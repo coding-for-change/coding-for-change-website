@@ -46,14 +46,20 @@ export interface TechTourIntroProps {
 }
 
 // Where the pops happen along the scroll range [0, 1]. Progress reaches 1 the
-// moment the white content band starts sliding up over the stage, so the last
-// bubble lands just before the curtain and there is no empty stretch.
+// moment the white content band's top edge reaches the bottom of the viewport.
 const POP_START = 0.06;
-const POP_END = 0.86;
+const POP_END = 0.76;
+// The exit: over this last stretch of progress the whole viewport lightens
+// from black to white while the constellation dissolves. The page background
+// painter does the lightening (it blends towards the content band's white as
+// the band approaches); `measure()` tells it, via the band's data-bg-window,
+// to run that blend over exactly this stretch, so colour and dissolve move
+// together and the band then arrives white-on-white — no edge to see.
+const EXIT_START = 0.8;
 const HINT_AFTER_MS = 3200;
 // The content band overlaps the last viewport of this section (negative
-// margin, see .lp--intro .lp-page), so the pinned stage stays put while the
-// white slides over it instead of being pushed off the top.
+// margin, see .lp--intro .lp-page), so the pinned stage stays put until it is
+// fully covered instead of being pushed off the top.
 const CURTAIN_VH = 100;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
@@ -166,6 +172,8 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
         if (!section) return;
         const scroller = section.closest('.site-scroll') as HTMLElement | null;
         const target: HTMLElement | Window = scroller ?? window;
+        // The white content band that follows this section (see TechTour.tsx).
+        const band = section.parentElement?.querySelector<HTMLElement>('[data-bg="#ffffff"]') ?? null;
         let raf = 0;
         const measure = () => {
             raf = 0;
@@ -176,6 +184,14 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
             // reached the bottom of the viewport.
             const range = Math.max(1, rect.height - 2 * viewH);
             progress.set(clamp01((viewTop - rect.top) / range));
+            // Align the background blend with the exit stretch: the band's top
+            // sits `start` viewports below the viewport top when progress is
+            // EXIT_START, and exactly one viewport (its bottom edge) at 1.
+            if (band) {
+                const start = 1 + ((1 - EXIT_START) * range) / viewH;
+                const window_ = `${start.toFixed(3)} 1`;
+                if (band.dataset.bgWindow !== window_) band.dataset.bgWindow = window_;
+            }
         };
         const onScroll = () => {
             if (!raf) raf = requestAnimationFrame(measure);
@@ -219,8 +235,10 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
 
     // The headline steps aside once the constellation is nearly complete.
     const headOpacity = useTransform([opener, progress], ([o, p]: number[]) =>
-        Math.min(o, 1 - clamp01((p - 0.62) / 0.16))
+        Math.min(o, 1 - clamp01((p - 0.56) / 0.16))
     );
+    // Everything on the stage dissolves while the page lightens.
+    const sceneOpacity = useTransform(progress, [EXIT_START, 1], [1, 0]);
     const headY = useTransform(opener, [0, 1], [18, 0]);
     const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB';
     const height = (isMobile ? 90 + n * 40 : 100 + n * 55) + CURTAIN_VH;
@@ -234,10 +252,7 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
             aria-label={heading}
         >
             <div className="lp-tt-intro__stage">
-                {/* The stage's own black, fading in on mount. It stays until the
-                    white content band slides up over it, so the page background
-                    blending underneath (which drives the nav ink) never shows. */}
-                <div className="lp-tt-intro__backdrop" aria-hidden="true" />
+              <motion.div className="lp-tt-intro__scene" style={{ opacity: sceneOpacity }}>
                 <motion.div className="lp-tt-intro__head" style={{ opacity: headOpacity, y: headY }}>
                     <p className="lp-tt-intro__kicker">{kicker}</p>
                     <h2 className="lp-tt-intro__title">{heading}</h2>
@@ -300,6 +315,7 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
                 <button type="button" className="lp-tt-intro__skip" onClick={onSkip}>
                     {t.techtour.introSkip} ↓
                 </button>
+              </motion.div>
             </div>
         </section>
     );

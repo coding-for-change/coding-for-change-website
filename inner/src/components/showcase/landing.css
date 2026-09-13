@@ -2048,30 +2048,19 @@ a.lp-member__project:hover {
     margin-top: -64px;
 }
 /* The content band is solid white so its cards never sit on a half-blended
-   grey: on tall screens the evening cards were already in view while the page
-   background was still on its way from black to white, and read as a glowing
-   box. The blend now only plays out above the band; a gradient over the last
-   stretch of the stage lets the white bleed in instead of ending in a line. */
+   background, whatever the screen height. By the time it scrolls in, the page
+   background has already been blended to white by the intro's exit (see
+   TechTourIntro.tsx), so its top edge is white on white — invisible. */
 .lp--techtour .lp-page {
     position: relative;
     background: #ffffff;
 }
-/* The curtain: the band starts one viewport before the intro section ends, so
-   the sticky stage is still pinned while the white slides up over it. Keep in
-   sync with CURTAIN_VH in TechTourIntro.tsx. */
+/* The band starts one viewport before the intro section ends, so the sticky
+   stage stays pinned until it is fully covered instead of being pushed off the
+   top. Keep in sync with CURTAIN_VH in TechTourIntro.tsx. */
 .lp--intro .lp-page {
     margin-top: -100vh;
     z-index: 1;
-}
-.lp--intro .lp-page::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: -180px;
-    height: 180px;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff);
-    pointer-events: none;
 }
 .lp-tt-intro {
     position: relative;
@@ -2085,11 +2074,10 @@ a.lp-member__project:hover {
     height: 100vh;
     overflow: hidden;
 }
-.lp-tt-intro__backdrop {
+/* Everything on the stage; dissolves as the page lightens on the way out. */
+.lp-tt-intro__scene {
     position: absolute;
     inset: 0;
-    background: #000000;
-    animation: lp-tt-fade-in 1.1s ease both;
 }
 /* Column, explicitly: App.css makes every div a flex row by default. */
 .lp-tt-intro__head {
@@ -2241,14 +2229,6 @@ a.lp-member__project:hover {
 }
 .lp-tt-replay {
     gap: 8px;
-}
-@keyframes lp-tt-fade-in {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
 }
 @keyframes lp-tt-pulse {
     0%,

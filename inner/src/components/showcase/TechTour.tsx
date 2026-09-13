@@ -207,7 +207,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                     onSkip={onIntroSkip}
                 />
             )}
-            <div className="lp-page" data-bg="#ffffff" data-bg-window="0.12 0.02">
+            <div className="lp-page" data-bg="#ffffff">
             <div className="lp-inner">
                 <motion.div
                     className="lp-page__head"
