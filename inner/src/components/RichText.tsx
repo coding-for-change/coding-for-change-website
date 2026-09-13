@@ -39,6 +39,9 @@ const renderNode = (node: LexicalNode, key: React.Key): React.ReactNode => {
         }
         case 'horizontalrule':
             return <hr key={key} style={styles.divider} />;
+        // `autolink` is what the editor creates when a URL or email address is
+        // typed straight into the text; same shape, same rendering.
+        case 'autolink':
         case 'link': {
             const url = node.fields?.url ?? '#';
             const newTab = node.fields?.newTab;

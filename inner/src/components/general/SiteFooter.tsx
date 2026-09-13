@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import RouterLink from 'next/link';
 import { useSiteConfig, useLanguage } from '../../api';
+import { useSiteFlags } from '@/api/SiteFlagsContext';
 import {
     openConsentSettings,
     consentUiAvailable,
@@ -22,6 +23,7 @@ const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, s
 const SiteFooter: React.FC = () => {
     const siteConfig = useSiteConfig();
     const { t } = useLanguage();
+    const { techTourListed } = useSiteFlags();
 
     const f = t.footer;
     const PAGE_LINKS = [
@@ -31,7 +33,7 @@ const SiteFooter: React.FC = () => {
         { to: '/#sponsors', label: f.sponsors },
         { to: '/partner', label: f.partner },
         { to: '/join', label: f.join },
-        { to: '/techtour', label: f.techtour },
+        ...(techTourListed ? [{ to: '/techtour', label: f.techtour }] : []),
     ];
 
     const INFO_LINKS = [

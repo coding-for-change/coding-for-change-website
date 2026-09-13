@@ -2,6 +2,7 @@
 import React from 'react';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import { SiteConfigProvider } from '@/api/SiteConfigContext';
+import { SiteFlagsProvider, type SiteFlags } from '@/api/SiteFlagsContext';
 import AttributionTracker from './AttributionTracker';
 import AnalyticsTracker from './AnalyticsTracker';
 import ConsentManager from './ConsentManager';
@@ -17,14 +18,17 @@ export default function Providers({
     children,
     initialLocale,
     initialConfig,
+    flags,
 }: {
     children: React.ReactNode;
     initialLocale: Locale;
     initialConfig: CmsSiteConfig | null;
+    flags: SiteFlags;
 }) {
     return (
         <LanguageProvider initialLocale={initialLocale}>
             <SiteConfigProvider initialConfig={initialConfig}>
+              <SiteFlagsProvider value={flags}>
                 {/* ConsentManager first: the trackers subscribe to the consent
                     store it populates, and both hold their events until it
                     resolves. */}
@@ -32,6 +36,7 @@ export default function Providers({
                 <AttributionTracker />
                 <AnalyticsTracker />
                 {children}
+              </SiteFlagsProvider>
             </SiteConfigProvider>
         </LanguageProvider>
     );

@@ -18,6 +18,34 @@ export const TechTour: GlobalConfig = {
   },
   fields: [
     {
+      // Publishing switch. Content is written in the admin over days; until it
+      // is complete the page must not be indexed, and optionally not linked.
+      // The site reads this in three places: the page's robots meta, the nav +
+      // footer links, and the sitemap (public only).
+      name: 'visibility',
+      type: 'select',
+      defaultValue: 'unlisted',
+      options: [
+        {
+          label: 'Hidden — reachable by its link only (not in navigation, not indexed)',
+          value: 'hidden',
+        },
+        {
+          label: 'Unlisted — in navigation, but hidden from search engines',
+          value: 'unlisted',
+        },
+        {
+          label: 'Public — in navigation, indexed, listed in the sitemap',
+          value: 'public',
+        },
+      ],
+      admin: {
+        position: 'sidebar',
+        description:
+          'Switch to "Public" once the content is complete. Hidden and Unlisted pages carry a noindex tag and are left out of the sitemap; Hidden also removes the "TechTour 2026" link from the navigation and footer.',
+      },
+    },
+    {
       name: 'kicker',
       type: 'text',
       localized: true,

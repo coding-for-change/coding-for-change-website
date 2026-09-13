@@ -11,8 +11,8 @@ Who needs what:
 | 1, 2 | Google Ads account access + GitHub repo admin (to add a secret) |
 | 3 | Merge rights on the repo |
 | 4 | Whoever has SSH access to the VPS (only to *check*; nothing to run there) |
-| 5 | A laptop with the repo checked out and **Node 20 or newer** (`node --version`), plus a CMS admin login |
-| 6, 7 | A CMS admin login |
+| 5, 7 | A laptop with the repo checked out and **Node 20 or newer** (`node --version`), plus a CMS admin login |
+| 6 | A CMS admin login |
 
 ---
 
@@ -196,21 +196,34 @@ the option labels there too (e.g. `Mon 9 Nov · Company to be announced` →
 
 ## 7. CMS content: Datenschutz
 
-**Admin → Globals → Legal → Privacy Policy**, once in **English**, once with
-the locale switched to **Deutsch**. Three edits each. Headings keep their
-numbers, so nothing else has to move.
+A script makes the three edits below in both languages, structurally (it
+finds the sections by heading, keeps the numbering, and is safe to re-run):
 
-Two things in the drafts need a decision from you before pasting; they are
-marked **[CHECK]**:
+```bash
+cd inner/cms                                   # same shell as step 5 (CMS_URL / CMS_EMAIL / CMS_PASSWORD set)
+node scripts/upsert-content.mjs                # dry run: reports what would change
+node scripts/upsert-content.mjs --apply        # writes English and German, reads back to verify
+```
 
-- whether attendee **names** are passed on to host companies (for building
-  access lists). If not, delete that sentence.
-- the **email provider**: notification emails to the team (new application /
-  registration / contact enquiry) and the waitlist emails go out through
-  Resend (a US provider). It is not mentioned in the current Datenschutz at
-  all. Section 7c below adds it; confirm Resend's transfer basis in their data
-  processing agreement (Standard Contractual Clauses and/or Data Privacy
-  Framework) and pick the matching wording.
+Two wording choices are decisions for the association and are passed as
+options — read the drafts below first:
+
+- `--share-names` — whether attendee **names** are passed on to host companies
+  (for building access lists). Without the flag the text says names and
+  contact details are **not** passed on. Pick whatever is true.
+- `--transfer=dpf` — the **email provider**: notification emails to the team
+  (new application / registration / contact enquiry) and the waitlist emails
+  go out through Resend (a US provider), which the current Datenschutz does
+  not mention. The default names the EU Standard Contractual Clauses as the
+  transfer basis; pass `--transfer=dpf` if Resend's data processing agreement
+  shows a Data Privacy Framework certification instead.
+
+Afterwards open https://codingforchange.com/privacy (EN and DE) and read
+section 5, the storage list in section 8 and the end of section 3.
+
+If you would rather paste by hand: **Admin → Globals → Legal → Privacy
+Policy**, once in **English**, once with the locale switched to **Deutsch**.
+The texts follow; the **[CHECK]** markers correspond to the two options above.
 
 ### 7a. Replace section 5 — "Application form"
 
@@ -283,6 +296,24 @@ Submissions** (filter by form, select all, delete) and **Forms → Applicant
 files** for the CVs. Accepted members' applications may be kept for the
 duration of their involvement.
 
+## 7½. Keep the TechTour page out of search results until it is ready
+
+**Admin → Globals → TechTour Page → Visibility** (in the sidebar):
+
+| Setting | Navigation + footer link | Search engines | Sitemap |
+| --- | --- | --- | --- |
+| **Hidden** | no — reachable by its URL only | `noindex` | not listed |
+| **Unlisted** (default) | yes | `noindex` | not listed |
+| **Public** | yes | indexed | listed |
+
+Leave it on **Unlisted** (or **Hidden** if the nav link should wait too) while
+Monday/Friday, times and locations are still open. Switch to **Public** once
+the content is 100 % ready; no deploy needed. `noindex` tells Google to drop
+the page on its next crawl. If it was already indexed, hurry it along in
+Search Console → Removals → "Temporarily remove URL" for
+`https://codingforchange.com/techtour`, and after going public request
+indexing via the URL inspection tool.
+
 ## 8. Confirm the conversion action records
 
 After the deploy with the secret in place, make one TechTour test
@@ -300,8 +331,9 @@ Delete the test registration afterwards (step 5 shows where).
 
 ## 9. Announce
 
-- Nav shows **TechTour 2026**; `/techtour` plays the opening animation on the
-  first visit. Share `https://codingforchange.com/techtour`.
+- Nav shows **TechTour 2026** (unless Visibility is Hidden); `/techtour` plays
+  the opening animation on the first visit. Share
+  `https://codingforchange.com/techtour` once Visibility is **Public**.
 - `/join` is open until **30 Oct 2026, 23:59** and closes on its own; the
   TechTour form closes at the deadline set in step 6 or when you untick
   "Registration open".

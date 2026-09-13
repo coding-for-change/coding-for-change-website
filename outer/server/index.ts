@@ -144,6 +144,18 @@ const cmsDocs = async (slug) => {
     }
 };
 
+// Fetch a CMS global (we use `updatedAt` for lastmod). null on any failure.
+const cmsGlobal = async (slug) => {
+    try {
+        const res = await fetch(`${CMS_URL}/api/globals/${slug}?depth=0`, {
+            signal: AbortSignal.timeout(4000),
+        });
+        return res.ok ? await res.json() : null;
+    } catch {
+        return null;
+    }
+};
+
 // Normalise a CMS timestamp to YYYY-MM-DD, or null if missing/invalid.
 const isoDate = (value) => {
     if (!value) return null;
@@ -158,10 +170,11 @@ app.get('/sitemap.xml', async (req, res) => {
 
     // Projects drive both a list page and per-item detail pages;
     // events + sponsors only gate their own list page (no detail routes).
-    const [projects, events, sponsors] = await Promise.all([
+    const [projects, events, sponsors, techTour] = await Promise.all([
         cmsDocs('projects'),
         cmsDocs('events'),
         cmsDocs('sponsors'),
+        cmsGlobal('tech-tour'),
     ]);
     // null → CMS unreachable → fail open (keep the list page listed).
     const has = (docs) => docs === null || docs.length > 0;
@@ -179,6 +192,12 @@ app.get('/sitemap.xml', async (req, res) => {
     add('/team', '0.8');
     add('/qa', '0.7');
     add('/join', '0.8');
+    // The Munich TechTour event page — only once the CMS has switched it to
+    // "Public" (TechTour Page → Visibility); the page carries noindex until
+    // then, and an unreachable CMS keeps it out rather than guessing.
+    if (techTour?.visibility === 'public') {
+        add('/techtour', '0.8', isoDate(techTour.updatedAt));
+    }
     add('/contact', '0.7');
     add('/imprint', '0.3');
     add('/privacy', '0.3');

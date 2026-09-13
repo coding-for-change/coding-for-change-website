@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Enter3DButton from '../general/Enter3DButton';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useSiteFlags } from '@/api/SiteFlagsContext';
 import { useSiteConfig } from '../../api';
 import './landing.css';
 
@@ -70,13 +71,15 @@ const TopNav: React.FC = () => {
     // it keeps the row from overflowing as conditional items are added.
     const sectionLinks: { id: string; label: string }[] = [];
 
+    const { techTourListed } = useSiteFlags();
     const pageLinks: { to: string; label: string; event?: boolean }[] = [
         { to: '/partner', label: t.nav.partner },
         { to: '/projects', label: t.nav.projects },
         { to: '/team', label: t.nav.team },
         { to: '/sponsors', label: t.nav.sponsors },
         // The one accented item: an event, not a page — a small teal pill.
-        { to: '/techtour', label: t.nav.techtour, event: true },
+        // Only while the CMS lists the page (TechTour Page → Visibility).
+        ...(techTourListed ? [{ to: '/techtour', label: t.nav.techtour, event: true }] : []),
         // Join is intentionally omitted here — the top-right JOIN button covers it.
         { to: '/contact', label: t.nav.contact },
     ];

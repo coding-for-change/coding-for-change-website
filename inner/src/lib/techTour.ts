@@ -1,4 +1,20 @@
-import type { CmsTechTour } from '../api/types';
+import type { CmsTechTour, CmsTechTourVisibility } from '../api/types';
+
+/**
+ * The page's publishing state from the CMS. Missing (older data or CMS down)
+ * counts as 'unlisted': linked, but not indexed and not in the sitemap — the
+ * safe side while content is still being written.
+ */
+export const techTourVisibility = (tt: CmsTechTour | null | undefined): CmsTechTourVisibility =>
+    tt?.visibility ?? 'unlisted';
+
+/** Show the "TechTour 2026" link in navigation and footer. */
+export const techTourListed = (tt: CmsTechTour | null | undefined): boolean =>
+    techTourVisibility(tt) !== 'hidden';
+
+/** Let search engines index the page. */
+export const techTourIndexable = (tt: CmsTechTour | null | undefined): boolean =>
+    techTourVisibility(tt) === 'public';
 
 /**
  * Whether TechTour registration is open right now: the admin's "registration
