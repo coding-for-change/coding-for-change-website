@@ -1650,6 +1650,10 @@ a.lp-member__project:hover {
     display: block;
     margin-top: 24px;
 }
+/* On /join the timeline follows the tracks + benefits columns, not the head. */
+.lp-join-phase--spaced {
+    margin-top: 64px;
+}
 .lp-tl--join {
     margin: 36px 0 64px;
 }

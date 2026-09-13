@@ -22,6 +22,7 @@ export type ApplicationStepId =
     | 'invitation'
     | 'interviews'
     | 'onboarding'
+    | 'firstMeeting'
     | 'project';
 
 export interface ApplicationStep {
@@ -47,8 +48,10 @@ export const APPLICATION_STEPS: ApplicationStep[] = [
     { id: 'invitation', start: '2026-10-31T00:00:00+01:00', end: '2026-11-01T23:59:59+01:00' },
     // Interview week.
     { id: 'interviews', start: '2026-11-02T00:00:00+01:00', end: '2026-11-08T23:59:59+01:00' },
-    // Onboarding event + first team meeting: Mon 9 / Tue 10 / Wed 11 Nov.
+    // Onboarding event (projects introduced, teams matched): Mon 9 / Tue 10 / Wed 11 Nov.
     { id: 'onboarding', start: '2026-11-09T00:00:00+01:00', end: '2026-11-11T23:59:59+01:00' },
+    // First team meeting, the week after onboarding.
+    { id: 'firstMeeting', start: '2026-11-16T00:00:00+01:00', end: '2026-11-20T23:59:59+01:00' },
     // Two-month project phase, mid-November to mid-January.
     { id: 'project', start: '2026-11-16T00:00:00+01:00', end: '2027-01-15T23:59:59+01:00' },
 ];

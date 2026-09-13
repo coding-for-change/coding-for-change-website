@@ -83,6 +83,8 @@ export interface Translations {
         /** Status pill in the page head. `{n}` in daysLeft is the day count. */
         statusOpen: string; statusClosed: string; statusDeadline: string;
         daysLeft: string; lastDay: string;
+        /** Top-of-page button that scrolls to the application form. */
+        toForm: string;
         /** "How the application works" — the dated steps of the current round. */
         phase: {
             kicker: string; heading: string; intro: string;
@@ -327,10 +329,11 @@ const en: Translations = {
         statusDeadline: 'Deadline 30 Oct 2026, 23:59',
         daysLeft: '{n} days left',
         lastDay: 'Last day to apply',
+        toForm: 'To the application form',
         phase: {
             kicker: 'Application phase · Winter 2026/27',
             heading: 'How the application works',
-            intro: 'Six steps from a first hello to your first pull request. Every date that matters for this round, in order.',
+            intro: 'Seven steps from a first hello to your first pull request. Every date that matters for this round, in order.',
             steps: {
                 fair: {
                     timing: '21 Oct 2026 · 10:00–17:00',
@@ -354,8 +357,13 @@ const en: Translations = {
                 },
                 onboarding: {
                     timing: '9–11 Nov 2026',
-                    title: 'Onboarding event & first meeting',
-                    text: 'Meet your team, get your accounts and tools, and kick off the project. Whether it is Monday, Tuesday or Wednesday, we confirm the day with your acceptance.',
+                    title: 'Onboarding event',
+                    text: 'We introduce this round’s projects and partner NGOs, then match you to a project and team based on your interests and skills. You also get your accounts and tools. Whether it is Monday, Tuesday or Wednesday, we confirm the day with your acceptance.',
+                },
+                firstMeeting: {
+                    timing: 'Mid-Nov 2026',
+                    title: 'First team meeting',
+                    text: 'Your new team meets for the first time: goals, roles and the first tasks. From then on you meet every week.',
                 },
                 project: {
                     timing: 'Mid-Nov 2026 – mid-Jan 2027',
@@ -661,10 +669,11 @@ const de: Translations = {
         statusDeadline: 'Frist 30. Okt. 2026, 23:59 Uhr',
         daysLeft: 'noch {n} Tage',
         lastDay: 'Letzter Tag zum Bewerben',
+        toForm: 'Zum Bewerbungsformular',
         phase: {
             kicker: 'Bewerbungsphase · Winter 2026/27',
             heading: 'So läuft die Bewerbung ab',
-            intro: 'Sechs Schritte vom ersten Hallo bis zu deinem ersten Pull Request. Alle Termine dieser Runde, der Reihe nach.',
+            intro: 'Sieben Schritte vom ersten Hallo bis zu deinem ersten Pull Request. Alle Termine dieser Runde, der Reihe nach.',
             steps: {
                 fair: {
                     timing: '21. Okt. 2026 · 10–17 Uhr',
@@ -688,8 +697,13 @@ const de: Translations = {
                 },
                 onboarding: {
                     timing: '9.–11. Nov. 2026',
-                    title: 'Onboarding-Event & erstes Meeting',
-                    text: 'Du lernst dein Team kennen, bekommst Zugänge und Tools und startest ins Projekt. Ob Montag, Dienstag oder Mittwoch, sagen wir dir mit der Zusage.',
+                    title: 'Onboarding-Event',
+                    text: 'Wir stellen die Projekte und Partner-NGOs dieser Runde vor und matchen dich anhand deiner Interessen und Fähigkeiten mit einem Projekt und Team. Außerdem bekommst du deine Zugänge und Tools. Ob Montag, Dienstag oder Mittwoch, sagen wir dir mit der Zusage.',
+                },
+                firstMeeting: {
+                    timing: 'Mitte Nov. 2026',
+                    title: 'Erstes Team-Meeting',
+                    text: 'Dein neues Team trifft sich zum ersten Mal: Ziele, Rollen und die ersten Aufgaben. Ab dann trefft ihr euch jede Woche.',
                 },
                 project: {
                     timing: 'Mitte Nov. 2026 – Mitte Jan. 2027',

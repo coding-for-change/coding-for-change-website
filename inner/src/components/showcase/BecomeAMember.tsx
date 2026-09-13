@@ -178,7 +178,7 @@ const BecomeAMember: React.FC<{
                             href="#join-form"
                             onClick={scrollToForm}
                         >
-                            {open ? t.join.applyNow : t.join.waitlistButton} ↓
+                            {open ? t.join.toForm : t.join.waitlistButton} ↓
                         </a>
                     </div>
                 </motion.div>
@@ -197,8 +197,59 @@ const BecomeAMember: React.FC<{
                     </motion.div>
                 )}
 
+                {(membership.tracks ?? []).length > 0 && (
+                    <motion.div
+                        className="lp-tracks"
+                        initial={{ opacity: 0, y: 24 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, amount: 0.1 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <h2 className="lp-subhead">
+                            {t.join.waysToContribute}
+                        </h2>
+                        <div className="lp-grid">
+                            {(membership.tracks ?? []).map((track, i) => (
+                                <div className="lp-card" key={track.id ?? i}>
+                                    <h3 className="lp-card__title">
+                                        {track.title}
+                                    </h3>
+                                    <p className="lp-card__text">
+                                        {track.description}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+                )}
+
                 <motion.div
-                    className="lp-join-phase"
+                    className="lp-cols2"
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.15 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    <div className="lp-col">
+                        <h3 className="lp-col__head">{t.join.benefits}</h3>
+                        <ul className="lp-list">
+                            {(membership.benefits ?? []).map((b, i) => (
+                                <li key={i}>{b.text}</li>
+                            ))}
+                        </ul>
+                    </div>
+                    <div className="lp-col">
+                        <h3 className="lp-col__head">{t.join.requirements}</h3>
+                        <ul className="lp-list">
+                            {(membership.requirements ?? []).map((r, i) => (
+                                <li key={i}>{r.text}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </motion.div>
+
+                <motion.div
+                    className="lp-join-phase lp-join-phase--spaced"
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.15 }}
@@ -300,56 +351,6 @@ const BecomeAMember: React.FC<{
                     )}
                 </motion.div>
 
-                {(membership.tracks ?? []).length > 0 && (
-                    <motion.div
-                        className="lp-tracks"
-                        initial={{ opacity: 0, y: 24 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true, amount: 0.1 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h2 className="lp-subhead">
-                            {t.join.waysToContribute}
-                        </h2>
-                        <div className="lp-grid">
-                            {(membership.tracks ?? []).map((track, i) => (
-                                <div className="lp-card" key={track.id ?? i}>
-                                    <h3 className="lp-card__title">
-                                        {track.title}
-                                    </h3>
-                                    <p className="lp-card__text">
-                                        {track.description}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-
-                <motion.div
-                    className="lp-cols2"
-                    initial={{ opacity: 0, y: 24 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, amount: 0.15 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <div className="lp-col">
-                        <h3 className="lp-col__head">{t.join.benefits}</h3>
-                        <ul className="lp-list">
-                            {(membership.benefits ?? []).map((b, i) => (
-                                <li key={i}>{b.text}</li>
-                            ))}
-                        </ul>
-                    </div>
-                    <div className="lp-col">
-                        <h3 className="lp-col__head">{t.join.requirements}</h3>
-                        <ul className="lp-list">
-                            {(membership.requirements ?? []).map((r, i) => (
-                                <li key={i}>{r.text}</li>
-                            ))}
-                        </ul>
-                    </div>
-                </motion.div>
             </div>
             </div>
             <ClosingCta />

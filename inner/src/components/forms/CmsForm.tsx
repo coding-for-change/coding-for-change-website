@@ -340,10 +340,10 @@ const CmsForm: React.FC<CmsFormProps> = ({
         }
     };
 
+    // The marker stays on every required field, filled or not, so the form's
+    // rules are readable at a glance rather than disappearing as you type.
     const star = (field: PlainInput) =>
-        field.required && !isValid(field) && field.blockType !== 'checkbox' ? (
-            <span className="lp-required">*</span>
-        ) : null;
+        field.required ? <span className="lp-required">*</span> : null;
 
     const renderInput = (field: PlainInput, key: string) => {
         const value = valueOf(field);
@@ -359,9 +359,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         onChange={(e) => setValue(field.name, e.target.checked)}
                     />
                     <span className="lp-label">
-                        {field.required && value !== true && (
-                            <span className="lp-required">*</span>
-                        )}
+                        {star(field)}
                         {renderLabelText(fieldLabel)}
                     </span>
                 </label>
@@ -631,12 +629,10 @@ const CmsForm: React.FC<CmsFormProps> = ({
             <p className="lp-form-note">
                 {sendError ? (
                     <span className="lp-required">{t.forms.sendError}</span>
-                ) : !formValid ? (
+                ) : (
                     <span>
                         <span className="lp-required">*</span> = {t.forms.required}
                     </span>
-                ) : (
-                    '\xa0'
                 )}
             </p>
         </div>
