@@ -62,6 +62,11 @@ there still have to be entered in the CMS, there is no import.
 - The cross "also …" boxes disappear as soon as the other form has closed, so
   neither page can feed a closed round.
 
+> **Going live?** The step-by-step order (Google Ads action → GitHub secret →
+> merge → check the deploy → forms script → CMS content → Datenschutz text →
+> verify conversions) with exact commands and paste-ready texts is in
+> `GO-LIVE-RUNBOOK.md`.
+
 ## Setting the forms up on production
 
 The prod CMS still has the old three-field `application` form and no `techtour`
