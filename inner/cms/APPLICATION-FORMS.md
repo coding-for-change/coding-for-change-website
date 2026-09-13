@@ -97,11 +97,11 @@ The dev seed (`pnpm seed`) creates the same forms and page content.
 - **TechTour page content** (admin → Globals → TechTour Page): Monday's and
   Friday's company, time and location of every evening (empty = "to be
   announced" on the page), company logos, hero image, registration deadline.
-- **Datenschutz** (admin → Globals → Legal): add a section on applications and
-  event registrations. Recipient: Coding for Change e.V.; purpose: handling the
-  application / registration; data: the form fields and the uploaded CV;
-  retention: state a period (e.g. deleted 6 months after the round is decided)
-  and then actually delete the submissions and files.
+- **Datenschutz** (admin → Globals → Legal): `node scripts/upsert-content.mjs
+  --apply` adds the section on applications and event registrations, the
+  storage-list bullet and the email provider in both languages (options and
+  texts in `GO-LIVE-RUNBOOK.md` §7). Then actually delete submissions and
+  files when the stated retention periods end.
 - **Google Ads**: create a conversion action for TechTour registrations and set
   `GOOGLE_ADS_LABEL_TECHTOUR` in `.env` (already passed through compose).
 - **Rate limiting**: `POST /api/applicant-files` is open to anonymous callers by
