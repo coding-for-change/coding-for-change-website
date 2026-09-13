@@ -1014,6 +1014,14 @@ export interface Form {
  */
 export interface FormSubmission {
   id: number;
+  /**
+   * Your verdict on this applicant.
+   */
+  reviewStatus?: ('unreviewed' | 'accepted' | 'unsure' | 'rejected') | null;
+  /**
+   * Internal notes — never shown to the applicant. Included in the Excel export.
+   */
+  reviewNotes?: string | null;
   form: number | Form;
   submissionData?:
     | {
@@ -2050,6 +2058,8 @@ export interface FormsSelect<T extends boolean = true> {
  * via the `definition` "form-submissions_select".
  */
 export interface FormSubmissionsSelect<T extends boolean = true> {
+  reviewStatus?: T;
+  reviewNotes?: T;
   form?: T;
   submissionData?:
     | T

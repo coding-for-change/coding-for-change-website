@@ -38,6 +38,30 @@ checkbox, message) three custom blocks exist, defined in `src/lib/formBlocks.ts`
 Checkbox labels may contain `[text](url)` links, which is how the privacy
 consent points at `/privacy`.
 
+## Reviewing applications
+
+Every submission has a **Review status** (Unreviewed / Accepted / Unsure /
+Rejected) and **Notes on the applicant** in its sidebar in the admin; the
+answers themselves are read-only there. The list view shows the status column.
+
+**Download as Excel:** at the top of Forms → Form Submissions there is one
+button per form (`application`, `techtour`, `Contact`). Each streams
+`/api/submissions-export.xlsx?form=<title>` — one row per submission with the
+answers in the form's order, links to the uploaded CV (open only while logged
+in to the admin), the review status and notes, and the campaign attribution.
+The status column has a dropdown for reviewing in the sheet; decisions made
+there still have to be entered in the CMS, there is no import.
+
+## Closing on their own
+
+- The membership application form closes at the deadline in
+  `inner/src/lib/applicationPhase.ts` (30 Oct 2026, 23:59 Berlin time) and the
+  waitlist signup takes its place. The timeline's states move with the dates.
+- The TechTour form closes when "Registration open" is unticked on the TechTour
+  Page global or its registration deadline passes.
+- The cross "also …" boxes disappear as soon as the other form has closed, so
+  neither page can feed a closed round.
+
 ## Setting the forms up on production
 
 The prod CMS still has the old three-field `application` form and no `techtour`

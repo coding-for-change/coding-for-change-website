@@ -1,6 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { buildConfig } from 'payload';
+import { buildConfig, type Field } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder';
@@ -22,6 +22,8 @@ import { AnalyticsEvents } from './collections/AnalyticsEvents';
 import { ConsentRecords } from './collections/ConsentRecords';
 import { ApplicantFiles } from './collections/ApplicantFiles';
 import { attributionField } from './fields/attribution';
+import { reviewFields } from './fields/review';
+import { submissionsExport } from './endpoints/submissionsExport';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -43,6 +45,12 @@ import { TechTour } from './globals/TechTour';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** Keep the applicant's answers as sent: only the review fields are editable. */
+const readOnlyInAdmin = (field: Field): Field =>
+  'name' in field && (field.name === 'form' || field.name === 'submissionData')
+    ? ({ ...field, admin: { ...(field.admin ?? {}), readOnly: true } } as Field)
+    : field;
+
 export default buildConfig({
   editor: lexicalEditor(),
   collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles],
@@ -50,7 +58,7 @@ export default buildConfig({
   // Admin-only analytics reporting: JSON aggregates for the /admin/analytics
   // dashboard, plus CSV exports (campaign funnel, raw events, signups) and
   // the bulk "email the waitlist" sender (individual mails via Resend).
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints],
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -98,16 +106,29 @@ export default buildConfig({
       // Fallback recipient when a form doesn't define its own emails.
       defaultToEmail:
         process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com',
-      // Carry campaign/traffic-source attribution onto every form submission
-      // (contact + application), so we can attribute conversions to the poster
-      // or link a visitor arrived from. Same shared field as WaitlistSignups.
-      // …and the documents (CV) uploaded to `applicant-files` for it.
+      // Submissions get: the reviewer's status + notes (sidebar), the answers
+      // (read-only in the admin — what the applicant sent stays as sent), the
+      // documents (CV) uploaded to `applicant-files`, and the campaign /
+      // traffic-source attribution (same shared field as WaitlistSignups) so
+      // conversions can be attributed to the poster or link a visitor came from.
       formSubmissionOverrides: {
         fields: ({ defaultFields }) => [
-          ...defaultFields,
+          ...reviewFields,
+          ...defaultFields.map(readOnlyInAdmin),
           submissionFilesField,
           attributionField,
         ],
+        // The plugin forbids updates; admins need them for the review fields.
+        access: {
+          update: ({ req: { user } }) => Boolean(user),
+        },
+        admin: {
+          defaultColumns: ['form', 'reviewStatus', 'createdAt'],
+          components: {
+            // "Download as Excel" — one .xlsx per form (see endpoints/submissionsExport.ts).
+            beforeListTable: ['/components/submissions/ExportSubmissions#ExportSubmissions'],
+          },
+        },
       },
     }),
     // Model Context Protocol server at /api/mcp. Full CRUD on content is exposed

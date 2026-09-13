@@ -1,0 +1,59 @@
+/* "Download as Excel" panel above the Form Submissions list. Uses the admin's
+   own CSS variables so it follows the light/dark theme. */
+.sub-export {
+  margin: 0 0 var(--base, 24px);
+  padding: calc(var(--base, 24px) * 0.75) var(--base, 24px);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-m, 4px);
+  background: var(--theme-elevation-50);
+}
+.sub-export__head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+.sub-export__hint {
+  color: var(--theme-elevation-600);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sub-export__error {
+  margin: 0;
+  color: var(--theme-error-500);
+  font-size: 13px;
+}
+.sub-export__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.sub-export__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--theme-elevation-300);
+  border-radius: var(--style-radius-s, 3px);
+  background: var(--theme-elevation-0);
+  color: var(--theme-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  text-transform: capitalize;
+}
+.sub-export__btn:hover {
+  border-color: var(--theme-elevation-500);
+  background: var(--theme-elevation-100);
+}
+.sub-export__count {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--theme-elevation-200);
+  font-weight: 500;
+}
+.sub-export__ext {
+  color: var(--theme-elevation-500);
+  font-weight: 400;
+  text-transform: none;
+}

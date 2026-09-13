@@ -7,6 +7,8 @@ import type { CmsForm as CmsFormDoc, CmsTechTour, CmsTechTourEvent } from '../..
 import { useLanguage } from '../../contexts/LanguageContext';
 import CmsForm from '../forms/CmsForm';
 import ClosingCta from './ClosingCta';
+import { applicationsOpen } from '../../lib/applicationPhase';
+import { techTourRegistrationOpen } from '../../lib/techTour';
 import './landing.css';
 
 const reveal = {
@@ -51,9 +53,9 @@ const TechTour: React.FC<TechTourProps> = (props) => {
     }, []);
 
     const deadline = tt?.registrationDeadline ? new Date(tt.registrationDeadline) : null;
-    const open =
-        (tt?.registrationOpen ?? true) &&
-        (!deadline || Number.isNaN(deadline.getTime()) || now <= deadline.getTime());
+    const open = techTourRegistrationOpen(tt, now);
+    // Once the membership round has closed, the "also apply" box goes too.
+    const hiddenSubforms = applicationsOpen(now) ? undefined : ['application'];
 
     const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB';
     const fmtDay = (iso: string) =>
@@ -247,6 +249,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                                     form={form}
                                     conversion="techtour"
                                     heading={tt?.formHeading || t.techtour.formHeading}
+                                    hiddenSubforms={hiddenSubforms}
                                 />
                             )}
                         </>

@@ -2,8 +2,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useCmsGlobal, useCmsCollection, submitWaitlist, mediaUrl } from '../../api';
-import type { CmsForm as CmsFormDoc } from '../../api';
+import type { CmsForm as CmsFormDoc, CmsTechTour } from '../../api';
 import { CmsMembership } from '../../api/types';
+import { techTourRegistrationOpen } from '../../lib/techTour';
 import { getAttribution } from '../../lib/attribution';
 import { trackFormStart, trackConversion } from '../../lib/analytics';
 import { trackAdsConversion } from '../../lib/googleAds';
@@ -36,6 +37,8 @@ const validateEmail = (email: string) => {
 const BecomeAMember: React.FC<{
     membership?: CmsMembership | null;
     forms?: CmsFormDoc[] | null;
+    /** TechTour page settings — decides whether "also register" is offered. */
+    techTour?: CmsTechTour | null;
     /**
      * Request time from the server component. Seeding the clock with it keeps
      * the server and first client render identical (no hydration mismatch on
@@ -56,6 +59,11 @@ const BecomeAMember: React.FC<{
     }, []);
     const open = applicationsOpen(now);
     const daysLeft = daysUntilDeadline(now);
+    const { data: techTour } = useCmsGlobal<CmsTechTour>('tech-tour', props.techTour);
+    // The "also register for the TechTour" box disappears once that closes.
+    const hiddenSubforms = techTourRegistrationOpen(techTour, now)
+        ? undefined
+        : ['techtour'];
     const phaseSteps = useMemo(
         () =>
             APPLICATION_STEPS.map((step) => ({
@@ -283,6 +291,7 @@ const BecomeAMember: React.FC<{
                                 form={form}
                                 conversion="application"
                                 heading={t.join.applyNow}
+                                hiddenSubforms={hiddenSubforms}
                             />
                         )}
                       </>

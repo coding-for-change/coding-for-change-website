@@ -117,6 +117,12 @@ export interface CmsFormProps {
     conversion?: string;
     /** Optional heading rendered above the fields. */
     heading?: string;
+    /**
+     * Titles of linked forms (subform blocks) that must not be offered right
+     * now — e.g. `['application']` on the TechTour page once membership
+     * applications have closed. Matched case-insensitively.
+     */
+    hiddenSubforms?: string[];
     className?: string;
     onSubmitted?: () => void;
 }
@@ -125,11 +131,16 @@ const CmsForm: React.FC<CmsFormProps> = ({
     form,
     conversion,
     heading,
+    hiddenSubforms,
     className,
     onSubmitted,
 }) => {
     const { t } = useLanguage();
     const label = conversion ?? conversionLabelFor(form.title);
+    const hidden = useMemo(
+        () => new Set((hiddenSubforms ?? []).map((s) => s.trim().toLowerCase())),
+        [hiddenSubforms]
+    );
 
     const [values, setValues] = useState<Values>({});
     const [uploads, setUploads] = useState<Record<string, UploadState>>({});
@@ -140,7 +151,17 @@ const CmsForm: React.FC<CmsFormProps> = ({
     // failure does not create duplicates.
     const doneRef = useRef<Set<number>>(new Set());
 
-    const fields = form.fields ?? [];
+    // A linked form whose round is closed is dropped entirely: not rendered,
+    // not validated, not submitted.
+    const fields = useMemo(
+        () =>
+            (form.fields ?? []).filter((f) => {
+                if (!isSubform(f)) return true;
+                const sub = typeof f.form === 'object' && f.form ? f.form : null;
+                return !sub || !hidden.has(sub.title.trim().toLowerCase());
+            }),
+        [form.fields, hidden]
+    );
     const parentNames = useMemo(
         () => new Set(fields.filter(isInput).map((f) => f.name)),
         [fields]
