@@ -54,7 +54,12 @@ CMS_URL=https://codingforchange.com CMS_EMAIL=<admin> CMS_PASSWORD=<pw> \
 `--apply` replaces the fields of an existing form with the definitions in
 `scripts/lib/formDefinitions.mjs` (existing submissions are untouched). It also
 gives the **TechTour Page** global starting content, but only if it is still
-empty. From then on, edit in the admin.
+empty, and uploads the company logos bundled in `scripts/assets/techtour/`
+(Lio, McKinsey QuantumBlack, QuantCo), attaching each to the event whose
+company name matches. From then on, edit in the admin.
+
+`--logos` does only the logo step — useful after the page content was written
+by hand in the admin. Events that already have a logo are left alone.
 
 The dev seed (`pnpm seed`) creates the same forms and page content.
 

@@ -1,4 +1,65 @@
+import { readFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { applicationForm, techtourForm, techTourGlobal } from './formDefinitions.mjs';
+
+const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'techtour');
+
+/** Company logos shipped with the repo, matched to events by company name. */
+const LOGOS = [
+  { match: /^lio$/i, file: 'lio.png', alt: 'Lio logo' },
+  { match: /quantumblack/i, file: 'mckinsey-quantumblack.png', alt: 'McKinsey QuantumBlack logo' },
+  { match: /^quantco$/i, file: 'quantco.png', alt: 'QuantCo logo' },
+];
+
+/**
+ * Upload the bundled company logos to `media` and set them as the `logo` of
+ * every TechTour event whose company matches, unless that event already has
+ * one. Safe to re-run; logs and skips when an asset file is missing.
+ */
+export async function attachTechTourLogos({ base, cookie, log = console.log }) {
+  const auth = { cookie };
+  const get = async (p) => {
+    const r = await fetch(`${base}${p}`, { headers: auth });
+    if (!r.ok) throw new Error(`GET ${p} → ${r.status}`);
+    return r.json();
+  };
+  const page = await get('/api/globals/tech-tour?locale=en&depth=0');
+  const events = page?.events ?? [];
+  if (events.length === 0) {
+    log('tech-tour page has no events yet — logos not attached');
+    return 0;
+  }
+  let attached = 0;
+  const updates = [];
+  for (const ev of events) {
+    const logo = LOGOS.find((l) => l.match.test((ev.company || '').trim()));
+    if (!logo || ev.logo) { updates.push({ id: ev.id }); continue; }
+    const file = path.join(ASSETS, logo.file);
+    if (!existsSync(file)) { log(`logo file missing: ${file}`); updates.push({ id: ev.id }); continue; }
+    const body = new FormData();
+    body.append('file', new Blob([await readFile(file)], { type: 'image/png' }), logo.file);
+    body.append('_payload', JSON.stringify({ alt: logo.alt }));
+    const r = await fetch(`${base}/api/media`, { method: 'POST', headers: auth, body });
+    if (!r.ok) throw new Error(`POST /api/media (${logo.file}) → ${r.status} ${(await r.text()).slice(0, 200)}`);
+    const { doc } = await r.json();
+    updates.push({ id: ev.id, logo: doc.id });
+    attached += 1;
+  }
+  if (attached > 0) {
+    // Array rows are matched by id, so sending only ids + the new logo leaves
+    // every other field (both locales) untouched.
+    const r = await fetch(`${base}/api/globals/tech-tour?locale=en`, {
+      method: 'POST',
+      headers: { ...auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ events: updates }),
+    });
+    if (!r.ok) throw new Error(`POST /api/globals/tech-tour (logos) → ${r.status} ${(await r.text()).slice(0, 200)}`);
+  }
+  log(`tech-tour logos: ${attached} attached`);
+  return attached;
+}
 
 /**
  * Create or update the "application" and "techtour" forms (EN + DE) and, if the
@@ -86,5 +147,6 @@ export async function upsertForms({ base, cookie, toEmail, fromEmail, log = cons
     await req('POST', '/api/globals/tech-tour?locale=de', de);
     log('tech-tour page seeded with starting content (en + de)');
   }
+  await attachTechTourLogos({ base, cookie, log });
   return { application: app, techtour: tt };
 }

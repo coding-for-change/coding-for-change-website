@@ -1708,6 +1708,9 @@ a.lp-member__project:hover {
 }
 /* PDF upload: a bordered drop area with a button-styled label. */
 .lp-upload__drop {
+    /* The label is the containing block of its hidden file input (below). */
+    position: relative;
+    overflow: hidden;
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -1726,12 +1729,20 @@ a.lp-member__project:hover {
     cursor: progress;
     opacity: 0.7;
 }
+/* The real <input type=file>, invisible but covering the whole drop area. It
+   must be positioned against the label itself: the page shell (.site-page) is
+   a transformed, absolutely positioned box, so an absolutely positioned input
+   without a positioned parent gets laid out against the shell, not the label —
+   and when the browser focuses it to open the file dialog it scrolls the page
+   to where it thinks the input is, hundreds of pixels away. */
 .lp-upload__drop input[type='file'] {
     position: absolute;
-    width: 1px;
-    height: 1px;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
     opacity: 0;
-    overflow: hidden;
+    cursor: pointer;
 }
 .lp-upload__drop:focus-within {
     outline: 2px solid var(--teal);

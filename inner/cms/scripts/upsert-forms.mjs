@@ -6,18 +6,20 @@
  *   CMS_URL=https://codingforchange.com CMS_EMAIL=… CMS_PASSWORD=… \
  *     node scripts/upsert-forms.mjs            # shows what exists, writes nothing
  *     node scripts/upsert-forms.mjs --apply    # creates / replaces the forms
+ *     node scripts/upsert-forms.mjs --logos    # only attach the bundled company logos
  *
  * WARNING: --apply replaces the FIELDS of an existing form with the definitions
  * in scripts/lib/formDefinitions.mjs. Existing submissions are not touched.
  * After the first run, edit questions in the admin (Forms) — or change the
  * definitions and re-run.
  */
-import { upsertForms } from './lib/upsertForms.mjs';
+import { attachTechTourLogos, upsertForms } from './lib/upsertForms.mjs';
 
 const BASE = (process.env.CMS_URL || 'http://localhost:3000').replace(/\/$/, '');
 const EMAIL = process.env.CMS_EMAIL;
 const PASSWORD = process.env.CMS_PASSWORD;
 const APPLY = process.argv.includes('--apply');
+const LOGOS_ONLY = process.argv.includes('--logos');
 
 if (!EMAIL || !PASSWORD) {
   console.error('Set CMS_EMAIL and CMS_PASSWORD (an admin user of the CMS).');
@@ -41,10 +43,16 @@ if (!cookie) {
   process.exit(1);
 }
 
-await upsertForms({
-  base: BASE,
-  cookie,
-  toEmail: process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com',
-  fromEmail: process.env.EMAIL_FROM || 'noreply@codingforchange.com',
-  dryRun: !APPLY,
-});
+if (LOGOS_ONLY) {
+  // Attach the bundled Lio / McKinsey QuantumBlack / QuantCo logos to the
+  // TechTour events (matched by company name; events that have a logo are left).
+  await attachTechTourLogos({ base: BASE, cookie });
+} else {
+  await upsertForms({
+    base: BASE,
+    cookie,
+    toEmail: process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com',
+    fromEmail: process.env.EMAIL_FROM || 'noreply@codingforchange.com',
+    dryRun: !APPLY,
+  });
+}

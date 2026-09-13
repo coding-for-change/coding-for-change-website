@@ -358,7 +358,7 @@ const en: Translations = {
                 onboarding: {
                     timing: '9–11 Nov 2026',
                     title: 'Onboarding event',
-                    text: 'We introduce this round’s projects and partner NGOs, then match you to a project and team based on your interests and skills. You also get your accounts and tools. Whether it is Monday, Tuesday or Wednesday, we confirm the day with your acceptance.',
+                    text: 'We introduce this round’s projects and partner NGOs, then match you to a project and team based on your interests and skills. You also get your accounts and tools. We will confirm the exact date with your acceptance.',
                 },
                 firstMeeting: {
                     timing: 'Mid-Nov 2026',
@@ -698,7 +698,7 @@ const de: Translations = {
                 onboarding: {
                     timing: '9.–11. Nov. 2026',
                     title: 'Onboarding-Event',
-                    text: 'Wir stellen die Projekte und Partner-NGOs dieser Runde vor und matchen dich anhand deiner Interessen und Fähigkeiten mit einem Projekt und Team. Außerdem bekommst du deine Zugänge und Tools. Ob Montag, Dienstag oder Mittwoch, sagen wir dir mit der Zusage.',
+                    text: 'Wir stellen die Projekte und Partner-NGOs dieser Runde vor und matchen dich anhand deiner Interessen und Fähigkeiten mit einem Projekt und Team. Außerdem bekommst du deine Zugänge und Tools. Den genauen Termin bestätigen wir dir mit der Zusage.',
                 },
                 firstMeeting: {
                     timing: 'Mitte Nov. 2026',
