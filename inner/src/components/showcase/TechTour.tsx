@@ -1,14 +1,17 @@
 'use client';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useCmsGlobal, useCmsCollection, mediaUrl } from '../../api';
 import type { CmsForm as CmsFormDoc, CmsTechTour, CmsTechTourEvent } from '../../api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CmsForm from '../forms/CmsForm';
 import ClosingCta from './ClosingCta';
+import TechTourIntro from './TechTourIntro';
+import useSectionBackgrounds from '../../hooks/useSectionBackgrounds';
 import { applicationsOpen } from '../../lib/applicationPhase';
 import { techTourRegistrationOpen } from '../../lib/techTour';
+import { hasSeenTechTourIntro, markTechTourIntroSeen } from '../../lib/techTourIntro';
 import './landing.css';
 
 const reveal = {
@@ -79,6 +82,52 @@ const TechTour: React.FC<TechTourProps> = (props) => {
     const intro = tt?.intro || t.techtour.fallbackLead;
     const heroImage = mediaUrl(tt?.heroImage);
 
+    // The opening sequence. Server and first client render show the plain
+    // page (no storage on the server); after mount, first-time visitors get
+    // the intro and returning ones a replay button. Reduced-motion users get
+    // neither. The page background painter turns the page black while the
+    // intro's band is on screen and white again for the content.
+    const rootRef = useRef<HTMLDivElement>(null);
+    useSectionBackgrounds(rootRef);
+    const reducedMotion = useReducedMotion();
+    const [show, setShow] = useState<'pending' | 'play' | 'off'>('pending');
+    const [introKey, setIntroKey] = useState(0);
+    const [opening, setOpening] = useState(false);
+    useEffect(() => {
+        if (reducedMotion) {
+            setShow('off');
+            return;
+        }
+        setShow(hasSeenTechTourIntro() ? 'off' : 'play');
+    }, [reducedMotion]);
+    // A CSS transition on the root while the intro mounts, so the page fades
+    // to black instead of snapping.
+    useEffect(() => {
+        if (show !== 'play') return;
+        setOpening(true);
+        const timer = setTimeout(() => setOpening(false), 1600);
+        return () => clearTimeout(timer);
+    }, [show, introKey]);
+
+    const scrollToTop = () => {
+        const scroller = rootRef.current?.closest('.site-scroll');
+        if (scroller) scroller.scrollTo({ top: 0, behavior: 'auto' });
+        else window.scrollTo({ top: 0, behavior: 'auto' });
+    };
+    const replayIntro = () => {
+        scrollToTop();
+        setIntroKey((k) => k + 1);
+        setShow('play');
+    };
+    const onIntroSeen = useCallback(() => markTechTourIntroSeen(), []);
+    const onIntroSkip = useCallback(() => {
+        markTechTourIntroSeen();
+        document
+            .getElementById('techtour-form')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, []);
+    const introActive = show === 'play' && events.length > 0;
+
     const scrollToForm = (e: React.MouseEvent) => {
         const el = document.getElementById('techtour-form');
         if (el) {
@@ -142,8 +191,23 @@ const TechTour: React.FC<TechTourProps> = (props) => {
     };
 
     return (
-        <div className="lp">
-            <div className="lp-page">
+        <div
+            ref={rootRef}
+            className={`lp lp--techtour${introActive ? ' lp--intro' : ''}${
+                opening ? ' lp--opening' : ''
+            }`}
+        >
+            {introActive && (
+                <TechTourIntro
+                    key={introKey}
+                    events={events}
+                    kicker={kicker}
+                    heading={t.techtour.introHeading}
+                    onSeen={onIntroSeen}
+                    onSkip={onIntroSkip}
+                />
+            )}
+            <div className="lp-page" data-bg="#ffffff">
             <div className="lp-inner">
                 <motion.div
                     className="lp-page__head"
@@ -179,6 +243,15 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                             >
                                 {t.techtour.registerCta} ↓
                             </a>
+                        )}
+                        {show === 'off' && !reducedMotion && events.length > 0 && (
+                            <button
+                                type="button"
+                                className="lp-btn lp-btn--ghost lp-tt-replay"
+                                onClick={replayIntro}
+                            >
+                                <span aria-hidden="true">↻</span> {t.techtour.replay}
+                            </button>
                         )}
                     </div>
                 </motion.div>

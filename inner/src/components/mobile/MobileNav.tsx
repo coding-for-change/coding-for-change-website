@@ -55,6 +55,7 @@ const MobileNav: React.FC = () => {
         { to: '/projects', label: t.nav.projects },
         { to: '/team', label: t.nav.team },
         { to: '/sponsors', label: t.nav.sponsors },
+        { to: '/techtour', label: t.nav.techtour },
         { to: '/#qa', label: t.nav.qa }, // FAQ stays a homepage section
         { to: '/contact', label: t.nav.contact },
     ];

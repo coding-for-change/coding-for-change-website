@@ -6,7 +6,7 @@ export interface Translations {
     nav: {
         home: string; events: string; projects: string;
         sponsors: string; team: string; blog: string; qa: string; join: string; contact: string;
-        partner: string;
+        partner: string; techtour: string;
     };
     common: {
         learnMore: string; partner: string; at: string;
@@ -139,6 +139,8 @@ export interface Translations {
         highlightsHeading: string; commitmentHeading: string;
         formHeading: string; closedFallback: string; formUnavailable: string;
         alsoApply: string;
+        /** Opening sequence (TechTourIntro). */
+        introHeading: string; introHint: string; introSkip: string; replay: string;
     };
     aboutPage: {
         valuesTitle: string;
@@ -159,7 +161,7 @@ const en: Translations = {
     nav: {
         home: 'Home', events: 'Events', projects: 'Projects',
         sponsors: 'Sponsors', team: 'Team', blog: 'Blog', qa: 'Q&A', join: 'Join', contact: 'Contact',
-        partner: 'For NGOs',
+        partner: 'For NGOs', techtour: 'TechTour 2026',
     },
     common: {
         learnMore: 'Learn More', partner: 'Partner:', at: 'at',
@@ -468,6 +470,10 @@ const en: Translations = {
         formUnavailable:
             'The registration form is currently unavailable. Please email us directly.',
         alsoApply: 'Also want to build with us? Apply for membership on the Join page.',
+        introHeading: 'One week. Munich’s tech scene. Up close.',
+        introHint: 'Scroll to meet the companies',
+        introSkip: 'Skip to registration',
+        replay: 'Replay the intro',
     },
     aboutPage: {
         valuesTitle: 'What we care about',
@@ -499,7 +505,7 @@ const de: Translations = {
     nav: {
         home: 'Start', events: 'Events', projects: 'Projekte',
         sponsors: 'Sponsoren', team: 'Team', blog: 'Blog', qa: 'F&A', join: 'Mitmachen', contact: 'Kontakt',
-        partner: 'Für NGOs',
+        partner: 'Für NGOs', techtour: 'TechTour 2026',
     },
     common: {
         learnMore: 'Mehr erfahren', partner: 'Partner:', at: 'um',
@@ -808,6 +814,10 @@ const de: Translations = {
         formUnavailable:
             'Das Anmeldeformular ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
         alsoApply: 'Du willst auch mit uns bauen? Bewirb dich auf der Mitmachen-Seite.',
+        introHeading: 'Eine Woche. Münchens Tech-Szene. Ganz nah.',
+        introHint: 'Scroll, um die Unternehmen kennenzulernen',
+        introSkip: 'Direkt zur Anmeldung',
+        replay: 'Intro noch mal ansehen',
     },
     aboutPage: {
         valuesTitle: 'Worauf es uns ankommt',
