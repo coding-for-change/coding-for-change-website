@@ -2551,6 +2551,10 @@ export interface Homepage {
 export interface TechTour {
   id: number;
   /**
+   * Switch to "Public" once the content is complete. Hidden and Unlisted pages carry a noindex tag and are left out of the sitemap; Hidden also removes the "TechTour 2026" link from the navigation and footer.
+   */
+  visibility?: ('hidden' | 'unlisted' | 'public') | null;
+  /**
    * Small line above the headline, e.g. "Munich TechTour · 9–13 November 2026".
    */
   kicker?: string | null;
@@ -2833,6 +2837,7 @@ export interface HomepageSelect<T extends boolean = true> {
  * via the `definition` "tech-tour_select".
  */
 export interface TechTourSelect<T extends boolean = true> {
+  visibility?: T;
   kicker?: T;
   title?: T;
   intro?: T;

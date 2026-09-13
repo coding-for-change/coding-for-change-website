@@ -23,6 +23,7 @@ export type {
     CmsApplicantFile,
     CmsTechTour,
     CmsTechTourEvent,
+    CmsTechTourVisibility,
     LexicalRichText,
     CmsBlogPost,
     LexicalDocument,

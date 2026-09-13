@@ -296,6 +296,24 @@ Submissions** (filter by form, select all, delete) and **Forms → Applicant
 files** for the CVs. Accepted members' applications may be kept for the
 duration of their involvement.
 
+## 7½. Keep the TechTour page out of search results until it is ready
+
+**Admin → Globals → TechTour Page → Visibility** (in the sidebar):
+
+| Setting | Navigation + footer link | Search engines | Sitemap |
+| --- | --- | --- | --- |
+| **Hidden** | no — reachable by its URL only | `noindex` | not listed |
+| **Unlisted** (default) | yes | `noindex` | not listed |
+| **Public** | yes | indexed | listed |
+
+Leave it on **Unlisted** (or **Hidden** if the nav link should wait too) while
+Monday/Friday, times and locations are still open. Switch to **Public** once
+the content is 100 % ready; no deploy needed. `noindex` tells Google to drop
+the page on its next crawl. If it was already indexed, hurry it along in
+Search Console → Removals → "Temporarily remove URL" for
+`https://codingforchange.com/techtour`, and after going public request
+indexing via the URL inspection tool.
+
 ## 8. Confirm the conversion action records
 
 After the deploy with the secret in place, make one TechTour test
@@ -313,8 +331,9 @@ Delete the test registration afterwards (step 5 shows where).
 
 ## 9. Announce
 
-- Nav shows **TechTour 2026**; `/techtour` plays the opening animation on the
-  first visit. Share `https://codingforchange.com/techtour`.
+- Nav shows **TechTour 2026** (unless Visibility is Hidden); `/techtour` plays
+  the opening animation on the first visit. Share
+  `https://codingforchange.com/techtour` once Visibility is **Public**.
 - `/join` is open until **30 Oct 2026, 23:59** and closes on its own; the
   TechTour form closes at the deadline set in step 6 or when you untick
   "Registration open".

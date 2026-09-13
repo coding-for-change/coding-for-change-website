@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import RouterLink from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useSiteFlags } from '@/api/SiteFlagsContext';
 import './mobile.css';
 
 const NAVY = '#0f2040';
@@ -50,12 +51,13 @@ const MobileNav: React.FC = () => {
         return () => document.removeEventListener('mousedown', onDown);
     }, [langOpen]);
 
+    const { techTourListed } = useSiteFlags();
     const navLinks = [
         { to: '/partner', label: t.nav.partner },
         { to: '/projects', label: t.nav.projects },
         { to: '/team', label: t.nav.team },
         { to: '/sponsors', label: t.nav.sponsors },
-        { to: '/techtour', label: t.nav.techtour },
+        ...(techTourListed ? [{ to: '/techtour', label: t.nav.techtour }] : []),
         { to: '/#qa', label: t.nav.qa }, // FAQ stays a homepage section
         { to: '/contact', label: t.nav.contact },
     ];

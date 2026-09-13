@@ -469,7 +469,11 @@ export interface CmsTechTourEvent {
     status?: 'confirmed' | 'tentative' | 'tba' | null;
 }
 
+export type CmsTechTourVisibility = 'hidden' | 'unlisted' | 'public';
+
 export interface CmsTechTour {
+    /** Publishing switch; absent (older data) behaves like 'unlisted'. */
+    visibility?: CmsTechTourVisibility | null;
     kicker?: string | null;
     title?: string | null;
     intro?: string | null;

@@ -15,8 +15,9 @@ import Providers from './providers';
 import InputRelay from './InputRelay';
 import GoogleTag from '@/components/general/GoogleTag';
 import { fetchGlobal } from '@/lib/cms';
+import { techTourListed } from '@/lib/techTour';
 import { getServerLocale } from '@/lib/locale';
-import type { CmsSiteConfig } from '@/api/types';
+import type { CmsSiteConfig, CmsTechTour } from '@/api/types';
 
 const robotoMono = localFont({
     src: '../assets/fonts/RobotoMono-latin.woff2',
@@ -105,7 +106,10 @@ export default async function RootLayout({
     children: React.ReactNode;
 }) {
     const locale = await getServerLocale();
-    const siteConfig = await fetchGlobal<CmsSiteConfig>('site-config', locale);
+    const [siteConfig, techTour] = await Promise.all([
+        fetchGlobal<CmsSiteConfig>('site-config', locale),
+        fetchGlobal<CmsTechTour>('tech-tour', locale),
+    ]);
 
     return (
         <html
@@ -159,7 +163,11 @@ export default async function RootLayout({
                 </noscript>
 
                 <InputRelay />
-                <Providers initialLocale={locale} initialConfig={siteConfig}>
+                <Providers
+                    initialLocale={locale}
+                    initialConfig={siteConfig}
+                    flags={{ techTourListed: techTourListed(techTour) }}
+                >
                     {children}
                 </Providers>
             </body>
