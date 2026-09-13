@@ -26,6 +26,7 @@ import * as migration_20260819_170710_drop_demo_embed_url from './20260819_17071
 import * as migration_20260827_113402_process_timeline_fields from './20260827_113402_process_timeline_fields';
 import * as migration_20260828_153051_add_site_config_member_count from './20260828_153051_add_site_config_member_count';
 import * as migration_20260829_104650_add_project_team from './20260829_104650_add_project_team';
+import * as migration_20260913_114726_techtour_forms_and_applicant_files from './20260913_114726_techtour_forms_and_applicant_files';
 
 export const migrations = [
   {
@@ -166,6 +167,11 @@ export const migrations = [
   {
     up: migration_20260829_104650_add_project_team.up,
     down: migration_20260829_104650_add_project_team.down,
-    name: '20260829_104650_add_project_team'
+    name: '20260829_104650_add_project_team',
+  },
+  {
+    up: migration_20260913_114726_techtour_forms_and_applicant_files.up,
+    down: migration_20260913_114726_techtour_forms_and_applicant_files.down,
+    name: '20260913_114726_techtour_forms_and_applicant_files'
   },
 ];

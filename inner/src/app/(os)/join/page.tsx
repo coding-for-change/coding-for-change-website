@@ -16,5 +16,11 @@ export default async function JoinPage() {
         fetchGlobal<CmsMembership>('membership', locale),
         fetchCollection<CmsForm>('forms', locale),
     ]);
-    return <BecomeAMember membership={membership} forms={forms} />;
+    return (
+        <BecomeAMember
+            membership={membership}
+            forms={forms}
+            serverNow={Date.now()}
+        />
+    );
 }

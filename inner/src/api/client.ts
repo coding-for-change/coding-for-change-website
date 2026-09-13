@@ -1,4 +1,5 @@
 import type { Attribution } from '../lib/attribution';
+import type { CmsApplicantFile } from './types';
 
 const API_BASE = process.env.REACT_APP_API_URL || '/api';
 
@@ -40,10 +41,16 @@ export interface FormSubmissionValue {
 }
 
 
+/**
+ * Create a form-builder submission. `files` are ids returned by
+ * `uploadApplicantFile`; they land in the submission's `files` relationship so
+ * an admin can open the CV from the submission.
+ */
 export async function submitForm(
     formId: number,
     submissionData: FormSubmissionValue[],
-    attribution?: Attribution | null
+    attribution?: Attribution | null,
+    files?: number[]
 ): Promise<void> {
     const res = await fetch(`${API_BASE}/form-submissions`, {
         method: 'POST',
@@ -51,6 +58,7 @@ export async function submitForm(
         body: JSON.stringify({
             form: formId,
             submissionData,
+            ...(files?.length ? { files } : {}),
             ...(attribution ? { attribution } : {}),
         }),
     });
@@ -82,6 +90,43 @@ export async function submitWaitlist(
         const detail = await res.text().catch(() => '');
         throw new Error(`Failed to join waitlist: ${res.status} ${detail}`);
     }
+}
+
+/** Thrown by `uploadApplicantFile` so the form can show a specific message. */
+export class UploadError extends Error {
+    constructor(
+        message: string,
+        public readonly reason: 'too-large' | 'wrong-type' | 'failed'
+    ) {
+        super(message);
+    }
+}
+
+/**
+ * Upload an applicant document (PDF) to the private `applicant-files`
+ * collection. Anonymous create is allowed; only admins can read it back. The
+ * returned id is attached to the form submission via `submitForm(..., files)`.
+ */
+export async function uploadApplicantFile(
+    file: File,
+    kind: string
+): Promise<CmsApplicantFile> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    body.append('_payload', JSON.stringify({ kind }));
+    const res = await fetch(`${API_BASE}/applicant-files`, {
+        method: 'POST',
+        body,
+    });
+    if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        if (res.status === 413) throw new UploadError(detail, 'too-large');
+        if (res.status === 400 && /mime|type/i.test(detail))
+            throw new UploadError(detail, 'wrong-type');
+        throw new UploadError(`Upload failed: ${res.status} ${detail}`, 'failed');
+    }
+    const data = (await res.json()) as { doc: CmsApplicantFile };
+    return data.doc;
 }
 
 export function mediaUrl(

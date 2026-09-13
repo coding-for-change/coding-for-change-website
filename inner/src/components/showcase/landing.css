@@ -1595,6 +1595,381 @@ a.lp-member__project:hover {
     grid-template-columns: repeat(2, 1fr); /* 2×2 for the four role tracks */
 }
 
+/* ---- Join — application round: status pill, head CTA, dated timeline ---- */
+/* The pill says whether the round is open and how long is left; the button
+   jumps to the form further down. Both sit under the lead, on one line. */
+.lp-page__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 14px 22px;
+    margin-top: 26px;
+}
+.lp-round-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid rgba(47, 143, 144, 0.35);
+    background: rgba(47, 143, 144, 0.08);
+    color: var(--teal-dark);
+    /* Same voice as the timeline's timing badges below it. */
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.3;
+    font-variant-numeric: tabular-nums;
+}
+.lp-round-status__dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--teal);
+    box-shadow: 0 0 0 4px rgba(47, 143, 144, 0.18);
+}
+.lp-round-status__sep {
+    color: rgba(36, 107, 108, 0.55);
+}
+.lp-round-status--closed {
+    border-color: var(--line);
+    background: var(--alt);
+    color: var(--muted);
+}
+.lp-round-status--closed .lp-round-status__dot {
+    background: var(--muted);
+    box-shadow: none;
+}
+.lp-round-status--closed .lp-round-status__sep {
+    color: rgba(93, 104, 104, 0.6);
+}
+/* Section head for "How the application works", then the compact timeline
+   (shared with the case studies) with room before the form below it. */
+.lp-join-phase {
+    display: block;
+    margin-top: 24px;
+}
+.lp-tl--join {
+    margin: 36px 0 64px;
+}
+
+/* ---- CMS form renderer: upload, checkbox group, linked form ---- */
+.lp-cmsform {
+    display: flex;
+    flex-direction: column;
+}
+.lp-form--wide {
+    max-width: 640px;
+}
+.lp-field__hint {
+    margin: 6px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+.lp-field__hint--req {
+    color: #b5651d;
+}
+.lp-field--message {
+    max-width: 58ch;
+}
+/* `[text](url)` links inside checkbox labels (privacy policy etc.). */
+.lp-label__link {
+    color: var(--teal-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+/* Checkbox group: a fieldset with one row per option. */
+.lp-checkgroup {
+    border: 0;
+    padding: 0;
+    margin: 0 0 18px;
+    min-width: 0;
+}
+.lp-checkgroup legend {
+    padding: 0;
+    margin-bottom: 8px;
+}
+.lp-checkgroup__options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    background: #ffffff;
+}
+.lp-checkgroup__options .lp-checkbox {
+    margin: 0;
+}
+/* PDF upload: a bordered drop area with a button-styled label. */
+.lp-upload__drop {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    padding: 14px 16px;
+    border: 1px dashed rgba(47, 143, 144, 0.55);
+    background: rgba(47, 143, 144, 0.04);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.lp-upload__drop:hover {
+    background: rgba(47, 143, 144, 0.08);
+    border-color: var(--teal);
+}
+.lp-upload__drop.is-busy {
+    cursor: progress;
+    opacity: 0.7;
+}
+.lp-upload__drop input[type='file'] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    overflow: hidden;
+}
+.lp-upload__drop:focus-within {
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+}
+.lp-upload__btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 9px 16px;
+    background: var(--teal);
+    color: #ffffff;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+}
+.lp-upload__hint {
+    font-size: 13px;
+    color: var(--muted);
+}
+.lp-upload__done {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 16px;
+    padding: 12px 16px;
+    border: 1px solid rgba(47, 143, 144, 0.45);
+    background: rgba(47, 143, 144, 0.08);
+}
+.lp-upload__name {
+    font-size: 15px;
+    color: var(--teal-dark);
+    word-break: break-all;
+}
+.lp-upload__name::before {
+    content: '✓ ';
+}
+.lp-upload__remove {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font: inherit;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+.lp-upload__remove:hover {
+    color: var(--ink);
+}
+/* Linked form: checkbox + "what is this?" link; the revealed questions sit in
+   an indented panel with a teal rail so they read as one optional block. */
+.lp-subform {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    margin: 4px 0 18px;
+}
+.lp-subform__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+}
+.lp-subform__head .lp-checkbox {
+    margin: 0;
+}
+.lp-subform__link {
+    font-size: 14px;
+    color: var(--teal-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+.lp-subform__desc {
+    margin: 6px 0 0 30px;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 58ch;
+}
+.lp-subform__panel {
+    display: flex;
+    flex-direction: column;
+    margin: 14px 0 0 12px;
+    padding: 16px 0 2px 18px;
+    border-left: 2px solid var(--teal);
+}
+
+/* ---- TechTour page ---- */
+/* One card per evening. Left: the day; middle: the company mark; right: what
+   happens. Stacks on phones. Unconfirmed slots recede like upcoming steps. */
+.lp-tt-days {
+    list-style: none;
+    margin: 36px 0 64px;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.lp-tt-day {
+    display: grid;
+    grid-template-columns: 120px 84px minmax(0, 1fr);
+    column-gap: 24px;
+    align-items: start;
+    padding: 22px 24px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+}
+.lp-tt-day--tba {
+    border-style: dashed;
+    background: var(--alt);
+}
+.lp-tt-day--tba .lp-tt-day__body {
+    opacity: 0.8;
+}
+.lp-tt-day__when {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+}
+.lp-tt-day__weekday {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--teal-dark);
+    line-height: 1.2;
+}
+.lp-tt-day__date {
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.lp-tt-day__logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 84px;
+    height: 84px;
+    border: 1px solid var(--line);
+    background: #ffffff;
+    box-sizing: border-box;
+    padding: 12px;
+}
+.lp-tt-day__logo img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+.lp-tt-day__initial {
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 32px;
+    font-weight: 600;
+    color: var(--teal);
+}
+.lp-tt-day__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    min-width: 0;
+}
+.lp-tt-day__title {
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 22px;
+    line-height: 1.25;
+    margin: 0 0 4px;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+.lp-tt-day__title a {
+    color: inherit;
+    text-decoration: none;
+}
+.lp-tt-day__title a:hover {
+    color: var(--teal-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.lp-tt-day__company {
+    margin: 0 0 6px;
+    font-size: 15px;
+    color: var(--teal-dark);
+}
+.lp-tt-day__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 8px;
+    margin: 0 0 10px;
+    font-size: 14px;
+    color: var(--muted);
+}
+.lp-tt-day__text {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 60ch;
+}
+.lp-tt-day__badge {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 3px 10px;
+    border: 1px solid rgba(181, 101, 29, 0.45);
+    background: rgba(181, 101, 29, 0.08);
+    color: #8a4b12;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+/* Three highlight cards side by side on desktop (the tracks grid is 2×2). */
+.lp-tt-highlights .lp-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+/* "One thing we ask": the attendance commitment, set apart above the form. */
+.lp-tt-commit {
+    margin: 0 0 26px;
+    padding: 18px 20px;
+    border-left: 3px solid var(--teal);
+    background: var(--alt);
+}
+.lp-tt-commit__head {
+    margin: 0 0 6px;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+}
+.lp-tt-commit__text {
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--ink);
+}
+.lp-tt-also {
+    margin-top: 22px;
+}
+.lp-tt-also a {
+    color: var(--teal-dark);
+}
+
 /* ---- Responsive (narrow window / phone) ---- */
 @media (max-width: 900px) {
     .lp-section {
@@ -1619,6 +1994,51 @@ a.lp-member__project:hover {
     }
     .lp-tracks .lp-grid {
         grid-template-columns: 1fr;
+    }
+    .lp-page__actions {
+        gap: 12px 16px;
+        margin-top: 22px;
+    }
+    .lp-page__actions .lp-btn {
+        width: 100%;
+    }
+    .lp-tl--join {
+        margin: 28px 0 52px;
+    }
+    .lp-tt-days {
+        margin: 28px 0 52px;
+    }
+    .lp-tt-highlights .lp-grid {
+        grid-template-columns: 1fr;
+    }
+    .lp-tt-day {
+        grid-template-columns: 64px minmax(0, 1fr);
+        grid-template-areas:
+            'logo when'
+            'body body';
+        column-gap: 16px;
+        row-gap: 14px;
+        padding: 18px;
+    }
+    .lp-tt-day__logo {
+        grid-area: logo;
+        width: 64px;
+        height: 64px;
+        padding: 8px;
+    }
+    .lp-tt-day__when {
+        grid-area: when;
+        align-self: center;
+    }
+    .lp-tt-day__body {
+        grid-area: body;
+    }
+    .lp-tt-day__title {
+        font-size: 20px;
+    }
+    .lp-subform__panel {
+        margin-left: 6px;
+        padding-left: 14px;
     }
     /* On phones the top bar collapses to just brand + CTA; the inline
        section links are handled by the existing MobileNav menu. */

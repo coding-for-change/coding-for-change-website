@@ -44,6 +44,7 @@ const GA4_ID = process.env.GA4_MEASUREMENT_ID?.trim();
 const ADS_LABELS = {
     waitlist: process.env.GOOGLE_ADS_LABEL_WAITLIST?.trim(),
     application: process.env.GOOGLE_ADS_LABEL_APPLICATION?.trim(),
+    techtour: process.env.GOOGLE_ADS_LABEL_TECHTOUR?.trim(),
     contact: process.env.GOOGLE_ADS_LABEL_CONTACT?.trim(),
     booking: process.env.GOOGLE_ADS_LABEL_BOOKING?.trim(),
 };

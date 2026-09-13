@@ -29,6 +29,7 @@ services:
       - GOOGLE_ADS_CONVERSION_ID=${GOOGLE_ADS_CONVERSION_ID:-}
       - GOOGLE_ADS_LABEL_WAITLIST=${GOOGLE_ADS_LABEL_WAITLIST:-}
       - GOOGLE_ADS_LABEL_APPLICATION=${GOOGLE_ADS_LABEL_APPLICATION:-}
+      - GOOGLE_ADS_LABEL_TECHTOUR=${GOOGLE_ADS_LABEL_TECHTOUR:-}
       - GOOGLE_ADS_LABEL_CONTACT=${GOOGLE_ADS_LABEL_CONTACT:-}
       - GOOGLE_ADS_LABEL_BOOKING=${GOOGLE_ADS_LABEL_BOOKING:-}
       - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID:-}
@@ -46,6 +47,7 @@ services:
     # /api/media/file/* for every existing Media record.
     volumes:
       - cms-media:/app/media
+      - cms-applicant-files:/app/applicant-files
     depends_on:
       postgres:
         condition: service_healthy
@@ -70,3 +72,4 @@ services:
 volumes:
   postgres-data:
   cms-media:
+  cms-applicant-files:

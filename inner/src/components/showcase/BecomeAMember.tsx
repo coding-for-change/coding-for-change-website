@@ -1,15 +1,22 @@
 'use client';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { useCmsGlobal, useCmsCollection, submitForm, submitWaitlist, mediaUrl } from '../../api';
-import type { CmsForm, CmsFormField } from '../../api';
+import { useCmsGlobal, useCmsCollection, submitWaitlist, mediaUrl } from '../../api';
+import type { CmsForm as CmsFormDoc } from '../../api';
 import { CmsMembership } from '../../api/types';
 import { getAttribution } from '../../lib/attribution';
 import { trackFormStart, trackConversion } from '../../lib/analytics';
 import { trackAdsConversion } from '../../lib/googleAds';
 import { useLanguage } from '../../contexts/LanguageContext';
-import RichText from '../RichText';
+import CmsForm from '../forms/CmsForm';
 import ClosingCta from './ClosingCta';
+import ProcessTimeline from './ProcessTimeline';
+import {
+    APPLICATION_STEPS,
+    applicationsOpen,
+    daysUntilDeadline,
+    stepState,
+} from '../../lib/applicationPhase';
 import './landing.css';
 
 const validateEmail = (email: string) => {
@@ -19,24 +26,23 @@ const validateEmail = (email: string) => {
     return re.test(String(email).toLowerCase());
 };
 
-// Whether membership applications are open. While closed, the page shows a
-// "notify me when applications reopen" email signup (persisted to the CMS
-// `waitlist-signups` collection) instead of the application form. To reopen,
-// flip this to `true` and redeploy — the application form path below is kept
-// intact for exactly that.
-const APPLICATIONS_OPEN: boolean = false;
-
-type FormValues = Record<string, string | boolean>;
-
-// Fields that actually capture a value (everything except the static `message`).
-const isInputField = (
-    field: CmsFormField
-): field is Exclude<CmsFormField, { blockType: 'message' }> =>
-    field.blockType !== 'message';
+// Whether membership applications are open is decided by the round's deadline
+// in `lib/applicationPhase.ts`. While closed, the page shows a "notify me when
+// applications reopen" email signup (persisted to the CMS `waitlist-signups`
+// collection) instead of the application form. The form itself — every
+// question, the CV upload, the "also register for the TechTour" box — is
+// defined in the CMS and rendered by the shared `CmsForm`.
 
 const BecomeAMember: React.FC<{
     membership?: CmsMembership | null;
-    forms?: CmsForm[] | null;
+    forms?: CmsFormDoc[] | null;
+    /**
+     * Request time from the server component. Seeding the clock with it keeps
+     * the server and first client render identical (no hydration mismatch on
+     * the open/closed state or the day count); the client clock takes over
+     * after mount.
+     */
+    serverNow?: number;
 }> = (props) => {
     const { data: membership, loading } = useCmsGlobal<CmsMembership>(
         'membership',
@@ -44,9 +50,32 @@ const BecomeAMember: React.FC<{
     );
     const { t, locale } = useLanguage();
 
-    // Waitlist ("notify me when applications reopen") state — used when
-    // APPLICATIONS_OPEN is false. Emails persist to the CMS waitlist-signups
-    // collection via submitWaitlist().
+    const [now, setNow] = useState(() => props.serverNow ?? Date.now());
+    useEffect(() => {
+        setNow(Date.now());
+    }, []);
+    const open = applicationsOpen(now);
+    const daysLeft = daysUntilDeadline(now);
+    const phaseSteps = useMemo(
+        () =>
+            APPLICATION_STEPS.map((step) => ({
+                ...t.join.phase.steps[step.id],
+                state: stepState(step, now),
+            })),
+        [t, now]
+    );
+
+    const scrollToForm = (e: React.MouseEvent) => {
+        const el = document.getElementById('join-form');
+        if (el) {
+            e.preventDefault();
+            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
+
+    // Waitlist ("notify me when applications reopen") state — used while the
+    // round is closed. Emails persist to the CMS waitlist-signups collection
+    // via submitWaitlist().
     const [waitlistEmail, setWaitlistEmail] = useState('');
     const [waitlistSubmitting, setWaitlistSubmitting] = useState(false);
     const [waitlistSubmitted, setWaitlistSubmitted] = useState(false);
@@ -76,170 +105,19 @@ const BecomeAMember: React.FC<{
         data: forms,
         loading: formsLoading,
         error: formsError,
-    } = useCmsCollection<CmsForm>('forms', undefined, props.forms);
+    } = useCmsCollection<CmsFormDoc>('forms', undefined, props.forms);
     const form = useMemo(
         () => forms?.find((f) => f.title === 'application') ?? forms?.[0] ?? null,
         [forms]
     );
 
-    const [values, setValues] = useState<FormValues>({});
-    const [submitting, setSubmitting] = useState(false);
-    const [submitted, setSubmitted] = useState(false);
-    const [sendError, setSendError] = useState(false);
-
-    // Funnel: fire `form_start` the first time the visitor focuses any field
-    // (whichever form is shown), so we can measure start → conversion drop-off.
-    const formStarted = useRef(false);
-    const handleFormFocus = () => {
-        if (formStarted.current) return;
-        formStarted.current = true;
-        trackFormStart(APPLICATIONS_OPEN ? 'application' : 'waitlist');
-    };
-
-    const setValue = (name: string, value: string | boolean) =>
-        setValues((prev) => ({ ...prev, [name]: value }));
-
-    const inputFields = (form?.fields ?? []).filter(isInputField);
-
-    const fieldValue = (field: CmsFormField & { name: string }) => {
-        const v = values[field.name];
-        if (v !== undefined) return v;
-        if (field.blockType === 'checkbox') return field.defaultValue ?? false;
-        if (field.blockType === 'number')
-            return field.defaultValue != null ? String(field.defaultValue) : '';
-        if ('defaultValue' in field && field.defaultValue != null)
-            return String(field.defaultValue);
-        return '';
-    };
-
-    const isFieldValid = (field: typeof inputFields[number]) => {
-        const value = fieldValue(field);
-        if (field.blockType === 'email') {
-            const str = String(value);
-            if (!str) return !field.required;
-            return validateEmail(str);
-        }
-        if (field.blockType === 'checkbox') {
-            return field.required ? value === true : true;
-        }
-        if (!field.required) return true;
-        return String(value).trim().length > 0;
-    };
-
-    const isFormValid =
-        !!form && inputFields.every((field) => isFieldValid(field));
-
-    const handleSubmit = async () => {
-        if (!form || !isFormValid || submitting) return;
-        setSendError(false);
-        setSubmitting(true);
-        try {
-            const submissionData = inputFields.map((field) => ({
-                field: field.name,
-                value:
-                    field.blockType === 'checkbox'
-                        ? fieldValue(field) === true
-                            ? 'true'
-                            : 'false'
-                        : String(fieldValue(field)),
-            }));
-            await submitForm(form.id, submissionData, getAttribution());
-            setSubmitted(true);
-            trackConversion('application');
-            trackAdsConversion('application');
-        } catch (err) {
-            setSendError(true);
-        } finally {
-            setSubmitting(false);
-        }
-    };
-
-    const renderField = (field: typeof inputFields[number], index: number) => {
-        const value = fieldValue(field);
-        const showRequiredStar =
-            field.required &&
-            !isFieldValid(field) &&
-            field.blockType !== 'checkbox';
-
-        if (field.blockType === 'checkbox') {
-            return (
-                <label key={field.name ?? index} className="lp-checkbox">
-                    <input
-                        type="checkbox"
-                        name={field.name}
-                        checked={value === true}
-                        onChange={(e) => setValue(field.name, e.target.checked)}
-                    />
-                    <span className="lp-label">
-                        {field.required && value !== true && (
-                            <span className="lp-required">*</span>
-                        )}
-                        {field.label || field.name}
-                    </span>
-                </label>
-            );
-        }
-
-        const label = (
-            <span className="lp-label">
-                {showRequiredStar && <span className="lp-required">*</span>}
-                {field.label || field.name}
-            </span>
-        );
-
-        if (field.blockType === 'textarea') {
-            return (
-                <div className="lp-field" key={field.name ?? index}>
-                    {label}
-                    <textarea
-                        className="lp-textarea"
-                        name={field.name}
-                        value={String(value)}
-                        onChange={(e) => setValue(field.name, e.target.value)}
-                    />
-                </div>
-            );
-        }
-
-        if (field.blockType === 'select') {
-            return (
-                <div className="lp-field" key={field.name ?? index}>
-                    {label}
-                    <select
-                        className="lp-select"
-                        name={field.name}
-                        value={String(value)}
-                        onChange={(e) => setValue(field.name, e.target.value)}
-                    >
-                        <option value="">{field.placeholder || '—'}</option>
-                        {(field.options ?? []).map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            );
-        }
-
-        return (
-            <div className="lp-field" key={field.name ?? index}>
-                {label}
-                <input
-                    className="lp-input"
-                    type={
-                        field.blockType === 'email'
-                            ? 'email'
-                            : field.blockType === 'number'
-                            ? 'number'
-                            : 'text'
-                    }
-                    name={field.name}
-                    value={String(value)}
-                    onChange={(e) => setValue(field.name, e.target.value)}
-                />
-            </div>
-        );
+    // Funnel: the waitlist signup fires `form_start` on first focus; the
+    // application form tracks its own start inside CmsForm.
+    const waitlistStarted = useRef(false);
+    const handleWaitlistFocus = () => {
+        if (open || waitlistStarted.current) return;
+        waitlistStarted.current = true;
+        trackFormStart('waitlist');
     };
 
     if (loading) {
@@ -275,6 +153,34 @@ const BecomeAMember: React.FC<{
                     <p className="lp-kicker">{t.nav.join}</p>
                     <h1 className="lp-page__title">{membership.title}</h1>
                     <p className="lp-lead">{membership.description}</p>
+                    <div className="lp-page__actions">
+                        <span
+                            className={`lp-round-status${
+                                open ? ' lp-round-status--open' : ' lp-round-status--closed'
+                            }`}
+                        >
+                            <span className="lp-round-status__dot" aria-hidden="true" />
+                            {open ? t.join.statusOpen : t.join.statusClosed}
+                            <span className="lp-round-status__sep" aria-hidden="true">
+                                ·
+                            </span>
+                            {open
+                                ? daysLeft <= 1
+                                    ? t.join.lastDay
+                                    : t.join.daysLeft.replace(
+                                          '{n}',
+                                          String(daysLeft)
+                                      )
+                                : t.join.statusDeadline}
+                        </span>
+                        <a
+                            className="lp-btn lp-btn--primary"
+                            href="#join-form"
+                            onClick={scrollToForm}
+                        >
+                            {open ? t.join.applyNow : t.join.waitlistButton} ↓
+                        </a>
+                    </div>
                 </motion.div>
 
                 {mediaUrl(membership.heroImage) && (
@@ -292,79 +198,42 @@ const BecomeAMember: React.FC<{
                 )}
 
                 <motion.div
-                    className="lp-form"
-                    id="join-form"
-                    onFocus={handleFormFocus}
+                    className="lp-join-phase"
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true, amount: 0.15 }}
                     transition={{ duration: 0.5 }}
                 >
-                    {APPLICATIONS_OPEN ? (
+                    <p className="lp-kicker">{t.join.phase.kicker}</p>
+                    <h2 className="lp-h2">{t.join.phase.heading}</h2>
+                    <p className="lp-lead">{t.join.phase.intro}</p>
+                </motion.div>
+                <ProcessTimeline className="lp-tl--cs lp-tl--join" steps={phaseSteps} />
+
+                <motion.div
+                    className="lp-form"
+                    id="join-form"
+                    onFocus={handleWaitlistFocus}
+                    initial={{ opacity: 0, y: 24 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, amount: 0.15 }}
+                    transition={{ duration: 0.5 }}
+                >
+                    {open ? (
                       <>
-                    <h3 className="lp-col__head" style={{ marginBottom: 16 }}>
-                        {t.join.applyNow}
-                    </h3>
-
-                    {formsLoading && (
-                        <p className="lp-loading">{t.join.loadingForm}</p>
-                    )}
-
-                    {!formsLoading && (formsError || !form) && (
-                        <p className="lp-empty">{t.join.formUnavailable}</p>
-                    )}
-
-                    {!formsLoading && form && submitted && (
-                        <div className="lp-field">
-                            {form.confirmationMessage ? (
-                                <RichText content={form.confirmationMessage} />
-                            ) : (
-                                <p>{t.join.successFallback}</p>
-                            )}
-                        </div>
-                    )}
-
-                    {!formsLoading && form && !submitted && (
-                        <>
-                            {(form.fields ?? []).map((field, index) =>
-                                field.blockType === 'message' ? (
-                                    <div
-                                        key={`message-${index}`}
-                                        className="lp-field"
-                                    >
-                                        <RichText content={field.message} />
-                                    </div>
-                                ) : (
-                                    renderField(field, index)
-                                )
-                            )}
-                            <button
-                                className="lp-submit"
-                                type="submit"
-                                disabled={!isFormValid || submitting}
-                                onMouseDown={handleSubmit}
-                            >
-                                {submitting
-                                    ? t.join.submitting
-                                    : form.submitButtonLabel ||
-                                      t.join.sendApplication}
-                            </button>
-                            <p className="lp-form-note">
-                                {sendError ? (
-                                    <span className="lp-required">
-                                        {t.join.sendError}
-                                    </span>
-                                ) : !isFormValid ? (
-                                    <span>
-                                        <span className="lp-required">*</span> ={' '}
-                                        {t.join.requiredNote.replace('* = ', '')}
-                                    </span>
-                                ) : (
-                                    '\xa0'
-                                )}
-                            </p>
-                        </>
-                    )}
+                        {formsLoading && (
+                            <p className="lp-loading">{t.join.loadingForm}</p>
+                        )}
+                        {!formsLoading && (formsError || !form) && (
+                            <p className="lp-empty">{t.join.formUnavailable}</p>
+                        )}
+                        {!formsLoading && form && (
+                            <CmsForm
+                                form={form}
+                                conversion="application"
+                                heading={t.join.applyNow}
+                            />
+                        )}
                       </>
                     ) : (
                       <>
