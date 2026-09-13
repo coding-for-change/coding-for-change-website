@@ -2047,6 +2047,25 @@ a.lp-member__project:hover {
 .site-scroll > .lp--intro {
     margin-top: -64px;
 }
+/* The content band is solid white so its cards never sit on a half-blended
+   grey: on tall screens the evening cards were already in view while the page
+   background was still on its way from black to white, and read as a glowing
+   box. The blend now only plays out above the band; a gradient over the last
+   stretch of the stage lets the white bleed in instead of ending in a line. */
+.lp--techtour .lp-page {
+    position: relative;
+    background: #ffffff;
+}
+.lp--intro .lp-page::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -180px;
+    height: 180px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff);
+    pointer-events: none;
+}
 .lp-tt-intro {
     position: relative;
     display: block;
