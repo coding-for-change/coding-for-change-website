@@ -70,11 +70,13 @@ const TopNav: React.FC = () => {
     // it keeps the row from overflowing as conditional items are added.
     const sectionLinks: { id: string; label: string }[] = [];
 
-    const pageLinks = [
+    const pageLinks: { to: string; label: string; event?: boolean }[] = [
         { to: '/partner', label: t.nav.partner },
         { to: '/projects', label: t.nav.projects },
         { to: '/team', label: t.nav.team },
         { to: '/sponsors', label: t.nav.sponsors },
+        // The one accented item: an event, not a page — a small teal pill.
+        { to: '/techtour', label: t.nav.techtour, event: true },
         // Join is intentionally omitted here — the top-right JOIN button covers it.
         { to: '/contact', label: t.nav.contact },
     ];
@@ -125,6 +127,7 @@ const TopNav: React.FC = () => {
                         href={link.to}
                         className={
                             'lp-nav__link' +
+                            (link.event ? ' lp-nav__link--event' : '') +
                             (pathname.startsWith(link.to)
                                 ? ' lp-nav__link--active'
                                 : '')

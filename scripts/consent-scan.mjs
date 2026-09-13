@@ -71,6 +71,11 @@ const ALLOWED_STORAGE_KEYS = new Map([
     // language they asked for (EDPB WP194 "user-input"/preference cookies).
     // Still must appear in the Datenschutz cookie table.
     ['cfc-locale', 'Locale preference — strictly necessary, consent-exempt'],
+    // "Already watched the TechTour intro" flag (localStorage). A yes/no about
+    // a UI state the visitor reached, no identifier, read only by the TechTour
+    // page: user-preference storage, consent-exempt like cfc-locale. Declared
+    // in klaroConfig's "site basics" text and in the Datenschutz storage list.
+    ['cfc-techtour-intro', 'TechTour intro seen — strictly necessary, consent-exempt'],
 ]);
 
 /** Cookie writes are rare enough to enumerate by the file that does them. */

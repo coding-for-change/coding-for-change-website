@@ -119,7 +119,7 @@ const EN = {
     [SERVICE_NECESSARY]: {
         title: 'Site basics',
         description:
-            'Remembers the language you chose, your decision on this banner, and a random id proving we asked — we are legally required to keep that proof. ' +
+            'Remembers the language you chose, your decision on this banner, a random id proving we asked — we are legally required to keep that proof — and whether you have already watched the TechTour page’s opening animation. ' +
             'Exempt from consent under § 25(2) TDDDG because the site cannot work as you asked without it, so there is nothing here to switch off. Never used to track you.',
     },
     // Audit criterion 2: ads personalisation named explicitly, and criteria 4/5:
@@ -188,7 +188,7 @@ const DE = {
     [SERVICE_NECESSARY]: {
         title: 'Website-Grundfunktionen',
         description:
-            'Speichert die von dir gewählte Sprache, deine Entscheidung zu diesem Banner und eine zufällige Kennung als Nachweis, dass wir gefragt haben – diesen Nachweis müssen wir gesetzlich aufbewahren. ' +
+            'Speichert die von dir gewählte Sprache, deine Entscheidung zu diesem Banner, eine zufällige Kennung als Nachweis, dass wir gefragt haben – diesen Nachweis müssen wir gesetzlich aufbewahren – und ob du die Eröffnungsanimation der TechTour-Seite schon gesehen hast. ' +
             'Nach § 25 Abs. 2 TDDDG einwilligungsfrei, weil die Seite ohne das nicht wie gewünscht funktioniert; es gibt hier also nichts abzuschalten. Wird nie zum Tracking verwendet.',
     },
     [SERVICE_GOOGLE_ADS]: {

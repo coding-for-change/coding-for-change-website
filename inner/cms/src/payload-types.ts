@@ -82,6 +82,7 @@ export interface Config {
     'waitlist-signups': WaitlistSignup;
     'analytics-events': AnalyticsEvent;
     'consent-records': ConsentRecord;
+    'applicant-files': ApplicantFile;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-mcp-api-keys': PayloadMcpApiKey;
@@ -106,6 +107,7 @@ export interface Config {
     'waitlist-signups': WaitlistSignupsSelect<false> | WaitlistSignupsSelect<true>;
     'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
     'consent-records': ConsentRecordsSelect<false> | ConsentRecordsSelect<true>;
+    'applicant-files': ApplicantFilesSelect<false> | ApplicantFilesSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
@@ -125,6 +127,7 @@ export interface Config {
     partner: Partner;
     about: About;
     homepage: Homepage;
+    'tech-tour': TechTour;
   };
   globalsSelect: {
     'site-config': SiteConfigSelect<false> | SiteConfigSelect<true>;
@@ -133,6 +136,7 @@ export interface Config {
     partner: PartnerSelect<false> | PartnerSelect<true>;
     about: AboutSelect<false> | AboutSelect<true>;
     homepage: HomepageSelect<false> | HomepageSelect<true>;
+    'tech-tour': TechTourSelect<false> | TechTourSelect<true>;
   };
   locale: 'en' | 'de';
   widgets: {
@@ -763,6 +767,30 @@ export interface ConsentRecord {
   createdAt: string;
 }
 /**
+ * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file not attached to any submission within 24 hours is deleted automatically.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "applicant-files".
+ */
+export interface ApplicantFile {
+  id: number;
+  /**
+   * Which form field the file was uploaded for (e.g. "cv").
+   */
+  kind?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms".
  */
@@ -858,6 +886,68 @@ export interface Form {
             blockName?: string | null;
             blockType: 'textarea';
           }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            required?: boolean | null;
+            /**
+             * Shown under the field, e.g. "PDF, max. 5 MB".
+             */
+            description?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'upload';
+          }
+        | {
+            name: string;
+            label?: string | null;
+            width?: number | null;
+            required?: boolean | null;
+            /**
+             * Shown under the field.
+             */
+            description?: string | null;
+            /**
+             * One checkbox per option. The submission records the labels of the ticked options, so keep labels descriptive (e.g. "Tue 10 Nov · Lio").
+             */
+            options?:
+              | {
+                  label: string;
+                  /**
+                   * Stable key, e.g. "tue-lio". Not shown to visitors.
+                   */
+                  value: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'checkboxGroup';
+          }
+        | {
+            name: string;
+            label: string;
+            /**
+             * When the box is ticked, this form's questions appear below it (fields with a name that already exists in this form, e.g. "email", are asked only once). On submit a separate submission of that form is created, so its answers land with the other submissions of that form.
+             */
+            form: number | Form;
+            /**
+             * Optional text under the checkbox.
+             */
+            description?: string | null;
+            /**
+             * Optional link shown next to the checkbox, e.g. "What is the TechTour?". Opens in a new tab.
+             */
+            linkLabel?: string | null;
+            /**
+             * e.g. /techtour
+             */
+            linkUrl?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'subform';
+          }
       )[]
     | null;
   submitButtonLabel?: string | null;
@@ -924,6 +1014,14 @@ export interface Form {
  */
 export interface FormSubmission {
   id: number;
+  /**
+   * Your verdict on this applicant.
+   */
+  reviewStatus?: ('unreviewed' | 'accepted' | 'unsure' | 'rejected') | null;
+  /**
+   * Internal notes — never shown to the applicant. Included in the Excel export.
+   */
+  reviewNotes?: string | null;
   form: number | Form;
   submissionData?:
     | {
@@ -932,6 +1030,10 @@ export interface FormSubmission {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Documents uploaded with this submission (e.g. the CV). Click one to open or download it.
+   */
+  files?: (number | ApplicantFile)[] | null;
   /**
    * Where this submission came from — captured from the landing URL (?src / utm_*) and carried through the session. Empty for direct/organic visits. Used only in aggregate for campaign analysis.
    */
@@ -1254,6 +1356,16 @@ export interface PayloadMcpApiKey {
      */
     update?: boolean | null;
   };
+  techTour?: {
+    /**
+     * Allow clients to find tech-tour global.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to update tech-tour global.
+     */
+    update?: boolean | null;
+  };
   updatedAt: string;
   createdAt: string;
   enableAPIKey?: boolean | null;
@@ -1340,6 +1452,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'consent-records';
         value: number | ConsentRecord;
+      } | null)
+    | ({
+        relationTo: 'applicant-files';
+        value: number | ApplicantFile;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1767,6 +1883,24 @@ export interface ConsentRecordsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "applicant-files_select".
+ */
+export interface ApplicantFilesSelect<T extends boolean = true> {
+  kind?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -1854,6 +1988,47 @@ export interface FormsSelect<T extends boolean = true> {
               id?: T;
               blockName?: T;
             };
+        upload?:
+          | T
+          | {
+              name?: T;
+              label?: T;
+              width?: T;
+              required?: T;
+              description?: T;
+              id?: T;
+              blockName?: T;
+            };
+        checkboxGroup?:
+          | T
+          | {
+              name?: T;
+              label?: T;
+              width?: T;
+              required?: T;
+              description?: T;
+              options?:
+                | T
+                | {
+                    label?: T;
+                    value?: T;
+                    id?: T;
+                  };
+              id?: T;
+              blockName?: T;
+            };
+        subform?:
+          | T
+          | {
+              name?: T;
+              label?: T;
+              form?: T;
+              description?: T;
+              linkLabel?: T;
+              linkUrl?: T;
+              id?: T;
+              blockName?: T;
+            };
       };
   submitButtonLabel?: T;
   confirmationType?: T;
@@ -1883,6 +2058,8 @@ export interface FormsSelect<T extends boolean = true> {
  * via the `definition` "form-submissions_select".
  */
 export interface FormSubmissionsSelect<T extends boolean = true> {
+  reviewStatus?: T;
+  reviewNotes?: T;
   form?: T;
   submissionData?:
     | T
@@ -1891,6 +2068,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         value?: T;
         id?: T;
       };
+  files?: T;
   attribution?:
     | T
     | {
@@ -2034,6 +2212,12 @@ export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
         update?: T;
       };
   homepage?:
+    | T
+    | {
+        find?: T;
+        update?: T;
+      };
+  techTour?:
     | T
     | {
         find?: T;
@@ -2359,6 +2543,101 @@ export interface Homepage {
   createdAt?: string | null;
 }
 /**
+ * Content of the Munich TechTour event page. The registration form is the form titled "techtour" under Forms.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tech-tour".
+ */
+export interface TechTour {
+  id: number;
+  /**
+   * Small line above the headline, e.g. "Munich TechTour · 9–13 November 2026".
+   */
+  kicker?: string | null;
+  /**
+   * Page headline.
+   */
+  title?: string | null;
+  /**
+   * Lead paragraph under the headline: what the TechTour is and who it is for.
+   */
+  intro?: string | null;
+  /**
+   * Optional hero image under the headline, e.g. a group photo at a company.
+   */
+  heroImage?: (number | null) | Media;
+  /**
+   * Untick to close registration: the page shows the "registration closed" message instead of the form.
+   */
+  registrationOpen?: boolean | null;
+  /**
+   * Optional. Shown on the page; once it has passed the form closes on its own.
+   */
+  registrationDeadline?: string | null;
+  /**
+   * One entry per visit, in date order. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown — the page says so instead of showing a blank.
+   */
+  events?:
+    | {
+        /**
+         * Company name, or "To be announced".
+         */
+        company: string;
+        date: string;
+        /**
+         * Optional headline for the visit, e.g. "Startup evening at Lio". Defaults to the company name.
+         */
+        title?: string | null;
+        /**
+         * e.g. "18:00–20:00". Empty = "time to be announced".
+         */
+        time?: string | null;
+        /**
+         * Empty = "location to be announced".
+         */
+        location?: string | null;
+        /**
+         * What happens at this visit and why a student should come.
+         */
+        description?: string | null;
+        /**
+         * Company logo (SVG or PNG on transparent).
+         */
+        logo?: (number | null) | Media;
+        website?: string | null;
+        /**
+         * "Tentative" marks a visit that is not certain yet; "To be announced" is a placeholder slot without a company.
+         */
+        status?: ('confirmed' | 'tentative' | 'tba') | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Short cards, e.g. "Meet the engineers", "Office tours", "Free food & drinks".
+   */
+  highlights?:
+    | {
+        title: string;
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Explains the "I commit to attend" checkbox on the form: spots are limited and companies plan for headcount, so a registration is binding.
+   */
+  commitment?: string | null;
+  /**
+   * Heading above the registration form. Default: "Register for the TechTour".
+   */
+  formHeading?: string | null;
+  /**
+   * Shown instead of the form while registration is closed.
+   */
+  closedMessage?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "site-config_select".
  */
@@ -2545,6 +2824,45 @@ export interface HomepageSelect<T extends boolean = true> {
   ctaText?: T;
   ctaJoin?: T;
   ctaContact?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tech-tour_select".
+ */
+export interface TechTourSelect<T extends boolean = true> {
+  kicker?: T;
+  title?: T;
+  intro?: T;
+  heroImage?: T;
+  registrationOpen?: T;
+  registrationDeadline?: T;
+  events?:
+    | T
+    | {
+        company?: T;
+        date?: T;
+        title?: T;
+        time?: T;
+        location?: T;
+        description?: T;
+        logo?: T;
+        website?: T;
+        status?: T;
+        id?: T;
+      };
+  highlights?:
+    | T
+    | {
+        title?: T;
+        text?: T;
+        id?: T;
+      };
+  commitment?: T;
+  formHeading?: T;
+  closedMessage?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

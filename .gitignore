@@ -8,6 +8,8 @@ coverage
 inner/build
 outer/public
 inner/cms/.next
+# Applicant uploads (CVs) written by a locally running CMS — never commit.
+inner/cms/applicant-files
 
 # CMS generated types
 inner/cms/payload-types.ts

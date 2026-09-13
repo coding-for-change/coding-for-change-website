@@ -18,7 +18,12 @@
  * and CI never post phantom conversions to the live account.
  */
 
-export type AdsConversionAction = 'waitlist' | 'application' | 'contact' | 'booking';
+export type AdsConversionAction =
+    | 'waitlist'
+    | 'application'
+    | 'techtour'
+    | 'contact'
+    | 'booking';
 
 /**
  * Populated by the inline bootstrap in `layout.tsx` from server-side env, since

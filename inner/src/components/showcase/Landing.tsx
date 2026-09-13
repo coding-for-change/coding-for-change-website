@@ -18,6 +18,7 @@ import ProjectShowcase from './ProjectShowcase';
 import ScrollRevealText from './ScrollRevealText';
 import SponsorTiers from './SponsorTiers';
 import ClosingCta from './ClosingCta';
+import useSectionBackgrounds from '../../hooks/useSectionBackgrounds';
 import './landing.css';
 
 // Shared scroll-reveal animation. Sections fade/slide in once on first view.
@@ -115,65 +116,9 @@ const Landing: React.FC<LandingProps> = (props) => {
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
 
+    // Scroll-driven background blend between the `data-bg` bands + nav ink flip.
     const bgRef = useRef<HTMLDivElement>(null);
-    useEffect(() => {
-        const root = bgRef.current;
-        if (!root) return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches)
-            return;
-
-        const scroller = root.closest('.site-scroll') as HTMLElement | null;
-        const listenTarget: HTMLElement | Window = scroller ?? window;
-        const toRgb = (hex: string) =>
-            [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-
-        let raf = 0;
-        const paint = () => {
-            raf = 0;
-            const viewTop = scroller
-                ? scroller.getBoundingClientRect().top
-                : 0;
-            const viewH = scroller ? scroller.clientHeight : window.innerHeight;
-
-            const sections = Array.from(
-                root.querySelectorAll<HTMLElement>('[data-bg]')
-            ).filter((el) => el.offsetParent !== null);
-            if (sections.length === 0) return;
-
-            let [r, g, b] = toRgb(sections[0].dataset.bg!);
-            for (const el of sections.slice(1)) {
-                const topRatio =
-                    (el.getBoundingClientRect().top - viewTop) / viewH;
-                const p = Math.min(
-                    1,
-                    Math.max(0, (0.78 - topRatio) / (0.78 - 0.32))
-                );
-                if (p === 0) continue;
-                const [r2, g2, b2] = toRgb(el.dataset.bg!);
-                r += (r2 - r) * p;
-                g += (g2 - g) * p;
-                b += (b2 - b) * p;
-            }
-            root.style.backgroundColor = `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
-
-            const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-            document.documentElement.dataset.nav =
-                lum < 0.5 ? 'dark' : 'light';
-        };
-        const onScroll = () => {
-            if (!raf) raf = requestAnimationFrame(paint);
-        };
-        paint();
-        listenTarget.addEventListener('scroll', onScroll, { passive: true });
-        window.addEventListener('resize', onScroll);
-        return () => {
-            listenTarget.removeEventListener('scroll', onScroll);
-            window.removeEventListener('resize', onScroll);
-            if (raf) cancelAnimationFrame(raf);
-            root.style.backgroundColor = '';
-            delete document.documentElement.dataset.nav;
-        };
-    }, []);
+    useSectionBackgrounds(bgRef);
 
 
     const scrollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

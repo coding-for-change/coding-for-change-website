@@ -3,7 +3,9 @@
     /* width: 1280px; */
     width: 100%;
     /* min-height: 100%; */
-    image-rendering: pixelated;
+    /* `image-rendering: pixelated` used to live here for the Windows-95 desktop's
+       pixel-art icons. That chrome is gone and every photo, screenshot and logo
+       on the site inherited the setting, rendering jagged on desktop. */
     overflow-y: hidden;
     overflow-x: hidden;
 }
@@ -29,7 +31,6 @@ body {
     }
 
     .App {
-        image-rendering: auto;
         overflow: visible;
         height: auto;
         min-height: 100vh;

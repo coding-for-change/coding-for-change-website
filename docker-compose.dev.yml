@@ -65,6 +65,7 @@ services:
       - GOOGLE_ADS_CONVERSION_ID=${GOOGLE_ADS_CONVERSION_ID:-}
       - GOOGLE_ADS_LABEL_WAITLIST=${GOOGLE_ADS_LABEL_WAITLIST:-}
       - GOOGLE_ADS_LABEL_APPLICATION=${GOOGLE_ADS_LABEL_APPLICATION:-}
+      - GOOGLE_ADS_LABEL_TECHTOUR=${GOOGLE_ADS_LABEL_TECHTOUR:-}
       - GOOGLE_ADS_LABEL_CONTACT=${GOOGLE_ADS_LABEL_CONTACT:-}
       - GOOGLE_ADS_LABEL_BOOKING=${GOOGLE_ADS_LABEL_BOOKING:-}
       - GA4_MEASUREMENT_ID=${GA4_MEASUREMENT_ID:-}
@@ -94,6 +95,7 @@ services:
       - ./inner/cms:/app
       - cms_node_modules:/app/node_modules
       - cms-media:/app/media
+      - cms-applicant-files:/app/applicant-files
     ports:
       - "3000:3000"
     depends_on:
@@ -119,6 +121,7 @@ services:
 volumes:
   postgres-data:
   cms-media:
+  cms-applicant-files:
   outer_node_modules:
   inner_node_modules:
   cms_node_modules:

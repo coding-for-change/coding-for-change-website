@@ -1,4 +1,4 @@
-export { fetchCollection, fetchGlobal, submitForm, submitWaitlist, mediaUrl } from './client';
+export { fetchCollection, fetchGlobal, submitForm, submitWaitlist, uploadApplicantFile, mediaUrl } from './client';
 export type { FormSubmissionValue } from './client';
 export { useCmsCollection, useCmsGlobal } from './useCms';
 export { SiteConfigProvider, useSiteConfig, useSiteConfigLoading } from './SiteConfigContext';
@@ -20,6 +20,9 @@ export type {
     CmsLegal,
     CmsForm,
     CmsFormField,
+    CmsApplicantFile,
+    CmsTechTour,
+    CmsTechTourEvent,
     LexicalRichText,
     CmsBlogPost,
     LexicalDocument,

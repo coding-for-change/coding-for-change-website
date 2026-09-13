@@ -31,6 +31,7 @@ const SiteFooter: React.FC = () => {
         { to: '/#sponsors', label: f.sponsors },
         { to: '/partner', label: f.partner },
         { to: '/join', label: f.join },
+        { to: '/techtour', label: f.techtour },
     ];
 
     const INFO_LINKS = [

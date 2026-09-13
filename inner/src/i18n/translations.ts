@@ -1,10 +1,12 @@
+import type { ApplicationStepId } from '../lib/applicationPhase';
+
 export type Locale = 'en' | 'de';
 
 export interface Translations {
     nav: {
         home: string; events: string; projects: string;
         sponsors: string; team: string; blog: string; qa: string; join: string; contact: string;
-        partner: string;
+        partner: string; techtour: string;
     };
     common: {
         learnMore: string; partner: string; at: string;
@@ -78,6 +80,16 @@ export interface Translations {
         waitlistEmailLabel: string; waitlistEmailPlaceholder: string;
         waitlistButton: string; waitlistSubmitting: string;
         waitlistSuccess: string; waitlistError: string;
+        /** Status pill in the page head. `{n}` in daysLeft is the day count. */
+        statusOpen: string; statusClosed: string; statusDeadline: string;
+        daysLeft: string; lastDay: string;
+        /** Top-of-page button that scrolls to the application form. */
+        toForm: string;
+        /** "How the application works" — the dated steps of the current round. */
+        phase: {
+            kicker: string; heading: string; intro: string;
+            steps: Record<ApplicationStepId, { timing: string; title: string; text: string }>;
+        };
     };
     contact: {
         title: string; intro: string;
@@ -107,7 +119,28 @@ export interface Translations {
         pages: string; info: string;
         home: string; projects: string; team: string; blog: string;
         sponsors: string; join: string; contact: string; qa: string; partner: string;
+        techtour: string;
         privacy: string; imprint: string; cookieSettings: string;
+    };
+    /** Shared strings of the CMS form renderer (components/forms/CmsForm). */
+    forms: {
+        send: string; submitting: string; sendError: string; required: string;
+        successFallback: string; chooseAtLeastOne: string; opensNewTab: string;
+        linkedUnavailable: string;
+        uploadChoose: string; uploadHint: string; uploading: string; uploadRemove: string;
+        uploadTooLarge: string; uploadWrongType: string; uploadFailed: string;
+    };
+    /** Munich TechTour page (/techtour); CMS copy overrides these. */
+    techtour: {
+        kicker: string; fallbackTitle: string; fallbackLead: string;
+        statusOpen: string; statusClosed: string; deadlinePrefix: string; registerCta: string;
+        scheduleKicker: string; scheduleHeading: string; scheduleIntro: string;
+        tbaCompany: string; tbaTime: string; tbaLocation: string; tentative: string;
+        highlightsHeading: string; commitmentHeading: string;
+        formHeading: string; closedFallback: string; formUnavailable: string;
+        alsoApply: string;
+        /** Opening sequence (TechTourIntro). */
+        introHeading: string; introHint: string; introSkip: string; replay: string;
     };
     aboutPage: {
         valuesTitle: string;
@@ -128,7 +161,7 @@ const en: Translations = {
     nav: {
         home: 'Home', events: 'Events', projects: 'Projects',
         sponsors: 'Sponsors', team: 'Team', blog: 'Blog', qa: 'Q&A', join: 'Join', contact: 'Contact',
-        partner: 'For NGOs',
+        partner: 'For NGOs', techtour: 'TechTour 2026',
     },
     common: {
         learnMore: 'Learn More', partner: 'Partner:', at: 'at',
@@ -293,6 +326,54 @@ const en: Translations = {
             'You’re on the list! We’ll be in touch as soon as applications reopen.',
         waitlistError:
             'Something went wrong. Please try again or email us directly.',
+        statusOpen: 'Applications open',
+        statusClosed: 'Applications closed',
+        statusDeadline: 'Deadline 30 Oct 2026, 23:59',
+        daysLeft: '{n} days left',
+        lastDay: 'Last day to apply',
+        toForm: 'To the application form',
+        phase: {
+            kicker: 'Application phase · Winter 2026/27',
+            heading: 'How the application works',
+            intro: 'Seven steps from a first hello to your first pull request. Every date that matters for this round, in order.',
+            steps: {
+                fair: {
+                    timing: '21 Oct 2026 · 10:00–17:00',
+                    title: 'Student Club Fair',
+                    text: 'Come by our booth and meet the team. Ask us anything about the projects, the time commitment and what a semester with us looks like.',
+                },
+                apply: {
+                    timing: 'Deadline 30 Oct 2026, 23:59',
+                    title: 'Send your application',
+                    text: 'The form below takes five minutes: your e-mail, why you want to join, and a yes to about five hours a week. No CV, no cover letter.',
+                },
+                invitation: {
+                    timing: 'By 1 Nov 2026',
+                    title: 'Interview invitation',
+                    text: 'Within two days of the deadline you hear from us and pick an interview slot that works for you.',
+                },
+                interviews: {
+                    timing: '2–8 Nov 2026',
+                    title: 'Interviews',
+                    text: 'A relaxed conversation about you, your motivation and where you would fit best.',
+                },
+                onboarding: {
+                    timing: '9–11 Nov 2026',
+                    title: 'Onboarding event',
+                    text: 'We introduce this round’s projects and partner NGOs, then match you to a project and team based on your interests and skills. You also get your accounts and tools. We will confirm the exact date with your acceptance.',
+                },
+                firstMeeting: {
+                    timing: 'Mid-Nov 2026',
+                    title: 'First team meeting',
+                    text: 'Your new team meets for the first time: goals, roles and the first tasks. From then on you meet every week.',
+                },
+                project: {
+                    timing: 'Mid-Nov 2026 – mid-Jan 2027',
+                    title: 'Project phase',
+                    text: 'Two months of building for a real non-profit. Plan on about five hours a week including a one-hour team meeting, and at least one pull request per week.',
+                },
+            },
+        },
     },
     contact: {
         title: 'Contact',
@@ -343,7 +424,56 @@ const en: Translations = {
         pages: 'Pages', info: 'Information',
         home: 'Home', projects: 'Projects', team: 'Team', blog: 'Blog',
         sponsors: 'Sponsors', join: 'Join', contact: 'Contact', qa: 'Q&A', partner: 'For NGOs',
+        techtour: 'Munich TechTour',
         privacy: 'Privacy', imprint: 'Imprint', cookieSettings: 'Cookie settings',
+    },
+    forms: {
+        send: 'Send',
+        submitting: 'Sending…',
+        sendError:
+            'Something went wrong sending the form. Please try again or email us directly.',
+        required: 'required',
+        successFallback: 'Thanks! We have received your submission.',
+        chooseAtLeastOne: 'Choose at least one.',
+        opensNewTab: 'Opens in a new tab',
+        linkedUnavailable: 'This part of the form is currently unavailable. Please email us directly.',
+        uploadChoose: 'Choose PDF',
+        uploadHint: 'PDF, max. 5 MB',
+        uploading: 'Uploading…',
+        uploadRemove: 'Remove',
+        uploadTooLarge: 'That file is too large. The limit is 5 MB.',
+        uploadWrongType: 'Please upload a PDF.',
+        uploadFailed: 'The upload failed. Please try again.',
+    },
+    techtour: {
+        kicker: 'Munich TechTour',
+        fallbackTitle: 'One week. Munich’s most exciting tech companies. You’re invited.',
+        fallbackLead:
+            'The Munich TechTour takes students inside the companies shaping tech in Munich — one visit per evening, with the engineers and founders who work there. Open to every student, free of charge.',
+        statusOpen: 'Registration open',
+        statusClosed: 'Registration closed',
+        deadlinePrefix: 'Register by',
+        registerCta: 'Register now',
+        scheduleKicker: 'The week',
+        scheduleHeading: 'Where we’re going',
+        scheduleIntro:
+            'Pick the evenings you want to join. Times and locations are confirmed with each company and appear here as soon as they are fixed.',
+        tbaCompany: 'Company to be announced',
+        tbaTime: 'Time to be announced',
+        tbaLocation: 'Location to be announced',
+        tentative: 'Tentative',
+        highlightsHeading: 'What you get',
+        commitmentHeading: 'One thing we ask',
+        formHeading: 'Register for the TechTour',
+        closedFallback:
+            'Registration for this TechTour has closed. Follow us on LinkedIn to hear about the next one.',
+        formUnavailable:
+            'The registration form is currently unavailable. Please email us directly.',
+        alsoApply: 'Also want to build with us? Apply for membership on the Join page.',
+        introHeading: 'One week. Munich’s tech scene. Up close.',
+        introHint: 'Scroll to meet the companies',
+        introSkip: 'Skip to registration',
+        replay: 'Replay the intro',
     },
     aboutPage: {
         valuesTitle: 'What we care about',
@@ -375,7 +505,7 @@ const de: Translations = {
     nav: {
         home: 'Start', events: 'Events', projects: 'Projekte',
         sponsors: 'Sponsoren', team: 'Team', blog: 'Blog', qa: 'F&A', join: 'Mitmachen', contact: 'Kontakt',
-        partner: 'Für NGOs',
+        partner: 'Für NGOs', techtour: 'TechTour 2026',
     },
     common: {
         learnMore: 'Mehr erfahren', partner: 'Partner:', at: 'um',
@@ -540,6 +670,54 @@ const de: Translations = {
             'Du stehst auf der Liste! Wir melden uns, sobald die Bewerbungen wieder öffnen.',
         waitlistError:
             'Etwas ist schiefgelaufen. Bitte versuche es erneut oder schreib uns direkt.',
+        statusOpen: 'Bewerbungen offen',
+        statusClosed: 'Bewerbungen geschlossen',
+        statusDeadline: 'Frist 30. Okt. 2026, 23:59 Uhr',
+        daysLeft: 'noch {n} Tage',
+        lastDay: 'Letzter Tag zum Bewerben',
+        toForm: 'Zum Bewerbungsformular',
+        phase: {
+            kicker: 'Bewerbungsphase · Winter 2026/27',
+            heading: 'So läuft die Bewerbung ab',
+            intro: 'Sieben Schritte vom ersten Hallo bis zu deinem ersten Pull Request. Alle Termine dieser Runde, der Reihe nach.',
+            steps: {
+                fair: {
+                    timing: '21. Okt. 2026 · 10–17 Uhr',
+                    title: 'Student Club Fair',
+                    text: 'Komm an unserem Stand vorbei und lern das Team kennen. Frag uns alles zu den Projekten, zum Zeitaufwand und dazu, wie ein Semester bei uns aussieht.',
+                },
+                apply: {
+                    timing: 'Frist 30. Okt. 2026, 23:59 Uhr',
+                    title: 'Bewerbung abschicken',
+                    text: 'Das Formular unten dauert fünf Minuten: deine E-Mail, warum du mitmachen willst und ein Ja zu etwa fünf Stunden pro Woche. Kein Lebenslauf, kein Anschreiben.',
+                },
+                invitation: {
+                    timing: 'Bis 1. Nov. 2026',
+                    title: 'Einladung zum Interview',
+                    text: 'Innerhalb von zwei Tagen nach der Frist hörst du von uns und wählst einen Interviewtermin, der dir passt.',
+                },
+                interviews: {
+                    timing: '2.–8. Nov. 2026',
+                    title: 'Interviews',
+                    text: 'Ein lockeres Gespräch über dich, deine Motivation und wo du am besten hinpasst.',
+                },
+                onboarding: {
+                    timing: '9.–11. Nov. 2026',
+                    title: 'Onboarding-Event',
+                    text: 'Wir stellen die Projekte und Partner-NGOs dieser Runde vor und matchen dich anhand deiner Interessen und Fähigkeiten mit einem Projekt und Team. Außerdem bekommst du deine Zugänge und Tools. Den genauen Termin bestätigen wir dir mit der Zusage.',
+                },
+                firstMeeting: {
+                    timing: 'Mitte Nov. 2026',
+                    title: 'Erstes Team-Meeting',
+                    text: 'Dein neues Team trifft sich zum ersten Mal: Ziele, Rollen und die ersten Aufgaben. Ab dann trefft ihr euch jede Woche.',
+                },
+                project: {
+                    timing: 'Mitte Nov. 2026 – Mitte Jan. 2027',
+                    title: 'Projektphase',
+                    text: 'Zwei Monate bauen für eine echte Non-Profit-Organisation. Rechne mit etwa fünf Stunden pro Woche inklusive einem einstündigen Team-Meeting und mindestens einem Pull Request pro Woche.',
+                },
+            },
+        },
     },
     contact: {
         title: 'Kontakt',
@@ -590,7 +768,56 @@ const de: Translations = {
         pages: 'Seiten', info: 'Informationen',
         home: 'Startseite', projects: 'Projekte', team: 'Team', blog: 'Blog',
         sponsors: 'Sponsoren', join: 'Mitmachen', contact: 'Kontakt', qa: 'F&A', partner: 'Für NGOs',
+        techtour: 'Munich TechTour',
         privacy: 'Datenschutz', imprint: 'Impressum', cookieSettings: 'Cookie-Einstellungen',
+    },
+    forms: {
+        send: 'Absenden',
+        submitting: 'Wird gesendet…',
+        sendError:
+            'Beim Senden ist etwas schiefgelaufen. Bitte versuche es erneut oder schreib uns direkt.',
+        required: 'Pflichtfeld',
+        successFallback: 'Danke! Wir haben deine Angaben erhalten.',
+        chooseAtLeastOne: 'Bitte wähle mindestens eine Option.',
+        opensNewTab: 'Öffnet in neuem Tab',
+        linkedUnavailable: 'Dieser Teil des Formulars ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
+        uploadChoose: 'PDF auswählen',
+        uploadHint: 'PDF, max. 5 MB',
+        uploading: 'Wird hochgeladen…',
+        uploadRemove: 'Entfernen',
+        uploadTooLarge: 'Die Datei ist zu groß. Das Limit sind 5 MB.',
+        uploadWrongType: 'Bitte lade ein PDF hoch.',
+        uploadFailed: 'Der Upload ist fehlgeschlagen. Bitte versuche es erneut.',
+    },
+    techtour: {
+        kicker: 'Munich TechTour',
+        fallbackTitle: 'Eine Woche. Münchens spannendste Tech-Unternehmen. Du bist eingeladen.',
+        fallbackLead:
+            'Die Munich TechTour bringt Studierende in die Unternehmen, die Tech in München prägen – ein Besuch pro Abend, mit den Engineers und Gründer:innen, die dort arbeiten. Offen für alle Studierenden, kostenlos.',
+        statusOpen: 'Anmeldung offen',
+        statusClosed: 'Anmeldung geschlossen',
+        deadlinePrefix: 'Anmeldung bis',
+        registerCta: 'Jetzt anmelden',
+        scheduleKicker: 'Die Woche',
+        scheduleHeading: 'Wohin es geht',
+        scheduleIntro:
+            'Wähl die Abende, an denen du dabei sein willst. Uhrzeiten und Orte stimmen wir mit den Unternehmen ab und tragen sie hier ein, sobald sie feststehen.',
+        tbaCompany: 'Unternehmen wird noch bekannt gegeben',
+        tbaTime: 'Uhrzeit wird noch bekannt gegeben',
+        tbaLocation: 'Ort wird noch bekannt gegeben',
+        tentative: 'Vorläufig',
+        highlightsHeading: 'Was du bekommst',
+        commitmentHeading: 'Eine Bitte',
+        formHeading: 'Für die TechTour anmelden',
+        closedFallback:
+            'Die Anmeldung für diese TechTour ist geschlossen. Folg uns auf LinkedIn, um von der nächsten zu erfahren.',
+        formUnavailable:
+            'Das Anmeldeformular ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
+        alsoApply: 'Du willst auch mit uns bauen? Bewirb dich auf der Mitmachen-Seite.',
+        introHeading: 'Eine Woche. Münchens Tech-Szene. Ganz nah.',
+        introHint: 'Scroll, um die Unternehmen kennenzulernen',
+        introSkip: 'Direkt zur Anmeldung',
+        replay: 'Intro noch mal ansehen',
     },
     aboutPage: {
         valuesTitle: 'Worauf es uns ankommt',

@@ -1,6 +1,6 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { buildConfig } from 'payload';
+import { buildConfig, type Field } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder';
@@ -20,7 +20,17 @@ import { BlogPost } from './collections/BlogPost';
 import { WaitlistSignups } from './collections/WaitlistSignups';
 import { AnalyticsEvents } from './collections/AnalyticsEvents';
 import { ConsentRecords } from './collections/ConsentRecords';
+import { ApplicantFiles } from './collections/ApplicantFiles';
 import { attributionField } from './fields/attribution';
+import { reviewFields } from './fields/review';
+import { submissionsExport } from './endpoints/submissionsExport';
+import {
+  CheckboxGroupBlock,
+  SubformBlock,
+  UploadBlock,
+  submissionFilesField,
+} from './lib/formBlocks';
+import { purgeOrphanApplicantFiles } from './lib/purgeApplicantFiles';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
 import { analyticsSummary } from './endpoints/analyticsSummary';
 import { waitlistEmailEndpoints } from './endpoints/waitlistEmail';
@@ -31,17 +41,24 @@ import { Legal } from './globals/Legal';
 import { Partner } from './globals/Partner';
 import { About } from './globals/About';
 import { Homepage } from './globals/Homepage';
+import { TechTour } from './globals/TechTour';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
+/** Keep the applicant's answers as sent: only the review fields are editable. */
+const readOnlyInAdmin = (field: Field): Field =>
+  'name' in field && (field.name === 'form' || field.name === 'submissionData')
+    ? ({ ...field, admin: { ...(field.admin ?? {}), readOnly: true } } as Field)
+    : field;
+
 export default buildConfig({
   editor: lexicalEditor(),
-  collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords],
-  globals: [SiteConfig, Membership, Legal, Partner, About, Homepage],
+  collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles],
+  globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour],
   // Admin-only analytics reporting: JSON aggregates for the /admin/analytics
   // dashboard, plus CSV exports (campaign funnel, raw events, signups) and
   // the bulk "email the waitlist" sender (individual mails via Resend).
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints],
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -74,6 +91,12 @@ export default buildConfig({
         select: true,
         checkbox: true,
         message: true,
+        // Our own blocks (see lib/formBlocks.ts): a private PDF upload for
+        // CVs, a multi-select checkbox group, and a "linked form" checkbox
+        // that reveals another form's questions inline.
+        upload: UploadBlock,
+        checkboxGroup: CheckboxGroupBlock,
+        subform: SubformBlock,
         // Not needed for our forms — keep the builder UI focused.
         country: false,
         state: false,
@@ -83,11 +106,29 @@ export default buildConfig({
       // Fallback recipient when a form doesn't define its own emails.
       defaultToEmail:
         process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com',
-      // Carry campaign/traffic-source attribution onto every form submission
-      // (contact + application), so we can attribute conversions to the poster
-      // or link a visitor arrived from. Same shared field as WaitlistSignups.
+      // Submissions get: the reviewer's status + notes (sidebar), the answers
+      // (read-only in the admin — what the applicant sent stays as sent), the
+      // documents (CV) uploaded to `applicant-files`, and the campaign /
+      // traffic-source attribution (same shared field as WaitlistSignups) so
+      // conversions can be attributed to the poster or link a visitor came from.
       formSubmissionOverrides: {
-        fields: ({ defaultFields }) => [...defaultFields, attributionField],
+        fields: ({ defaultFields }) => [
+          ...reviewFields,
+          ...defaultFields.map(readOnlyInAdmin),
+          submissionFilesField,
+          attributionField,
+        ],
+        // The plugin forbids updates; admins need them for the review fields.
+        access: {
+          update: ({ req: { user } }) => Boolean(user),
+        },
+        admin: {
+          defaultColumns: ['form', 'reviewStatus', 'createdAt'],
+          components: {
+            // "Download as Excel" — one .xlsx per form (see endpoints/submissionsExport.ts).
+            beforeListTable: ['/components/submissions/ExportSubmissions#ExportSubmissions'],
+          },
+        },
       },
     }),
     // Model Context Protocol server at /api/mcp. Full CRUD on content is exposed
@@ -116,6 +157,7 @@ export default buildConfig({
         partner: { enabled: true },
         about: { enabled: true },
         homepage: { enabled: true },
+        'tech-tour': { enabled: true },
       },
     }),
   ],
@@ -155,13 +197,18 @@ export default buildConfig({
   },
   // Enforce the analytics retention window (GDPR storage limitation): purge
   // old behavioural events once at startup, then daily while the server runs.
-  // Failures are logged, never fatal; the interval is unref'd so it never
-  // holds a build/CLI process open.
+  // The same schedule removes applicant uploads that never made it onto a
+  // submission. Failures are logged, never fatal; the interval is unref'd so
+  // it never holds a build/CLI process open.
   onInit: async (payload) => {
-    const run = () =>
-      purgeAnalyticsEvents(payload).catch((err) =>
+    const run = async () => {
+      await purgeAnalyticsEvents(payload).catch((err) =>
         payload.logger.error(err, '[analytics] retention purge failed'),
       );
+      await purgeOrphanApplicantFiles(payload).catch((err) =>
+        payload.logger.error(err, '[applicant-files] orphan purge failed'),
+      );
+    };
     await run();
     const timer = setInterval(run, 24 * 60 * 60 * 1000);
     (timer as { unref?: () => void }).unref?.();

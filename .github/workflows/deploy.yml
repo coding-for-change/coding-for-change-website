@@ -108,6 +108,7 @@ jobs:
             "GOOGLE_ADS_LABEL_WAITLIST=${{ secrets.GOOGLE_ADS_LABEL_WAITLIST }}" \
             "GOOGLE_ADS_LABEL_CONTACT=${{ secrets.GOOGLE_ADS_LABEL_CONTACT }}" \
             "GOOGLE_ADS_LABEL_APPLICATION=${{ secrets.GOOGLE_ADS_LABEL_APPLICATION }}" \
+            "GOOGLE_ADS_LABEL_TECHTOUR=${{ secrets.GOOGLE_ADS_LABEL_TECHTOUR }}" \
             "GOOGLE_ADS_LABEL_BOOKING=${{ secrets.GOOGLE_ADS_LABEL_BOOKING }}" \
             "GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}" \
             > /tmp/.env

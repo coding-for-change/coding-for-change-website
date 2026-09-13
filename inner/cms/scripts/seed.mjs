@@ -15,6 +15,8 @@
  * (`docker compose down -v`) and run it again.
  */
 
+import { upsertForms } from './lib/upsertForms.mjs';
+
 const BASE = (process.env.SEED_BASE_URL || 'http://localhost:3000').replace(/\/$/, '');
 const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@codingforchange.com';
 const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD || 'ChangeMe!1234';
@@ -1187,6 +1189,17 @@ const seed = async () => {
     ).then(assertOk('forms (de)'));
   }
   console.log('Created Contact form (en + de)');
+
+  // ── Application + TechTour forms, TechTour page ───────────────────────────
+  // Same definitions the production upsert script uses, so dev renders the real
+  // forms (CV upload, event multi-select, the cross "also …" checkboxes).
+  await upsertForms({
+    base: BASE,
+    cookie,
+    toEmail: contactToEmail,
+    fromEmail: contactFromEmail,
+    log: (msg) => console.log(msg),
+  });
 
   console.log('\nSeed complete. Admin login:');
   console.log(`  email:    ${ADMIN_EMAIL}`);

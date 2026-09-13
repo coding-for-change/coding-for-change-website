@@ -412,7 +412,76 @@ export type CmsFormField =
     | {
           blockType: 'message';
           message?: LexicalRichText | null;
+      }
+    /** PDF stored privately in `applicant-files`; the submission carries the id. */
+    | {
+          blockType: 'upload';
+          name: string;
+          label?: string | null;
+          required?: boolean | null;
+          description?: string | null;
+          width?: number | null;
+      }
+    /** Multi-select rendered as one checkbox per option. */
+    | {
+          blockType: 'checkboxGroup';
+          name: string;
+          label?: string | null;
+          required?: boolean | null;
+          description?: string | null;
+          options?: { label: string; value: string; id?: string }[] | null;
+          width?: number | null;
+      }
+    /**
+     * A checkbox that reveals another form's questions inline and, when ticked,
+     * creates a separate submission of that form on submit.
+     */
+    | {
+          blockType: 'subform';
+          name: string;
+          label?: string | null;
+          form: number | CmsForm;
+          description?: string | null;
+          linkLabel?: string | null;
+          linkUrl?: string | null;
       };
+
+/** POST /api/applicant-files — a privately stored applicant document. */
+export interface CmsApplicantFile {
+    id: number;
+    filename?: string | null;
+    filesize?: number | null;
+    mimeType?: string | null;
+    kind?: string | null;
+}
+
+/** GET /api/globals/tech-tour — the Munich TechTour event page. */
+export interface CmsTechTourEvent {
+    id?: string;
+    company: string;
+    date: string;
+    title?: string | null;
+    time?: string | null;
+    location?: string | null;
+    description?: string | null;
+    logo?: CmsMedia | null;
+    website?: string | null;
+    status?: 'confirmed' | 'tentative' | 'tba' | null;
+}
+
+export interface CmsTechTour {
+    kicker?: string | null;
+    title?: string | null;
+    intro?: string | null;
+    heroImage?: CmsMedia | null;
+    registrationOpen?: boolean | null;
+    registrationDeadline?: string | null;
+    events?: CmsTechTourEvent[] | null;
+    highlights?: { title: string; text: string; id?: string }[] | null;
+    commitment?: string | null;
+    formHeading?: string | null;
+    closedMessage?: string | null;
+}
 
 /** GET /api/forms — a form-builder form schema (rendered dynamically). */
 export interface CmsForm {
