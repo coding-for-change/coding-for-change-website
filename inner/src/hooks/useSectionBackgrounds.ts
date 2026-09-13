@@ -6,8 +6,11 @@ import { useEffect, type RefObject } from 'react';
  * `data-bg="#rrggbb"` attribute is a band; as the next band's top edge climbs
  * from 78% to 32% of the viewport, the root's background blends towards its
  * colour, and the nav is told whether it is over a dark or light background
- * (`html[data-nav]`, see landing.css). Extracted from the Landing so the
- * TechTour intro can turn the page black and back the same way.
+ * (`html[data-nav]`, see landing.css). A band may narrow that window with
+ * `data-bg-window="0.12 0.02"` (start and end as viewport fractions) — the
+ * TechTour's white band does, so the nav ink flips only once the white has
+ * actually reached the nav. Extracted from the Landing so the TechTour intro
+ * can turn the page black and back the same way.
  *
  * On desktop the site scrolls inside `.site-scroll`, not the window; the hook
  * finds that scroller from the root. Respects prefers-reduced-motion by doing
@@ -36,8 +39,11 @@ export default function useSectionBackgrounds(root: RefObject<HTMLElement | null
 
             let [r, g, b] = toRgb(sections[0].dataset.bg!);
             for (const s of sections.slice(1)) {
+                const [start, end] = (s.dataset.bgWindow ?? '0.78 0.32')
+                    .split(/\s+/)
+                    .map(Number);
                 const topRatio = (s.getBoundingClientRect().top - viewTop) / viewH;
-                const p = Math.min(1, Math.max(0, (0.78 - topRatio) / (0.78 - 0.32)));
+                const p = Math.min(1, Math.max(0, (start - topRatio) / (start - end)));
                 if (p === 0) continue;
                 const [r2, g2, b2] = toRgb(s.dataset.bg!);
                 r += (r2 - r) * p;

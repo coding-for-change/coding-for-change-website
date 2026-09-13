@@ -45,11 +45,16 @@ export interface TechTourIntroProps {
     onSkip: () => void;
 }
 
-// Where the pops happen along the scroll range [0, 1].
+// Where the pops happen along the scroll range [0, 1]. Progress reaches 1 the
+// moment the white content band starts sliding up over the stage, so the last
+// bubble lands just before the curtain and there is no empty stretch.
 const POP_START = 0.06;
-const POP_END = 0.7;
-const FADE = [0.8, 0.93] as const;
+const POP_END = 0.86;
 const HINT_AFTER_MS = 3200;
+// The content band overlaps the last viewport of this section (negative
+// margin, see .lp--intro .lp-page), so the pinned stage stays put while the
+// white slides over it instead of being pushed off the top.
+const CURTAIN_VH = 100;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
@@ -167,7 +172,9 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
             const rect = section.getBoundingClientRect();
             const viewTop = scroller ? scroller.getBoundingClientRect().top : 0;
             const viewH = scroller ? scroller.clientHeight : window.innerHeight;
-            const range = Math.max(1, rect.height - viewH);
+            // Exclude the overlapped viewport: 1 = the band's top edge has just
+            // reached the bottom of the viewport.
+            const range = Math.max(1, rect.height - 2 * viewH);
             progress.set(clamp01((viewTop - rect.top) / range));
         };
         const onScroll = () => {
@@ -210,13 +217,13 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
         };
     }, [progress, onSeen]);
 
-    const stageOpacity = useTransform(progress, [FADE[0], FADE[1]], [1, 0]);
+    // The headline steps aside once the constellation is nearly complete.
     const headOpacity = useTransform([opener, progress], ([o, p]: number[]) =>
-        Math.min(o, 1 - clamp01((p - 0.5) / 0.15))
+        Math.min(o, 1 - clamp01((p - 0.62) / 0.16))
     );
     const headY = useTransform(opener, [0, 1], [18, 0]);
     const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB';
-    const height = isMobile ? 90 + n * 45 : 100 + n * 60;
+    const height = (isMobile ? 90 + n * 40 : 100 + n * 55) + CURTAIN_VH;
 
     return (
         <section
@@ -226,7 +233,11 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
             style={{ height: `${height}vh` }}
             aria-label={heading}
         >
-            <motion.div className="lp-tt-intro__stage" style={{ opacity: stageOpacity }}>
+            <div className="lp-tt-intro__stage">
+                {/* The stage's own black, fading in on mount. It stays until the
+                    white content band slides up over it, so the page background
+                    blending underneath (which drives the nav ink) never shows. */}
+                <div className="lp-tt-intro__backdrop" aria-hidden="true" />
                 <motion.div className="lp-tt-intro__head" style={{ opacity: headOpacity, y: headY }}>
                     <p className="lp-tt-intro__kicker">{kicker}</p>
                     <h2 className="lp-tt-intro__title">{heading}</h2>
@@ -289,7 +300,7 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
                 <button type="button" className="lp-tt-intro__skip" onClick={onSkip}>
                     {t.techtour.introSkip} ↓
                 </button>
-            </motion.div>
+            </div>
         </section>
     );
 };

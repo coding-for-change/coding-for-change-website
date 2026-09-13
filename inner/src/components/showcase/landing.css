@@ -2056,6 +2056,13 @@ a.lp-member__project:hover {
     position: relative;
     background: #ffffff;
 }
+/* The curtain: the band starts one viewport before the intro section ends, so
+   the sticky stage is still pinned while the white slides up over it. Keep in
+   sync with CURTAIN_VH in TechTourIntro.tsx. */
+.lp--intro .lp-page {
+    margin-top: -100vh;
+    z-index: 1;
+}
 .lp--intro .lp-page::before {
     content: '';
     position: absolute;
@@ -2076,8 +2083,13 @@ a.lp-member__project:hover {
     position: sticky;
     top: 0;
     height: 100vh;
-    height: 100dvh;
     overflow: hidden;
+}
+.lp-tt-intro__backdrop {
+    position: absolute;
+    inset: 0;
+    background: #000000;
+    animation: lp-tt-fade-in 1.1s ease both;
 }
 /* Column, explicitly: App.css makes every div a flex row by default. */
 .lp-tt-intro__head {
@@ -2229,6 +2241,14 @@ a.lp-member__project:hover {
 }
 .lp-tt-replay {
     gap: 8px;
+}
+@keyframes lp-tt-fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 @keyframes lp-tt-pulse {
     0%,
