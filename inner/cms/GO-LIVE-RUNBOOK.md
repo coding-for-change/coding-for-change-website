@@ -300,9 +300,9 @@ duration of their involvement.
 
 **Admin → Globals → TechTour Page → Visibility** (in the sidebar):
 
-| Setting | Navigation + footer link | Search engines | Sitemap |
+| Setting | Nav + footer link, "also register" box on /join | Search engines | Sitemap |
 | --- | --- | --- | --- |
-| **Hidden** | no — reachable by its URL only | `noindex` | not listed |
+| **Hidden** | no — the page is reachable by its URL only, and the join page does not mention the TechTour | `noindex` | not listed |
 | **Unlisted** (default) | yes | `noindex` | not listed |
 | **Public** | yes | indexed | listed |
 
