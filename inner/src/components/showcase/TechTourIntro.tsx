@@ -64,14 +64,21 @@ const CURTAIN_VH = 100;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
-/** Bubble centres in % of the stage: a wave across on desktop, a zigzag down on phones. */
+/**
+ * Bubble centres in % of the constellation field (the stage minus the headline
+ * block above it, so nothing can reach the title): a wave across on desktop, a
+ * zigzag down on phones.
+ */
 const layoutFor = (n: number, mobile: boolean): { x: number; y: number }[] =>
     Array.from({ length: n }, (_, i) => {
         const f = n > 1 ? i / (n - 1) : 0.5;
         return mobile
-            ? { x: i % 2 === 0 ? 32 : 68, y: 18 + f * 64 }
-            : { x: 12 + f * 76, y: i % 2 === 0 ? 60 : 40 };
+            ? { x: i % 2 === 0 ? 28 : 72, y: 16 + f * 68 }
+            : { x: 12 + f * 76, y: i % 2 === 0 ? 62 : 34 };
     });
+
+// Vertical gap kept between same-side neighbours in the phone zigzag.
+const ZIGZAG_GAP = 10;
 
 const IntroBubble: React.FC<{
     ev: CmsTechTourEvent;
@@ -84,7 +91,9 @@ const IntroBubble: React.FC<{
     opener: MotionValue<number>;
     dateLocale: string;
     tbaLabel: string;
-}> = ({ ev, index, x, y, popAt, popLen, progress, opener, dateLocale, tbaLabel }) => {
+    /** Base size, < 1 on short screens where the full-size zigzag would not fit. */
+    size: number;
+}> = ({ ev, index, x, y, popAt, popLen, progress, opener, dateLocale, tbaLabel, size }) => {
     const byScroll = useTransform(progress, [popAt, popAt + popLen], [0, 1]);
     // The first bubble also comes in with the automatic opener.
     const raw = useTransform([byScroll, opener], ([s, o]: number[]) =>
@@ -102,6 +111,10 @@ const IntroBubble: React.FC<{
             className="lp-tt-intro__node"
             style={{ left: `${x}%`, top: `${y}%`, x: '-50%', y: '-50%', scale, opacity }}
         >
+          <div
+              className="lp-tt-intro__node-inner"
+              style={size < 1 ? { transform: `scale(${size})` } : undefined}
+          >
             <div className={`lp-tt-intro__disc${tba ? ' lp-tt-intro__disc--tba' : ''}`}>
                 {tba ? (
                     <span aria-hidden="true">?</span>
@@ -120,6 +133,7 @@ const IntroBubble: React.FC<{
                 </span>
                 <span className="lp-tt-intro__company">{tba ? tbaLabel : ev.company}</span>
             </div>
+          </div>
         </motion.div>
     );
 };
@@ -153,6 +167,7 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
     const { t, locale } = useLanguage();
     const isMobile = useIsMobile();
     const sectionRef = useRef<HTMLElement>(null);
+    const fieldRef = useRef<HTMLDivElement>(null);
     const progress = useMotionValue(0);
     const opener = useMotionValue(0);
     const [hint, setHint] = useState(false);
@@ -164,6 +179,65 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
     const step = n > 1 ? (POP_END - POP_START) / (n - 1) : 0;
     const popAt = (i: number) => POP_START + i * step;
     const popLen = n > 1 ? Math.min(0.08, step * 0.6) : 0.1;
+
+    // Fit the constellation to the space the headline leaves. The field's
+    // height varies with viewport and text wrapping, so bubble centres are laid
+    // out in pixels from the measured field: the first bubble starts just
+    // below the field's top edge (never in the title), the last ends at its
+    // bottom, and if the phone zigzag still cannot fit — same-side neighbours
+    // would touch — the bubbles themselves shrink. Node heights come from the
+    // DOM (offsetHeight ignores transforms, so no feedback loop). Until
+    // measured, the percentage layout above is used.
+    const [geom, setGeom] = useState<{ ys: number[]; size: number; fieldH: number } | null>(null);
+    useEffect(() => {
+        const field = fieldRef.current;
+        if (!field || n === 0) return;
+        const PAD = 6;
+        const measure = () => {
+            const fieldH = field.clientHeight;
+            const nodeH = Math.max(
+                0,
+                ...Array.from(field.querySelectorAll<HTMLElement>('.lp-tt-intro__node')).map(
+                    (el) => el.offsetHeight
+                )
+            );
+            if (!fieldH || !nodeH) return;
+            const clamp = (v: number) => Math.min(1, Math.max(0.4, v));
+            let size: number;
+            let ys: number[];
+            if (isMobile) {
+                // 2·step ≥ size·(nodeH + gap) with step = (fieldH − 2·PAD − size·nodeH)/(n − 1)
+                size =
+                    n > 1
+                        ? clamp((2 * fieldH - 4 * PAD) / (2 * nodeH + (n - 1) * (nodeH + ZIGZAG_GAP)))
+                        : clamp((fieldH - 2 * PAD) / nodeH);
+                const first = PAD + (size * nodeH) / 2;
+                const last = fieldH - PAD - (size * nodeH) / 2;
+                ys = Array.from({ length: n }, (_, i) =>
+                    n > 1 ? first + ((last - first) * i) / (n - 1) : fieldH / 2
+                );
+            } else {
+                // Two rows at 34 % / 62 %; the upper row must clear the field's top.
+                size = clamp((0.34 * fieldH - PAD) / (nodeH / 2));
+                ys = Array.from({ length: n }, (_, i) => (i % 2 === 0 ? 0.62 : 0.34) * fieldH);
+            }
+            setGeom({ ys, size: Math.round(size * 1000) / 1000, fieldH });
+        };
+        measure();
+        const ro = new ResizeObserver(measure);
+        ro.observe(field);
+        window.addEventListener('resize', measure);
+        return () => {
+            ro.disconnect();
+            window.removeEventListener('resize', measure);
+        };
+    }, [n, isMobile]);
+    // Percent coordinates shared by bubbles and the SVG lines (viewBox 0–100).
+    const laid = points.map((p, i) => ({
+        x: p.x,
+        y: geom ? (geom.ys[i] / geom.fieldH) * 100 : p.y,
+    }));
+    const nodeSize = geom?.size ?? 1;
 
     // Scroll progress through this section: 0 while its top is at the viewport
     // top, 1 when its bottom reaches the viewport bottom.
@@ -253,41 +327,52 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
         >
             <div className="lp-tt-intro__stage">
               <motion.div className="lp-tt-intro__scene" style={{ opacity: sceneOpacity }}>
+                {/* Headline block in normal flow; the constellation field below
+                    takes whatever height is left, so bubbles never reach it. */}
                 <motion.div className="lp-tt-intro__head" style={{ opacity: headOpacity, y: headY }}>
                     <p className="lp-tt-intro__kicker">{kicker}</p>
                     <h2 className="lp-tt-intro__title">{heading}</h2>
                     {/* The hint lives up here, not at the bottom: on a first
-                        visit the consent banner owns the bottom of the screen. */}
-                    <AnimatePresence>
-                        {hint && (
-                            <motion.div
-                                className="lp-tt-intro__hint"
-                                initial={{ opacity: 0, y: 8 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: 6 }}
-                                transition={{ duration: 0.4 }}
-                                aria-live="polite"
-                            >
-                                {t.techtour.introHint}
-                                <span className="lp-tt-intro__hint-arrow" aria-hidden="true">
-                                    ↓
-                                </span>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
+                        visit the consent banner owns the bottom of the screen.
+                        Its slot is always reserved so the field below does not
+                        jump when it appears. */}
+                    <div className="lp-tt-intro__hint-slot">
+                        <AnimatePresence>
+                            {hint && (
+                                <motion.div
+                                    className="lp-tt-intro__hint"
+                                    initial={{ opacity: 0, y: 8 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 6 }}
+                                    transition={{ duration: 0.4 }}
+                                    aria-live="polite"
+                                >
+                                    {t.techtour.introHint}
+                                    <span className="lp-tt-intro__hint-arrow" aria-hidden="true">
+                                        ↓
+                                    </span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                    <button type="button" className="lp-tt-intro__skip" onClick={onSkip}>
+                        {t.techtour.introSkip} ↓
+                    </button>
                 </motion.div>
 
+              <div className="lp-tt-intro__field" ref={fieldRef}>
+              <div className="lp-tt-intro__cluster">
                 <svg
                     className="lp-tt-intro__lines"
                     viewBox="0 0 100 100"
                     preserveAspectRatio="none"
                     aria-hidden="true"
                 >
-                    {points.slice(0, -1).map((p, i) => (
+                    {laid.slice(0, -1).map((p, i) => (
                         <IntroLine
                             key={i}
                             from={p}
-                            to={points[i + 1]}
+                            to={laid[i + 1]}
                             start={popAt(i) + popLen * 0.5}
                             end={popAt(i + 1) + popLen * 0.4}
                             faint={events[i].status === 'tba' || events[i + 1].status === 'tba'}
@@ -301,20 +386,19 @@ const TechTourIntro: React.FC<TechTourIntroProps> = ({ events, kicker, heading, 
                         key={ev.id ?? i}
                         ev={ev}
                         index={i}
-                        x={points[i].x}
-                        y={points[i].y}
+                        x={laid[i].x}
+                        y={laid[i].y}
                         popAt={popAt(i)}
                         popLen={popLen}
                         progress={progress}
                         opener={opener}
                         dateLocale={dateLocale}
                         tbaLabel={t.techtour.tbaCompany}
+                        size={nodeSize}
                     />
                 ))}
-
-                <button type="button" className="lp-tt-intro__skip" onClick={onSkip}>
-                    {t.techtour.introSkip} ↓
-                </button>
+              </div>
+              </div>
               </motion.div>
             </div>
         </section>

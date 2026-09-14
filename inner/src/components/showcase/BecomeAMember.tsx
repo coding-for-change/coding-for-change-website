@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { useCmsGlobal, useCmsCollection, submitWaitlist, mediaUrl } from '../../api';
 import type { CmsForm as CmsFormDoc, CmsTechTour } from '../../api';
 import { CmsMembership } from '../../api/types';
-import { techTourRegistrationOpen } from '../../lib/techTour';
+import { techTourListed, techTourRegistrationOpen } from '../../lib/techTour';
 import { getAttribution } from '../../lib/attribution';
 import { trackFormStart, trackConversion } from '../../lib/analytics';
 import { trackAdsConversion } from '../../lib/googleAds';
@@ -60,10 +60,13 @@ const BecomeAMember: React.FC<{
     const open = applicationsOpen(now);
     const daysLeft = daysUntilDeadline(now);
     const { data: techTour } = useCmsGlobal<CmsTechTour>('tech-tour', props.techTour);
-    // The "also register for the TechTour" box disappears once that closes.
-    const hiddenSubforms = techTourRegistrationOpen(techTour, now)
-        ? undefined
-        : ['techtour'];
+    // The "also register for the TechTour" box (and its "What is the TechTour?"
+    // link) is offered only while that page is listed (TechTour Page →
+    // Visibility is not "hidden") and its registration is open.
+    const hiddenSubforms =
+        techTourListed(techTour) && techTourRegistrationOpen(techTour, now)
+            ? undefined
+            : ['techtour'];
     const phaseSteps = useMemo(
         () =>
             APPLICATION_STEPS.map((step) => ({
