@@ -466,6 +466,8 @@ export interface CmsTechTourEvent {
     description?: string | null;
     logo?: CmsMedia | null;
     website?: string | null;
+    /** Photo for the Explore section; falls back to the logo on a plain panel. */
+    image?: CmsMedia | null;
     status?: 'confirmed' | 'tentative' | 'tba' | null;
 }
 

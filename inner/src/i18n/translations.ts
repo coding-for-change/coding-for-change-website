@@ -138,9 +138,44 @@ export interface Translations {
         tbaCompany: string; tbaTime: string; tbaLocation: string; tentative: string;
         highlightsHeading: string; commitmentHeading: string;
         formHeading: string; closedFallback: string; formUnavailable: string;
-        alsoApply: string;
-        /** Opening sequence (TechTourIntro). */
-        introHeading: string; introHint: string; introSkip: string; replay: string;
+        /** The poster's headline. Two words, unlike the one-word brand usage
+         *  in the nav and the footer. */
+        posterTitle: string;
+        /** The three facts on the poster; {count} is the number of evenings. */
+        factFormatLabel: string; factDatesLabel: string; factDeadlineLabel: string;
+        factEvenings: string;
+        /** The one ask: the button, and the page behind it (/techtour/apply). */
+        applyCta: string; detailsCta: string; closeHeading: string;
+        backToTour: string; detailsHeading: string;
+        /** The Explore section below the poster. */
+        learnMoreCta: string; scrollHint: string; exploreKicker: string;
+        exploreHeading: string; exploreLead: string;
+        eventApplyCta: string; eventSiteCta: string; tileHint: string;
+        factTimeLabel: string; factPlaceLabel: string;
+        /**
+         * /techtour/apply — the half-filled form a visitor can park and come
+         * back to. Saved only when they press the button, only in their own
+         * browser (see `cfc-techtour-draft` in klaroConfig's "site basics").
+         */
+        draftSave: string; draftSaved: string; draftRestored: string;
+        draftClear: string; draftCleared: string; draftNote: string;
+        /**
+         * The three steps above the form, in place of a lead paragraph.
+         * `{date}` is the CMS registration deadline and `{range}` the span the
+         * tour runs. Step 2 carries no date on purpose — the CMS has no
+         * "feedback by" field and we do not promise a day we cannot keep.
+         */
+        stepApplyTitle: string; stepApplyText: string;
+        stepConfirmTitle: string; stepConfirmText: string;
+        stepJoinTitle: string; stepJoinText: string;
+        /** Heading over the name / email / consent half of the form. */
+        sectionDetailsTitle: string;
+        /**
+         * The one-line reminder under the evening rows. It replaces the CMS
+         * `commitment` field, which was a paragraph where a sentence was
+         * wanted — that field is no longer rendered anywhere.
+         */
+        attendAsk: string;
     };
     aboutPage: {
         valuesTitle: string;
@@ -469,11 +504,42 @@ const en: Translations = {
             'Registration for this TechTour has closed. Follow us on LinkedIn to hear about the next one.',
         formUnavailable:
             'The registration form is currently unavailable. Please email us directly.',
-        alsoApply: 'Also want to build with us? Apply for membership on the Join page.',
-        introHeading: 'One week. Munich’s tech scene. Up close.',
-        introHint: 'Scroll to meet the companies',
-        introSkip: 'Skip to registration',
-        replay: 'Replay the intro',
+        posterTitle: 'Munich Tech Tour',
+        factFormatLabel: 'Format',
+        factDatesLabel: 'When',
+        factDeadlineLabel: 'Apply by',
+        factEvenings: '{count} evenings · free',
+        applyCta: 'Apply now',
+        detailsCta: 'See the details',
+        closeHeading: 'Come with us.',
+        backToTour: 'Back to the line-up',
+        learnMoreCta: 'Learn more',
+        scrollHint: 'Scroll down to learn more',
+        exploreKicker: 'The week, evening by evening',
+        exploreHeading: 'What each visit looks like',
+        exploreLead:
+            'Come to one evening or to all of them. Every visit is hosted by the company itself — you are in their office, with the people who work there.',
+        eventApplyCta: 'Apply for this evening',
+        eventSiteCta: 'Company website',
+        tileHint: 'Click to learn more',
+        factTimeLabel: 'Time',
+        factPlaceLabel: 'Where',
+        detailsHeading: 'The week in full',
+        draftSave: 'Save and finish later',
+        draftSaved: 'Saved in this browser',
+        draftRestored: 'We brought back the answers you saved here.',
+        draftClear: 'Delete saved answers',
+        draftCleared: 'Saved answers deleted.',
+        draftNote:
+            'Saving keeps your answers in this browser only — we receive nothing until you send the form.',
+        stepApplyTitle: 'Apply',
+        stepApplyText: 'by {date}',
+        stepConfirmTitle: 'Get your place',
+        stepConfirmText: 'we confirm by email',
+        stepJoinTitle: 'Come along',
+        stepJoinText: '{range}',
+        sectionDetailsTitle: 'About you',
+        attendAsk: 'Please only tick the evenings you will actually be there.',
     },
     aboutPage: {
         valuesTitle: 'What we care about',
@@ -813,11 +879,42 @@ const de: Translations = {
             'Die Anmeldung für diese TechTour ist geschlossen. Folg uns auf LinkedIn, um von der nächsten zu erfahren.',
         formUnavailable:
             'Das Anmeldeformular ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
-        alsoApply: 'Du willst auch mit uns bauen? Bewirb dich auf der Mitmachen-Seite.',
-        introHeading: 'Eine Woche. Münchens Tech-Szene. Ganz nah.',
-        introHint: 'Scroll, um die Unternehmen kennenzulernen',
-        introSkip: 'Direkt zur Anmeldung',
-        replay: 'Intro noch mal ansehen',
+        posterTitle: 'Munich Tech Tour',
+        factFormatLabel: 'Format',
+        factDatesLabel: 'Wann',
+        factDeadlineLabel: 'Bewerbung bis',
+        factEvenings: '{count} Abende · kostenlos',
+        applyCta: 'Jetzt bewerben',
+        detailsCta: 'Details ansehen',
+        closeHeading: 'Komm mit.',
+        backToTour: 'Zurück zum Line-up',
+        learnMoreCta: 'Mehr erfahren',
+        scrollHint: 'Runterscrollen für Details',
+        exploreKicker: 'Die Woche, Abend für Abend',
+        exploreHeading: 'Was bei den Besuchen passiert',
+        exploreLead:
+            'Komm zu einem Abend oder zu allen. Jeder Besuch wird vom Unternehmen selbst ausgerichtet — du bist in deren Büro, bei den Leuten, die dort arbeiten.',
+        eventApplyCta: 'Für diesen Abend bewerben',
+        eventSiteCta: 'Zur Website',
+        tileHint: 'Klicken für Details',
+        factTimeLabel: 'Uhrzeit',
+        factPlaceLabel: 'Ort',
+        detailsHeading: 'Die Woche im Detail',
+        draftSave: 'Speichern und später weitermachen',
+        draftSaved: 'In diesem Browser gespeichert',
+        draftRestored: 'Wir haben deine hier gespeicherten Antworten zurückgeholt.',
+        draftClear: 'Gespeicherte Antworten löschen',
+        draftCleared: 'Gespeicherte Antworten gelöscht.',
+        draftNote:
+            'Das Speichern legt deine Antworten nur in diesem Browser ab — bei uns kommt nichts an, bevor du das Formular abschickst.',
+        stepApplyTitle: 'Bewerben',
+        stepApplyText: 'bis {date}',
+        stepConfirmTitle: 'Zusage bekommen',
+        stepConfirmText: 'Antwort per E-Mail',
+        stepJoinTitle: 'Dabei sein',
+        stepJoinText: '{range}',
+        sectionDetailsTitle: 'Über dich',
+        attendAsk: 'Bitte kreuz nur die Abende an, an denen du wirklich dabei bist.',
     },
     aboutPage: {
         valuesTitle: 'Worauf es uns ankommt',

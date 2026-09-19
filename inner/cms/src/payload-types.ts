@@ -2610,6 +2610,10 @@ export interface TechTour {
         logo?: (number | null) | Media;
         website?: string | null;
         /**
+         * Photo for this visit in the "Explore" section further down the page — the office, the team, the space. Landscape works best. Without one the section falls back to the logo on a plain panel.
+         */
+        image?: (number | null) | Media;
+        /**
          * "Tentative" marks a visit that is not certain yet; "To be announced" is a placeholder slot without a company.
          */
         status?: ('confirmed' | 'tentative' | 'tba') | null;
@@ -2855,6 +2859,7 @@ export interface TechTourSelect<T extends boolean = true> {
         description?: T;
         logo?: T;
         website?: T;
+        image?: T;
         status?: T;
         id?: T;
       };

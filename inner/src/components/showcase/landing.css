@@ -1882,390 +1882,455 @@ a.lp-member__project:hover {
     border-left: 2px solid var(--teal);
 }
 
-/* ---- TechTour page ---- */
-/* One card per evening. Left: the day; middle: the company mark; right: what
-   happens. Stacks on phones. Unconfirmed slots recede like upcoming steps. */
-.lp-tt-days {
-    list-style: none;
-    margin: 36px 0 64px;
-    padding: 0;
+/* ---- TechTour: the poster ---- */
+/* On a desktop viewport the tour page is exactly one screen — title, three
+   facts, the line-up, one button — and the shell is told not to scroll under
+   it: the scroller's nav padding is dropped so the black runs the full height,
+   the overflow is clipped, and the site footer is hidden (the poster carries
+   the two links that have to be reachable from every page instead). Below the
+   layout breakpoint there is no poster to hold, so it becomes an ordinary
+   scrolling page and the shell is left alone. */
+.lp--techtour {
+    display: block;
+    background: #060d12;
+    color: #ffffff;
+}
+/* The first screen. It fills the viewport exactly — the Explore section below
+   it is what scrolling reveals, so the fold is the point here rather than
+   something to hide. */
+.lp-tt-poster {
+    position: relative;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    min-height: 100vh;
 }
-.lp-tt-day {
-    display: grid;
-    grid-template-columns: 120px 84px minmax(0, 1fr);
-    column-gap: 24px;
-    align-items: start;
-    padding: 22px 24px;
-    background: #ffffff;
-    border: 1px solid var(--line);
+.lp-tt-poster__inner {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(20px, 4vh, 52px);
+    width: 100%;
+    max-width: 1340px;
+    margin: 0 auto;
+    padding-inline: 32px;
+    padding-top: calc(64px + 1.5vh);
+    /* A deep floor under a shallow ceiling: the block is centred in what is
+       left, so it lands above the middle of the screen rather than on it. The
+       floor is what is actually spare (the poster is about 736px tall), so on
+       a short window it gives the room back instead of squeezing the line-up
+       into a scrollbar. */
+    padding-bottom: max(4vh, min(16vh, 100vh - 736px));
+    box-sizing: border-box;
+    text-align: center;
 }
-.lp-tt-day--tba {
-    border-style: dashed;
-    background: var(--alt);
+/* The stage runs up under the transparent nav, so the first screen measures a
+   whole viewport rather than a viewport minus the bar. */
+@media (min-width: 1025px) {
+    .site-scroll:has(> .lp--techtour) {
+        padding-top: 0;
+    }
+    .lp--techtour {
+        flex: none;
+    }
 }
-.lp-tt-day--tba .lp-tt-day__body {
-    opacity: 0.8;
-}
-.lp-tt-day__when {
+/* Headline and facts read as one block, so they sit closer to each other
+   than either does to the line-up. */
+.lp-tt-poster__head {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: clamp(10px, 1.6vh, 22px);
+    width: 100%;
+}
+.lp-tt-poster__title {
+    max-width: 20ch;
+    margin: 0;
     font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: clamp(34px, min(6.6vw, 9.5vh), 104px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    color: #ffffff;
 }
-.lp-tt-day__weekday {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--teal-dark);
-    line-height: 1.2;
+
+/* ---- The three facts ---- */
+.lp-tt-facts {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px clamp(20px, 3vw, 52px);
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
-.lp-tt-day__date {
-    font-size: 13px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
+.lp-tt-fact {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    text-align: left;
 }
-.lp-tt-day__logo {
+.lp-tt-fact__icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 84px;
-    height: 84px;
-    border: 1px solid var(--line);
-    background: #ffffff;
-    box-sizing: border-box;
-    padding: 12px;
+    flex: none;
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(127, 227, 228, 0.28);
+    border-radius: 12px;
+    background: rgba(127, 227, 228, 0.07);
+    color: #7fe3e4;
 }
-.lp-tt-day__logo img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
+.lp-tt-fact__icon svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
 }
-.lp-tt-day__initial {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: 32px;
-    font-weight: 600;
-    color: var(--teal);
-}
-.lp-tt-day__body {
+.lp-tt-fact__body {
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    min-width: 0;
 }
-.lp-tt-day__title {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: 22px;
-    line-height: 1.25;
-    margin: 0 0 4px;
-    color: var(--ink);
-    overflow-wrap: anywhere;
-}
-.lp-tt-day__title a {
-    color: inherit;
-    text-decoration: none;
-}
-.lp-tt-day__title a:hover {
-    color: var(--teal-dark);
-    text-decoration: underline;
-    text-underline-offset: 3px;
-}
-.lp-tt-day__company {
-    margin: 0 0 6px;
-    font-size: 15px;
-    color: var(--teal-dark);
-}
-.lp-tt-day__meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px 8px;
-    margin: 0 0 10px;
-    font-size: 14px;
-    color: var(--muted);
-}
-.lp-tt-day__text {
-    margin: 0;
-    font-size: 16px;
-    line-height: 1.6;
-    color: var(--muted);
-    max-width: 60ch;
-}
-.lp-tt-day__badge {
-    display: inline-block;
-    margin-top: 12px;
-    padding: 3px 10px;
-    border: 1px solid rgba(181, 101, 29, 0.45);
-    background: rgba(181, 101, 29, 0.08);
-    color: #8a4b12;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.08em;
+.lp-tt-fact__label {
+    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
 }
-/* Three highlight cards side by side on desktop (the tracks grid is 2×2). */
-.lp-tt-highlights .lp-grid {
-    grid-template-columns: repeat(3, 1fr);
-}
-/* "One thing we ask": the attendance commitment, set apart above the form. */
-.lp-tt-commit {
-    margin: 0 0 26px;
-    padding: 18px 20px;
-    border-left: 3px solid var(--teal);
-    background: var(--alt);
-}
-.lp-tt-commit__head {
-    margin: 0 0 6px;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+.lp-tt-fact__value {
+    margin-top: 2px;
     font-size: 15px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--teal-dark);
-}
-.lp-tt-commit__text {
-    margin: 0;
-    font-size: 15.5px;
-    line-height: 1.6;
-    color: var(--ink);
-}
-.lp-tt-also {
-    margin-top: 22px;
-}
-.lp-tt-also a {
-    color: var(--teal-dark);
+    line-height: 1.3;
+    color: #ffffff;
 }
 
-/* ---- TechTour intro: black stage, the week as a constellation ---- */
-/* The page background itself goes black (useSectionBackgrounds paints the
-   root from the intro's data-bg band); the stage is transparent so the blend
-   back to white shows through it as it fades. */
-.lp--opening {
-    transition: background-color 1.1s ease;
-}
-/* Like the landing hero, the stage runs up under the (transparent, dark) nav. */
-.site-scroll > .lp--intro {
-    margin-top: -64px;
-}
-/* The content band is solid white so its cards never sit on a half-blended
-   background, whatever the screen height. By the time it scrolls in, the page
-   background has already been blended to white by the intro's exit (see
-   TechTourIntro.tsx), so its top edge is white on white — invisible. */
-.lp--techtour .lp-page {
-    position: relative;
-    background: #ffffff;
-}
-/* The band starts one viewport before the intro section ends, so the sticky
-   stage stays pinned until it is fully covered instead of being pushed off the
-   top. Keep in sync with CURTAIN_VH in TechTourIntro.tsx. */
-.lp--intro .lp-page {
-    margin-top: -100vh;
-    z-index: 1;
-}
-.lp-tt-intro {
+/* ---- The line-up ---- */
+/* One app icon per evening, and a single glowing line that runs in, frames
+   each icon and carries on (TechTourLineup.tsx builds the path from measured
+   layout). The line sits behind the icons, so the legs between frames read as
+   the line passing through the artwork. */
+.lp-tt-lineup {
     position: relative;
     display: block;
     width: 100%;
-    --disc: 128px;
+    /* On top of the column's own gap: the headline block wants a clear step
+       down to the line-up, which also settles the row on the middle of the
+       screen rather than just above it. */
+    margin-top: clamp(10px, 3.4vh, 40px);
 }
-.lp-tt-intro__stage {
-    position: sticky;
-    top: 0;
-    height: 100vh;
-    overflow: hidden;
-}
-/* Everything on the stage; dissolves as the page lightens on the way out.
-   A column: the headline block on top, the constellation field taking the
-   rest — so the field's height is whatever the headline leaves, and a bubble
-   can never sit on the title, however the title wraps. */
-.lp-tt-intro__scene {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-}
-/* Column, explicitly: App.css makes every div a flex row by default. */
-.lp-tt-intro__head {
-    position: relative;
-    flex: none;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 12vh 24px 0;
-    text-align: center;
-}
-.lp-tt-intro__field {
-    position: relative;
-    flex: 1 1 auto;
-    min-height: 0;
-}
-/* Lines + bubbles, laid out in the field's coordinates (TechTourIntro.tsx). */
-.lp-tt-intro__cluster {
-    position: absolute;
-    inset: 0;
-}
-.lp-tt-intro__kicker {
-    margin: 0 0 12px;
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: #7fe3e4;
-}
-.lp-tt-intro__title {
-    margin: 0;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: clamp(28px, 3.4vw, 44px);
-    line-height: 1.1;
-    color: #ffffff;
-}
-.lp-tt-intro__lines {
+.lp-tt-lineup__wire {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     overflow: visible;
+    pointer-events: none;
+    z-index: 0;
 }
-/* Butt caps: a not-yet-drawn (zero-length) line must not show as a dot. */
-.lp-tt-intro__lines line {
+.lp-tt-lineup__wire path {
     fill: none;
     stroke: #7fe3e4;
-    stroke-width: 2;
-    stroke-linecap: butt;
-    opacity: 0.85;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 3px rgba(127, 227, 228, 0.9))
+        drop-shadow(0 0 11px rgba(127, 227, 228, 0.55));
+    animation: lp-tt-flicker 4.2s ease-in-out infinite;
 }
-.lp-tt-intro__lines line.is-faint {
-    opacity: 0.35;
+@keyframes lp-tt-flicker {
+    0%,
+    100% {
+        opacity: 0.92;
+    }
+    43% {
+        opacity: 1;
+    }
+    47% {
+        opacity: 0.74;
+    }
+    52% {
+        opacity: 1;
+    }
 }
-.lp-tt-intro__node {
-    position: absolute;
+.lp-tt-lineup__row {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: repeat(var(--tt-cols, 5), minmax(0, 1fr));
+    justify-items: center;
+    /* Headroom for the "click to learn more" hint above a tile. */
+    padding-top: 34px;
+    gap: 22px clamp(18px, 2.6vw, 44px);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.lp-tt-slot {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 200px;
+    min-width: 0;
     text-align: center;
 }
-/* Disc + caption; shrinks about its centre on short screens (inline scale). */
-.lp-tt-intro__node-inner {
+/* The tiles are the way into the Explore section, so they have to look like
+   they do something: they lift on hover and say what the click will do. */
+.lp-tt-slot__link {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+.lp-tt-slot__hint {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translate(-50%, -4px);
+    padding: 5px 11px;
+    border: 1px solid rgba(127, 227, 228, 0.4);
+    border-radius: 999px;
+    background: rgba(6, 13, 18, 0.92);
+    color: #7fe3e4;
+    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 11.5px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 2;
+}
+.lp-tt-slot__link:hover .lp-tt-slot__hint,
+.lp-tt-slot__link:focus-visible .lp-tt-slot__hint {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+.lp-tt-slot__link:focus-visible {
+    outline: 2px solid #7fe3e4;
+    outline-offset: 6px;
+    border-radius: 14px;
+}
+/* The artwork fills the frame edge to edge — these are app icons, not logos
+   floating in a box. The white ground only shows through for logos that come
+   with transparency. */
+/* An icon waits dark and colourless until the line gets to it, then comes on.
+   TechTourLineup.tsx adds `is-live` as the line arrives. */
+.lp-tt-slot__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(64px, min(9.5vw, 15vh), 168px);
+    aspect-ratio: 1 / 1;
+    border-radius: 24%;
+    background: #ffffff;
+    overflow: hidden;
+    opacity: 0.4;
+    filter: grayscale(1) brightness(0.45);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55);
+    transition: opacity 0.5s ease, filter 0.5s ease, box-shadow 0.5s ease,
+        transform 0.25s ease;
+}
+.lp-tt-slot__icon.is-live {
+    opacity: 1;
+    filter: none;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4),
+        0 0 0 1px rgba(127, 227, 228, 0.35), 0 0 34px rgba(127, 227, 228, 0.25);
+    animation: lp-tt-strike 0.45s ease-out;
+}
+/* The caption follows its icon, a touch behind it. */
+.lp-tt-slot__day,
+.lp-tt-slot__date,
+.lp-tt-slot__name {
+    opacity: 0.35;
+    transition: opacity 0.5s ease 0.08s;
+}
+.lp-tt-slot.is-live .lp-tt-slot__day,
+.lp-tt-slot.is-live .lp-tt-slot__date,
+.lp-tt-slot.is-live .lp-tt-slot__name {
+    opacity: 1;
+}
+.lp-tt-slot__icon--tba.is-live {
+    background: #0f1f26;
+    border-color: #7fe3e4;
+    box-shadow: 0 0 26px rgba(127, 227, 228, 0.22);
+}
+@keyframes lp-tt-strike {
+    0% {
+        transform: scale(1);
+    }
+    32% {
+        transform: scale(1.075);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+.lp-tt-slot__link:hover .lp-tt-slot__icon.is-live,
+.lp-tt-slot__link:focus-visible .lp-tt-slot__icon.is-live {
+    /* Lift only. Lifting and growing at once reads as two separate effects. */
+    transform: translateY(-6px);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(127, 227, 228, 0.6),
+        0 0 36px rgba(127, 227, 228, 0.35);
+}
+.lp-tt-slot__icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.lp-tt-slot__initial {
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 2.6em;
+    font-weight: 600;
+    color: #2f8f90;
+}
+/* A slot still being confirmed: an outline where an icon will be. */
+/* Opaque, not a tint: the line runs behind every icon, and a translucent
+   tile would let it show straight through this one. */
+.lp-tt-slot__icon--tba {
+    background: #0c181d;
+    border: 2px dashed rgba(127, 227, 228, 0.5);
+    box-shadow: none;
+    filter: none;
+    color: #7fe3e4;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 2.2em;
+    font-weight: 600;
+}
+.lp-tt-slot__day {
+    margin-top: 16px;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+}
+.lp-tt-slot__date {
+    margin-top: 1px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+.lp-tt-slot__name {
+    margin-top: 6px;
+    font-size: 13.5px;
+    line-height: 1.3;
+    color: #7fe3e4;
+    overflow-wrap: anywhere;
+}
+
+/* ---- The one ask, and the links that have to survive the hidden footer ---- */
+.lp-tt-poster__cta {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 14px;
-    width: 100%;
-    transform-origin: 50% 50%;
 }
-.lp-tt-intro__disc {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--disc);
-    height: var(--disc);
-    padding: calc(var(--disc) * 0.18);
-    box-sizing: border-box;
-    border-radius: 50%;
-    background: #ffffff;
-    box-shadow: 0 0 0 6px rgba(127, 227, 228, 0.14), 0 18px 50px rgba(0, 0, 0, 0.5);
+.lp-tt-poster__closed {
+    max-width: 52ch;
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.68);
 }
-.lp-tt-intro__disc img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-}
-.lp-tt-intro__initial {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: calc(var(--disc) * 0.42);
-    font-weight: 600;
-    color: var(--teal, #2f8f90);
-}
-.lp-tt-intro__disc--tba {
-    /* Filled with the stage colour so the connecting line stops at the rim. */
-    background: #000000;
-    border: 2px dashed rgba(127, 227, 228, 0.6);
-    box-shadow: none;
-    color: #7fe3e4;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: calc(var(--disc) * 0.36);
-    font-weight: 600;
-    animation: lp-tt-pulse 2.6s ease-in-out infinite;
-}
-.lp-tt-intro__caption {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-.lp-tt-intro__day {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: 17px;
-    font-weight: 600;
+.lp-btn--glow {
+    padding: 19px 46px;
+    font-size: 18px;
+    border-color: #2f8f90;
+    background: #2f8f90;
     color: #ffffff;
+    box-shadow: 0 0 0 0 rgba(127, 227, 228, 0.45), 0 12px 34px rgba(0, 0, 0, 0.5);
+    transition: background 0.18s ease, border-color 0.18s ease, box-shadow 0.25s ease,
+        transform 0.18s ease;
 }
-.lp-tt-intro__date {
-    margin-top: 2px;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.6);
+.lp-btn--glow:hover {
+    background: #3aa9aa;
+    border-color: #3aa9aa;
+    transform: translateY(-1px);
+    box-shadow: 0 0 0 6px rgba(127, 227, 228, 0.16), 0 16px 40px rgba(0, 0, 0, 0.55);
 }
-.lp-tt-intro__company {
-    margin-top: 6px;
-    font-size: 14px;
+.lp-btn--glow:focus-visible {
+    outline: 2px solid #7fe3e4;
+    outline-offset: 3px;
+}
+.lp-btn--wire {
+    border-color: rgba(127, 227, 228, 0.5);
+    background: transparent;
     color: #7fe3e4;
 }
-/* Reserved so the field below keeps its height whether or not the hint shows. */
-.lp-tt-intro__hint-slot {
+.lp-btn--wire:hover {
+    border-color: #7fe3e4;
+    background: rgba(127, 227, 228, 0.08);
+}
+
+/* ---- The one ask, and the way down ---- */
+.lp-tt-poster__btns {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    min-height: 40px;
-    margin-top: 22px;
+    gap: 14px;
 }
-.lp-tt-intro__hint {
-    display: inline-flex;
-    align-self: flex-start;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    border: 1px solid rgba(127, 227, 228, 0.5);
-    border-radius: 999px;
-    background: rgba(0, 0, 0, 0.45);
-    color: #7fe3e4;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: 12px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    white-space: nowrap;
-}
-.lp-tt-intro__hint-arrow {
-    display: inline-block;
-    animation: lp-tt-bob 1.4s ease-in-out infinite;
-}
-/* Top-right on desktop (relative to the stage); under the headline on phones. */
-.lp-tt-intro__skip {
+/* Quiet until the line has finished drawing, then it flashes once — by that
+   point there is nothing left moving, so a single blink is enough to say the
+   page carries on below. */
+.lp-tt-scroll-hint {
     position: absolute;
-    right: 28px;
-    top: 84px;
-    padding: 6px 0;
+    left: 50%;
+    bottom: clamp(14px, 3vh, 34px);
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 4px;
     border: 0;
     background: none;
-    color: rgba(255, 255, 255, 0.7);
-    font: inherit;
-    font-size: 13px;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    color: rgba(255, 255, 255, 0.34);
+    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 12.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
     cursor: pointer;
+    transition: color 0.3s ease;
 }
-.lp-tt-intro__skip:hover {
-    color: #ffffff;
+.lp-tt-scroll-hint:hover {
+    color: #7fe3e4;
 }
-.lp-tt-replay {
-    gap: 8px;
+.lp-tt-scroll-hint__arrow {
+    animation: lp-tt-bob 1.8s ease-in-out infinite;
 }
-@keyframes lp-tt-pulse {
-    0%,
-    100% {
-        box-shadow: 0 0 0 0 rgba(127, 227, 228, 0.28);
+.lp-tt-scroll-hint.is-flashing {
+    animation: lp-tt-hint-flash 1.5s ease-out 1;
+}
+@keyframes lp-tt-hint-flash {
+    0% {
+        color: rgba(255, 255, 255, 0.34);
     }
-    50% {
-        box-shadow: 0 0 0 12px rgba(127, 227, 228, 0);
+    18% {
+        color: #d8ffff;
+        text-shadow: 0 0 14px rgba(127, 227, 228, 0.8);
+    }
+    38% {
+        color: rgba(255, 255, 255, 0.45);
+        text-shadow: none;
+    }
+    54% {
+        color: #7fe3e4;
+        text-shadow: 0 0 12px rgba(127, 227, 228, 0.6);
+    }
+    100% {
+        color: rgba(255, 255, 255, 0.34);
+        text-shadow: none;
     }
 }
 @keyframes lp-tt-bob {
@@ -2274,10 +2339,269 @@ a.lp-member__project:hover {
         transform: translateY(0);
     }
     50% {
-        transform: translateY(4px);
+        transform: translateY(3px);
     }
 }
 
+/* ---- Explore: one panel per evening ---- */
+.lp-tt-explore {
+    display: block;
+    padding: clamp(56px, 9vh, 120px) 0 clamp(64px, 10vh, 130px);
+}
+.lp-tt-explore__head {
+    display: block;
+    max-width: 680px;
+    margin-bottom: clamp(32px, 5vh, 56px);
+}
+.lp--techtour .lp-tt-explore__head .lp-lead {
+    margin: 0;
+}
+.lp-tt-explore__heading {
+    margin: 0 0 14px;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: clamp(28px, 3.2vw, 42px);
+    line-height: 1.1;
+    color: #ffffff;
+}
+.lp-tt-evenings {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(20px, 3vh, 34px);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.lp-tt-evening {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.03);
+    /* The fixed nav would otherwise sit on the panel when a tile scrolls one
+       of these into view; measured, not guessed — the scrollport starts under
+       the bar, so this buys a visible gap rather than just clearing it. */
+    scroll-margin-top: 120px;
+}
+.lp-tt-evening.is-tba {
+    border-style: dashed;
+    border-color: rgba(127, 227, 228, 0.22);
+}
+/* Picture and text swap sides down the list, so the column does not read as
+   one long left-hand strip. The wider track swaps with them — otherwise the
+   picture is the big half on one row and the small half on the next. */
+.lp-tt-evening:nth-child(even) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+}
+.lp-tt-evening:nth-child(even) .lp-tt-evening__art {
+    order: 2;
+}
+.lp-tt-evening:nth-child(even) .lp-tt-evening__body {
+    order: 1;
+}
+.lp-tt-evening__art {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 340px;
+    background: linear-gradient(140deg, #0e2029 0%, #071118 60%, #0b1a22 100%);
+}
+.lp-tt-evening__art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+/* No photo yet: the logo on the panel reads as deliberate, an empty frame
+   does not. */
+.lp-tt-evening__fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 124px;
+    height: 124px;
+    border-radius: 24%;
+    background: #ffffff;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+.lp-tt-evening.is-tba .lp-tt-evening__fallback {
+    background: rgba(127, 227, 228, 0.06);
+    border: 2px dashed rgba(127, 227, 228, 0.45);
+    box-shadow: none;
+    color: #7fe3e4;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 34px;
+    font-weight: 600;
+}
+.lp-tt-evening__fallback img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.lp-tt-evening__body {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    /* Centred against the picture next to it — top-aligned text beside a
+       full-height image reads as a mistake. */
+    justify-content: center;
+    padding: clamp(26px, 3.4vw, 52px);
+}
+.lp-tt-evening__when {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 10px;
+    margin: 0 0 10px;
+}
+.lp-tt-evening__day {
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #7fe3e4;
+}
+.lp-tt-evening__date {
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.45);
+}
+.lp-tt-evening__badge {
+    padding: 2px 9px;
+    border: 1px solid rgba(232, 168, 86, 0.5);
+    background: rgba(232, 168, 86, 0.1);
+    color: #e8a856;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+.lp-tt-evening__title {
+    margin: 0;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: clamp(22px, 2.2vw, 30px);
+    line-height: 1.2;
+    color: #ffffff;
+    overflow-wrap: anywhere;
+}
+.lp-tt-evening__host {
+    margin: 6px 0 0;
+    font-size: 15px;
+    color: rgba(255, 255, 255, 0.55);
+}
+.lp-tt-evening__facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 34px;
+    margin: 20px 0 0;
+}
+.lp-tt-evening__facts > div {
+    display: flex;
+    flex-direction: column;
+}
+.lp-tt-evening__facts dt {
+    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 10.5px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.4);
+}
+.lp-tt-evening__facts dd {
+    margin: 3px 0 0;
+    font-size: 15px;
+    color: #ffffff;
+}
+.lp-tt-evening__text {
+    margin: 18px 0 0;
+    font-size: 15.5px;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.66);
+}
+.lp-tt-evening__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    margin: 24px 0 0;
+}
+/* The page already has one loud button; down here it stays out of the way. */
+.lp-btn--quiet {
+    padding: 11px 20px;
+    border-width: 1px;
+    border-color: rgba(127, 227, 228, 0.4);
+    background: rgba(127, 227, 228, 0.06);
+    color: #7fe3e4;
+    font-size: 14.5px;
+}
+.lp-btn--quiet:hover {
+    border-color: #7fe3e4;
+    background: rgba(127, 227, 228, 0.13);
+}
+.lp-tt-evening__site {
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 14px;
+    text-decoration: none;
+}
+.lp-tt-evening__site:hover {
+    color: #7fe3e4;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* ---- The application page ---- */
+/* Same dark ground, but this one is a normal page: the form first, then
+   everything the poster could not carry. */
+.lp--techtour .lp-tt-stage {
+    position: relative;
+    display: block;
+    padding-bottom: 96px;
+    background: #060d12;
+    color: #ffffff;
+}
+.site-scroll > .lp--techtour .lp-tt-stage {
+    margin-top: -64px;
+}
+.lp--techtour .lp-tt-head {
+    padding-top: calc(64px + 6vh);
+    margin-bottom: 0;
+    max-width: 860px;
+}
+.lp--techtour .lp-kicker {
+    color: #7fe3e4;
+}
+.lp--techtour .lp-page__title {
+    color: #ffffff;
+}
+.lp--techtour .lp-lead {
+    color: rgba(255, 255, 255, 0.7);
+}
+.lp--techtour .lp-round-status {
+    border-color: rgba(127, 227, 228, 0.3);
+    background: rgba(127, 227, 228, 0.07);
+    color: #7fe3e4;
+}
+.lp--techtour .lp-round-status--closed {
+    border-color: rgba(255, 255, 255, 0.22);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.66);
+}
+.lp-tt-back {
+    color: #7fe3e4;
+    text-decoration: none;
+}
+.lp-tt-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.lp-inner--wide {
+    max-width: 1340px;
+}
+/* The application page's own styling lives in techtourApply.css — the form
+   there is inked for the dark ground rather than sat in a white panel. */
 /* ---- Responsive (narrow window / phone) ---- */
 @media (max-width: 900px) {
     .lp-section {
@@ -2313,80 +2637,80 @@ a.lp-member__project:hover {
     .lp-tl--join {
         margin: 28px 0 52px;
     }
-    .lp-tt-days {
-        margin: 28px 0 52px;
+    /* Below the layout breakpoint the poster becomes an ordinary page: the
+       icons wrap, so the line-up's wire is dropped (TechTourLineup.tsx) and
+       nothing is clipped. */
+    .lp-tt-poster__inner {
+        justify-content: flex-start;
+        gap: 26px;
+        padding: calc(56px + 3vh) 20px 56px;
     }
-    .lp-tt-highlights .lp-grid {
-        grid-template-columns: 1fr;
+    .lp-tt-poster__title {
+        font-size: clamp(30px, 9vw, 44px);
+        max-width: none;
     }
-    .lp-tt-intro {
-        --disc: 68px;
+    .lp-tt-facts {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        width: 100%;
+        max-width: 340px;
     }
-    .lp-tt-intro__node {
-        width: 140px;
+    .lp-tt-lineup__row {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 26px 16px;
+        /* No hover on a touch screen, so no hint and no room for it. */
+        padding-top: 0;
     }
-    .lp-tt-intro__node-inner {
-        gap: 8px;
+    .lp-tt-slot__icon {
+        width: clamp(88px, 34vw, 150px);
     }
-    .lp-tt-intro__head {
-        padding-top: 9vh;
-    }
-    .lp-tt-intro__title {
-        font-size: clamp(24px, 6.5vw, 30px);
-    }
-    .lp-tt-intro__day {
-        font-size: 14px;
-    }
-    .lp-tt-intro__date {
-        font-size: 11px;
-    }
-    .lp-tt-intro__company {
-        margin-top: 3px;
-        font-size: 12px;
-        line-height: 1.3;
-    }
-    .lp-tt-intro__hint-slot {
-        min-height: 34px;
-        margin-top: 14px;
-    }
-    .lp-tt-intro__hint {
-        font-size: 11px;
-        padding: 7px 12px;
-        white-space: normal;
-        text-align: center;
-    }
-    .lp-tt-intro__skip {
-        position: static;
-        margin-top: 8px;
-        font-size: 12px;
-    }
-    .lp-page__actions .lp-tt-replay {
+    .lp-tt-poster__cta .lp-btn {
         width: 100%;
     }
-    .lp-tt-day {
-        grid-template-columns: 64px minmax(0, 1fr);
-        grid-template-areas:
-            'logo when'
-            'body body';
-        column-gap: 16px;
-        row-gap: 14px;
-        padding: 18px;
+    .lp-tt-poster__btns {
+        flex-direction: column;
+        width: 100%;
     }
-    .lp-tt-day__logo {
-        grid-area: logo;
-        width: 64px;
-        height: 64px;
-        padding: 8px;
+    .lp-tt-scroll-hint {
+        position: static;
+        transform: none;
+        margin-top: 6px;
+        font-size: 11.5px;
     }
-    .lp-tt-day__when {
-        grid-area: when;
-        align-self: center;
+    /* Picture over text rather than beside it — a photo in a 40 % column on a
+       phone is a stamp. */
+    /* The even-row rule above carries a pseudo-class, so it outranks a plain
+       `.lp-tt-evening` here however late this block comes — it has to be named
+       explicitly or those rows keep two columns on a phone. */
+    .lp-tt-evening,
+    .lp-tt-evening:nth-child(even) {
+        grid-template-columns: minmax(0, 1fr);
+        border-radius: 18px;
+        scroll-margin-top: 96px;
     }
-    .lp-tt-day__body {
-        grid-area: body;
+    /* Stacked on a phone, so the alternation has nothing to alternate. */
+    .lp-tt-evening:nth-child(even) .lp-tt-evening__art,
+    .lp-tt-evening:nth-child(even) .lp-tt-evening__body {
+        order: 0;
     }
-    .lp-tt-day__title {
-        font-size: 20px;
+    .lp-tt-evening__art {
+        min-height: 180px;
+        aspect-ratio: 16 / 9;
+    }
+    .lp-tt-evening__fallback {
+        width: 84px;
+        height: 84px;
+    }
+    .lp-tt-evening__facts {
+        gap: 10px 24px;
+    }
+    /* No hover on a touch screen, so neither the hint nor the room it needs. */
+    .lp-tt-slot__hint {
+        display: none;
+    }
+    .lp--techtour .lp-tt-head {
+        padding-top: calc(64px + 4vh);
     }
     .lp-subform__panel {
         margin-left: 6px;

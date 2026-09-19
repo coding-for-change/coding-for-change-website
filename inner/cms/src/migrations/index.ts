@@ -29,6 +29,7 @@ import * as migration_20260829_104650_add_project_team from './20260829_104650_a
 import * as migration_20260913_114726_techtour_forms_and_applicant_files from './20260913_114726_techtour_forms_and_applicant_files';
 import * as migration_20260913_131103_add_submission_review from './20260913_131103_add_submission_review';
 import * as migration_20260913_153347_add_techtour_visibility from './20260913_153347_add_techtour_visibility';
+import * as migration_20260919_120100_techtour_event_image from './20260919_120100_techtour_event_image';
 
 export const migrations = [
   {
@@ -184,6 +185,11 @@ export const migrations = [
   {
     up: migration_20260913_153347_add_techtour_visibility.up,
     down: migration_20260913_153347_add_techtour_visibility.down,
-    name: '20260913_153347_add_techtour_visibility'
+    name: '20260913_153347_add_techtour_visibility',
+  },
+  {
+    up: migration_20260919_120100_techtour_event_image.up,
+    down: migration_20260919_120100_techtour_event_image.down,
+    name: '20260919_120100_techtour_event_image'
   },
 ];

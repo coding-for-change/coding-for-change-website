@@ -1,0 +1,624 @@
+/* ---- /techtour/apply — the registration, on the dark stage ---- */
+/*
+ * The page is one errand: pick your evenings and send. So it is a single
+ * centred column — a short "what you get" strip, then the form — and the form
+ * itself is not a white card any more. It sits directly on the tour's dark
+ * ground (#060d12), which means every control landing.css draws for a light
+ * page has to be re-inked here: the labels inherit white from `.lp--techtour`,
+ * so a white panel underneath made them invisible, and a white input under a
+ * white label hid the typing too.
+ *
+ * Everything is scoped to `.lp--techtour.tta`, the page's own root, so the
+ * shared form primitives keep their light-page look on /join and /contact. The
+ * doubled scope also wins on specificity over landing.css's own
+ * `.lp--techtour …` rules without depending on stylesheet order.
+ *
+ * Note the global `div { display: flex }` in App.css: every div here states its
+ * display explicitly.
+ */
+
+.lp--techtour.tta {
+    --tta-ink: #ffffff;
+    --tta-muted: rgba(255, 255, 255, 0.66);
+    --tta-faint: rgba(255, 255, 255, 0.45);
+    --tta-accent: #7fe3e4;
+    --tta-line: rgba(127, 227, 228, 0.22);
+    --tta-line-strong: rgba(127, 227, 228, 0.45);
+    --tta-well: rgba(255, 255, 255, 0.045);
+    --tta-teal: #2f8f90;
+}
+
+/* ---- The column ---- */
+.lp--techtour.tta .tta-col {
+    max-width: 760px;
+}
+/* The head, the strip and the form all measure the same: the column's content
+   box. A divider that runs wider than the fields under it reads as a mistake,
+   so nothing here sets a max-width of its own. */
+.lp--techtour.tta .tta-head {
+    max-width: none;
+    margin-bottom: 34px;
+    text-align: center;
+}
+.lp--techtour.tta .tta-head .lp-page__actions {
+    justify-content: center;
+    margin-top: 18px;
+}
+
+/* ---- How this goes: three steps, in place of a lead paragraph ---- */
+/* Boxes with arrows between them were three things to read plus two more to
+   look at. This is one hairline with three nodes on it: the rail says
+   "sequence" on its own, so nothing needs a border, a fill or an arrow. The
+   rail is drawn per step (each node reaches to the next) rather than as one
+   line behind the row, so it can never run past the last node. */
+.lp--techtour.tta .tta-steps {
+    display: flex;
+    gap: 0 12px;
+    margin: 26px 0 30px;
+    padding: 0 0 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    list-style: none;
+}
+.lp--techtour.tta .tta-step {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    text-align: center;
+}
+.tta-step__n {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--tta-line-strong);
+    border-radius: 50%;
+    background: #060d12;
+    color: var(--tta-accent);
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 12px;
+    line-height: 1;
+}
+/* The rail: from this node's edge to the next node's edge, through the gap. */
+.lp--techtour.tta .tta-step:not(:last-child) .tta-step__n::after {
+    content: '';
+    position: absolute;
+    /* Node centre (50%) + its radius + 4px of air, running to the same point
+       on the next node: 100% - (13 + 4) - (13 + 4) + the 12px column gap. */
+    top: 13px;
+    left: calc(50% + 17px);
+    width: calc(100% - 22px);
+    height: 1px;
+    background: rgba(127, 227, 228, 0.28);
+}
+.tta-step__body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.tta-step__title {
+    display: block;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.25;
+    color: var(--tta-ink);
+}
+.tta-step__text {
+    display: block;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--tta-muted);
+}
+
+/* ---- The form ---- */
+/* Full width of the column, so the fields line up with the rule above them. */
+.lp--techtour.tta .tta-form {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: none;
+}
+.lp--techtour.tta .tta-form .lp-cmsform {
+    display: flex;
+    flex-direction: column;
+}
+.lp--techtour.tta .tta-form .lp-label,
+.lp--techtour.tta .tta-form .lp-checkgroup legend,
+.lp--techtour.tta .tta-form .lp-col__head {
+    color: var(--tta-ink);
+}
+.lp--techtour.tta .tta-form .lp-input,
+.lp--techtour.tta .tta-form .lp-textarea,
+.lp--techtour.tta .tta-form .lp-select {
+    border: 1px solid var(--tta-line);
+    background: var(--tta-well);
+    color: var(--tta-ink);
+}
+.lp--techtour.tta .tta-form .lp-input::placeholder,
+.lp--techtour.tta .tta-form .lp-textarea::placeholder {
+    color: var(--tta-faint);
+}
+.lp--techtour.tta .tta-form .lp-input:focus,
+.lp--techtour.tta .tta-form .lp-textarea:focus,
+.lp--techtour.tta .tta-form .lp-select:focus {
+    border-color: var(--tta-accent);
+    background: rgba(127, 227, 228, 0.08);
+}
+/* The dropdown list itself is painted by the OS on its own (light) surface. */
+.lp--techtour.tta .tta-form .lp-select option {
+    color: #06131a;
+    background: #ffffff;
+}
+/* ---- The checkboxes ---- */
+/* Still a real <input type="checkbox">: `appearance: none` only takes the
+   OS paint off it, so it keeps its role, its label, its tab stop and the
+   space bar. Bigger than the browser default (22px against roughly 13), with
+   the tick drawn as a background image because pseudo-elements on a replaced
+   element are not dependable. Scoped to this form — /join keeps the native
+   control. */
+.lp--techtour.tta .tta-form input[type='checkbox'] {
+    appearance: none;
+    -webkit-appearance: none;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    margin: 0;
+    border: 2px solid rgba(127, 227, 228, 0.5);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+}
+.lp--techtour.tta .tta-form input[type='checkbox']:hover {
+    border-color: var(--tta-accent);
+}
+/* Ticked: filled accent with a dark check — the state is the fill, so it does
+   not depend on the row around it. */
+.lp--techtour.tta .tta-form input[type='checkbox']:checked {
+    border-color: var(--tta-accent);
+    background-color: var(--tta-accent);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2306131a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round' d='M3.2 8.4l3.1 3.2 6.5-6.8'/%3E%3C/svg%3E");
+    background-size: 15px 15px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+/* Keyboard only. A mouse click leaves no ring at all — the teal ring on a
+   clicked-but-unticked row was being read as "selected". White, so it can
+   never be mistaken for the accent that means "picked". */
+.lp--techtour.tta .tta-form input[type='checkbox']:focus {
+    outline: none;
+}
+.lp--techtour.tta .tta-form input[type='checkbox']:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+}
+.lp--techtour.tta .tta-form .lp-field__hint {
+    color: var(--tta-muted);
+}
+/* #b5651d and #cc3333 are for a white page; on #060d12 they fail contrast. */
+.lp--techtour.tta .tta-form .lp-field__hint--req {
+    color: #ffb37a;
+}
+.lp--techtour.tta .tta-form .lp-required {
+    color: #ff9b9b;
+}
+.lp--techtour.tta .tta-form .lp-label__link,
+.lp--techtour.tta .tta-form .lp-subform__link {
+    color: var(--tta-accent);
+}
+.lp--techtour.tta .tta-form .lp-form-note {
+    color: var(--tta-faint);
+}
+
+/* Linked "also apply for membership" form: same rail, inked for the dark. */
+/* The "About membership ↗" link belongs to the option, so it goes under the
+   label rather than floating off the end of the sentence, indented to where
+   the label's text starts (22px box + the checkbox's 10px gap) and quiet
+   enough not to compete with it. Underline on hover only — at rest it was
+   reading as a stray fragment of the sentence above it. */
+.lp--techtour.tta .tta-form .lp-subform__link {
+    /* The indent is padding, not margin: as a 100%-wide flex item a margin
+       would push its box past the end of the row. */
+    flex: 1 0 100%;
+    box-sizing: border-box;
+    margin: 6px 0 0;
+    padding-left: 32px;
+    font-size: 13px;
+    text-decoration: none;
+}
+.lp--techtour.tta .tta-form .lp-subform__link:hover,
+.lp--techtour.tta .tta-form .lp-subform__link:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.lp--techtour.tta .tta-form .lp-subform__desc {
+    margin-left: 32px;
+    color: var(--tta-muted);
+}
+.lp--techtour.tta .tta-form .lp-subform__panel {
+    border-left-color: var(--tta-line-strong);
+}
+.lp--techtour.tta .tta-form .lp-upload__drop {
+    border-color: var(--tta-line-strong);
+    background: rgba(127, 227, 228, 0.05);
+}
+.lp--techtour.tta .tta-form .lp-upload__drop:hover {
+    border-color: var(--tta-accent);
+    background: rgba(127, 227, 228, 0.1);
+}
+/* After a PDF is picked. The shared rule paints this with --teal-dark ink on a
+   dark-teal border, which is for a white page; on #060d12 the filename is
+   barely there. (The membership sub-form brings an upload today, and the
+   TechTour form gets its own CV field.) */
+.lp--techtour.tta .tta-form .lp-upload__done {
+    border-color: var(--tta-line-strong);
+    background: rgba(127, 227, 228, 0.07);
+}
+.lp--techtour.tta .tta-form .lp-upload__hint,
+.lp--techtour.tta .tta-form .lp-upload__name {
+    color: var(--tta-muted);
+}
+.lp--techtour.tta .tta-form .lp-upload__remove {
+    color: var(--tta-accent);
+}
+
+/* ---- The form's two parts ---- */
+/* One run of ten questions reads as a wall. The evenings are one part and the
+   person is the other, and each gets a heading of the same weight: the group's
+   own <legend> for the evenings (a set of checkboxes deserves a real legend
+   rather than a heading pretending to be one), and an inserted heading for the
+   rest. Both are styled here, so /join keeps its plain field labels. */
+.lp--techtour.tta .tta-form .lp-formsection {
+    display: block;
+    margin: 34px 0 16px;
+    padding-top: 26px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.lp--techtour.tta .tta-form .lp-formsection__title,
+.lp--techtour.tta .tta-form .lp-checkgroup--rich legend {
+    display: block;
+    margin: 0 0 4px;
+    padding: 0;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 22px;
+    line-height: 1.2;
+    color: var(--tta-ink);
+}
+/* The required marker rides along at label size — at 22px it would read as
+   part of the heading. */
+.lp--techtour.tta .tta-form .lp-checkgroup--rich legend .lp-required {
+    font-size: 15px;
+    vertical-align: 4px;
+}
+.lp--techtour.tta .tta-form .lp-formsection__text {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--tta-muted);
+}
+/* The question's own hint, now sitting under a heading rather than a label. */
+.lp--techtour.tta .tta-form .lp-checkgroup--rich > .lp-field__hint {
+    margin: 0 0 14px;
+    font-size: 14px;
+}
+
+/* ---- Which evenings: one row per visit ---- */
+/* The rows are the only place the week appears on this page — the detail is on
+   /techtour. So a row has to identify an evening at a glance and nothing more:
+   logo, company, its one-liner, the date. The whole row is the label of its
+   checkbox, so anywhere in it toggles the evening. */
+.lp--techtour.tta .tta-form .lp-checkgroup--rich .lp-checkgroup__options {
+    gap: 10px;
+    padding: 0;
+    border: 0;
+    background: none;
+}
+.lp--techtour.tta .tta-form .lp-checkbox--rich {
+    align-items: stretch;
+    gap: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--tta-line);
+    background: var(--tta-well);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.lp--techtour.tta .tta-form .lp-checkbox--rich:hover {
+    border-color: var(--tta-line-strong);
+    background: rgba(127, 227, 228, 0.07);
+}
+/* The box sits at the trailing edge of the row, vertically centred: you read
+   what the evening is — logo, company, one-liner, date — and the control you
+   then act on is the last thing in the row. `order` moves it there without
+   touching CmsForm's markup, where the input stays the label's first child. */
+.lp--techtour.tta .tta-form .lp-checkbox--rich input {
+    order: 1;
+    align-self: center;
+    margin: 0 0 0 14px;
+}
+/* Picked evenings read as picked before you look at the box at all: the row
+   fills and grows a solid edge down its left. Browsers without :has() keep the
+   resting row — the filled checkbox still says which evenings are on.
+   Deliberately not an outline: an outline is what focus uses, and the two
+   meaning the same thing was the confusion this replaces. */
+.lp--techtour.tta .tta-form .lp-checkbox--rich:has(input:checked) {
+    border-color: rgba(127, 227, 228, 0.55);
+    background: rgba(127, 227, 228, 0.16);
+    box-shadow: inset 3px 0 0 var(--tta-accent);
+}
+/* Keyboard focus only, and white rather than accent. `:focus-within` fired on
+   a mouse click too, which left a teal frame around an unticked row. */
+.lp--techtour.tta .tta-form .lp-checkbox--rich:has(input:focus-visible) {
+    outline: 2px solid #ffffff;
+    outline-offset: 3px;
+}
+/* Two rings would be noise — but only drop the box's own where the row ring
+   actually applied. A browser without :has() skips this rule as well as the
+   one above, and keeps the ring on the control itself. */
+.lp--techtour.tta
+    .tta-form
+    .lp-checkbox--rich:has(input:focus-visible)
+    input:focus-visible {
+    outline: none;
+}
+.tta-ev {
+    display: flex;
+    flex: 1 1 auto;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 14px;
+    min-width: 0;
+}
+/* The line-up's app icons, at row size: same 24% corner, artwork filling the
+   tile edge to edge. Padding plus `contain` left a white frame around every
+   logo, which read as a border nobody had drawn on purpose. The white ground
+   stays as the backing for logos that arrive with transparency. */
+.tta-ev__logo {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 46px;
+    height: 46px;
+    /* The TBA variant adds a 2px dashed border; without this it would measure
+       50px and sit a shade larger than every other tile in the column. */
+    box-sizing: border-box;
+    border-radius: 24%;
+    overflow: hidden;
+    background: #ffffff;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+}
+.tta-ev__logo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.tta-ev__mark {
+    display: block;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 18px;
+    color: #2f8f90;
+}
+/* An evening still being confirmed: an outline where an icon will be, like
+   the poster's own TBA slot. */
+.tta-ev__logo--tba {
+    background: #0c181d;
+    border: 2px dashed rgba(127, 227, 228, 0.5);
+    box-shadow: none;
+}
+.tta-ev__logo--tba .tta-ev__mark {
+    color: var(--tta-accent);
+}
+/* Basis 0, not auto: the row wraps (the date drops to its own line on a
+   phone), and a long one-liner must not be what triggers that wrap. */
+.tta-ev__body {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.tta-ev__company {
+    display: block;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15.5px;
+    line-height: 1.25;
+    color: #ffffff;
+}
+.tta-ev__line {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 13.5px;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.62);
+}
+.tta-ev__when {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    text-align: right;
+}
+.tta-ev__day {
+    display: block;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #7fe3e4;
+}
+.tta-ev__date,
+.tta-ev__time {
+    display: block;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.72);
+    white-space: nowrap;
+}
+.tta-ev__badge {
+    display: block;
+    margin-top: 2px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+/* The one ask, directly under the evenings it is about: a single bold line,
+   no rail and no kicker. It is the reminder the rows need at the moment of
+   ticking, not a paragraph about the tour. */
+.lp--techtour.tta .tta-form .lp-checkgroup__note {
+    display: block;
+    margin-top: 12px;
+}
+.tta-ask {
+    display: block;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* ---- Send, or park it for later ---- */
+.lp--techtour.tta .tta-form .lp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+    margin-top: 4px;
+}
+.lp--techtour.tta .tta-form .lp-submit {
+    background: var(--tta-teal);
+}
+.lp--techtour.tta .tta-form .lp-submit:hover:not(:disabled) {
+    background: #3aabac;
+}
+/* Secondary by shape, not by being hidden: same height, outline instead of
+   fill, so "save" never competes with "send" but is always findable. */
+.lp--techtour.tta .tta-form .lp-draft__save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 22px;
+    border: 1px solid var(--tta-line-strong);
+    background: none;
+    color: var(--tta-accent);
+    cursor: pointer;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+.lp--techtour.tta .tta-form .lp-draft__save:hover:not(:disabled) {
+    border-color: var(--tta-accent);
+    background: rgba(127, 227, 228, 0.1);
+}
+.lp--techtour.tta .tta-form .lp-draft__save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.lp--techtour.tta .tta-form .lp-draft__note {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--tta-faint);
+}
+.lp--techtour.tta .tta-form .lp-draft__flag {
+    color: var(--tta-accent);
+}
+.lp--techtour.tta .tta-form .lp-draft__clear {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: inherit;
+    color: var(--tta-muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.lp--techtour.tta .tta-form .lp-draft__clear:hover {
+    color: var(--tta-ink);
+}
+
+/* Loading / unavailable. */
+.lp--techtour.tta .tta-form .lp-loading,
+.lp--techtour.tta .tta-form .lp-empty {
+    color: var(--tta-muted);
+}
+
+/* ---- Registration closed: what stands in for the form ---- */
+.lp--techtour.tta .tta-closed__head {
+    margin: 0 0 8px;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 26px;
+    color: var(--tta-ink);
+}
+.lp--techtour.tta .tta-closed__text {
+    margin: 0;
+    max-width: 58ch;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--tta-muted);
+}
+
+@media (max-width: 700px) {
+    .lp--techtour.tta .tta-head {
+        margin-bottom: 26px;
+    }
+    /* Three steps in a phone's width would be three words per line, so the
+       rail turns on its side: node left, one line of text beside it. */
+    .lp--techtour.tta .tta-steps {
+        flex-direction: column;
+        gap: 14px;
+        margin: 22px 0 26px;
+        padding-bottom: 22px;
+    }
+    .lp--techtour.tta .tta-step {
+        flex: none;
+        flex-direction: row;
+        align-items: center;
+        gap: 12px;
+        text-align: left;
+    }
+    .lp--techtour.tta .tta-step:not(:last-child) .tta-step__n::after {
+        top: 27px;
+        left: calc(50% - 0.5px);
+        width: 1px;
+        height: 14px;
+    }
+    .tta-step__body {
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 2px 8px;
+    }
+    /* Narrow rows stack: the date moves under the company rather than
+       squeezing the one-liner into a column two words wide. */
+    .tta-ev__when {
+        flex: 1 0 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 8px;
+        /* Lines up under the body, past the logo tile (46px + the 14px gap). */
+        padding-left: 60px;
+        box-sizing: border-box;
+        text-align: left;
+    }
+    .lp--techtour.tta .tta-form .lp-actions {
+        gap: 10px;
+    }
+    .lp--techtour.tta .tta-form .lp-submit,
+    .lp--techtour.tta .tta-form .lp-draft__save {
+        flex: 1 1 100%;
+    }
+}
