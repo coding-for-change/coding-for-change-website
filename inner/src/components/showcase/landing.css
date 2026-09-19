@@ -2655,7 +2655,7 @@ a.lp-member__project:hover {
     .lp-tt-poster__inner {
         justify-content: flex-start;
         gap: clamp(20px, 3.2vh, 32px);
-        padding: clamp(30px, 7vh, 76px) 16px 26px;
+        padding: clamp(38px, 9vh, 96px) 16px 26px;
     }
     /* Whatever room is left over is shared between two places: above the
        line-up and above the ask. So the title and its caption sit high but
