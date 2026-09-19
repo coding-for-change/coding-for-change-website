@@ -8,7 +8,12 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import TechTourLineup from './TechTourLineup';
 import TechTourExplore, { eventAnchor } from './TechTourExplore';
 import useDarkNav from '../../hooks/useDarkNav';
-import { formatDateRange, techTourRegistrationOpen } from '../../lib/techTour';
+import {
+    formatDateRangeSplit,
+    formatDateSplit,
+    techTourRegistrationOpen,
+} from '../../lib/techTour';
+import type { SplitDate } from '../../lib/techTour';
 import './landing.css';
 
 export interface TechTourProps {
@@ -107,13 +112,19 @@ const TechTour: React.FC<TechTourProps> = (props) => {
     // The three facts: what it is, when it runs, by when to sign up. All of it
     // comes from the events and the deadline already in the CMS, so there is
     // nothing extra to keep in step.
+    // Each value carries its year separately so the narrow layout can drop it
+    // (`.lp-tt-fact__year` in landing.css): on a phone the row is three dates
+    // wide and the same year twice over is the first thing that can go.
     const facts = useMemo(() => {
-        const out: { icon: React.ReactNode; label: string; value: string }[] = [];
+        const out: { icon: React.ReactNode; label: string; value: SplitDate }[] = [];
         if (events.length > 0) {
             out.push({
                 icon: <IconFormat />,
                 label: t.techtour.factFormatLabel,
-                value: t.techtour.factEvenings.replace('{count}', String(events.length)),
+                value: {
+                    text: t.techtour.factEvenings.replace('{count}', String(events.length)),
+                    year: '',
+                },
             });
         }
         const dates = events
@@ -123,7 +134,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
             out.push({
                 icon: <IconDates />,
                 label: t.techtour.factDatesLabel,
-                value: formatDateRange(dates[0], dates[dates.length - 1], dateLocale),
+                value: formatDateRangeSplit(dates[0], dates[dates.length - 1], dateLocale),
             });
         }
         const deadline = tt?.registrationDeadline ? new Date(tt.registrationDeadline) : null;
@@ -131,11 +142,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
             out.push({
                 icon: <IconDeadline />,
                 label: t.techtour.factDeadlineLabel,
-                value: deadline.toLocaleDateString(dateLocale, {
-                    day: 'numeric',
-                    month: 'long',
-                    year: 'numeric',
-                }),
+                value: formatDateSplit(deadline, dateLocale),
             });
         }
         return out;
@@ -167,7 +174,14 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                                 <span className="lp-tt-fact__icon">{fact.icon}</span>
                                 <span className="lp-tt-fact__body">
                                     <span className="lp-tt-fact__label">{fact.label}</span>
-                                    <span className="lp-tt-fact__value">{fact.value}</span>
+                                    <span className="lp-tt-fact__value">
+                                    {fact.value.text}
+                                    {fact.value.year && (
+                                        <span className="lp-tt-fact__year">
+                                            {fact.value.year}
+                                        </span>
+                                    )}
+                                </span>
                                 </span>
                             </li>
                         ))}
