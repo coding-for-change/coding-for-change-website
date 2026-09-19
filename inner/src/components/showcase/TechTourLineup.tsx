@@ -32,7 +32,8 @@ import { useLanguage } from '../../contexts/LanguageContext';
  *
  * The line is rebuilt from measured layout whenever the row resizes, and
  * dropped entirely once the row wraps to more than one line — a rail threaded
- * through a grid would be nonsense.
+ * through a grid would be nonsense — or once the viewport is narrow enough
+ * that the icons have shrunk to phone size (`WIRE_MIN_WIDTH`).
  */
 
 /** How long the line takes to draw itself, and how long it waits first. */
@@ -45,6 +46,13 @@ const OUTSET = 7;
 const RUN_OFF = 220;
 /** Icons whose centres sit this close together count as one row. */
 const SAME_ROW_TOL = 8;
+/** Below this width there is no wire. It is the poster's own layout
+ *  breakpoint (landing.css), where the row shrinks to phone-sized icons: the
+ *  frames stand `OUTSET` clear on each side, which is most of the gap a phone
+ *  has between two tiles, so the line would thread itself through its own
+ *  frames. Without it every icon is lit from the start, which is what a
+ *  screen you are holding wants anyway. */
+const WIRE_MIN_WIDTH = 901;
 
 interface Box {
     x: number;
@@ -182,6 +190,7 @@ const TechTourLineup: React.FC<TechTourLineupProps> = ({
         const row = rowRef.current;
         if (!root || !row || events.length === 0) return;
         const measure = () => {
+            if (window.innerWidth < WIRE_MIN_WIDTH) return setGeom(null);
             const icons = Array.from(row.querySelectorAll<HTMLElement>('.lp-tt-slot__icon'));
             if (icons.length !== events.length) return setGeom(null);
             const boxes = icons.map((el) => {
