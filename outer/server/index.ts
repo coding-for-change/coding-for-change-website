@@ -197,6 +197,8 @@ app.get('/sitemap.xml', async (req, res) => {
     // then, and an unreachable CMS keeps it out rather than guessing.
     if (techTour?.visibility === 'public') {
         add('/techtour', '0.8', isoDate(techTour.updatedAt));
+        // The registration behind the tour page's "Apply now".
+        add('/techtour/apply', '0.6', isoDate(techTour.updatedAt));
     }
     add('/contact', '0.7');
     add('/imprint', '0.3');

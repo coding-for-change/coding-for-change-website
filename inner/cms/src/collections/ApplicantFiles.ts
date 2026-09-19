@@ -5,8 +5,9 @@ import { APIError } from 'payload';
 export const APPLICANT_FILE_MAX_BYTES = 5 * 1024 * 1024;
 
 /**
- * Documents uploaded with a form submission — today the CV on the membership
- * application. Kept apart from `media` on purpose: `media` is world-readable
+ * Documents uploaded with a form submission: the CV on the membership
+ * application, and the optional CV on the TechTour registration. Kept apart
+ * from `media` on purpose: `media` is world-readable
  * (it serves the site's images), while these are personal data that only a
  * logged-in admin may open.
  *
@@ -15,8 +16,11 @@ export const APPLICANT_FILE_MAX_BYTES = 5 * 1024 * 1024;
  * submit. Files that never make it onto a submission (visitor abandoned the
  * form) are removed by `purgeOrphanApplicantFiles` after 24 hours.
  *
- * Retention of the files that *are* attached follows the applications
- * themselves — delete the submission's files once a round is decided.
+ * Retention of the files that *are* attached follows the submission they hang
+ * off, and the two differ: an application's CV goes when the round is decided
+ * (six months at the latest), a TechTour registration's within three months of
+ * the event week. Both are stated in the Datenschutz — see
+ * `scripts/lib/privacyEdits.mjs`, section 5.
  */
 export const ApplicantFiles: CollectionConfig = {
   slug: 'applicant-files',

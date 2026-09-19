@@ -1,5 +1,5 @@
 'use client';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { submitForm, uploadApplicantFile } from '../../api';
 import { UploadError } from '../../api/client';
@@ -111,6 +111,88 @@ interface UploadState {
     error?: string;
 }
 
+/**
+ * Page-supplied rendering for one checkboxGroup's options, keyed by field name
+ * in `checkboxGroups`. /techtour/apply uses it to draw each evening as a row
+ * with the company's logo, its one-liner and the date, instead of a bare
+ * checkbox — the answer sent to the CMS is unchanged either way.
+ */
+export interface CheckboxGroupOverride {
+    /** Rich label for one option; falling back to the plain label when null. */
+    renderOption?: (
+        option: { label: string; value: string },
+        index: number
+    ) => React.ReactNode;
+    /** Rendered under the options — e.g. the attendance ask that belongs here. */
+    note?: React.ReactNode;
+}
+
+/**
+ * A heading opened before a named question, so a long form reads as a couple
+ * of parts rather than one run of fields. Opt-in: a form that passes none —
+ * /join, /contact — renders exactly as it always did.
+ */
+export interface CmsFormSection {
+    /** The field this section starts at, by name. Unknown names are ignored. */
+    at: string;
+    title: string;
+    /** Optional line under the heading. */
+    text?: string;
+}
+
+/**
+ * Opt-in "save and finish later". Off unless a page passes it, so /join and
+ * /contact keep storing nothing at all.
+ *
+ * Only what the visitor typed is kept, and only when they press the button —
+ * never on a keystroke. Consent ticks, linked-form toggles and uploaded files
+ * are deliberately left out: a consent box must be ticked deliberately each
+ * time, and a file lives in the CMS already. The key is declared as § 25(2)
+ * TDDDG storage in `lib/klaroConfig.ts` and allow-listed in
+ * `scripts/consent-scan.mjs`.
+ */
+export interface CmsFormDraft {
+    /** localStorage key the answers are parked under. */
+    key: string;
+    /** Copy for the save row, so this component carries no page wording. */
+    labels: {
+        save: string;
+        saved: string;
+        restored: string;
+        clear: string;
+        cleared: string;
+        note: string;
+    };
+}
+
+/** Answers we park: everything typed or picked, nothing consent-shaped. */
+const DRAFTABLE = new Set(['text', 'email', 'textarea', 'number', 'select', 'checkboxGroup']);
+/** A parked draft is forgotten after this long — it is personal data. */
+const DRAFT_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
+interface StoredDraft {
+    v: 1;
+    savedAt: number;
+    values: Record<string, string | string[]>;
+}
+
+const readDraft = (key: string): StoredDraft | null => {
+    try {
+        const raw = window.localStorage.getItem(key);
+        if (!raw) return null;
+        const parsed = JSON.parse(raw) as StoredDraft;
+        if (parsed?.v !== 1 || typeof parsed.savedAt !== 'number') return null;
+        if (Date.now() - parsed.savedAt > DRAFT_MAX_AGE_MS) {
+            window.localStorage.removeItem(key);
+            return null;
+        }
+        return parsed;
+    } catch {
+        // Private mode, disabled storage, or something else wrote the key.
+        return null;
+    }
+};
+
 export interface CmsFormProps {
     form: CmsFormDoc;
     /** Analytics/Ads label; defaults from the form title. */
@@ -123,6 +205,19 @@ export interface CmsFormProps {
      * applications have closed. Matched case-insensitively.
      */
     hiddenSubforms?: string[];
+    /** Rich rendering for named checkbox groups; see CheckboxGroupOverride. */
+    checkboxGroups?: Record<string, CheckboxGroupOverride>;
+    /**
+     * Field names to pull to the front, in this order; everything else keeps
+     * the order the CMS gives it. /techtour/apply asks which evenings first,
+     * because that is the decision the page is about — the admin's order is
+     * still what every other page renders.
+     */
+    fieldOrder?: string[];
+    /** Headings to open before named questions; see CmsFormSection. */
+    sections?: CmsFormSection[];
+    /** Enables "save and finish later"; see CmsFormDraft. */
+    draft?: CmsFormDraft;
     className?: string;
     onSubmitted?: () => void;
 }
@@ -132,6 +227,10 @@ const CmsForm: React.FC<CmsFormProps> = ({
     conversion,
     heading,
     hiddenSubforms,
+    checkboxGroups,
+    fieldOrder,
+    sections,
+    draft,
     className,
     onSubmitted,
 }) => {
@@ -152,16 +251,26 @@ const CmsForm: React.FC<CmsFormProps> = ({
     const doneRef = useRef<Set<number>>(new Set());
 
     // A linked form whose round is closed is dropped entirely: not rendered,
-    // not validated, not submitted.
-    const fields = useMemo(
-        () =>
-            (form.fields ?? []).filter((f) => {
-                if (!isSubform(f)) return true;
-                const sub = typeof f.form === 'object' && f.form ? f.form : null;
-                return !sub || !hidden.has(sub.title.trim().toLowerCase());
-            }),
-        [form.fields, hidden]
-    );
+    // not validated, not submitted. `fieldOrder` then pulls named questions to
+    // the front; a name that isn't on this form is simply ignored, and without
+    // the prop the CMS order is untouched.
+    const fields = useMemo(() => {
+        const kept = (form.fields ?? []).filter((f) => {
+            if (!isSubform(f)) return true;
+            const sub = typeof f.form === 'object' && f.form ? f.form : null;
+            return !sub || !hidden.has(sub.title.trim().toLowerCase());
+        });
+        if (!fieldOrder?.length) return kept;
+        const rank = (f: CmsFormField) => {
+            const at = isInput(f) ? fieldOrder.indexOf(f.name) : -1;
+            return at === -1 ? fieldOrder.length : at;
+        };
+        // Stable: everything the list doesn't name keeps its relative order.
+        return kept
+            .map((f, i) => ({ f, i, r: rank(f) }))
+            .sort((a, b) => a.r - b.r || a.i - b.i)
+            .map((e) => e.f);
+    }, [form.fields, hidden, fieldOrder]);
     const parentNames = useMemo(
         () => new Set(fields.filter(isInput).map((f) => f.name)),
         [fields]
@@ -184,6 +293,115 @@ const CmsForm: React.FC<CmsFormProps> = ({
 
     const setValue = (name: string, value: Value) =>
         setValues((prev) => ({ ...prev, [name]: value }));
+
+    /**
+     * Questions the visitor has actually engaged with.
+     *
+     * A required question is not a mistake until someone has had a go at it, so
+     * nothing complains on first paint — the asterisk and the disabled send
+     * button already say what is needed. A question is "touched" once it is
+     * changed, or once focus leaves it (so clicking in, choosing nothing and
+     * moving on does count). The submit button is disabled while the form is
+     * invalid, so a submit attempt is not an event that can be observed here;
+     * this is the signal that stands in for it.
+     *
+     * Only the checkbox group renders a validation message today — the other
+     * field types show the required marker and nothing else — so this is the
+     * single place it is read. It is keyed by field name so a second one would
+     * behave the same way.
+     */
+    const [touched, setTouched] = useState<Record<string, boolean>>({});
+    const markTouched = (name: string) =>
+        setTouched((prev) => (prev[name] ? prev : { ...prev, [name]: true }));
+    /** Focus left the field entirely (not just moved between its controls). */
+    const handleFieldBlur = (name: string) => (e: React.FocusEvent<HTMLElement>) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+        markTouched(name);
+    };
+
+    // ---- Save and finish later (only when `draft` is passed) ----
+    const draftKey = draft?.key;
+    const [draftState, setDraftState] = useState<'none' | 'restored' | 'saved' | 'cleared'>(
+        'none'
+    );
+    /** Field names whose answers we are willing to park. */
+    const draftable = useMemo(
+        () =>
+            new Set(
+                fields
+                    .filter(isPlainInput)
+                    .filter((f) => DRAFTABLE.has(f.blockType))
+                    .map((f) => f.name)
+            ),
+        [fields]
+    );
+
+    // Restore once, after mount: reading storage during render would differ
+    // between the server pass and the browser and break hydration.
+    //
+    // The ref is what makes it *once*. `draftable` is derived from `fields`,
+    // which is rebuilt whenever a caller passes a fresh `hiddenSubforms` array,
+    // so without the guard this effect would re-run on every render — and since
+    // it calls setValues with a new object each time, that is an endless
+    // render loop. An empty field list means the form has not arrived yet, so
+    // the guard trips only once there is something to restore into.
+    const restoredRef = useRef(false);
+    useEffect(() => {
+        if (!draftKey || restoredRef.current || draftable.size === 0) return;
+        restoredRef.current = true;
+        const stored = readDraft(draftKey);
+        if (!stored) return;
+        const restored: Values = {};
+        Object.entries(stored.values).forEach(([name, value]) => {
+            if (!draftable.has(name)) return; // the form changed since
+            if (Array.isArray(value) && value.every((v) => typeof v === 'string'))
+                restored[name] = value;
+            else if (typeof value === 'string') restored[name] = value;
+        });
+        if (Object.keys(restored).length === 0) return;
+        // Anything already typed wins over the parked copy.
+        setValues((prev) => ({ ...restored, ...prev }));
+        setDraftState('restored');
+    }, [draftKey, draftable]);
+
+    const forgetDraft = useCallback(() => {
+        if (!draftKey) return;
+        try {
+            window.localStorage.removeItem(draftKey);
+        } catch {
+            /* nothing stored, nothing to forget */
+        }
+    }, [draftKey]);
+
+    const saveDraft = () => {
+        if (!draftKey) return;
+        const payload: StoredDraft['values'] = {};
+        draftable.forEach((name) => {
+            const value = values[name];
+            if (Array.isArray(value)) {
+                if (value.length > 0) payload[name] = value;
+            } else if (typeof value === 'string' && value.trim() !== '') {
+                payload[name] = value;
+            }
+        });
+        if (Object.keys(payload).length === 0) return;
+        try {
+            window.localStorage.setItem(
+                draftKey,
+                JSON.stringify({ v: 1, savedAt: Date.now(), values: payload } satisfies StoredDraft)
+            );
+            setDraftState('saved');
+        } catch {
+            // Storage refused (private mode, quota). Saying nothing is better
+            // than claiming a save that did not happen.
+            setDraftState('none');
+        }
+    };
+
+    const clearDraft = () => {
+        forgetDraft();
+        setDraftState('cleared');
+    };
 
     const valueOf = (field: PlainInput): Value => {
         const v = values[field.name];
@@ -317,6 +535,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
             setSendError(true);
             return;
         }
+        // The answers are with us now; the parked copy has done its job.
+        forgetDraft();
         setSubmitted(true);
         onSubmitted?.();
     };
@@ -389,13 +609,22 @@ const CmsForm: React.FC<CmsFormProps> = ({
 
         if (field.blockType === 'checkboxGroup') {
             const picked = Array.isArray(value) ? value : [];
-            const toggle = (opt: string, on: boolean) =>
+            const toggle = (opt: string, on: boolean) => {
+                markTouched(field.name);
                 setValue(
                     field.name,
                     on ? [...picked, opt] : picked.filter((v) => v !== opt)
                 );
+            };
+            const override = checkboxGroups?.[field.name];
             return (
-                <fieldset key={key} className="lp-field lp-checkgroup">
+                <fieldset
+                    key={key}
+                    className={`lp-field lp-checkgroup${
+                        override ? ' lp-checkgroup--rich' : ''
+                    }`}
+                    onBlur={handleFieldBlur(field.name)}
+                >
                     <legend className="lp-label">
                         {star(field)}
                         {fieldLabel}
@@ -404,23 +633,41 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         <p className="lp-field__hint">{field.description}</p>
                     )}
                     <div className="lp-checkgroup__options">
-                        {(field.options ?? []).map((opt) => (
-                            <label key={opt.value} className="lp-checkbox">
-                                <input
-                                    type="checkbox"
-                                    name={`${field.name}[]`}
-                                    value={opt.value}
-                                    checked={picked.includes(opt.value)}
-                                    onChange={(e) => toggle(opt.value, e.target.checked)}
-                                />
-                                <span className="lp-label">{renderLabelText(opt.label)}</span>
-                            </label>
-                        ))}
+                        {(field.options ?? []).map((opt, i) => {
+                            const rich = override?.renderOption?.(opt, i) ?? null;
+                            return (
+                                <label
+                                    key={opt.value}
+                                    className={`lp-checkbox${rich ? ' lp-checkbox--rich' : ''}`}
+                                >
+                                    <input
+                                        type="checkbox"
+                                        name={`${field.name}[]`}
+                                        value={opt.value}
+                                        checked={picked.includes(opt.value)}
+                                        onChange={(e) => toggle(opt.value, e.target.checked)}
+                                    />
+                                    {rich ?? (
+                                        <span className="lp-label">
+                                            {renderLabelText(opt.label)}
+                                        </span>
+                                    )}
+                                </label>
+                            );
+                        })}
                     </div>
-                    {field.required && picked.length === 0 && (
+                    {/* The error belongs to the options, so it sits with them
+                        — above any note a page has attached. Without a note
+                        (every other form) the order is unchanged. And it waits
+                        for the visitor to have had a go at the question: see
+                        `touched` above. */}
+                    {field.required && picked.length === 0 && touched[field.name] && (
                         <p className="lp-field__hint lp-field__hint--req">
                             {t.forms.chooseAtLeastOne}
                         </p>
+                    )}
+                    {override?.note && (
+                        <div className="lp-checkgroup__note">{override.note}</div>
                     )}
                 </fieldset>
             );
@@ -604,6 +851,27 @@ const CmsForm: React.FC<CmsFormProps> = ({
         return renderInput(field, key);
     };
 
+    /** Sections by the field they open at. Empty unless a page asks for them. */
+    const sectionAt = useMemo(() => {
+        const map = new Map<string, CmsFormSection>();
+        (sections ?? []).forEach((s) => map.set(s.at, s));
+        return map;
+    }, [sections]);
+
+    const submitButton = (
+        <button
+            className="lp-submit"
+            type="submit"
+            disabled={!formValid || submitting}
+            onMouseDown={handleSubmit}
+            onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') handleSubmit();
+            }}
+        >
+            {submitting ? t.forms.submitting : form.submitButtonLabel || t.forms.send}
+        </button>
+    );
+
     if (submitted) {
         return (
             <div className={`lp-cmsform${className ? ` ${className}` : ''}`}>
@@ -633,20 +901,69 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     {heading}
                 </h3>
             )}
-            {fields.map((field, i) => renderField(field, `f-${i}`))}
-            <button
-                className="lp-submit"
-                type="submit"
-                disabled={!formValid || submitting}
-                onMouseDown={handleSubmit}
-                onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') handleSubmit();
-                }}
-            >
-                {submitting
-                    ? t.forms.submitting
-                    : form.submitButtonLabel || t.forms.send}
-            </button>
+            {fields.map((field, i) => {
+                // A section opens immediately before the field it names; with
+                // no sections the fragment renders nothing extra at all.
+                const section = isInput(field) ? sectionAt.get(field.name) : undefined;
+                return (
+                    <React.Fragment key={`f-${i}`}>
+                        {section && (
+                            <div className="lp-formsection">
+                                <h3 className="lp-formsection__title">{section.title}</h3>
+                                {section.text && (
+                                    <p className="lp-formsection__text">{section.text}</p>
+                                )}
+                            </div>
+                        )}
+                        {renderField(field, `f-${i}`)}
+                    </React.Fragment>
+                );
+            })}
+            {/* Without a draft this is the bare button it has always been —
+                forms that don't opt in keep their exact markup. The draft row's
+                styling lives with the page that does opt in, today only
+                showcase/techtourApply.css. */}
+            {draft ? (
+                <div className="lp-actions">
+                    {submitButton}
+                    <button
+                        className="lp-draft__save"
+                        type="button"
+                        onClick={saveDraft}
+                        disabled={submitting}
+                    >
+                        {draft.labels.save}
+                    </button>
+                </div>
+            ) : (
+                submitButton
+            )}
+            {draft && (
+                <p className="lp-draft__note">
+                    {draftState === 'restored' && (
+                        <span className="lp-draft__flag">{draft.labels.restored} </span>
+                    )}
+                    {draftState === 'saved' && (
+                        <span className="lp-draft__flag">{draft.labels.saved}. </span>
+                    )}
+                    {draftState === 'cleared' && (
+                        <span className="lp-draft__flag">{draft.labels.cleared} </span>
+                    )}
+                    {draft.labels.note}
+                    {(draftState === 'restored' || draftState === 'saved') && (
+                        <>
+                            {' '}
+                            <button
+                                className="lp-draft__clear"
+                                type="button"
+                                onClick={clearDraft}
+                            >
+                                {draft.labels.clear}
+                            </button>
+                        </>
+                    )}
+                </p>
+            )}
             <p className="lp-form-note">
                 {sendError ? (
                     <span className="lp-required">{t.forms.sendError}</span>

@@ -166,6 +166,15 @@ export const TechTour: GlobalConfig = {
           ],
         },
         {
+          name: 'image',
+          type: 'upload',
+          relationTo: 'media',
+          admin: {
+            description:
+              'Photo for this visit in the "Explore" section further down the page — the office, the team, the space. Landscape works best. Without one the section falls back to the logo on a plain panel.',
+          },
+        },
+        {
           name: 'status',
           type: 'select',
           defaultValue: 'confirmed',

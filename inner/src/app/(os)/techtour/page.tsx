@@ -1,8 +1,8 @@
 import TechTour from '@/components/showcase/TechTour';
-import { fetchCollection, fetchGlobal } from '@/lib/cms';
+import { fetchGlobal } from '@/lib/cms';
 import { getServerLocale } from '@/lib/locale';
 import type { Metadata } from 'next';
-import type { CmsTechTour, CmsForm } from '@/api/types';
+import type { CmsTechTour } from '@/api/types';
 import { techTourIndexable } from '@/lib/techTour';
 
 export const dynamic = 'force-dynamic';
@@ -25,9 +25,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function TechTourPage() {
     const locale = await getServerLocale();
-    const [techTour, forms] = await Promise.all([
-        fetchGlobal<CmsTechTour>('tech-tour', locale),
-        fetchCollection<CmsForm>('forms', locale),
-    ]);
-    return <TechTour techTour={techTour} forms={forms} serverNow={Date.now()} />;
+    const techTour = await fetchGlobal<CmsTechTour>('tech-tour', locale);
+    return <TechTour techTour={techTour} serverNow={Date.now()} />;
 }

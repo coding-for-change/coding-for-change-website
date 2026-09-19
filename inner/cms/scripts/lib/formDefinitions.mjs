@@ -32,6 +32,11 @@ const L = {
     why: 'Why do you want to join Coding for Change?',
     cv: 'Your CV',
     cvHint: 'PDF, max. 5 MB',
+    university: 'University',
+    course: 'Course of study',
+    techtourCv: 'Your CV (optional)',
+    techtourCvHint:
+        'Only if you want the companies to see it. PDF, max. 5 MB — the TechTour is open to you either way.',
     hoursCommit: 'I can commit about 5 hours per week for the project phase.',
     privacy:
       'I agree that Coding for Change e.V. processes the data in this form to handle my application, as described in the [privacy policy](/privacy).',
@@ -61,6 +66,11 @@ const L = {
     why: 'Warum möchtest du bei Coding for Change mitmachen?',
     cv: 'Dein Lebenslauf',
     cvHint: 'PDF, max. 5 MB',
+    university: 'Hochschule',
+    course: 'Studiengang',
+    techtourCv: 'Dein Lebenslauf (optional)',
+    techtourCvHint:
+        'Nur wenn du willst, dass die Unternehmen ihn sehen. PDF, max. 5 MB — zur TechTour kannst du auch ohne kommen.',
     hoursCommit: 'Ich kann in der Projektphase etwa 5 Stunden pro Woche einbringen.',
     privacy:
       'Ich bin einverstanden, dass Coding for Change e.V. die Angaben in diesem Formular zur Bearbeitung meiner Bewerbung verarbeitet, wie in der [Datenschutzerklärung](/privacy) beschrieben.',
@@ -142,6 +152,8 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
     { blockType: 'text', name: 'firstName', label: t.firstName, required: true, width: 50 },
     { blockType: 'text', name: 'lastName', label: t.lastName, required: true, width: 50 },
     { blockType: 'email', name: 'email', label: t.email, required: true, width: 100 },
+    { blockType: 'text', name: 'university', label: t.university, required: true, width: 50 },
+    { blockType: 'text', name: 'course', label: t.course, required: true, width: 50 },
     {
       blockType: 'checkboxGroup',
       name: 'events',
@@ -150,6 +162,17 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
       width: 100,
       description: t.eventsHint,
       options: EVENT_OPTIONS.map((value) => ({ value, label: t[value] })),
+    },
+    // Optional, deliberately: the tour is free and open to every student, so a
+    // required CV would contradict the promise on the page. It exists because
+    // the host companies ask who is coming.
+    {
+      blockType: 'upload',
+      name: 'cv',
+      label: t.techtourCv,
+      required: false,
+      width: 100,
+      description: t.techtourCvHint,
     },
     { blockType: 'checkbox', name: 'attendCommit', label: t.attendCommit, required: true, width: 100 },
     { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true, width: 100 },

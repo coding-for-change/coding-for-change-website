@@ -1,72 +1,67 @@
 'use client';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
-import { useCmsGlobal, useCmsCollection, mediaUrl } from '../../api';
-import type { CmsForm as CmsFormDoc, CmsTechTour, CmsTechTourEvent } from '../../api';
+import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion';
+import { useCmsGlobal } from '../../api';
+import type { CmsTechTour } from '../../api';
 import { useLanguage } from '../../contexts/LanguageContext';
-import CmsForm from '../forms/CmsForm';
-import ClosingCta from './ClosingCta';
-import TechTourIntro from './TechTourIntro';
-import useSectionBackgrounds from '../../hooks/useSectionBackgrounds';
-import { applicationsOpen } from '../../lib/applicationPhase';
-import { techTourRegistrationOpen } from '../../lib/techTour';
-import { hasSeenTechTourIntro, markTechTourIntroSeen } from '../../lib/techTourIntro';
+import TechTourLineup from './TechTourLineup';
+import TechTourExplore, { eventAnchor } from './TechTourExplore';
+import useDarkNav from '../../hooks/useDarkNav';
+import { formatDateRange, techTourRegistrationOpen } from '../../lib/techTour';
 import './landing.css';
-
-const reveal = {
-    initial: { opacity: 0, y: 24 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, amount: 0.15 },
-} as const;
-
-/** The registration form is the form-builder form titled "techtour". */
-const FORM_TITLE = 'techtour';
 
 export interface TechTourProps {
     techTour?: CmsTechTour | null;
-    forms?: CmsFormDoc[] | null;
     /** Request time from the server component; see BecomeAMember for why. */
     serverNow?: number;
 }
 
+/** Stroke icons for the three facts. 24×24, inheriting colour and stroke. */
+const IconFormat = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 21h18M5 21V8l7-5 7 5v13" />
+        <path d="M9.5 21v-5h5v5" />
+        <path d="M9 11h1.5M13.5 11H15" />
+    </svg>
+);
+const IconDates = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <rect x="3" y="5" width="18" height="16" rx="2.5" />
+        <path d="M3 10h18M8 3v4M16 3v4" />
+    </svg>
+);
+const IconDeadline = () => (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="13" r="8" />
+        <path d="M12 9v4.5l3 2M9 2h6" />
+    </svg>
+);
+
 /**
  * The Munich TechTour page: a week of evening visits to Munich tech companies,
- * open to every student. Copy and the visits come from the `tech-tour` global;
- * the registration form (which evenings, the attendance commitment, and the
- * optional "also apply for membership" box) is defined in the CMS and rendered
- * by the shared CmsForm.
+ * open to every student.
+ *
+ * A poster, not an article. On a desktop viewport it is exactly one screen —
+ * title, three facts, the line-up, one button — and the shell's scrolling is
+ * switched off underneath it (see `.lp--tt-poster` in landing.css). Everything
+ * that does not belong on a poster (times, locations, what you get, the
+ * attendance commitment) lives on /techtour/apply behind the button, together
+ * with the registration form: a form at the foot of a long read is a comment
+ * box under a newspaper article. A narrow screen cannot hold a poster, so
+ * there it becomes an ordinary scrolling page of the same parts.
  */
 const TechTour: React.FC<TechTourProps> = (props) => {
     const { t, locale } = useLanguage();
     const { data: tt } = useCmsGlobal<CmsTechTour>('tech-tour', props.techTour);
-    const {
-        data: forms,
-        loading: formsLoading,
-        error: formsError,
-    } = useCmsCollection<CmsFormDoc>('forms', undefined, props.forms);
-    const form = useMemo(
-        () => forms?.find((f) => f.title.trim().toLowerCase() === FORM_TITLE) ?? null,
-        [forms]
-    );
 
     const [now, setNow] = useState(() => props.serverNow ?? Date.now());
     useEffect(() => {
         setNow(Date.now());
     }, []);
 
-    const deadline = tt?.registrationDeadline ? new Date(tt.registrationDeadline) : null;
     const open = techTourRegistrationOpen(tt, now);
-    // Once the membership round has closed, the "also apply" box goes too.
-    const hiddenSubforms = applicationsOpen(now) ? undefined : ['application'];
-
     const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB';
-    const fmtDay = (iso: string) =>
-        new Date(iso).toLocaleDateString(dateLocale, { weekday: 'long' });
-    const fmtDate = (iso: string) =>
-        new Date(iso).toLocaleDateString(dateLocale, { day: 'numeric', month: 'short' });
-    const fmtDeadline = (d: Date) =>
-        d.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' });
 
     const events = useMemo(
         () =>
@@ -75,272 +70,175 @@ const TechTour: React.FC<TechTourProps> = (props) => {
             ),
         [tt]
     );
-    const highlights = tt?.highlights ?? [];
 
-    const kicker = tt?.kicker || t.techtour.kicker;
-    const title = tt?.title || t.techtour.fallbackTitle;
-    const intro = tt?.intro || t.techtour.fallbackLead;
-    const heroImage = mediaUrl(tt?.heroImage);
+    // The poster's headline is the event's name; the CMS `title` is a
+    // strapline, far too long to set at poster size.
+    const title = t.techtour.posterTitle;
 
-    // The opening sequence. Server and first client render show the plain
-    // page (no storage on the server); after mount, first-time visitors get
-    // the intro and returning ones a replay button. Reduced-motion users get
-    // neither. The page background painter turns the page black while the
-    // intro's band is on screen and white again for the content.
-    const rootRef = useRef<HTMLDivElement>(null);
-    useSectionBackgrounds(rootRef);
-    const reducedMotion = useReducedMotion();
-    const [show, setShow] = useState<'pending' | 'play' | 'off'>('pending');
-    const [introKey, setIntroKey] = useState(0);
-    const [opening, setOpening] = useState(false);
-    useEffect(() => {
-        if (reducedMotion) {
-            setShow('off');
-            return;
-        }
-        setShow(hasSeenTechTourIntro() ? 'off' : 'play');
-    }, [reducedMotion]);
-    // A CSS transition on the root while the intro mounts, so the page fades
-    // to black instead of snapping.
-    useEffect(() => {
-        if (show !== 'play') return;
-        setOpening(true);
-        const timer = setTimeout(() => setOpening(false), 1600);
-        return () => clearTimeout(timer);
-    }, [show, introKey]);
+    // The stage is dark from top to bottom, so the nav is told to use its
+    // light ink and go transparent over it.
+    useDarkNav();
 
-    const scrollToTop = () => {
-        const scroller = rootRef.current?.closest('.site-scroll');
-        if (scroller) scroller.scrollTo({ top: 0, behavior: 'auto' });
-        else window.scrollTo({ top: 0, behavior: 'auto' });
-    };
-    const replayIntro = () => {
-        scrollToTop();
-        setIntroKey((k) => k + 1);
-        setShow('play');
-    };
-    const onIntroSeen = useCallback(() => markTechTourIntroSeen(), []);
-    const onIntroSkip = useCallback(() => {
-        markTechTourIntroSeen();
-        document
-            .getElementById('techtour-form')
-            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // The line-up tiles and the "Learn more" button both scroll down into the
+    // Explore section. On desktop the site scrolls inside `.site-scroll`, on
+    // mobile the window does — scrollIntoView finds the right one either way,
+    // and the targets carry a scroll-margin so the fixed nav does not land on
+    // them.
+    const scrollTo = useCallback((id: string) => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, []);
-    const introActive = show === 'play' && events.length > 0;
+    // The scroll hint flashes once, when the line has finished drawing.
+    const [drawn, setDrawn] = useState(false);
+    const onDone = useCallback(() => setDrawn(true), []);
 
-    const scrollToForm = (e: React.MouseEvent) => {
-        const el = document.getElementById('techtour-form');
-        if (el) {
-            e.preventDefault();
-            el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // Every time the line reaches an icon the poster takes a knock. The shake
+    // rides on the content column rather than on the black behind it: moving
+    // the background too would show a sliver of whatever is underneath at the
+    // edge of the screen.
+    const reduced = useReducedMotion();
+    const shakeX = useMotionValue(0);
+    const shakeY = useMotionValue(0);
+    const onHit = useCallback(() => {
+        if (reduced) return;
+        animate(shakeX, [0, -2.8, 2, -1.2, 0.5, 0], { duration: 0.42, ease: 'easeOut' });
+        animate(shakeY, [0, 1.6, -2, 1, -0.4, 0], { duration: 0.42, ease: 'easeOut' });
+    }, [reduced, shakeX, shakeY]);
+
+    // The three facts: what it is, when it runs, by when to sign up. All of it
+    // comes from the events and the deadline already in the CMS, so there is
+    // nothing extra to keep in step.
+    const facts = useMemo(() => {
+        const out: { icon: React.ReactNode; label: string; value: string }[] = [];
+        if (events.length > 0) {
+            out.push({
+                icon: <IconFormat />,
+                label: t.techtour.factFormatLabel,
+                value: t.techtour.factEvenings.replace('{count}', String(events.length)),
+            });
         }
-    };
-
-    const renderEvent = (ev: CmsTechTourEvent, i: number) => {
-        const tba = ev.status === 'tba';
-        const logo = mediaUrl(ev.logo);
-        // `company` is not localised in the CMS, so a placeholder slot always
-        // shows the translated "to be announced" instead of whatever was typed.
-        const company = tba ? t.techtour.tbaCompany : ev.company;
-        const heading = ev.title || company;
-        return (
-            <motion.li
-                key={ev.id ?? i}
-                className={`lp-tt-day${tba ? ' lp-tt-day--tba' : ''}`}
-                {...reveal}
-                transition={{ duration: 0.45, delay: Math.min(i * 0.08, 0.4) }}
-            >
-                <div className="lp-tt-day__when">
-                    <span className="lp-tt-day__weekday">{fmtDay(ev.date)}</span>
-                    <span className="lp-tt-day__date">{fmtDate(ev.date)}</span>
-                </div>
-                <div className="lp-tt-day__logo" aria-hidden={!logo}>
-                    {logo ? (
-                        <img src={logo} alt={`${company} logo`} loading="lazy" />
-                    ) : (
-                        <span className="lp-tt-day__initial">
-                            {tba ? '?' : company.trim().charAt(0).toUpperCase()}
-                        </span>
-                    )}
-                </div>
-                <div className="lp-tt-day__body">
-                    <h3 className="lp-tt-day__title">
-                        {ev.website && !tba ? (
-                            <a href={ev.website} target="_blank" rel="noopener noreferrer">
-                                {heading}
-                            </a>
-                        ) : (
-                            heading
-                        )}
-                    </h3>
-                    {ev.title && !tba && (
-                        <p className="lp-tt-day__company">{company}</p>
-                    )}
-                    <p className="lp-tt-day__meta">
-                        <span>{ev.time || t.techtour.tbaTime}</span>
-                        <span className="lp-tt-day__sep" aria-hidden="true">·</span>
-                        <span>{ev.location || t.techtour.tbaLocation}</span>
-                    </p>
-                    {ev.description && <p className="lp-tt-day__text">{ev.description}</p>}
-                    {ev.status === 'tentative' && (
-                        <span className="lp-tt-day__badge">{t.techtour.tentative}</span>
-                    )}
-                </div>
-            </motion.li>
-        );
-    };
+        const dates = events
+            .map((ev) => new Date(ev.date))
+            .filter((d) => !Number.isNaN(d.getTime()));
+        if (dates.length > 0) {
+            out.push({
+                icon: <IconDates />,
+                label: t.techtour.factDatesLabel,
+                value: formatDateRange(dates[0], dates[dates.length - 1], dateLocale),
+            });
+        }
+        const deadline = tt?.registrationDeadline ? new Date(tt.registrationDeadline) : null;
+        if (deadline && !Number.isNaN(deadline.getTime())) {
+            out.push({
+                icon: <IconDeadline />,
+                label: t.techtour.factDeadlineLabel,
+                value: deadline.toLocaleDateString(dateLocale, {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                }),
+            });
+        }
+        return out;
+    }, [events, dateLocale, tt, t]);
 
     return (
-        <div
-            ref={rootRef}
-            className={`lp lp--techtour${introActive ? ' lp--intro' : ''}${
-                opening ? ' lp--opening' : ''
-            }`}
-        >
-            {introActive && (
-                <TechTourIntro
-                    key={introKey}
-                    events={events}
-                    kicker={kicker}
-                    heading={t.techtour.introHeading}
-                    onSeen={onIntroSeen}
-                    onSkip={onIntroSkip}
-                />
-            )}
-            <div className="lp-page" data-bg="#ffffff">
-            <div className="lp-inner">
-                <motion.div
-                    className="lp-page__head"
-                    initial={{ opacity: 0, y: 20 }}
+        <div className="lp lp--techtour">
+            <section className="lp-tt-poster">
+            <motion.div className="lp-tt-poster__inner" style={{ x: shakeX, y: shakeY }}>
+                <div className="lp-tt-poster__head">
+                <motion.h1
+                    className="lp-tt-poster__title"
+                    initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
+                    transition={{ duration: 0.55 }}
                 >
-                    <p className="lp-kicker">{kicker}</p>
-                    <h1 className="lp-page__title">{title}</h1>
-                    <p className="lp-lead">{intro}</p>
-                    <div className="lp-page__actions">
-                        <span
-                            className={`lp-round-status${
-                                open ? ' lp-round-status--open' : ' lp-round-status--closed'
-                            }`}
-                        >
-                            <span className="lp-round-status__dot" aria-hidden="true" />
-                            {open ? t.techtour.statusOpen : t.techtour.statusClosed}
-                            {deadline && !Number.isNaN(deadline.getTime()) && (
-                                <>
-                                    <span className="lp-round-status__sep" aria-hidden="true">
-                                        ·
-                                    </span>
-                                    {t.techtour.deadlinePrefix} {fmtDeadline(deadline)}
-                                </>
-                            )}
-                        </span>
-                        {open && (
-                            <a
-                                className="lp-btn lp-btn--primary"
-                                href="#techtour-form"
-                                onClick={scrollToForm}
-                            >
-                                {t.techtour.registerCta} ↓
-                            </a>
-                        )}
-                        {show === 'off' && !reducedMotion && events.length > 0 && (
-                            <button
-                                type="button"
-                                className="lp-btn lp-btn--ghost lp-tt-replay"
-                                onClick={replayIntro}
-                            >
-                                <span aria-hidden="true">↻</span> {t.techtour.replay}
-                            </button>
-                        )}
-                    </div>
-                </motion.div>
+                    {title}
+                </motion.h1>
 
-                {heroImage && (
-                    <motion.div
-                        className="lp-page__hero"
-                        initial={{ opacity: 0, y: 16 }}
+                {facts.length > 0 && (
+                    <motion.ul
+                        className="lp-tt-facts"
+                        initial={{ opacity: 0, y: 12 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.1 }}
+                        transition={{ duration: 0.5, delay: 0.12 }}
                     >
-                        <img src={heroImage} alt={title} />
-                    </motion.div>
+                        {facts.map((fact) => (
+                            <li className="lp-tt-fact" key={fact.label}>
+                                <span className="lp-tt-fact__icon">{fact.icon}</span>
+                                <span className="lp-tt-fact__body">
+                                    <span className="lp-tt-fact__label">{fact.label}</span>
+                                    <span className="lp-tt-fact__value">{fact.value}</span>
+                                </span>
+                            </li>
+                        ))}
+                    </motion.ul>
                 )}
+                </div>
 
-                {/* ---- The week: one visit per evening ---- */}
                 {events.length > 0 && (
-                    <>
-                        <motion.div className="lp-join-phase" {...reveal} transition={{ duration: 0.5 }}>
-                            <p className="lp-kicker">{t.techtour.scheduleKicker}</p>
-                            <h2 className="lp-h2">{t.techtour.scheduleHeading}</h2>
-                            <p className="lp-lead">{t.techtour.scheduleIntro}</p>
-                        </motion.div>
-                        <ol className="lp-tt-days">{events.map(renderEvent)}</ol>
-                    </>
+                    <TechTourLineup
+                        events={events}
+                        tbaLabel={t.techtour.tbaCompany}
+                        hint={t.techtour.tileHint}
+                        onHit={onHit}
+                        onDone={onDone}
+                        onPick={(i) => scrollTo(eventAnchor(i))}
+                    />
                 )}
 
-                {/* ---- What you get ---- */}
-                {highlights.length > 0 && (
-                    <motion.div
-                        className="lp-tracks lp-tt-highlights"
-                        {...reveal}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h2 className="lp-subhead">{t.techtour.highlightsHeading}</h2>
-                        <div className="lp-grid">
-                            {highlights.map((h, i) => (
-                                <div className="lp-card" key={h.id ?? i}>
-                                    <h3 className="lp-card__title">{h.title}</h3>
-                                    <p className="lp-card__text">{h.text}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* ---- Registration ---- */}
                 <motion.div
-                    className="lp-form lp-form--wide"
-                    id="techtour-form"
-                    {...reveal}
-                    transition={{ duration: 0.5 }}
+                    className="lp-tt-poster__cta"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
                 >
-                    {tt?.commitment && (
-                        <aside className="lp-tt-commit">
-                            <p className="lp-tt-commit__head">{t.techtour.commitmentHeading}</p>
-                            <p className="lp-tt-commit__text">{tt.commitment}</p>
-                        </aside>
-                    )}
                     {open ? (
-                        <>
-                            {formsLoading && <p className="lp-loading">{t.join.loadingForm}</p>}
-                            {!formsLoading && (formsError || !form) && (
-                                <p className="lp-empty">{t.techtour.formUnavailable}</p>
+                        <span className="lp-tt-poster__btns">
+                            {events.length > 0 && (
+                                <button
+                                    type="button"
+                                    className="lp-btn lp-btn--wire"
+                                    onClick={() => scrollTo('tt-explore')}
+                                >
+                                    {t.techtour.learnMoreCta} ↓
+                                </button>
                             )}
-                            {!formsLoading && form && (
-                                <CmsForm
-                                    form={form}
-                                    conversion="techtour"
-                                    heading={tt?.formHeading || t.techtour.formHeading}
-                                    hiddenSubforms={hiddenSubforms}
-                                />
-                            )}
-                        </>
+                            <Link className="lp-btn lp-btn--glow" href="/techtour/apply">
+                                {t.techtour.applyCta} →
+                            </Link>
+                        </span>
                     ) : (
                         <>
-                            <h3 className="lp-col__head" style={{ marginBottom: 8 }}>
-                                {t.techtour.statusClosed}
-                            </h3>
-                            <p className="lp-lead">{tt?.closedMessage || t.techtour.closedFallback}</p>
+                            <p className="lp-tt-poster__closed">
+                                {tt?.closedMessage || t.techtour.closedFallback}
+                            </p>
+                            <Link className="lp-btn lp-btn--wire" href="/techtour/apply">
+                                {t.techtour.detailsCta} →
+                            </Link>
                         </>
                     )}
-                    <p className="lp-form-note lp-tt-also">
-                        <Link href="/join">{t.techtour.alsoApply}</Link>
-                    </p>
                 </motion.div>
-            </div>
-            </div>
-            <ClosingCta />
+
+            </motion.div>
+
+            {events.length > 0 && (
+                <button
+                    type="button"
+                    /* Quiet by default; it catches the eye once, the moment the
+                       line has finished drawing and there is nothing else left
+                       to watch. */
+                    className={`lp-tt-scroll-hint${drawn ? ' is-flashing' : ''}`}
+                    onClick={() => scrollTo('tt-explore')}
+                >
+                    {t.techtour.scrollHint}
+                    <span className="lp-tt-scroll-hint__arrow" aria-hidden="true">
+                        ↓
+                    </span>
+                </button>
+            )}
+            </section>
+
+            {events.length > 0 && <TechTourExplore events={events} open={open} />}
         </div>
     );
 };
