@@ -2654,59 +2654,74 @@ a.lp-member__project:hover {
     }
     .lp-tt-poster__inner {
         justify-content: flex-start;
-        gap: clamp(20px, 3.4vh, 34px);
-        padding: 28px 16px 24px;
+        gap: clamp(18px, 3vh, 30px);
+        padding: clamp(22px, 4.5vh, 52px) 16px 24px;
     }
-    /* Centred, but safely: auto margins share out whatever room is left over
-       and collapse to nothing when there is none, where `justify-content:
-       center` would push the title up off the top of an overflowing column
-       (a long headline on a small phone). */
-    .lp-tt-poster__inner > :first-child {
-        margin-top: auto;
-    }
+    /* The title sits near the top of the screen and whatever room is left
+       over falls below the ask, between it and the scroll hint. Centring the
+       block instead opened a hand's width of nothing above the title, which
+       reads as a page that has not finished loading. An auto margin here also
+       collapses rather than clipping, so a long headline on a small phone
+       overflows downward, where it scrolls. */
     .lp-tt-poster__inner > :last-child {
         margin-bottom: auto;
+    }
+    /* Title and facts are one block and rise together; this pulls the facts
+       up the last few pixels so they read as the title's caption rather than
+       as the next thing down the page. */
+    .lp-tt-poster__head {
+        gap: clamp(8px, 1.2vh, 14px);
     }
     .lp-tt-poster__title {
         font-size: clamp(30px, 9vw, 44px);
         max-width: none;
     }
-    /* Three abreast rather than a stacked list: the facts are a caption under
-       the title, not a section of their own, and stacked they cost a third of
-       the screen the line-up needs. The icon moves above its text — side by
-       side there is no room for both in a column this narrow. */
+    /* A credit line under the title rather than three tiles: label over value
+       in equal columns, divided by hairlines, and no icon — at this size the
+       icon boxes were the tallest thing in a block meant to be taken in at a
+       glance, and three of them floating over the black read as buttons.
+       Everything is sized off the viewport so each value keeps to one line
+       down to the narrowest phone: one column wrapping and the other two not
+       is what made the row look ragged. */
     .lp-tt-facts {
         display: grid;
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        align-items: start;
-        gap: 10px;
+        /* Each column takes the width of what is in it, not a third of the
+           row: the date is half again as wide as the other two, so in equal
+           thirds it was the one that wrapped while they sat in spare room. */
+        grid-template-columns: auto auto auto;
+        justify-content: center;
+        align-items: stretch;
+        gap: 0;
         width: 100%;
-        max-width: 420px;
+        max-width: none;
     }
     .lp-tt-fact {
         flex-direction: column;
-        gap: 7px;
+        justify-content: center;
+        gap: 0;
+        padding: 0 5px;
         text-align: center;
     }
-    .lp-tt-fact__icon {
-        width: 30px;
-        height: 30px;
-        border-radius: 10px;
+    .lp-tt-fact + .lp-tt-fact {
+        border-left: 1px solid rgba(255, 255, 255, 0.13);
     }
-    .lp-tt-fact__icon svg {
-        width: 16px;
-        height: 16px;
+    .lp-tt-fact__icon {
+        display: none;
     }
     .lp-tt-fact__body {
         align-items: center;
     }
     .lp-tt-fact__label {
-        font-size: 9px;
-        letter-spacing: 0.09em;
+        font-size: clamp(8px, 2.3vw, 10px);
+        letter-spacing: 0.1em;
     }
     .lp-tt-fact__value {
-        font-size: 12.5px;
-        line-height: 1.25;
+        margin-top: 3px;
+        /* Fits all three values on one line each, in both locales, from the
+           narrowest phone up — German's "9.–12. November 2026" is the one
+           that sets it. */
+        font-size: clamp(9px, 2.85vw, 13px);
+        line-height: 1.3;
     }
     /* The row keeps its five columns (the base rule's `--tt-cols`) — wrapped
        to two, the fifth evening sat below the fold and the line-up stopped
@@ -2753,14 +2768,19 @@ a.lp-member__project:hover {
         box-sizing: border-box;
         /* Fluid, so that two labels side by side stay on one line each down to
            the narrowest phone rather than turning into two-line blocks. */
-        padding: 15px clamp(8px, 2.4vw, 16px);
-        font-size: clamp(13px, 3.7vw, 16px);
+        padding: 12px clamp(10px, 3vw, 18px);
+        font-size: clamp(12.5px, 3.4vw, 15px);
         text-align: center;
     }
+    /* Equal halves of a row that stops well short of the full width: spanning
+       the screen edge to edge they read as a form, not as a poster's one ask.
+       The cap grows with the viewport because the label inside it does — held
+       at a phone's width, a tablet's larger type wrapped the arrow onto its
+       own line. */
     .lp-tt-poster__btns .lp-btn {
         flex: 1 1 0;
         min-width: 0;
-        max-width: 240px;
+        max-width: clamp(140px, 40vw, 190px);
     }
     /* The closed state has one button and no row to share. */
     .lp-tt-poster__cta > .lp-btn {
