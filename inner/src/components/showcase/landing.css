@@ -2637,45 +2637,144 @@ a.lp-member__project:hover {
     .lp-tl--join {
         margin: 28px 0 52px;
     }
-    /* Below the layout breakpoint the poster becomes an ordinary page: the
-       icons wrap, so the line-up's wire is dropped (TechTourLineup.tsx) and
-       nothing is clipped. */
+    /* Below the layout breakpoint the poster becomes an ordinary page — it
+       scrolls, and the line-up's wire is dropped (TechTourLineup.tsx), because
+       the frames it draws are wider than the gaps a phone has to spare. What
+       it keeps is the shape of a poster: the whole cast — title, the three
+       facts side by side, every icon with its name, the ask — inside the
+       first screen, with nothing to scroll for before you have seen it. */
+    /* The mobile bar is sticky, so it sits in the flow above the poster: a
+       full 100vh here would hang a bar's height below the fold and take the
+       scroll hint with it. 61px is that bar — 60 plus its rule (MobileNav.tsx,
+       `styles.header`). `svh` is the viewport with the browser's own chrome
+       showing, so the hint stays on screen at every scroll position; a browser
+       that does not know the unit drops the line and keeps the base 100vh. */
+    .lp-tt-poster {
+        min-height: calc(100svh - 61px);
+    }
     .lp-tt-poster__inner {
         justify-content: flex-start;
-        gap: 26px;
-        padding: calc(56px + 3vh) 20px 56px;
+        gap: clamp(20px, 3.4vh, 34px);
+        padding: 28px 16px 24px;
+    }
+    /* Centred, but safely: auto margins share out whatever room is left over
+       and collapse to nothing when there is none, where `justify-content:
+       center` would push the title up off the top of an overflowing column
+       (a long headline on a small phone). */
+    .lp-tt-poster__inner > :first-child {
+        margin-top: auto;
+    }
+    .lp-tt-poster__inner > :last-child {
+        margin-bottom: auto;
     }
     .lp-tt-poster__title {
         font-size: clamp(30px, 9vw, 44px);
         max-width: none;
     }
+    /* Three abreast rather than a stacked list: the facts are a caption under
+       the title, not a section of their own, and stacked they cost a third of
+       the screen the line-up needs. The icon moves above its text — side by
+       side there is no room for both in a column this narrow. */
     .lp-tt-facts {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: start;
+        gap: 10px;
         width: 100%;
-        max-width: 340px;
+        max-width: 420px;
     }
+    .lp-tt-fact {
+        flex-direction: column;
+        gap: 7px;
+        text-align: center;
+    }
+    .lp-tt-fact__icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+    }
+    .lp-tt-fact__icon svg {
+        width: 16px;
+        height: 16px;
+    }
+    .lp-tt-fact__body {
+        align-items: center;
+    }
+    .lp-tt-fact__label {
+        font-size: 9px;
+        letter-spacing: 0.09em;
+    }
+    .lp-tt-fact__value {
+        font-size: 12.5px;
+        line-height: 1.25;
+    }
+    /* The row keeps its five columns (the base rule's `--tt-cols`) — wrapped
+       to two, the fifth evening sat below the fold and the line-up stopped
+       reading as a week. The icons shrink to fit instead. */
     .lp-tt-lineup__row {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 26px 16px;
+        gap: 0 4px;
         /* No hover on a touch screen, so no hint and no room for it. */
         padding-top: 0;
     }
     .lp-tt-slot__icon {
-        width: clamp(88px, 34vw, 150px);
+        width: clamp(46px, 15.5vw, 120px);
     }
-    .lp-tt-poster__cta .lp-btn {
+    .lp-tt-slot__day {
+        margin-top: 9px;
+        font-size: 12px;
+    }
+    .lp-tt-slot__date {
+        font-size: 9px;
+        letter-spacing: 0.06em;
+    }
+    /* Sized off the viewport, like the column it sits in: a fixed size that
+       fits "QuantumBlack" at 375px breaks it mid-word at 360px. */
+    .lp-tt-slot__name {
+        margin-top: 4px;
+        font-size: clamp(8px, 2.4vw, 13.5px);
+        line-height: 1.25;
+    }
+    /* Side by side, and actually centred. Stacked, the two buttons were sized
+       by a container that shrank to the narrower of them, so the wider one
+       broke out to the right and took the page's horizontal scroll with it. */
+    .lp-tt-poster__cta {
         width: 100%;
     }
     .lp-tt-poster__btns {
-        flex-direction: column;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 10px;
         width: 100%;
+    }
+    .lp-tt-poster__cta .lp-btn {
+        /* The pair is a <button> and an <a>, and the UA gives those different
+           box-sizing: without this the max-width below caps one at its border
+           and the other at its content, and they come out unequal. */
+        box-sizing: border-box;
+        /* Fluid, so that two labels side by side stay on one line each down to
+           the narrowest phone rather than turning into two-line blocks. */
+        padding: 15px clamp(8px, 2.4vw, 16px);
+        font-size: clamp(13px, 3.7vw, 16px);
+        text-align: center;
+    }
+    .lp-tt-poster__btns .lp-btn {
+        flex: 1 1 0;
+        min-width: 0;
+        max-width: 240px;
+    }
+    /* The closed state has one button and no row to share. */
+    .lp-tt-poster__cta > .lp-btn {
+        width: 100%;
+        max-width: 320px;
     }
     .lp-tt-scroll-hint {
         position: static;
         transform: none;
-        margin-top: 6px;
+        /* In the flow it is a stretched flex item of the poster, so without
+           this the label starts at the left edge instead of under the middle
+           of what it points away from. */
+        align-self: center;
+        margin: 6px 0 16px;
         font-size: 11.5px;
     }
     /* Picture over text rather than beside it — a photo in a 40 % column on a
