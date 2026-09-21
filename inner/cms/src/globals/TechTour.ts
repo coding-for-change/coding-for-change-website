@@ -2,9 +2,17 @@ import { GlobalConfig } from 'payload';
 
 /**
  * The Munich TechTour page (/techtour): a week of company visits where we
- * introduce students to Munich tech employers. This global holds the page copy,
- * the visits and the registration settings. The registration form itself is the
- * form-builder form titled "techtour", so questions are added in the admin.
+ * introduce students to Munich tech employers. This global holds the visits and
+ * the registration settings. The registration form itself is the form-builder
+ * form titled "techtour", so questions are added in the admin.
+ *
+ * Every field here is rendered by the site. The page's own wording — the poster
+ * headline, the fact labels, the "Explore the week" heading and its lead — is
+ * not content but part of the layout, and lives in the site's translation table
+ * (`inner/src/i18n/translations.ts`, key `techtour`); a field for it here would
+ * be a knob that changes nothing. Anything added below has to be rendered by
+ * `components/showcase/TechTour*.tsx` in the same change, or it becomes the
+ * same dead weight.
  */
 export const TechTour: GlobalConfig = {
   slug: 'tech-tour',
@@ -14,7 +22,7 @@ export const TechTour: GlobalConfig = {
   },
   admin: {
     description:
-      'Content of the Munich TechTour event page. The registration form is the form titled "techtour" under Forms.',
+      'The visits and the registration settings for the Munich TechTour page. The registration form is the form titled "techtour" under Forms; the page\'s headline and section wording are part of the design, not content.',
   },
   fields: [
     {
@@ -46,30 +54,6 @@ export const TechTour: GlobalConfig = {
       },
     },
     {
-      name: 'kicker',
-      type: 'text',
-      localized: true,
-      admin: {
-        description:
-          'Small line above the headline, e.g. "Munich TechTour · 9–13 November 2026".',
-      },
-    },
-    { name: 'title', type: 'text', localized: true, admin: { description: 'Page headline.' } },
-    {
-      name: 'intro',
-      type: 'textarea',
-      localized: true,
-      admin: { description: 'Lead paragraph under the headline: what the TechTour is and who it is for.' },
-    },
-    {
-      name: 'heroImage',
-      type: 'upload',
-      relationTo: 'media',
-      admin: {
-        description: 'Optional hero image under the headline, e.g. a group photo at a company.',
-      },
-    },
-    {
       type: 'row',
       fields: [
         {
@@ -89,7 +73,7 @@ export const TechTour: GlobalConfig = {
             width: '50%',
             date: { pickerAppearance: 'dayAndTime' },
             description:
-              'Optional. Shown on the page; once it has passed the form closes on its own.',
+              'Optional. Shown on the page as the "apply by" fact and as step 1 of the registration; once it has passed the form closes on its own.',
           },
         },
       ],
@@ -101,7 +85,7 @@ export const TechTour: GlobalConfig = {
       admin: {
         initCollapsed: true,
         description:
-          'One entry per visit, in date order. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown — the page says so instead of showing a blank.',
+          'One entry per visit, in date order. The page counts them, takes its date range from the first and last, and gives each one a panel in the "Explore" section and a row in the registration form. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown — the page says so instead of showing a blank.',
       },
       fields: [
         {
@@ -151,7 +135,10 @@ export const TechTour: GlobalConfig = {
           name: 'description',
           type: 'textarea',
           localized: true,
-          admin: { description: 'What happens at this visit and why a student should come.' },
+          admin: {
+            description:
+              'What happens at this visit and why a student should come. The "Explore" panel shows it in full; the registration form shows its first sentence next to the tick box, so make that sentence the one that identifies the visit.',
+          },
         },
         {
           type: 'row',
@@ -191,29 +178,10 @@ export const TechTour: GlobalConfig = {
       ],
     },
     {
-      name: 'highlights',
-      label: 'What participants get',
-      type: 'array',
-      admin: { initCollapsed: true, description: 'Short cards, e.g. "Meet the engineers", "Office tours", "Free food & drinks".' },
-      fields: [
-        { name: 'title', type: 'text', required: true, localized: true },
-        { name: 'text', type: 'textarea', required: true, localized: true },
-      ],
-    },
-    {
-      name: 'commitment',
-      type: 'textarea',
-      localized: true,
-      admin: {
-        description:
-          'Explains the "I commit to attend" checkbox on the form: spots are limited and companies plan for headcount, so a registration is binding.',
-      },
-    },
-    {
       name: 'formHeading',
       type: 'text',
       localized: true,
-      admin: { description: 'Heading above the registration form. Default: "Register for the TechTour".' },
+      admin: { description: 'Heading of the registration page /techtour/apply. Default: "Register for the TechTour".' },
     },
     {
       name: 'closedMessage',

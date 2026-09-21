@@ -476,15 +476,9 @@ export type CmsTechTourVisibility = 'hidden' | 'unlisted' | 'public';
 export interface CmsTechTour {
     /** Publishing switch; absent (older data) behaves like 'unlisted'. */
     visibility?: CmsTechTourVisibility | null;
-    kicker?: string | null;
-    title?: string | null;
-    intro?: string | null;
-    heroImage?: CmsMedia | null;
     registrationOpen?: boolean | null;
     registrationDeadline?: string | null;
     events?: CmsTechTourEvent[] | null;
-    highlights?: { title: string; text: string; id?: string }[] | null;
-    commitment?: string | null;
     formHeading?: string | null;
     closedMessage?: string | null;
 }

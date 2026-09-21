@@ -1883,13 +1883,11 @@ a.lp-member__project:hover {
 }
 
 /* ---- TechTour: the poster ---- */
-/* On a desktop viewport the tour page is exactly one screen — title, three
-   facts, the line-up, one button — and the shell is told not to scroll under
-   it: the scroller's nav padding is dropped so the black runs the full height,
-   the overflow is clipped, and the site footer is hidden (the poster carries
-   the two links that have to be reachable from every page instead). Below the
-   layout breakpoint there is no poster to hold, so it becomes an ordinary
-   scrolling page and the shell is left alone. */
+/* The first screen of the tour page is exactly one screen — title, three
+   facts, the line-up, one button — so the scroller's nav padding is dropped
+   under it and the black runs the full height. What is below the fold (the
+   Explore section, then the footer) scrolls normally; the footer goes dark
+   with the page, which the page asks for with `useDarkNav`. */
 .lp--techtour {
     display: block;
     background: #060d12;
@@ -2078,7 +2076,7 @@ a.lp-member__project:hover {
     text-align: center;
 }
 /* The tiles are the way into the Explore section, so they have to look like
-   they do something: they lift on hover and say what the click will do. */
+   they do something: they grow on hover and say what the click will do. */
 .lp-tt-slot__link {
     position: relative;
     display: flex;
@@ -2094,7 +2092,10 @@ a.lp-member__project:hover {
 }
 .lp-tt-slot__hint {
     position: absolute;
-    bottom: calc(100% + 10px);
+    /* Far enough up to stay off the frame in the one state it is ever seen in:
+       hovered, with the tile grown a little past its resting top edge. 10px
+       left the two sitting on each other. */
+    bottom: calc(100% + 20px);
     left: 50%;
     transform: translate(-50%, -4px);
     padding: 5px 11px;
@@ -2178,8 +2179,10 @@ a.lp-member__project:hover {
 }
 .lp-tt-slot__link:hover .lp-tt-slot__icon.is-live,
 .lp-tt-slot__link:focus-visible .lp-tt-slot__icon.is-live {
-    /* Lift only. Lifting and growing at once reads as two separate effects. */
-    transform: translateY(-6px);
+    /* It grows where it stands, rather than lifting: a lift walks the frame up
+       into the hint, which is arriving in the same moment from the other
+       direction, and the two meet. Growing keeps the gap between them. */
+    transform: scale(1.035);
     box-shadow: 0 18px 38px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(127, 227, 228, 0.6),
         0 0 36px rgba(127, 227, 228, 0.35);
 }

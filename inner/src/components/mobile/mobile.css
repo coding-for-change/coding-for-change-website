@@ -42,6 +42,25 @@ html[data-nav='light'] .mobile-nav--overlay .mobile-nav__line {
     background: #000;
 }
 
+/* A page that is dark from top to bottom — the TechTour, which stamps
+   html[data-nav='dark'] through useDarkNav — keeps the solid sticky bar (it
+   is in flow, and making it the landing's fixed overlay would move the page
+   under it) but takes the page's own colours, so the header stops being a
+   white lid on a black screen. The landing is excluded: its bar is the
+   transparent overlay above, and data-nav is the landing scrub's attribute
+   too. The menu overlay behind the hamburger has its own logo, without
+   .mobile-nav__logo, so it stays light. */
+html[data-nav='dark'] .mobile-nav:not(.mobile-nav--overlay) {
+    background: #060d12;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+html[data-nav='dark'] .mobile-nav:not(.mobile-nav--overlay) .mobile-nav__logo {
+    filter: brightness(0) invert(1);
+}
+html[data-nav='dark'] .mobile-nav:not(.mobile-nav--overlay) .mobile-nav__line {
+    background: #fff;
+}
+
 /* Entrance animations for the mobile menu overlay. */
 
 @keyframes mobileOverlayIn {

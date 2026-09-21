@@ -105,13 +105,13 @@ export const EVENT_OPTIONS = ['mon-tba', 'tue-lio', 'wed-quantumblack', 'thu-qua
 export const applicationForm = (locale, { techtourFormId, toEmail, fromEmail } = {}) => {
   const t = L[locale];
   const fields = [
-    { blockType: 'text', name: 'firstName', label: t.firstName, required: true, width: 50 },
-    { blockType: 'text', name: 'lastName', label: t.lastName, required: true, width: 50 },
-    { blockType: 'email', name: 'email', label: t.email, required: true, width: 100 },
-    { blockType: 'textarea', name: 'why', label: t.why, required: true, width: 100 },
-    { blockType: 'upload', name: 'cv', label: t.cv, required: true, width: 100, description: t.cvHint },
-    { blockType: 'checkbox', name: 'hoursCommit', label: t.hoursCommit, required: true, width: 100 },
-    { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true, width: 100 },
+    { blockType: 'text', name: 'firstName', label: t.firstName, required: true },
+    { blockType: 'text', name: 'lastName', label: t.lastName, required: true },
+    { blockType: 'email', name: 'email', label: t.email, required: true },
+    { blockType: 'textarea', name: 'why', label: t.why, required: true },
+    { blockType: 'upload', name: 'cv', label: t.cv, required: true, description: t.cvHint },
+    { blockType: 'checkbox', name: 'hoursCommit', label: t.hoursCommit, required: true },
+    { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true },
   ];
   if (techtourFormId) {
     fields.push({
@@ -126,7 +126,6 @@ export const applicationForm = (locale, { techtourFormId, toEmail, fromEmail } =
   return {
     title: 'application',
     submitButtonLabel: t.applicationSubmit,
-    confirmationType: 'message',
     confirmationMessage: doc(paragraph(t.applicationConfirm)),
     fields,
     ...(locale === 'en' && toEmail
@@ -149,17 +148,16 @@ export const applicationForm = (locale, { techtourFormId, toEmail, fromEmail } =
 export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } = {}) => {
   const t = L[locale];
   const fields = [
-    { blockType: 'text', name: 'firstName', label: t.firstName, required: true, width: 50 },
-    { blockType: 'text', name: 'lastName', label: t.lastName, required: true, width: 50 },
-    { blockType: 'email', name: 'email', label: t.email, required: true, width: 100 },
-    { blockType: 'text', name: 'university', label: t.university, required: true, width: 50 },
-    { blockType: 'text', name: 'course', label: t.course, required: true, width: 50 },
+    { blockType: 'text', name: 'firstName', label: t.firstName, required: true },
+    { blockType: 'text', name: 'lastName', label: t.lastName, required: true },
+    { blockType: 'email', name: 'email', label: t.email, required: true },
+    { blockType: 'text', name: 'university', label: t.university, required: true },
+    { blockType: 'text', name: 'course', label: t.course, required: true },
     {
       blockType: 'checkboxGroup',
       name: 'events',
       label: t.events,
       required: true,
-      width: 100,
       description: t.eventsHint,
       options: EVENT_OPTIONS.map((value) => ({ value, label: t[value] })),
     },
@@ -171,11 +169,10 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
       name: 'cv',
       label: t.techtourCv,
       required: false,
-      width: 100,
       description: t.techtourCvHint,
     },
-    { blockType: 'checkbox', name: 'attendCommit', label: t.attendCommit, required: true, width: 100 },
-    { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true, width: 100 },
+    { blockType: 'checkbox', name: 'attendCommit', label: t.attendCommit, required: true },
+    { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true },
   ];
   if (applicationFormId) {
     fields.push({
@@ -190,7 +187,6 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
   return {
     title: 'techtour',
     submitButtonLabel: t.techtourSubmit,
-    confirmationType: 'message',
     confirmationMessage: doc(paragraph(t.techtourConfirm)),
     fields,
     ...(locale === 'en' && toEmail

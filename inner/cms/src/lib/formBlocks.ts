@@ -31,18 +31,10 @@ const label: Field = {
   admin: { width: '50%' },
 };
 
-const width: Field = {
-  name: 'width',
-  type: 'number',
-  label: 'Field Width (percentage)',
-  admin: { width: '50%' },
-};
-
 const required: Field = {
   name: 'required',
   type: 'checkbox',
   label: 'Required',
-  admin: { width: '50%' },
 };
 
 const description: Field = {
@@ -58,7 +50,7 @@ export const UploadBlock: Block = {
   labels: { singular: 'File upload (PDF)', plural: 'File uploads (PDF)' },
   fields: [
     { type: 'row', fields: [name, label] },
-    { type: 'row', fields: [width, required] },
+    required,
     {
       ...description,
       admin: { description: 'Shown under the field, e.g. "PDF, max. 5 MB".' },
@@ -74,13 +66,7 @@ export const CheckboxGroupBlock: Block = {
   },
   fields: [
     { type: 'row', fields: [name, label] },
-    {
-      type: 'row',
-      fields: [
-        width,
-        { ...required, label: 'Required (at least one must be ticked)' },
-      ],
-    },
+    { ...required, label: 'Required (at least one must be ticked)' },
     description,
     {
       name: 'options',

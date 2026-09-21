@@ -1122,23 +1122,21 @@ const seed = async () => {
   const contactForm = {
     title: 'Contact',
     submitButtonLabel: 'Send Message',
-    confirmationType: 'message',
     confirmationMessage: makeDoc(
       lexicalParagraph(
         "Thanks for reaching out! We've received your message and will get back to you soon."
       )
     ),
     fields: [
-      { blockType: 'text', name: 'name', label: 'Your name', required: true, width: 100 },
-      { blockType: 'email', name: 'email', label: 'Email', required: true, width: 100 },
+      { blockType: 'text', name: 'name', label: 'Your name', required: true },
+      { blockType: 'email', name: 'email', label: 'Email', required: true },
       {
         blockType: 'text',
         name: 'organization',
         label: 'Organization / NGO (optional)',
         required: false,
-        width: 100,
       },
-      { blockType: 'textarea', name: 'message', label: 'Message', required: true, width: 100 },
+      { blockType: 'textarea', name: 'message', label: 'Message', required: true },
     ],
     emails: [
       {
@@ -1182,7 +1180,6 @@ const seed = async () => {
           name: f.name,
           label: deLabels[f.name] ?? f.label,
           required: f.required,
-          width: f.width,
         })),
       },
       cookie
