@@ -161,7 +161,14 @@ const styles: StyleSheetCSS = {
         display: 'flex',
         flexDirection: 'column',
         backgroundColor: '#ffffff',
-        borderTop: '1px solid #f0f0f0',
+        // Spelled out rather than the `borderTop` shorthand: the dark page
+        // overrides the colour alone, and React warns (rightly) that dropping
+        // a longhand on re-render while a shorthand still sets it can leave
+        // the wrong value behind. Every override in `darkStyles` names the
+        // same property its light counterpart does.
+        borderTopWidth: 1,
+        borderTopStyle: 'solid',
+        borderTopColor: '#f0f0f0',
         padding: '48px 24px 32px',
         width: '100%',
         boxSizing: 'border-box',
