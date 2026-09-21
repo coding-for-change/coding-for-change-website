@@ -1883,13 +1883,11 @@ a.lp-member__project:hover {
 }
 
 /* ---- TechTour: the poster ---- */
-/* On a desktop viewport the tour page is exactly one screen — title, three
-   facts, the line-up, one button — and the shell is told not to scroll under
-   it: the scroller's nav padding is dropped so the black runs the full height,
-   the overflow is clipped, and the site footer is hidden (the poster carries
-   the two links that have to be reachable from every page instead). Below the
-   layout breakpoint there is no poster to hold, so it becomes an ordinary
-   scrolling page and the shell is left alone. */
+/* The first screen of the tour page is exactly one screen — title, three
+   facts, the line-up, one button — so the scroller's nav padding is dropped
+   under it and the black runs the full height. What is below the fold (the
+   Explore section, then the footer) scrolls normally; the footer goes dark
+   with the page, which the page asks for with `useDarkNav`. */
 .lp--techtour {
     display: block;
     background: #060d12;

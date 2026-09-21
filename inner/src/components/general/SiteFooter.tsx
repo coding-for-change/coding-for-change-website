@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import RouterLink from 'next/link';
 import { useSiteConfig, useLanguage } from '../../api';
 import { useSiteFlags } from '@/api/SiteFlagsContext';
+import { useDarkChrome } from '../../hooks/useDarkNav';
 import {
     openConsentSettings,
     consentUiAvailable,
@@ -12,6 +13,23 @@ import {
 const NAVY = '#0f2040';
 const GRAY = '#6b7280';
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+
+/**
+ * The footer on a page that is dark from top to bottom — the TechTour, which
+ * declares it with `useDarkNav`. Off-white on white would leave the footer
+ * sitting under the page like a strip of paper taped to the bottom of a
+ * screen, so it takes the stage's own colours (`.lp--techtour` and the Explore
+ * panels in landing.css) rather than a generic dark grey.
+ */
+const DARK = {
+    background: '#060d12',
+    border: 'rgba(255, 255, 255, 0.08)',
+    /* The logo is drawn in black; the nav flips it the same way. */
+    logo: 'brightness(0) invert(1)',
+    strong: '#ffffff',
+    muted: 'rgba(255, 255, 255, 0.62)',
+    faint: 'rgba(255, 255, 255, 0.38)',
+} as const;
 
 /**
  * Site-wide footer. Shared by the desktop site shell and the mobile layout —
@@ -24,6 +42,10 @@ const SiteFooter: React.FC = () => {
     const siteConfig = useSiteConfig();
     const { t } = useLanguage();
     const { techTourListed } = useSiteFlags();
+    const dark = useDarkChrome();
+    /** A style from `styles`, with the dark page's override folded in if it has one. */
+    const sx = (key: string): React.CSSProperties =>
+        dark && darkStyles[key] ? { ...styles[key], ...darkStyles[key] } : styles[key];
 
     const f = t.footer;
     const PAGE_LINKS = [
@@ -56,39 +78,39 @@ const SiteFooter: React.FC = () => {
     );
 
     return (
-        <footer style={styles.footer}>
-            <div style={styles.inner}>
-                <div style={styles.top}>
+        <footer style={sx('footer')}>
+            <div style={sx('inner')}>
+                <div style={sx('top')}>
                     <img
                         src="/images/logo.svg"
                         alt="Coding for Change"
                         width={220}
                         height={30}
-                        style={styles.logo}
+                        style={sx('logo')}
                     />
                     {siteConfig.tagline && (
-                        <p style={styles.tagline}>{siteConfig.tagline}</p>
+                        <p style={sx('tagline')}>{siteConfig.tagline}</p>
                     )}
                     {siteConfig.email && (
-                        <a href={`mailto:${siteConfig.email}`} style={styles.email}>
+                        <a href={`mailto:${siteConfig.email}`} style={sx('email')}>
                             {siteConfig.email}
                         </a>
                     )}
                 </div>
 
-                <div style={styles.columns}>
-                    <div style={styles.column}>
-                        <p style={styles.columnHeading}>{f.pages.toUpperCase()}</p>
+                <div style={sx('columns')}>
+                    <div style={sx('column')}>
+                        <p style={sx('columnHeading')}>{f.pages.toUpperCase()}</p>
                         {PAGE_LINKS.map((link) => (
-                            <RouterLink key={link.label} href={link.to} style={styles.columnLink}>
+                            <RouterLink key={link.label} href={link.to} style={sx('columnLink')}>
                                 {link.label}
                             </RouterLink>
                         ))}
                     </div>
-                    <div style={styles.column}>
-                        <p style={styles.columnHeading}>{f.info.toUpperCase()}</p>
+                    <div style={sx('column')}>
+                        <p style={sx('columnHeading')}>{f.info.toUpperCase()}</p>
                         {INFO_LINKS.map((link) => (
-                            <RouterLink key={link.label} href={link.to} style={styles.columnLink}>
+                            <RouterLink key={link.label} href={link.to} style={sx('columnLink')}>
                                 {link.label}
                             </RouterLink>
                         ))}
@@ -96,7 +118,7 @@ const SiteFooter: React.FC = () => {
                             <button
                                 type="button"
                                 onClick={openConsentSettings}
-                                style={styles.consentButton}
+                                style={sx('consentButton')}
                             >
                                 {f.cookieSettings}
                             </button>
@@ -106,13 +128,32 @@ const SiteFooter: React.FC = () => {
             </div>
 
             {siteConfig.copyrightText && (
-                <div style={styles.copyrightWrap}>
-                    <div style={styles.divider} />
-                    <p style={styles.copyright}>{siteConfig.copyrightText}</p>
+                <div style={sx('copyrightWrap')}>
+                    <div style={sx('divider')} />
+                    <p style={sx('copyright')}>{siteConfig.copyrightText}</p>
                 </div>
             )}
         </footer>
     );
+};
+
+/**
+ * What changes on a dark page — nothing else is repeated, so the light footer
+ * stays the one description of the layout.
+ */
+const darkStyles: StyleSheetCSS = {
+    footer: {
+        backgroundColor: DARK.background,
+        borderTopColor: DARK.border,
+    },
+    logo: { filter: DARK.logo },
+    tagline: { color: DARK.muted },
+    email: { color: DARK.strong },
+    columnHeading: { color: DARK.strong },
+    columnLink: { color: DARK.muted },
+    consentButton: { color: DARK.muted },
+    divider: { backgroundColor: DARK.border },
+    copyright: { color: DARK.faint },
 };
 
 const styles: StyleSheetCSS = {
