@@ -130,13 +130,14 @@ export interface Translations {
         uploadChoose: string; uploadHint: string; uploading: string; uploadRemove: string;
         uploadTooLarge: string; uploadWrongType: string; uploadFailed: string;
     };
-    /** Munich TechTour page (/techtour); CMS copy overrides these. */
+    /**
+     * Munich TechTour page (/techtour). The page's own wording lives here and
+     * only here — the CMS holds the visits and the registration settings, and
+     * overrides just two of these strings (`formHeading`, `closedFallback`).
+     */
     techtour: {
-        kicker: string; fallbackTitle: string; fallbackLead: string;
-        statusOpen: string; statusClosed: string; deadlinePrefix: string; registerCta: string;
-        scheduleKicker: string; scheduleHeading: string; scheduleIntro: string;
+        statusOpen: string; statusClosed: string;
         tbaCompany: string; tbaTime: string; tbaLocation: string; tentative: string;
-        highlightsHeading: string; commitmentHeading: string;
         formHeading: string; closedFallback: string; formUnavailable: string;
         /** The poster's headline. Two words, unlike the one-word brand usage
          *  in the nav and the footer. */
@@ -145,8 +146,7 @@ export interface Translations {
         factFormatLabel: string; factDatesLabel: string; factDeadlineLabel: string;
         factEvenings: string;
         /** The one ask: the button, and the page behind it (/techtour/apply). */
-        applyCta: string; detailsCta: string; closeHeading: string;
-        backToTour: string; detailsHeading: string;
+        applyCta: string; detailsCta: string; backToTour: string;
         /** The Explore section below the poster. */
         learnMoreCta: string; scrollHint: string; exploreKicker: string;
         exploreHeading: string; exploreLead: string;
@@ -171,9 +171,9 @@ export interface Translations {
         /** Heading over the name / email / consent half of the form. */
         sectionDetailsTitle: string;
         /**
-         * The one-line reminder under the evening rows. It replaces the CMS
-         * `commitment` field, which was a paragraph where a sentence was
-         * wanted — that field is no longer rendered anywhere.
+         * The one-line reminder under the evening rows. It took the place of a
+         * CMS `commitment` field, which was a paragraph where a sentence was
+         * wanted.
          */
         attendAsk: string;
     };
@@ -481,24 +481,12 @@ const en: Translations = {
         uploadFailed: 'The upload failed. Please try again.',
     },
     techtour: {
-        kicker: 'Munich TechTour',
-        fallbackTitle: 'One week. Munich’s most exciting tech companies. You’re invited.',
-        fallbackLead:
-            'The Munich TechTour takes students inside the companies shaping tech in Munich — one visit per evening, with the engineers and founders who work there. Open to every student, free of charge.',
         statusOpen: 'Registration open',
         statusClosed: 'Registration closed',
-        deadlinePrefix: 'Register by',
-        registerCta: 'Register now',
-        scheduleKicker: 'The week',
-        scheduleHeading: 'Where we’re going',
-        scheduleIntro:
-            'Pick the evenings you want to join. Times and locations are confirmed with each company and appear here as soon as they are fixed.',
         tbaCompany: 'Company to be announced',
         tbaTime: 'Time to be announced',
         tbaLocation: 'Location to be announced',
         tentative: 'Tentative',
-        highlightsHeading: 'What you get',
-        commitmentHeading: 'One thing we ask',
         formHeading: 'Register for the TechTour',
         closedFallback:
             'Registration for this TechTour has closed. Follow us on LinkedIn to hear about the next one.',
@@ -511,7 +499,6 @@ const en: Translations = {
         factEvenings: '{count} evenings · free',
         applyCta: 'Apply now',
         detailsCta: 'See the details',
-        closeHeading: 'Come with us.',
         backToTour: 'Back to the line-up',
         learnMoreCta: 'Learn more',
         scrollHint: 'Scroll down to learn more',
@@ -524,7 +511,6 @@ const en: Translations = {
         tileHint: 'Click to learn more',
         factTimeLabel: 'Time',
         factPlaceLabel: 'Where',
-        detailsHeading: 'The week in full',
         draftSave: 'Save and finish later',
         draftSaved: 'Saved in this browser',
         draftRestored: 'We brought back the answers you saved here.',
@@ -856,24 +842,12 @@ const de: Translations = {
         uploadFailed: 'Der Upload ist fehlgeschlagen. Bitte versuche es erneut.',
     },
     techtour: {
-        kicker: 'Munich TechTour',
-        fallbackTitle: 'Eine Woche. Münchens spannendste Tech-Unternehmen. Du bist eingeladen.',
-        fallbackLead:
-            'Die Munich TechTour bringt Studierende in die Unternehmen, die Tech in München prägen – ein Besuch pro Abend, mit den Engineers und Gründer:innen, die dort arbeiten. Offen für alle Studierenden, kostenlos.',
         statusOpen: 'Anmeldung offen',
         statusClosed: 'Anmeldung geschlossen',
-        deadlinePrefix: 'Anmeldung bis',
-        registerCta: 'Jetzt anmelden',
-        scheduleKicker: 'Die Woche',
-        scheduleHeading: 'Wohin es geht',
-        scheduleIntro:
-            'Wähl die Abende, an denen du dabei sein willst. Uhrzeiten und Orte stimmen wir mit den Unternehmen ab und tragen sie hier ein, sobald sie feststehen.',
         tbaCompany: 'Unternehmen wird noch bekannt gegeben',
         tbaTime: 'Uhrzeit wird noch bekannt gegeben',
         tbaLocation: 'Ort wird noch bekannt gegeben',
         tentative: 'Vorläufig',
-        highlightsHeading: 'Was du bekommst',
-        commitmentHeading: 'Eine Bitte',
         formHeading: 'Für die TechTour anmelden',
         closedFallback:
             'Die Anmeldung für diese TechTour ist geschlossen. Folg uns auf LinkedIn, um von der nächsten zu erfahren.',
@@ -886,7 +860,6 @@ const de: Translations = {
         factEvenings: '{count} Abende · kostenlos',
         applyCta: 'Jetzt bewerben',
         detailsCta: 'Details ansehen',
-        closeHeading: 'Komm mit.',
         backToTour: 'Zurück zum Line-up',
         learnMoreCta: 'Mehr erfahren',
         scrollHint: 'Runterscrollen für Details',
@@ -899,7 +872,6 @@ const de: Translations = {
         tileHint: 'Klicken für Details',
         factTimeLabel: 'Uhrzeit',
         factPlaceLabel: 'Ort',
-        detailsHeading: 'Die Woche im Detail',
         draftSave: 'Speichern und später weitermachen',
         draftSaved: 'In diesem Browser gespeichert',
         draftRestored: 'Wir haben deine hier gespeicherten Antworten zurückgeholt.',

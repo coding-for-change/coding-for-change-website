@@ -51,6 +51,47 @@ const readOnlyInAdmin = (field: Field): Field =>
     ? ({ ...field, admin: { ...(field.admin ?? {}), readOnly: true } } as Field)
     : field;
 
+/** The same field with whatever `admin.width` it carried taken off. */
+const fullWidth = (field: Field): Field => {
+  if (!('admin' in field) || !field.admin) return field;
+  const { width: _column, ...admin } = field.admin as { width?: string };
+  return { ...field, admin } as Field;
+};
+
+/**
+ * Take "Field Width (percentage)" back out of the form builder.
+ *
+ * It ships with the plugin's stock question blocks, but the site lays forms
+ * out itself (`components/forms/CmsForm.tsx`) and has never read the value —
+ * so it is a box that asks an editor to make a decision the page then ignores.
+ * Our own blocks (lib/formBlocks.ts) do not offer it either.
+ *
+ * A row left holding a single question setting would keep that setting in a
+ * half-width column, so it is unwrapped back to full width; a row left empty
+ * goes altogether.
+ */
+const withoutWidthSetting = (fields: Field[]): Field[] =>
+  fields
+    .filter((field) => !('name' in field && field.name === 'width'))
+    .map((field) => {
+      if (field.type !== 'row') return field;
+      const kept = withoutWidthSetting(field.fields);
+      return kept.length === 1 ? fullWidth(kept[0]) : ({ ...field, fields: kept } as Field);
+    })
+    .filter((field) => field.type !== 'row' || field.fields.length > 0);
+
+/** `withoutWidthSetting` applied to every question block of a form. */
+const questionsWithoutWidth = (field: Field): Field =>
+  field.type === 'blocks' && field.name === 'fields'
+    ? ({
+        ...field,
+        blocks: field.blocks.map((block) => ({
+          ...block,
+          fields: withoutWidthSetting(block.fields),
+        })),
+      } as Field)
+    : field;
+
 export default buildConfig({
   editor: lexicalEditor(),
   collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles],
@@ -106,6 +147,33 @@ export default buildConfig({
       // Fallback recipient when a form doesn't define its own emails.
       defaultToEmail:
         process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com',
+      // Every setting the admin offers has to be one the site honours.
+      // Two of the plugin's defaults are not: the per-question width (see
+      // `withoutWidthSetting`), and "redirect to a page after submit" —
+      // CmsForm always shows the confirmation message, so picking Redirect
+      // leaves a form that appears to do nothing once it is sent.
+      formOverrides: {
+        fields: ({ defaultFields }) =>
+          defaultFields
+            .filter(
+              (field) =>
+                !(
+                  'name' in field &&
+                  (field.name === 'confirmationType' || field.name === 'redirect')
+                )
+            )
+            .map((field) => {
+              // The confirmation message was only shown while confirmationType
+              // was "message"; with the choice gone that condition would hide
+              // it for good.
+              if ('name' in field && field.name === 'confirmationMessage') {
+                const { condition: _always, ...admin } = field.admin ?? {};
+                return { ...field, admin } as Field;
+              }
+              return field;
+            })
+            .map(questionsWithoutWidth),
+      },
       // Submissions get: the reviewer's status + notes (sidebar), the answers
       // (read-only in the admin — what the applicant sent stays as sent), the
       // documents (CV) uploaded to `applicant-files`, and the campaign /

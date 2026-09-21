@@ -802,7 +802,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             required?: boolean | null;
             defaultValue?: boolean | null;
             id?: string | null;
@@ -812,7 +811,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             required?: boolean | null;
             id?: string | null;
             blockName?: string | null;
@@ -841,7 +839,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             defaultValue?: number | null;
             required?: boolean | null;
             id?: string | null;
@@ -851,7 +848,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             defaultValue?: string | null;
             placeholder?: string | null;
             options?:
@@ -869,7 +865,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             defaultValue?: string | null;
             required?: boolean | null;
             id?: string | null;
@@ -879,7 +874,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             defaultValue?: string | null;
             required?: boolean | null;
             id?: string | null;
@@ -889,7 +883,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             required?: boolean | null;
             /**
              * Shown under the field, e.g. "PDF, max. 5 MB".
@@ -902,7 +895,6 @@ export interface Form {
         | {
             name: string;
             label?: string | null;
-            width?: number | null;
             required?: boolean | null;
             /**
              * Shown under the field.
@@ -951,11 +943,7 @@ export interface Form {
       )[]
     | null;
   submitButtonLabel?: string | null;
-  /**
-   * Choose whether to display an on-page message or redirect to a different page after they submit the form.
-   */
-  confirmationType?: ('message' | 'redirect') | null;
-  confirmationMessage?: {
+  confirmationMessage: {
     root: {
       type: string;
       children: {
@@ -969,9 +957,6 @@ export interface Form {
       version: number;
     };
     [k: string]: unknown;
-  } | null;
-  redirect?: {
-    url: string;
   };
   /**
    * Send custom emails when the form submits. Use comma separated lists to send the same email to multiple recipients. To reference a value from this form, wrap that field's name with double curly brackets, i.e. {{firstName}}. You can use a wildcard {{*}} to output all data and {{*:table}} to format it as an HTML table in the email.
@@ -1913,7 +1898,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               required?: T;
               defaultValue?: T;
               id?: T;
@@ -1924,7 +1908,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               required?: T;
               id?: T;
               blockName?: T;
@@ -1941,7 +1924,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               defaultValue?: T;
               required?: T;
               id?: T;
@@ -1952,7 +1934,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               defaultValue?: T;
               placeholder?: T;
               options?:
@@ -1971,7 +1952,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               defaultValue?: T;
               required?: T;
               id?: T;
@@ -1982,7 +1962,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               defaultValue?: T;
               required?: T;
               id?: T;
@@ -1993,7 +1972,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               required?: T;
               description?: T;
               id?: T;
@@ -2004,7 +1982,6 @@ export interface FormsSelect<T extends boolean = true> {
           | {
               name?: T;
               label?: T;
-              width?: T;
               required?: T;
               description?: T;
               options?:
@@ -2031,13 +2008,7 @@ export interface FormsSelect<T extends boolean = true> {
             };
       };
   submitButtonLabel?: T;
-  confirmationType?: T;
   confirmationMessage?: T;
-  redirect?:
-    | T
-    | {
-        url?: T;
-      };
   emails?:
     | T
     | {
@@ -2543,7 +2514,7 @@ export interface Homepage {
   createdAt?: string | null;
 }
 /**
- * Content of the Munich TechTour event page. The registration form is the form titled "techtour" under Forms.
+ * The visits and the registration settings for the Munich TechTour page. The registration form is the form titled "techtour" under Forms; the page's headline and section wording are part of the design, not content.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "tech-tour".
@@ -2555,31 +2526,15 @@ export interface TechTour {
    */
   visibility?: ('hidden' | 'unlisted' | 'public') | null;
   /**
-   * Small line above the headline, e.g. "Munich TechTour · 9–13 November 2026".
-   */
-  kicker?: string | null;
-  /**
-   * Page headline.
-   */
-  title?: string | null;
-  /**
-   * Lead paragraph under the headline: what the TechTour is and who it is for.
-   */
-  intro?: string | null;
-  /**
-   * Optional hero image under the headline, e.g. a group photo at a company.
-   */
-  heroImage?: (number | null) | Media;
-  /**
    * Untick to close registration: the page shows the "registration closed" message instead of the form.
    */
   registrationOpen?: boolean | null;
   /**
-   * Optional. Shown on the page; once it has passed the form closes on its own.
+   * Optional. Shown on the page as the "apply by" fact and as step 1 of the registration; once it has passed the form closes on its own.
    */
   registrationDeadline?: string | null;
   /**
-   * One entry per visit, in date order. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown — the page says so instead of showing a blank.
+   * One entry per visit, in date order. The page counts them, takes its date range from the first and last, and gives each one a panel in the "Explore" section and a row in the registration form. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown — the page says so instead of showing a blank.
    */
   events?:
     | {
@@ -2601,7 +2556,7 @@ export interface TechTour {
          */
         location?: string | null;
         /**
-         * What happens at this visit and why a student should come.
+         * What happens at this visit and why a student should come. The "Explore" panel shows it in full; the registration form shows its first sentence next to the tick box, so make that sentence the one that identifies the visit.
          */
         description?: string | null;
         /**
@@ -2621,21 +2576,7 @@ export interface TechTour {
       }[]
     | null;
   /**
-   * Short cards, e.g. "Meet the engineers", "Office tours", "Free food & drinks".
-   */
-  highlights?:
-    | {
-        title: string;
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Explains the "I commit to attend" checkbox on the form: spots are limited and companies plan for headcount, so a registration is binding.
-   */
-  commitment?: string | null;
-  /**
-   * Heading above the registration form. Default: "Register for the TechTour".
+   * Heading of the registration page /techtour/apply. Default: "Register for the TechTour".
    */
   formHeading?: string | null;
   /**
@@ -2842,10 +2783,6 @@ export interface HomepageSelect<T extends boolean = true> {
  */
 export interface TechTourSelect<T extends boolean = true> {
   visibility?: T;
-  kicker?: T;
-  title?: T;
-  intro?: T;
-  heroImage?: T;
   registrationOpen?: T;
   registrationDeadline?: T;
   events?:
@@ -2863,14 +2800,6 @@ export interface TechTourSelect<T extends boolean = true> {
         status?: T;
         id?: T;
       };
-  highlights?:
-    | T
-    | {
-        title?: T;
-        text?: T;
-        id?: T;
-      };
-  commitment?: T;
   formHeading?: T;
   closedMessage?: T;
   updatedAt?: T;
