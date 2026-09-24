@@ -3078,8 +3078,8 @@ a.lp-member__project:hover {
     color: rgba(255, 255, 255, 0.85);
     margin: 0 0 32px;
 }
-@media (max-width: 900px) {
-    .lp-3d {
+@media (max-width: 1024px) {
+    .lp--landing .lp-3d {
         display: none;
     }
 }
