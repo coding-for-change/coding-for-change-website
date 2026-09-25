@@ -408,7 +408,7 @@
 }
 
 /* ---- Process timeline (vertical progress line) ----
-   Shared by the homepage/partner "how we work" section and case-study
+   Shared by the homepage/NGOs "how we work" section and case-study
    timelines (ProcessTimeline.tsx). Light context by default; recolored
    under `.lp-section--dark`. Spacing between steps lives on the body's
    padding (not the <li>) so the rail — stretched to the grid row —
@@ -761,7 +761,7 @@
     border-radius: 999px;
 }
 
-/* ---- Sponsors ---- */
+/* ---- Partners (the CMS `sponsors` collection) ---- */
 .lp-tiers {
     display: flex;
     flex-direction: column;
@@ -802,7 +802,9 @@
     color: var(--muted);
     transition: border-color 0.16s ease, transform 0.16s ease;
 }
-.lp-sponsor:hover {
+/* Only a logo that links somewhere lifts — without a URL in the CMS the tile
+   is a plain <div> and shouldn't look clickable. */
+a.lp-sponsor:hover {
     border-color: #cfe0e0;
     transform: translateY(-2px);
 }
@@ -2966,7 +2968,7 @@ a.lp-member__project:hover {
 }
 /* The calendar as a click away rather than a fixture: the widget is ~900px tall,
    and on a page that is about something else that is the whole screen spent on a
-   form nobody asked for yet. Pages whose job *is* booking (/partner, /contact)
+   form nobody asked for yet. Pages whose job *is* booking (/ngos, /contact)
    keep it inline. */
 .lp-booking--compact {
     flex-direction: row;

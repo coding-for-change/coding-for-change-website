@@ -15,17 +15,23 @@ const FALLBACK_ORDER: Record<string, number> = {
     partner: 50,
 };
 
+// Editors tend to paste a bare domain ("hetzner.com"). Without a scheme the
+// browser resolves that as a path on our own site, so assume https.
+const externalHref = (url: string) =>
+    /^https?:\/\//i.test(url) ? url : `https://${url.replace(/^\/+/, '')}`;
+
 const SponsorLogo: React.FC<{ sponsor: CmsSponsor }> = ({ sponsor }) => {
     const logo = mediaUrl(sponsor.logo);
+    const url = sponsor.url?.trim();
     const inner = logo ? (
         <img src={logo} alt={sponsor.name} />
     ) : (
         <span className="lp-sponsor__name">{sponsor.name}</span>
     );
-    return sponsor.url ? (
+    return url ? (
         <a
             className="lp-sponsor"
-            href={sponsor.url}
+            href={externalHref(url)}
             target="_blank"
             rel="noopener noreferrer"
         >

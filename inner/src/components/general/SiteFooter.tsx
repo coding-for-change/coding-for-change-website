@@ -52,8 +52,8 @@ const SiteFooter: React.FC = () => {
         { to: '/', label: f.home },
         { to: '/projects', label: f.projects },
         { to: '/team', label: f.team },
-        { to: '/#sponsors', label: f.sponsors },
-        { to: '/partner', label: f.partner },
+        { to: '/#partners', label: f.partners },
+        { to: '/ngos', label: f.ngos },
         { to: '/join', label: f.join },
         ...(techTourListed ? [{ to: '/techtour', label: f.techtour }] : []),
     ];

@@ -5,8 +5,8 @@ export type Locale = 'en' | 'de';
 export interface Translations {
     nav: {
         home: string; events: string; projects: string;
-        sponsors: string; team: string; blog: string; qa: string; join: string; contact: string;
-        partner: string; techtour: string;
+        partners: string; team: string; blog: string; qa: string; join: string; contact: string;
+        ngos: string; techtour: string;
     };
     common: {
         learnMore: string; partner: string; at: string;
@@ -106,6 +106,7 @@ export interface Translations {
         ngoKicker: string; ngoHeading: string; ngoText: string;
         studentKicker: string; studentHeading: string; studentText: string; studentCta: string;
     };
+    /** The CMS `sponsors` collection, which the site calls "Partners". */
     sponsors: {
         title: string; subtitle: string; intro: string;
         tiers: { platinum: string; gold: string; silver: string; bronze: string; partner: string };
@@ -118,7 +119,7 @@ export interface Translations {
     footer: {
         pages: string; info: string;
         home: string; projects: string; team: string; blog: string;
-        sponsors: string; join: string; contact: string; qa: string; partner: string;
+        partners: string; join: string; contact: string; qa: string; ngos: string;
         techtour: string;
         privacy: string; imprint: string; cookieSettings: string;
     };
@@ -188,15 +189,15 @@ export interface Translations {
     notFound: {
         kicker: string; title: string; lead: string;
         backHome: string; helpfulLinks: string;
-        projects: string; join: string;
+        projects: string; ngos: string; join: string;
     };
 }
 
 const en: Translations = {
     nav: {
         home: 'Home', events: 'Events', projects: 'Projects',
-        sponsors: 'Sponsors', team: 'Team', blog: 'Blog', qa: 'Q&A', join: 'Join', contact: 'Contact',
-        partner: 'For NGOs', techtour: 'TechTour 2026',
+        partners: 'Partners', team: 'Team', blog: 'Blog', qa: 'Q&A', join: 'Join', contact: 'Contact',
+        ngos: 'NGOs', techtour: 'TechTour 2026',
     },
     common: {
         learnMore: 'Learn More', partner: 'Partner:', at: 'at',
@@ -298,7 +299,7 @@ const en: Translations = {
         resultsHeading: 'The impact',
         workingHeading: 'Working with us',
         workingPoints: [
-            'Free of charge — funded by our university backing and sponsors',
+            'Free of charge — funded by our university backing and partners',
             'Delivered in a single semester by a dedicated student team',
             'You own the result — documented, handed over, no lock-in',
         ],
@@ -445,8 +446,8 @@ const en: Translations = {
         studentCta: 'Join the club',
     },
     sponsors: {
-        title: 'Sponsors', subtitle: 'Our Supporters',
-        intro: 'We are grateful for the support of our sponsors who make our work possible. Interested in sponsoring? Reach out to us!',
+        title: 'Partners', subtitle: 'Our Supporters',
+        intro: 'We are grateful for the support of our partners who make our work possible. Interested in becoming a partner? Reach out to us!',
         tiers: { platinum: 'Platinum', gold: 'Gold', silver: 'Silver', bronze: 'Bronze', partner: 'Partners' },
     },
     blog: {
@@ -458,7 +459,7 @@ const en: Translations = {
     footer: {
         pages: 'Pages', info: 'Information',
         home: 'Home', projects: 'Projects', team: 'Team', blog: 'Blog',
-        sponsors: 'Sponsors', join: 'Join', contact: 'Contact', qa: 'Q&A', partner: 'For NGOs',
+        partners: 'Partners', join: 'Join', contact: 'Contact', qa: 'Q&A', ngos: 'For NGOs',
         techtour: 'Munich TechTour',
         privacy: 'Privacy', imprint: 'Imprint', cookieSettings: 'Cookie settings',
     },
@@ -549,6 +550,7 @@ const en: Translations = {
         backHome: 'Back to home',
         helpfulLinks: 'Or head somewhere useful',
         projects: 'Our projects',
+        ngos: 'For NGOs',
         join: 'Join us',
     },
 };
@@ -556,8 +558,8 @@ const en: Translations = {
 const de: Translations = {
     nav: {
         home: 'Start', events: 'Events', projects: 'Projekte',
-        sponsors: 'Sponsoren', team: 'Team', blog: 'Blog', qa: 'F&A', join: 'Mitmachen', contact: 'Kontakt',
-        partner: 'Für NGOs', techtour: 'TechTour 2026',
+        partners: 'Partner', team: 'Team', blog: 'Blog', qa: 'F&A', join: 'Mitmachen', contact: 'Kontakt',
+        ngos: 'NGOs', techtour: 'TechTour 2026',
     },
     common: {
         learnMore: 'Mehr erfahren', partner: 'Partner:', at: 'um',
@@ -659,7 +661,7 @@ const de: Translations = {
         resultsHeading: 'Die Wirkung',
         workingHeading: 'Zusammenarbeit mit uns',
         workingPoints: [
-            'Kostenlos – finanziert durch unsere universitäre Anbindung und Sponsoren',
+            'Kostenlos – finanziert durch unsere universitäre Anbindung und unsere Partner',
             'Geliefert in einem Semester von einem festen Studierendenteam',
             'Das Ergebnis gehört Ihnen – dokumentiert, übergeben, kein Lock-in',
         ],
@@ -806,8 +808,8 @@ const de: Translations = {
         studentCta: 'Mitglied werden',
     },
     sponsors: {
-        title: 'Sponsoren', subtitle: 'Unsere Unterstützer',
-        intro: 'Wir sind dankbar für die Unterstützung unserer Sponsoren, die unsere Arbeit erst möglich machen. Interesse am Sponsoring? Melden Sie sich bei uns!',
+        title: 'Partner', subtitle: 'Unsere Unterstützer',
+        intro: 'Wir sind dankbar für die Unterstützung unserer Partner, die unsere Arbeit erst möglich machen. Interesse an einer Partnerschaft? Melden Sie sich bei uns!',
         tiers: { platinum: 'Platin', gold: 'Gold', silver: 'Silber', bronze: 'Bronze', partner: 'Partner' },
     },
     blog: {
@@ -819,7 +821,7 @@ const de: Translations = {
     footer: {
         pages: 'Seiten', info: 'Informationen',
         home: 'Startseite', projects: 'Projekte', team: 'Team', blog: 'Blog',
-        sponsors: 'Sponsoren', join: 'Mitmachen', contact: 'Kontakt', qa: 'F&A', partner: 'Für NGOs',
+        partners: 'Partner', join: 'Mitmachen', contact: 'Kontakt', qa: 'F&A', ngos: 'Für NGOs',
         techtour: 'Munich TechTour',
         privacy: 'Datenschutz', imprint: 'Impressum', cookieSettings: 'Cookie-Einstellungen',
     },
@@ -910,6 +912,7 @@ const de: Translations = {
         backHome: 'Zurück zur Startseite',
         helpfulLinks: 'Oder gehen Sie direkt weiter',
         projects: 'Unsere Projekte',
+        ngos: 'Für NGOs',
         join: 'Mitmachen',
     },
 };

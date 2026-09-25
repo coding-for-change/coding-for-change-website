@@ -2,9 +2,12 @@ import { CollectionConfig } from 'payload';
 
 export const Sponsors: CollectionConfig = {
   slug: 'sponsors',
+  // The site calls them "Partners". Only the labels changed — the slug (and so
+  // the DB tables and /api/sponsors) keeps the old name.
+  labels: { singular: 'Partner', plural: 'Partners' },
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'tier'],
+    defaultColumns: ['name', 'url', 'tierRef'],
   },
   access: {
     read: () => true,
@@ -12,7 +15,15 @@ export const Sponsors: CollectionConfig = {
   fields: [
     { name: 'name', type: 'text', required: true },
     { name: 'logo', type: 'upload', relationTo: 'media' },
-    { name: 'url', type: 'text' },
+    {
+      name: 'url',
+      label: 'Website',
+      type: 'text',
+      admin: {
+        description:
+          'The logo links here (opens in a new tab), e.g. https://www.hetzner.com. Left empty, the logo is not clickable.',
+      },
+    },
     {
       name: 'tierRef',
       label: 'Tier',
@@ -20,7 +31,7 @@ export const Sponsors: CollectionConfig = {
       relationTo: 'sponsor-tiers',
       admin: {
         description:
-          'Which tier section this sponsor appears in (managed in Sponsor Tiers).',
+          'Which tier section this partner appears in (managed in Partner Tiers).',
       },
     },
     {

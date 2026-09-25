@@ -10,7 +10,7 @@ import './landing.css';
 
 // Sections that live on the single-scroll landing page (`/`). Clicking one
 // navigates to /#id; the Landing component handles the smooth scroll.
-const SECTION_IDS = ['home', 'process', 'sponsors', 'qa'];
+const SECTION_IDS = ['home', 'process', 'partners', 'qa'];
 
 const TopNav: React.FC = () => {
     const { t, locale, setLocale } = useLanguage();
@@ -73,10 +73,10 @@ const TopNav: React.FC = () => {
 
     const { techTourListed } = useSiteFlags();
     const pageLinks: { to: string; label: string; event?: boolean }[] = [
-        { to: '/partner', label: t.nav.partner },
         { to: '/projects', label: t.nav.projects },
+        { to: '/ngos', label: t.nav.ngos },
+        { to: '/partners', label: t.nav.partners },
         { to: '/team', label: t.nav.team },
-        { to: '/sponsors', label: t.nav.sponsors },
         // The one accented item: an event, not a page — a small teal pill.
         // Only while the CMS lists the page (TechTour Page → Visibility).
         ...(techTourListed ? [{ to: '/techtour', label: t.nav.techtour, event: true }] : []),

@@ -53,7 +53,7 @@ export const Homepage: GlobalConfig = {
           type: 'array',
           admin: {
             description:
-              'Overrides the built-in process timeline (homepage and partner page). Add, remove or reorder steps freely — e.g. drop the MVP step or add an expansion step.',
+              'Overrides the built-in process timeline (homepage and NGO page). Add, remove or reorder steps freely — e.g. drop the MVP step or add an expansion step.',
           },
           fields: [
             {
@@ -105,9 +105,9 @@ export const Homepage: GlobalConfig = {
         { name: 'eventsSubtitle', type: 'text', localized: true },
         { name: 'eventsTitle', type: 'text', localized: true },
         { name: 'eventsIntro', type: 'textarea', localized: true },
-        { name: 'sponsorsSubtitle', type: 'text', localized: true },
-        { name: 'sponsorsTitle', type: 'text', localized: true },
-        { name: 'sponsorsIntro', type: 'textarea', localized: true },
+        { name: 'sponsorsSubtitle', label: 'Partners Subtitle', type: 'text', localized: true },
+        { name: 'sponsorsTitle', label: 'Partners Title', type: 'text', localized: true },
+        { name: 'sponsorsIntro', label: 'Partners Intro', type: 'textarea', localized: true },
         { name: 'qaSubtitle', type: 'text', localized: true },
         { name: 'qaTitle', type: 'text', localized: true },
         { name: 'qaIntro', type: 'textarea', localized: true },

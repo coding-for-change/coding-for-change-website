@@ -11,7 +11,7 @@ export const metadata = {
         'Non-profits: we design and ship the software you need — free, delivered by a dedicated student team in a single semester. Start a conversation.',
 };
 
-export default async function PartnerPage() {
+export default async function NgosPage() {
     const locale = await getServerLocale();
     const [partner, about, homepage] = await Promise.all([
         fetchGlobal<CmsPartner>('partner', locale),

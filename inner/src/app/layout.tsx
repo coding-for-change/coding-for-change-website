@@ -155,9 +155,9 @@ export default async function RootLayout({
                         hackathons, and bring students together to use code for social good.
                     </p>
                     <nav>
-                        <a href="/partner">For NGOs</a> · <a href="/team">Team</a> ·{' '}
+                        <a href="/ngos">For NGOs</a> · <a href="/team">Team</a> ·{' '}
                         <a href="/projects">Projects</a> · <a href="/events">Events</a> ·{' '}
-                        <a href="/sponsors">Sponsors</a> · <a href="/qa">FAQ</a> ·{' '}
+                        <a href="/partners">Partners</a> · <a href="/qa">FAQ</a> ·{' '}
                         <a href="/join">Join</a> · <a href="/contact">Contact</a>
                     </nav>
                 </noscript>

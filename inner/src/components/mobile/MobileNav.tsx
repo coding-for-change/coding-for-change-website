@@ -53,10 +53,10 @@ const MobileNav: React.FC = () => {
 
     const { techTourListed } = useSiteFlags();
     const navLinks = [
-        { to: '/partner', label: t.nav.partner },
         { to: '/projects', label: t.nav.projects },
+        { to: '/ngos', label: t.nav.ngos },
+        { to: '/partners', label: t.nav.partners },
         { to: '/team', label: t.nav.team },
-        { to: '/sponsors', label: t.nav.sponsors },
         ...(techTourListed ? [{ to: '/techtour', label: t.nav.techtour }] : []),
         { to: '/#qa', label: t.nav.qa }, // FAQ stays a homepage section
         { to: '/contact', label: t.nav.contact },

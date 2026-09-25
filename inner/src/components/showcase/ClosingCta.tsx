@@ -22,8 +22,8 @@ export interface ClosingCtaProps {
  * Shared closing call-to-action band ("Ready to build something great?"), placed
  * at the bottom of every content page. Copy comes from the `homepage` global
  * (falls back to i18n). Context-aware buttons: on /join the Join button scrolls
- * to the application/email form; on /partner the partner button scrolls to the
- * booking tool; everywhere else they link to /join and /partner.
+ * to the application/email form; on /ngos the partner button scrolls to the
+ * booking tool; everywhere else they link to /join and /ngos.
  */
 const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
     const { t } = useLanguage();
@@ -36,7 +36,7 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
     const partnerLabel = hp?.ctaContact || t.cta.contact;
 
     const onJoin = pathname.startsWith('/join');
-    const onPartner = pathname.startsWith('/partner');
+    const onPartner = pathname.startsWith('/ngos');
 
     const scrollTo = (id: string) => (e: React.MouseEvent) => {
         const el = document.getElementById(id);
@@ -75,7 +75,7 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
                                 {partnerLabel}
                             </a>
                         ) : (
-                            <Link className="lp-btn lp-btn--light" href="/partner">
+                            <Link className="lp-btn lp-btn--light" href="/ngos">
                                 {partnerLabel}
                             </Link>
                         )}

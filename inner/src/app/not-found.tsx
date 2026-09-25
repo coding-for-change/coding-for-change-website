@@ -61,8 +61,8 @@ export default function NotFound() {
                                 <Link className="lp-btn lp-btn--ghost" href="/projects">
                                     {t.notFound.projects}
                                 </Link>
-                                <Link className="lp-btn lp-btn--ghost" href="/partner">
-                                    {t.nav.partner}
+                                <Link className="lp-btn lp-btn--ghost" href="/ngos">
+                                    {t.notFound.ngos}
                                 </Link>
                                 <Link className="lp-btn lp-btn--ghost" href="/join">
                                     {t.notFound.join}
