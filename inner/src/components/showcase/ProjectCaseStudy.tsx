@@ -507,7 +507,7 @@ const ProjectCaseStudy: React.FC<{ project: CmsProject }> = ({ project }) => {
 
                     <CaseStudyBlocks project={project} />
 
-                    {/* Reassurance: how partnering works. Full pitch lives at /partner. */}
+                    {/* Reassurance: how partnering works. Full pitch lives at /ngos. */}
                     <section className="lp-cs__block lp-cs__block--wide lp-cs-working">
                         <h2 className="lp-cs__h lp-cs__h--centred">
                             {t.caseStudy.workingHeading}
@@ -520,7 +520,7 @@ const ProjectCaseStudy: React.FC<{ project: CmsProject }> = ({ project }) => {
                                 </li>
                             ))}
                         </ul>
-                        <Link className="lp-cs__more" href="/partner">
+                        <Link className="lp-cs__more" href="/ngos">
                             {t.caseStudy.partnerLink} →
                         </Link>
                     </section>

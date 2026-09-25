@@ -523,9 +523,12 @@ export interface Sponsor {
   id: number;
   name: string;
   logo?: (number | null) | Media;
+  /**
+   * The logo links here (opens in a new tab), e.g. https://www.hetzner.com. Left empty, the logo is not clickable.
+   */
   url?: string | null;
   /**
-   * Which tier section this sponsor appears in (managed in Sponsor Tiers).
+   * Which tier section this partner appears in (managed in Partner Tiers).
    */
   tierRef?: (number | null) | SponsorTier;
   /**
@@ -537,7 +540,7 @@ export interface Sponsor {
   createdAt: string;
 }
 /**
- * Tier sections for the Sponsors page (e.g. Platinum, Gold …).
+ * Tier sections for the Partners page (e.g. Platinum, Gold …).
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "sponsor-tiers".
@@ -2466,7 +2469,7 @@ export interface Homepage {
       }[]
     | null;
   /**
-   * Overrides the built-in process timeline (homepage and partner page). Add, remove or reorder steps freely — e.g. drop the MVP step or add an expansion step.
+   * Overrides the built-in process timeline (homepage and NGO page). Add, remove or reorder steps freely — e.g. drop the MVP step or add an expansion step.
    */
   steps?:
     | {

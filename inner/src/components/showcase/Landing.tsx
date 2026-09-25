@@ -401,10 +401,10 @@ const Landing: React.FC<LandingProps> = (props) => {
                 </div>
             </section>
 
-            {/* ---- Sponsors (only shown when there are sponsors) ---- */}
+            {/* ---- Partners (only shown when the CMS has any) ---- */}
             {hasSponsors && (
             <section
-                id="sponsors"
+                id="partners"
                 data-bg="#f1f6f6"
                 className="lp-section lp-section--alt"
             >

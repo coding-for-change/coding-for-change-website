@@ -58,7 +58,7 @@ const partner = {
   valueProps: [
     { title: 'A dedicated team', description: 'Engineers, product and design working only on your project for the semester.' },
     { title: 'Production software, not a prototype', description: 'Real, maintainable software that goes live and keeps working after we hand it over.' },
-    { title: 'Free of charge', description: 'Funded by our university backing and sponsors — there is no cost to you.' },
+    { title: 'Free of charge', description: 'Funded by our university backing and partners — there is no cost to you.' },
     { title: 'Clean hand-off', description: 'Documentation, a walkthrough, and the code — you own it, with no dependency on us.' },
   ],
   process: [
@@ -199,7 +199,7 @@ const projects = [
     impactResults:
       'The spreadsheets and phone-tag are gone. Volunteers organise themselves, no-shows dropped, and the coordination team got hours of their week back to spend on the mission instead of the rota.',
     ngoFaq: [
-      { question: 'What does it cost us?', answer: 'Nothing. Our work is funded by our university backing and sponsors — there is no cost to your organisation.' },
+      { question: 'What does it cost us?', answer: 'Nothing. Our work is funded by our university backing and partners — there is no cost to your organisation.' },
       { question: 'How long does it take?', answer: 'A single semester, from first conversation to a working product handed over to your team.' },
       { question: 'What happens after hand-off?', answer: 'You own it — the code, the documentation and a walkthrough — with a support window afterwards. No lock-in.' },
     ],
@@ -320,7 +320,7 @@ const faqs = [
   },
   {
     question: 'Is there a membership fee?',
-    answer: 'No. Coding for Change is free to join — we are funded by sponsors and university support.',
+    answer: 'No. Coding for Change is free to join — we are funded by partners and university support.',
     category: 'membership',
   },
   {
@@ -371,13 +371,13 @@ const sponsors = [
   {
     name: 'Munich Tech Collective',
     tier: 'bronze',
-    url: 'https://codingforchange.com/sponsors',
+    url: 'https://codingforchange.com/partners',
     description: 'A local network connecting student initiatives with mentors.',
   },
   {
     name: 'Code Foundation e.V.',
     tier: 'bronze',
-    url: 'https://codingforchange.com/sponsors',
+    url: 'https://codingforchange.com/partners',
     description: 'Backs grassroots tech-for-good work across Germany.',
   },
 ];
@@ -410,7 +410,7 @@ const partnerDe = {
   valueProps: [
     { title: 'Ein festes Team', description: 'Engineering, Produkt und Design, die ein Semester lang nur an Ihrem Projekt arbeiten.' },
     { title: 'Produktreife Software, kein Prototyp', description: 'Echte, wartbare Software, die live geht und nach der Übergabe weiterläuft.' },
-    { title: 'Kostenlos', description: 'Finanziert durch unsere universitäre Anbindung und Sponsoren – für Sie entstehen keine Kosten.' },
+    { title: 'Kostenlos', description: 'Finanziert durch unsere universitäre Anbindung und unsere Partner – für Sie entstehen keine Kosten.' },
     { title: 'Saubere Übergabe', description: 'Dokumentation, ein Walkthrough und der Code – alles gehört Ihnen, ganz ohne Abhängigkeit von uns.' },
   ],
   process: [
@@ -513,7 +513,7 @@ const projectsDe = [
     impactResults:
       'Tabellen und Telefon-Pingpong sind Geschichte. Freiwillige organisieren sich selbst, No-Shows gingen zurück, und das Koordinationsteam gewann Stunden pro Woche zurück – für die Mission statt für den Dienstplan.',
     ngoFaq: [
-      { question: 'Was kostet uns das?', answer: 'Nichts. Unsere Arbeit wird durch unsere universitäre Anbindung und Sponsoren finanziert – für Ihre Organisation entstehen keine Kosten.' },
+      { question: 'Was kostet uns das?', answer: 'Nichts. Unsere Arbeit wird durch unsere universitäre Anbindung und unsere Partner finanziert – für Ihre Organisation entstehen keine Kosten.' },
       { question: 'Wie lange dauert es?', answer: 'Ein einziges Semester, vom ersten Gespräch bis zum fertigen Produkt, das an Ihr Team übergeben wird.' },
       { question: 'Was passiert nach der Übergabe?', answer: 'Es gehört Ihnen – der Code, die Dokumentation und ein Walkthrough – mit einem Support-Zeitraum danach. Kein Lock-in.' },
     ],
@@ -589,7 +589,7 @@ const faqsDe = [
   },
   {
     question: 'Gibt es einen Mitgliedsbeitrag?',
-    answer: 'Nein. Coding for Change ist kostenlos – wir werden durch Sponsoren und Hochschulförderung finanziert.',
+    answer: 'Nein. Coding for Change ist kostenlos – wir werden durch Partner und Hochschulförderung finanziert.',
   },
   {
     question: 'Wie werden Projekte ausgewählt?',

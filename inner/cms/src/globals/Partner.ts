@@ -2,11 +2,12 @@ import { GlobalConfig } from 'payload';
 
 /**
  * "Partner with us / For NGOs" page content. A dedicated pitch for non-profit
- * organisations — distinct from student recruiting — rendered at /partner.
+ * organisations — distinct from student recruiting — rendered at /ngos.
  */
 export const Partner: GlobalConfig = {
   slug: 'partner',
-  label: 'Partner Page (For NGOs)',
+  // Not "Partner …": that is what the admin now calls the sponsors.
+  label: 'NGO Page',
   access: {
     read: () => true,
   },

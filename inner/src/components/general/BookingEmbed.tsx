@@ -12,7 +12,7 @@ export interface BookingEmbedProps {
     height?: number;
     /**
      * `inline` parks the calendar in the page — right for a page whose job is
-     * booking (/partner, /contact).
+     * booking (/ngos, /contact).
      *
      * `compact` shows a button that opens the same calendar in an overlay. The
      * widget is ~900px tall, which is most of a screen; on a page that is about

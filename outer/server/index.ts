@@ -187,8 +187,8 @@ app.get('/sitemap.xml', async (req, res) => {
     add('/', '1.0');
     if (has(projects)) add('/projects', '0.8');
     if (has(events)) add('/events', '0.8');
-    if (has(sponsors)) add('/sponsors', '0.8');
-    add('/partner', '0.8');
+    if (has(sponsors)) add('/partners', '0.8');
+    add('/ngos', '0.8');
     add('/team', '0.8');
     add('/qa', '0.7');
     add('/join', '0.8');
