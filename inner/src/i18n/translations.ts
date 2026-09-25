@@ -380,7 +380,7 @@ const en: Translations = {
                 apply: {
                     timing: 'Deadline 30 Oct 2026, 23:59',
                     title: 'Send your application',
-                    text: 'The form below takes five minutes: your e-mail, why you want to join, and a yes to about five hours a week. No CV, no cover letter.',
+                    text: 'The form below takes five minutes: your e-mail, why you want to join, and a yes to about five hours a week.',
                 },
                 invitation: {
                     timing: 'By 1 Nov 2026',
@@ -741,7 +741,7 @@ const de: Translations = {
                 apply: {
                     timing: 'Frist 30. Okt. 2026, 23:59 Uhr',
                     title: 'Bewerbung abschicken',
-                    text: 'Das Formular unten dauert fünf Minuten: deine E-Mail, warum du mitmachen willst und ein Ja zu etwa fünf Stunden pro Woche. Kein Lebenslauf, kein Anschreiben.',
+                    text: 'Das Formular unten dauert fünf Minuten: deine E-Mail, warum du mitmachen willst und ein Ja zu etwa fünf Stunden pro Woche.',
                 },
                 invitation: {
                     timing: 'Bis 1. Nov. 2026',
