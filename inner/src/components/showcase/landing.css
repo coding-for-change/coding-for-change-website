@@ -665,7 +665,7 @@
     object-fit: cover;
 }
 /* ---- CMS-driven page hero images (all optional; only render with an upload) ---- */
-/* Generic wide hero used on the Partner, Join and Team pages. `display:block`
+/* Generic wide hero used on the Partner and Team pages. `display:block`
    is explicit because a bare `div` is otherwise caught by the global
    `div { display:flex }` rule in App.css. */
 .lp-page__hero,
@@ -1584,73 +1584,14 @@ a.lp-member__project:hover {
     margin-right: 3px;
 }
 
-/* ---- Join / membership ---- */
-.lp-cols2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    margin-bottom: 16px;
-}
-.lp-col {
-    display: block;
-}
+/* ---- Form heading (CmsForm) ---- */
 .lp-col__head {
     font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
     font-size: 22px;
     margin-bottom: 4px;
 }
-.lp-list {
-    display: flex;
-    flex-direction: column;
-    list-style: none;
-    padding: 0;
-    margin: 14px 0 0;
-}
-.lp-list li {
-    position: relative;
-    padding-left: 24px;
-    margin-bottom: 12px;
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
-    font-size: 16px;
-    line-height: 1.5;
-    color: #41494a;
-}
-.lp-list li::before {
-    content: '›';
-    position: absolute;
-    left: 6px;
-    top: 0;
-    color: var(--teal);
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-}
-.lp-form {
-    display: flex;
-    flex-direction: column;
-    max-width: 560px;
-    margin-top: 8px;
-}
 
-/* ---- Join — "Ways to contribute" tracks ---- */
-.lp-tracks {
-    display: block;
-    margin: 8px 0 52px; /* breathing room before What you get / Who we're looking for */
-}
-.lp-tracks .lp-subhead {
-    display: block;
-    float: none;
-    clear: both;
-    width: 100%;
-    margin: 0 0 20px; /* header sits above the cards, not beside them */
-}
-.lp-tracks .lp-grid {
-    clear: both;
-    margin-top: 0;
-    grid-template-columns: repeat(2, 1fr); /* 2×2 for the four role tracks */
-}
-
-/* ---- Join — application round: status pill, head CTA, dated timeline ---- */
-/* The pill says whether the round is open and how long is left; the button
-   jumps to the form further down. Both sit under the lead, on one line. */
+/* ---- Application round status pill (/techtour/apply, /join/apply) ---- */
 .lp-page__actions {
     display: flex;
     flex-wrap: wrap;
@@ -1697,20 +1638,6 @@ a.lp-member__project:hover {
 .lp-round-status--closed .lp-round-status__sep {
     color: rgba(93, 104, 104, 0.6);
 }
-/* Section head for "How the application works", then the compact timeline
-   (shared with the case studies) with room before the form below it. */
-.lp-join-phase {
-    display: block;
-    margin-top: 24px;
-}
-/* On /join the timeline follows the tracks + benefits columns, not the head. */
-.lp-join-phase--spaced {
-    margin-top: 64px;
-}
-.lp-tl--join {
-    margin: 36px 0 64px;
-}
-
 /* ---- CMS form renderer: upload, checkbox group, linked form ---- */
 .lp-cmsform {
     display: flex;
@@ -2625,22 +2552,12 @@ a.lp-member__project:hover {
     .lp-page__title {
         font-size: 34px;
     }
-    .lp-cols2 {
-        grid-template-columns: 1fr;
-        gap: 8px;
-    }
-    .lp-tracks .lp-grid {
-        grid-template-columns: 1fr;
-    }
     .lp-page__actions {
         gap: 12px 16px;
         margin-top: 22px;
     }
     .lp-page__actions .lp-btn {
         width: 100%;
-    }
-    .lp-tl--join {
-        margin: 28px 0 52px;
     }
     /* Below the layout breakpoint the poster becomes an ordinary page — it
        scrolls, and the line-up's wire is dropped (TechTourLineup.tsx), because

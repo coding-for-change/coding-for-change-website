@@ -2291,34 +2291,17 @@ export interface SiteConfig {
  */
 export interface Membership {
   id: number;
+  /**
+   * Headline of the Join page (/join).
+   */
   title: string;
+  /**
+   * The lead under the headline – one or two sentences.
+   */
   description: string;
   /**
-   * Optional hero image for the Join page — an aspirational candid (a hackathon, a build night). Left empty, the page stays text-only.
+   * Shown on the application page (/join/apply) for questions about applying.
    */
-  heroImage?: (number | null) | Media;
-  benefits?:
-    | {
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
-  requirements?:
-    | {
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * The disciplines people can join in (e.g. Engineering, Consulting, Marketing, People & Ops). Shown as cards on the Join page to encourage cross-disciplinary applications.
-   */
-  tracks?:
-    | {
-        title: string;
-        description: string;
-        id?: string | null;
-      }[]
-    | null;
   contactEmail: string;
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -2629,26 +2612,6 @@ export interface SiteConfigSelect<T extends boolean = true> {
 export interface MembershipSelect<T extends boolean = true> {
   title?: T;
   description?: T;
-  heroImage?: T;
-  benefits?:
-    | T
-    | {
-        text?: T;
-        id?: T;
-      };
-  requirements?:
-    | T
-    | {
-        text?: T;
-        id?: T;
-      };
-  tracks?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        id?: T;
-      };
   contactEmail?: T;
   updatedAt?: T;
   createdAt?: T;

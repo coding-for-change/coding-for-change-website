@@ -276,15 +276,10 @@ export interface CmsBlogPost {
     content: LexicalDocument;
 }
 
-/** GET /api/globals/membership */
+/** GET /api/globals/membership – the Join page's head and the applicants' contact address. */
 export interface CmsMembership {
     title: string;
     description: string;
-    heroImage?: CmsMedia | null;
-    benefits?: { text: string; id?: string }[];
-    requirements?: { text: string; id?: string }[];
-    /** Cross-disciplinary "Ways to contribute" cards (Engineering, Consulting, …). */
-    tracks?: { title: string; description: string; id?: string }[];
     contactEmail: string;
 }
 

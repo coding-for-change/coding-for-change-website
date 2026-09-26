@@ -21,9 +21,9 @@ export interface ClosingCtaProps {
 /**
  * Shared closing call-to-action band ("Ready to build something great?"), placed
  * at the bottom of every content page. Copy comes from the `homepage` global
- * (falls back to i18n). Context-aware buttons: on /join the Join button scrolls
- * to the application/email form; on /ngos the partner button scrolls to the
- * booking tool; everywhere else they link to /join and /ngos.
+ * (falls back to i18n). Context-aware: on /ngos the partner button scrolls to
+ * the booking tool; everywhere else the buttons link to /join and /ngos. /join
+ * has its own closing band, tied to the application round.
  */
 const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
     const { t } = useLanguage();
@@ -35,7 +35,6 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
     const joinLabel = hp?.ctaJoin || t.cta.join;
     const partnerLabel = hp?.ctaContact || t.cta.contact;
 
-    const onJoin = pathname.startsWith('/join');
     const onPartner = pathname.startsWith('/ngos');
 
     const scrollTo = (id: string) => (e: React.MouseEvent) => {
@@ -53,19 +52,9 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
                     <h2 className="lp-cta__heading">{heading}</h2>
                     <p className="lp-cta__text">{text}</p>
                     <div className="lp-cta__btns">
-                        {onJoin ? (
-                            <a
-                                className="lp-btn lp-btn--light"
-                                href="#join-form"
-                                onClick={scrollTo('join-form')}
-                            >
-                                {joinLabel}
-                            </a>
-                        ) : (
-                            <Link className="lp-btn lp-btn--light" href="/join">
-                                {joinLabel}
-                            </Link>
-                        )}
+                        <Link className="lp-btn lp-btn--light" href="/join">
+                            {joinLabel}
+                        </Link>
                         {onPartner ? (
                             <a
                                 className="lp-btn lp-btn--light"

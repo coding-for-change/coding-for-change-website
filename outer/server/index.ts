@@ -192,6 +192,8 @@ app.get('/sitemap.xml', async (req, res) => {
     add('/team', '0.8');
     add('/qa', '0.7');
     add('/join', '0.8');
+    // The application behind every button on /join (form or "notify me").
+    add('/join/apply', '0.6');
     // The Munich TechTour event page — only once the CMS has switched it to
     // "Public" (TechTour Page → Visibility); the page carries noindex until
     // then, and an unreachable CMS keeps it out rather than guessing.

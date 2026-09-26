@@ -31,6 +31,7 @@ import * as migration_20260913_131103_add_submission_review from './20260913_131
 import * as migration_20260913_153347_add_techtour_visibility from './20260913_153347_add_techtour_visibility';
 import * as migration_20260919_120100_techtour_event_image from './20260919_120100_techtour_event_image';
 import * as migration_20260921_120439_drop_unrendered_techtour_and_form_fields from './20260921_120439_drop_unrendered_techtour_and_form_fields';
+import * as migration_20260926_214026_drop_unrendered_membership_fields from './20260926_214026_drop_unrendered_membership_fields';
 
 export const migrations = [
   {
@@ -196,6 +197,11 @@ export const migrations = [
   {
     up: migration_20260921_120439_drop_unrendered_techtour_and_form_fields.up,
     down: migration_20260921_120439_drop_unrendered_techtour_and_form_fields.down,
-    name: '20260921_120439_drop_unrendered_techtour_and_form_fields'
+    name: '20260921_120439_drop_unrendered_techtour_and_form_fields',
+  },
+  {
+    up: migration_20260926_214026_drop_unrendered_membership_fields.up,
+    down: migration_20260926_214026_drop_unrendered_membership_fields.down,
+    name: '20260926_214026_drop_unrendered_membership_fields'
   },
 ];
