@@ -117,7 +117,7 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
 
     const deadline = tt?.registrationDeadline ? new Date(tt.registrationDeadline) : null;
     const open = techTourRegistrationOpen(tt, now);
-    // Once the membership round has closed, the "also apply" box goes too.
+    // Outside the membership round's window, the "also apply" box goes too.
     const hiddenSubforms = applicationsOpen(now) ? undefined : ['application'];
 
     const events = useMemo(
