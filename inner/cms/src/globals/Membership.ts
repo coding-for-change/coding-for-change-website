@@ -1,5 +1,9 @@
 import { GlobalConfig } from 'payload';
 
+// The Join page (/join) takes its headline and lead from here; everything
+// else on it – what to expect, the ways to get involved, the three steps of
+// the application – is copy in the site's translations, and the application
+// round's dates live in `inner/src/lib/applicationPhase.ts`.
 export const Membership: GlobalConfig = {
   slug: 'membership',
   label: 'Membership Page',
@@ -7,46 +11,27 @@ export const Membership: GlobalConfig = {
     read: () => true,
   },
   fields: [
-    { name: 'title', type: 'text', required: true, localized: true },
-    { name: 'description', type: 'textarea', required: true, localized: true },
     {
-      name: 'heroImage',
-      type: 'upload',
-      relationTo: 'media',
+      name: 'title',
+      type: 'text',
+      required: true,
+      localized: true,
+      admin: { description: 'Headline of the Join page (/join).' },
+    },
+    {
+      name: 'description',
+      type: 'textarea',
+      required: true,
+      localized: true,
+      admin: { description: 'The lead under the headline – one or two sentences.' },
+    },
+    {
+      name: 'contactEmail',
+      type: 'email',
+      required: true,
       admin: {
-        description:
-          'Optional hero image for the Join page — an aspirational candid (a hackathon, a build night). Left empty, the page stays text-only.',
+        description: 'Shown on the application page (/join/apply) for questions about applying.',
       },
     },
-    {
-      name: 'benefits',
-      type: 'array',
-      fields: [{ name: 'text', type: 'text', required: true, localized: true }],
-    },
-    {
-      name: 'requirements',
-      type: 'array',
-      fields: [{ name: 'text', type: 'text', required: true, localized: true }],
-    },
-    {
-      name: 'tracks',
-      label: 'Ways to contribute',
-      type: 'array',
-      admin: {
-        description:
-          'The disciplines people can join in (e.g. Engineering, Consulting, Marketing, People & Ops). Shown as cards on the Join page to encourage cross-disciplinary applications.',
-        initCollapsed: true,
-      },
-      fields: [
-        { name: 'title', type: 'text', required: true, localized: true },
-        {
-          name: 'description',
-          type: 'textarea',
-          required: true,
-          localized: true,
-        },
-      ],
-    },
-    { name: 'contactEmail', type: 'email', required: true },
   ],
 };

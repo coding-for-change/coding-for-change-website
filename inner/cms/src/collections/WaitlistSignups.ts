@@ -1,7 +1,7 @@
 import { CollectionConfig } from 'payload';
 import { attributionField } from '../fields/attribution';
 
-// Emails collected on the /join page while applications are closed ("sign up to
+// Emails collected on /join/apply while applications are closed ("sign up to
 // know first when applications open"). The public inner site POSTs to
 // /api/waitlist-signups; only authenticated admins can read the list back, so
 // the collected addresses can't be scraped through the public REST API.
