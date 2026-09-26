@@ -80,8 +80,14 @@ export interface Translations {
         waitlistEmailLabel: string; waitlistEmailPlaceholder: string;
         waitlistButton: string; waitlistSubmitting: string;
         waitlistSuccess: string; waitlistError: string;
-        /** Status pill in the page head. `{n}` in daysLeft is the day count. */
-        statusOpen: string; statusClosed: string; statusDeadline: string;
+        /** Heading + lead over the waitlist before the round opens (in place of waitlistTitle / waitlistLead). */
+        upcomingTitle: string; upcomingLead: string;
+        /**
+         * Status pill in the page head. `{n}` in daysLeft is the day count.
+         * statusOpens follows statusClosed before the round opens,
+         * statusDeadline after it has closed.
+         */
+        statusOpen: string; statusClosed: string; statusOpens: string; statusDeadline: string;
         daysLeft: string; lastDay: string;
         /** Top-of-page button that scrolls to the application form. */
         toForm: string;
@@ -362,8 +368,12 @@ const en: Translations = {
             'You’re on the list! We’ll be in touch as soon as applications reopen.',
         waitlistError:
             'Something went wrong. Please try again or email us directly.',
+        upcomingTitle: 'Applications open on 5 October',
+        upcomingLead:
+            'Leave your email and we’ll let you know the moment the form goes live.',
         statusOpen: 'Applications open',
         statusClosed: 'Applications closed',
+        statusOpens: 'Opens 5 Oct 2026',
         statusDeadline: 'Deadline 30 Oct 2026, 23:59',
         daysLeft: '{n} days left',
         lastDay: 'Last day to apply',
@@ -379,7 +389,7 @@ const en: Translations = {
                     text: 'Come by our booth and meet the team. Ask us anything about the projects, the time commitment and what a semester with us looks like.',
                 },
                 apply: {
-                    timing: 'Deadline 30 Oct 2026, 23:59',
+                    timing: '5–30 Oct 2026 · until 23:59',
                     title: 'Send your application',
                     text: 'The form below takes five minutes: your e-mail, why you want to join, and a yes to about five hours a week.',
                 },
@@ -724,8 +734,12 @@ const de: Translations = {
             'Du stehst auf der Liste! Wir melden uns, sobald die Bewerbungen wieder öffnen.',
         waitlistError:
             'Etwas ist schiefgelaufen. Bitte versuche es erneut oder schreib uns direkt.',
+        upcomingTitle: 'Bewerbungen sind ab 5. Oktober möglich',
+        upcomingLead:
+            'Trag dich ein – wir sagen dir Bescheid, sobald das Formular online ist.',
         statusOpen: 'Bewerbungen offen',
         statusClosed: 'Bewerbungen geschlossen',
+        statusOpens: 'Start am 5. Okt. 2026',
         statusDeadline: 'Frist 30. Okt. 2026, 23:59 Uhr',
         daysLeft: 'noch {n} Tage',
         lastDay: 'Letzter Tag zum Bewerben',
@@ -741,7 +755,7 @@ const de: Translations = {
                     text: 'Komm an unserem Stand vorbei und lern das Team kennen. Frag uns alles zu den Projekten, zum Zeitaufwand und dazu, wie ein Semester bei uns aussieht.',
                 },
                 apply: {
-                    timing: 'Frist 30. Okt. 2026, 23:59 Uhr',
+                    timing: '5.–30. Okt. 2026 · bis 23:59 Uhr',
                     title: 'Bewerbung abschicken',
                     text: 'Das Formular unten dauert fünf Minuten: deine E-Mail, warum du mitmachen willst und ein Ja zu etwa fünf Stunden pro Woche.',
                 },

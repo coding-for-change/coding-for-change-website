@@ -14,7 +14,7 @@ import ClosingCta from './ClosingCta';
 import ProcessTimeline from './ProcessTimeline';
 import {
     APPLICATION_STEPS,
-    applicationsOpen,
+    applicationStatus,
     daysUntilDeadline,
     stepState,
 } from '../../lib/applicationPhase';
@@ -27,10 +27,11 @@ const validateEmail = (email: string) => {
     return re.test(String(email).toLowerCase());
 };
 
-// Whether membership applications are open is decided by the round's deadline
-// in `lib/applicationPhase.ts`. While closed, the page shows a "notify me when
-// applications reopen" email signup (persisted to the CMS `waitlist-signups`
-// collection) instead of the application form. The form itself — every
+// Whether membership applications are open is decided by the round's opening
+// date and deadline in `lib/applicationPhase.ts`. While closed, the page shows
+// a "notify me when applications reopen" email signup (persisted to the CMS
+// `waitlist-signups` collection) instead of the application form – headed by
+// the opening date while the round has yet to start. The form itself — every
 // question, the CV upload, the "also register for the TechTour" box — is
 // defined in the CMS and rendered by the shared `CmsForm`.
 
@@ -57,7 +58,9 @@ const BecomeAMember: React.FC<{
     useEffect(() => {
         setNow(Date.now());
     }, []);
-    const open = applicationsOpen(now);
+    const status = applicationStatus(now);
+    const open = status === 'open';
+    const upcoming = status === 'upcoming';
     const daysLeft = daysUntilDeadline(now);
     const { data: techTour } = useCmsGlobal<CmsTechTour>('tech-tour', props.techTour);
     // The "also register for the TechTour" box (and its "What is the TechTour?"
@@ -182,7 +185,9 @@ const BecomeAMember: React.FC<{
                                           '{n}',
                                           String(daysLeft)
                                       )
-                                : t.join.statusDeadline}
+                                : upcoming
+                                  ? t.join.statusOpens
+                                  : t.join.statusDeadline}
                         </span>
                         <a
                             className="lp-btn lp-btn--primary"
@@ -304,10 +309,10 @@ const BecomeAMember: React.FC<{
                             className="lp-col__head"
                             style={{ marginBottom: 8 }}
                         >
-                            {t.join.waitlistTitle}
+                            {upcoming ? t.join.upcomingTitle : t.join.waitlistTitle}
                         </h3>
                         <p className="lp-lead" style={{ marginBottom: 20 }}>
-                            {t.join.waitlistLead}
+                            {upcoming ? t.join.upcomingLead : t.join.waitlistLead}
                         </p>
 
                         {waitlistSubmitted ? (

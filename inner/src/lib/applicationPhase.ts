@@ -5,15 +5,16 @@
  *
  * Dates are the single source of truth for the Join page. Each step's window
  * decides how the timeline draws it (done / current / upcoming), and the
- * application deadline decides whether the form or the "notify me" waitlist
- * shows — so nobody has to redeploy at midnight to close a round. The wording
- * for each step lives in `i18n/translations.ts` (`join.phase.steps`), keyed by
- * the ids below.
+ * opening date and deadline decide whether the form or the "notify me"
+ * waitlist shows – so nobody has to redeploy at midnight to open or close a
+ * round. The wording for each step lives in `i18n/translations.ts`
+ * (`join.phase.steps`), keyed by the ids below.
  *
  * To run the next round: update the dates here and the step copy in the
- * translations. Offsets are written out explicitly (Europe/Berlin: +02:00
- * until the clocks change on 25 Oct 2026, +01:00 after) so the result does not
- * depend on the server's time zone.
+ * translations, including the opening date in `join.statusOpens` and
+ * `join.upcomingTitle`. Offsets are written out explicitly (Europe/Berlin:
+ * +02:00 until the clocks change on 25 Oct 2026, +01:00 after) so the result
+ * does not depend on the server's time zone.
  */
 
 export type ApplicationStepId =
@@ -36,14 +37,17 @@ export interface ApplicationStep {
 /** Round label used in the section kicker, e.g. "Winter 2026/27". */
 export const APPLICATION_ROUND = { en: 'Winter 2026/27', de: 'Winter 2026/27' } as const;
 
+/** Applications are accepted from this instant on. Before it the page names the date. */
+export const APPLICATION_OPENS = '2026-10-05T00:00:00+02:00';
+
 /** Applications are accepted up to and including this instant. */
 export const APPLICATION_DEADLINE = '2026-10-30T23:59:59+01:00';
 
 export const APPLICATION_STEPS: ApplicationStep[] = [
     // Student Club Fair — meet the team.
     { id: 'fair', start: '2026-10-21T10:00:00+02:00', end: '2026-10-21T17:00:00+02:00' },
-    // Applications open now, hard deadline 30 Oct 23:59.
-    { id: 'apply', end: APPLICATION_DEADLINE },
+    // Applications open 5 Oct, hard deadline 30 Oct 23:59.
+    { id: 'apply', start: APPLICATION_OPENS, end: APPLICATION_DEADLINE },
     // Interview invitations go out within two days of the deadline.
     { id: 'invitation', start: '2026-10-31T00:00:00+01:00', end: '2026-11-01T23:59:59+01:00' },
     // Interview week.
@@ -57,11 +61,18 @@ export const APPLICATION_STEPS: ApplicationStep[] = [
 ];
 
 /**
- * Manual override for the form. Leave `null` so the deadline decides; set
- * 'open' to keep accepting late applications after the deadline, or 'closed'
- * to stop early. Either way the timeline keeps drawing from the dates.
+ * Manual override for the form. Leave `null` so the dates decide; set 'open'
+ * to accept applications outside the window (early, or late after the
+ * deadline), or 'closed' to stop early. Either way the timeline keeps drawing
+ * from the dates.
  */
 export const APPLICATIONS_OVERRIDE: 'open' | 'closed' | null = null;
+
+/**
+ * 'upcoming' – the round has not started, the page names the opening date;
+ * 'open' – the form shows; 'closed' – the round is over (or stopped early).
+ */
+export type ApplicationStatus = 'upcoming' | 'open' | 'closed';
 
 export type StepState = 'done' | 'current' | 'upcoming';
 
@@ -74,11 +85,15 @@ export const stepState = (step: ApplicationStep, now: number): StepState => {
     return 'current';
 };
 
-/** Whether the application form (rather than the waitlist) should show. */
-export const applicationsOpen = (now: number): boolean => {
-    if (APPLICATIONS_OVERRIDE) return APPLICATIONS_OVERRIDE === 'open';
-    return now <= ms(APPLICATION_DEADLINE);
+/** Where the round stands at `now` (epoch ms). */
+export const applicationStatus = (now: number): ApplicationStatus => {
+    if (APPLICATIONS_OVERRIDE) return APPLICATIONS_OVERRIDE;
+    if (now < ms(APPLICATION_OPENS)) return 'upcoming';
+    return now <= ms(APPLICATION_DEADLINE) ? 'open' : 'closed';
 };
+
+/** Whether the application form (rather than the waitlist) should show. */
+export const applicationsOpen = (now: number): boolean => applicationStatus(now) === 'open';
 
 /** Whole days left until the deadline, never negative. Same-day counts as 1. */
 export const daysUntilDeadline = (now: number): number =>
