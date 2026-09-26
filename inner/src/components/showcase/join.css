@@ -1,0 +1,1064 @@
+/* ------------------------------------------------------------------ */
+/* /join and /join/apply. Builds on the .lp tokens in landing.css.      */
+/* NOTE: App.css sets a global `div { display: flex }`, so every div    */
+/* below sets its own `display`. Rules on an element that also carries  */
+/* an .lp-* class are scoped under .jn: this file can load before       */
+/* landing.css, and an equally specific .lp-* rule would win.           */
+/* ------------------------------------------------------------------ */
+
+.jn {
+    --navy: #0f2040;
+    --jn-display: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+}
+
+.jn-head {
+    display: block;
+    max-width: 720px;
+    margin-bottom: 44px;
+}
+.jn-head .lp-h2 {
+    color: var(--navy);
+}
+
+/* ---- Head: the pitch on the left, a photo with the round's chip right ---- */
+.jn-hero {
+    display: block;
+    padding: 64px 0 88px;
+    background: #ffffff;
+    overflow: hidden;
+}
+.jn .jn-hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(40px, 6vw, 88px);
+}
+.jn-hero__copy {
+    display: block;
+}
+.jn-hero__title {
+    margin: 0;
+    font-family: var(--jn-display);
+    font-weight: 700;
+    font-size: clamp(38px, 5vw, 60px);
+    line-height: 1.04;
+    letter-spacing: -1.5px;
+    color: var(--navy);
+    /* Wrap at spaces only – auto-hyphenation chops short headline words. */
+    hyphens: manual;
+    overflow-wrap: break-word;
+}
+.jn-hero__lead {
+    max-width: 520px;
+    margin: 22px 0 0;
+    font-size: clamp(17px, 1.6vw, 20px);
+    line-height: 1.6;
+    color: var(--muted);
+}
+.jn-hero__ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 34px;
+}
+.jn-hero__visual {
+    position: relative;
+    display: block;
+    /* Room for the chip, which hangs off the photo's left edge. */
+    margin-left: 28px;
+}
+/* A soft teal block behind the photo's top-right corner. */
+.jn-hero__backdrop {
+    position: absolute;
+    top: -22px;
+    right: -22px;
+    width: 70%;
+    height: 62%;
+    background: rgba(47, 143, 144, 0.12);
+}
+
+/* ---- The head's slideshow: photos fade into each other, the event's cover
+   image is pinned to the corner, the caption says what happened there. ---- */
+.jn-slides {
+    position: relative;
+    display: block;
+}
+.jn-slides__frame {
+    position: relative;
+    display: block;
+    aspect-ratio: 5 / 4;
+    background: var(--alt);
+    box-shadow: 0 30px 60px rgba(15, 32, 64, 0.16);
+}
+.jn-slides__photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 0.9s ease;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+.jn-slides__photo[data-active='true'] {
+    opacity: 1;
+}
+/* The event's cover image, pinned on like a flyer: a tilted white card with
+   the picture inside, so no seam shows between frame and picture. */
+.jn-slides__poster {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    z-index: 2;
+    display: block;
+    width: 32%;
+    padding: 5px;
+    box-sizing: border-box;
+    background: #ffffff;
+    box-shadow: 0 16px 36px rgba(15, 32, 64, 0.22);
+    opacity: 0;
+    transform: rotate(3deg) scale(0.94);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    pointer-events: none;
+}
+.jn-slides__poster[data-active='true'] {
+    opacity: 1;
+    transform: rotate(3deg);
+}
+.jn-slides__poster img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+.jn-slides .jn-hero__chip {
+    z-index: 3;
+}
+/* Small dots on the photo's bottom-right corner; each button is a 24px target. */
+.jn-slides__dots {
+    position: absolute;
+    right: 10px;
+    bottom: 8px;
+    z-index: 3;
+    display: flex;
+}
+.jn-slides__dot {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+.jn-slides__pip {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.55);
+    box-shadow: 0 1px 4px rgba(15, 32, 64, 0.35);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.jn-slides__dot:hover .jn-slides__pip {
+    background: rgba(255, 255, 255, 0.85);
+}
+.jn-slides__dot[aria-current='true'] .jn-slides__pip {
+    background: #ffffff;
+    transform: scale(1.25);
+}
+/* What happened here: a casual note, with a hand-drawn arrow curving up to
+   the photo – the same voice as the arrows on our event posters. */
+.jn-slides__note {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    width: fit-content;
+    max-width: 82%;
+    /* Leaves the arrow's tip a clear gap below the photo. */
+    margin: 20px 0 0 auto;
+}
+.jn-slides__arrow {
+    flex: none;
+    width: 64px;
+    height: 54px;
+    margin-top: -12px;
+    color: #8a9999;
+}
+.jn-slides__note-text {
+    padding-top: 26px;
+    font-family: var(--font-roboto-mono), 'Roboto Mono', ui-monospace, monospace;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.45;
+    color: #6b7a7a;
+    animation: jn-note-in 0.5s ease both;
+}
+@keyframes jn-note-in {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .jn-slides__note-text {
+        animation: none;
+    }
+}
+/* The round, in one line: when it opens, or until when it is open. */
+.jn-hero__chip {
+    position: absolute;
+    left: -28px;
+    bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 22px 14px 18px;
+    background: #ffffff;
+    box-shadow: 0 18px 44px rgba(15, 32, 64, 0.18);
+}
+.jn-hero__dot {
+    flex: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--teal);
+}
+.jn-hero__chip[data-status='upcoming'] .jn-hero__dot {
+    background: transparent;
+    box-shadow: inset 0 0 0 2px var(--teal);
+}
+.jn-hero__chip[data-status='open'] .jn-hero__dot {
+    animation: jn-pulse 2.2s ease-out infinite;
+}
+.jn-hero__chip[data-status='closed'] .jn-hero__dot {
+    background: #9aa6a6;
+}
+@keyframes jn-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(47, 143, 144, 0.45);
+    }
+    70%,
+    100% {
+        box-shadow: 0 0 0 9px rgba(47, 143, 144, 0);
+    }
+}
+.jn-hero__chip-body {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.jn-hero__chip-status {
+    font-family: var(--jn-display);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--navy);
+}
+.jn-hero__chip-count {
+    font-size: 13.5px;
+    line-height: 1.3;
+    color: var(--muted);
+}
+
+/* ---- Partners: the logo band under the head ---- */
+.jn-partners {
+    display: block;
+    padding: 34px 0 38px;
+    background: var(--alt);
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+}
+.jn-partners__label {
+    max-width: 1060px;
+    margin: 0 auto 20px;
+    padding: 0 32px;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+.jn-marquee {
+    display: block;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+}
+/* Two identical passes slide by one pass's width, so the loop never jumps.
+   The spacing is each tile's own right margin (not `gap`), which keeps the
+   two passes exactly the same width. */
+.jn-marquee__track {
+    display: flex;
+    width: max-content;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    animation: jn-marquee var(--jn-marquee-duration, 60s) linear infinite;
+    will-change: transform;
+}
+.jn-marquee:hover .jn-marquee__track {
+    animation-play-state: paused;
+}
+@keyframes jn-marquee {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-50%);
+    }
+}
+.jn-logo {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 196px;
+    height: 96px;
+    margin-right: 16px;
+    padding: 16px 22px;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid var(--line);
+}
+.jn-logo img {
+    display: block;
+    max-width: 100%;
+    max-height: 52px;
+    object-fit: contain;
+    -webkit-user-drag: none;
+    user-select: none;
+}
+.jn-logo--named {
+    justify-content: flex-start;
+}
+.jn-logo--named img {
+    flex: none;
+    max-width: 40px;
+    max-height: 40px;
+}
+.jn-logo__name {
+    min-width: 0;
+    font-family: var(--jn-display);
+    font-size: 15px;
+    line-height: 1.2;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+@media (prefers-reduced-motion: reduce) {
+    .jn-marquee {
+        -webkit-mask-image: none;
+        mask-image: none;
+    }
+    .jn-marquee__track {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        width: auto;
+        padding: 0 32px;
+        animation: none;
+    }
+    .jn-logo {
+        margin-right: 0;
+    }
+    .jn-logo[aria-hidden='true'] {
+        display: none;
+    }
+}
+
+/* ---- What to expect: three photos, the first one large ---- */
+.jn-bento {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    grid-template-rows: repeat(2, minmax(270px, auto));
+    gap: 18px;
+}
+.jn-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    margin: 0;
+    min-height: 270px;
+    overflow: hidden;
+    background: var(--navy);
+    isolation: isolate;
+}
+.jn-tile--projects {
+    grid-row: span 2;
+}
+.jn-tile__img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+/* Keep the people and the slide in frame when the square photo is cropped wide. */
+.jn-tile--community .jn-tile__img {
+    object-position: 50% 55%;
+}
+.jn-tile--companies .jn-tile__img {
+    object-position: 50% 34%;
+}
+/* A light navy veil over the whole photo ties the three together; the copy
+   brings its own gradient, so it reads however tall it runs on a tile. */
+.jn-tile::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgba(15, 32, 64, 0.1);
+}
+/* The two small tiles carry a title and one line – the photo does the rest. */
+.jn-tile__body {
+    display: block;
+    padding: 56px 24px 20px;
+    color: #ffffff;
+    background: linear-gradient(
+        0deg,
+        rgba(15, 32, 64, 0.9) 0%,
+        rgba(15, 32, 64, 0.7) 50%,
+        rgba(15, 32, 64, 0) 100%
+    );
+}
+.jn-tile__title {
+    margin: 0 0 4px;
+    font-family: var(--jn-display);
+    font-size: 21px;
+    line-height: 1.15;
+    color: #ffffff;
+}
+.jn-tile__text {
+    max-width: 40ch;
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.5;
+    color: rgba(255, 255, 255, 0.86);
+}
+.jn-tile--projects .jn-tile__body {
+    padding: 96px 30px 28px;
+}
+.jn-tile--projects .jn-tile__title {
+    margin-bottom: 8px;
+    font-size: 32px;
+}
+.jn-tile--projects .jn-tile__text {
+    max-width: 44ch;
+    font-size: 16px;
+}
+
+/* ---- Ways to get involved: two cards, same parts in the same order ----
+   Each card spans five shared rows (label, title, text, points, contact), so
+   the points and the contact line up across both cards however long the
+   text above them runs. */
+.jn-ways__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, auto);
+    column-gap: 20px;
+}
+.jn-way {
+    display: grid;
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    padding: 32px 32px 28px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    box-sizing: border-box;
+}
+.jn-way__label {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+}
+.jn-way__title {
+    margin: 12px 0 10px;
+    font-family: var(--jn-display);
+    font-size: 28px;
+    line-height: 1.1;
+    color: var(--navy);
+}
+.jn-way__text {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.6;
+    color: #41494a;
+}
+.jn-way__points {
+    display: block;
+    align-self: start;
+    margin: 18px 0 0;
+    padding: 0 0 0 20px;
+    list-style: disc;
+}
+.jn-way__points li {
+    margin: 0 0 6px;
+    padding-left: 4px;
+    font-size: 15.5px;
+    line-height: 1.5;
+    color: var(--ink);
+}
+.jn-way__points li:last-child {
+    margin-bottom: 0;
+}
+.jn-way__points li::marker {
+    color: var(--teal);
+}
+/* Who to ask: photo, name and role, and a small LinkedIn button – the whole
+   row is the link. */
+.jn-way__contact {
+    display: flex;
+    align-items: center;
+    align-self: end;
+    gap: 14px;
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: inherit;
+    text-decoration: none;
+}
+.jn-way__avatar {
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: var(--alt);
+    color: var(--teal-dark);
+    font-family: var(--jn-display);
+    font-size: 18px;
+}
+/* Team photos are head-and-shoulders squares; zoom in on the face so it
+   fills the circle rather than floating in the background. */
+.jn-way__avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scale(1.55);
+    transform-origin: 50% 36%;
+}
+.jn-way__person {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+.jn-way__person-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+}
+.jn-way__person-name {
+    font-family: var(--jn-display);
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--navy);
+}
+.jn-way__person-role {
+    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--muted);
+}
+/* The LinkedIn mark on its own – it is already a square, so no frame. */
+.jn-way__linkedin {
+    flex: none;
+    display: inline-flex;
+    color: var(--teal-dark);
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+.jn-way__linkedin svg {
+    display: block;
+    width: 26px;
+    height: 26px;
+}
+.jn-way__contact:hover .jn-way__linkedin,
+.jn-way__contact:focus-visible .jn-way__linkedin {
+    color: var(--teal);
+    transform: translateY(-1px);
+}
+
+/* ---- The three steps, beside a project members built ----
+   Both sizes run down a vertical line: node and line in a narrow first
+   column, the copy beside it. The date leads each step as plain teal type. */
+.jn-process__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+    align-items: center;
+    gap: clamp(40px, 6vw, 80px);
+}
+.jn-process__grid--solo {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 560px;
+}
+.jn-steps {
+    display: block;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.jn-step {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 20px;
+    min-width: 0;
+}
+.jn-step__rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.jn-step__node {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    box-sizing: border-box;
+    border: 1.5px solid rgba(47, 143, 144, 0.5);
+    border-radius: 50%;
+    background: #ffffff;
+    color: var(--teal-dark);
+    font-family: var(--jn-display);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.jn-step__line {
+    flex: 1;
+    width: 1.5px;
+    min-height: 16px;
+    margin: 8px 0;
+    background: var(--line);
+}
+.jn-step[data-state='done'] .jn-step__node,
+.jn-step[data-state='current'] .jn-step__node {
+    border-color: var(--teal);
+    background: var(--teal);
+    color: #ffffff;
+}
+.jn-step[data-state='current'] .jn-step__node {
+    box-shadow: 0 0 0 6px rgba(47, 143, 144, 0.16);
+}
+.jn-step[data-state='done'] .jn-step__line {
+    background: var(--teal);
+}
+.jn-step__body {
+    display: block;
+    min-width: 0;
+    padding: 9px 0 34px;
+}
+.jn-step:last-child .jn-step__body {
+    padding-bottom: 0;
+}
+.jn-step__timing {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+    font-variant-numeric: tabular-nums;
+}
+.jn-step__title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 4px;
+    font-family: var(--jn-display);
+    font-size: 22px;
+    line-height: 1.15;
+    color: var(--navy);
+}
+.jn-step__now {
+    padding: 3px 8px;
+    background: var(--teal);
+    color: #ffffff;
+    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    line-height: 1.4;
+}
+.jn-step__text {
+    max-width: 40ch;
+    margin: 0;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+/* Compact: the side column of /join/apply. */
+.jn-steps--compact .jn-step {
+    grid-template-columns: 34px minmax(0, 1fr);
+    column-gap: 16px;
+}
+.jn-steps--compact .jn-step__line {
+    min-height: 14px;
+    margin: 6px 0;
+}
+.jn-steps--compact .jn-step__body {
+    padding: 6px 0 22px;
+}
+.jn-steps--compact .jn-step:last-child .jn-step__body {
+    padding-bottom: 0;
+}
+.jn-steps--compact .jn-step__node {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+}
+.jn-steps--compact .jn-step[data-state='current'] .jn-step__node {
+    box-shadow: 0 0 0 4px rgba(47, 143, 144, 0.16);
+}
+.jn-steps--compact .jn-step__timing {
+    font-size: 11px;
+}
+.jn-steps--compact .jn-step__title {
+    margin: 4px 0 2px;
+    font-size: 17px;
+}
+.jn-steps--compact .jn-step__text {
+    max-width: none;
+    font-size: 14.5px;
+}
+
+/* The project: its screens on a soft panel, then what it is and the link. */
+.jn-showcase {
+    display: block;
+    margin: 0;
+    padding: 28px 28px 30px;
+    background: var(--alt);
+}
+.jn-showcase__img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.jn-showcase__body {
+    display: block;
+    margin-top: 22px;
+}
+.jn-showcase__kicker {
+    margin: 0 0 8px;
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+}
+.jn-showcase__title {
+    margin: 0;
+    font-family: var(--jn-display);
+    font-size: 22px;
+    line-height: 1.2;
+    color: var(--navy);
+}
+.jn-showcase__ngo {
+    margin: 2px 0 0;
+    font-size: 14.5px;
+    color: var(--muted);
+}
+.jn-showcase__text {
+    margin: 12px 0 0;
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--ink);
+}
+.jn-showcase__link {
+    display: inline-block;
+    margin-top: 16px;
+    padding-bottom: 2px;
+    border-bottom: 2px solid var(--teal);
+    font-family: var(--jn-display);
+    font-size: 15px;
+    color: var(--teal-dark);
+    text-decoration: none;
+}
+.jn-showcase__link:hover {
+    color: var(--teal);
+}
+
+/* ---- /join/apply ---- */
+.jn-apply .lp-page {
+    padding: 48px 0 96px;
+}
+/* Head and steps on the left, the form on the right; on a phone the form
+   comes straight after the head and the steps follow it. */
+.jn .jn-apply__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+        'head main'
+        'steps main';
+    column-gap: clamp(32px, 5vw, 72px);
+    max-width: 1140px;
+}
+.jn-apply__head {
+    display: block;
+    grid-area: head;
+}
+.jn-apply__main {
+    display: block;
+    grid-area: main;
+    min-width: 0;
+}
+.jn-apply__steps {
+    display: block;
+    grid-area: steps;
+    margin-top: 36px;
+}
+.jn-back {
+    color: var(--teal-dark);
+    text-decoration: none;
+}
+.jn-back:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.jn-apply .lp-page__title {
+    margin-bottom: 18px;
+    font-size: clamp(34px, 4vw, 46px);
+    color: var(--navy);
+}
+/* The hollow dot: coming, not yet open. */
+.jn-status--upcoming .lp-round-status__dot {
+    background: transparent;
+    box-shadow: inset 0 0 0 2px var(--teal);
+}
+.jn-apply__lead {
+    max-width: 44ch;
+    margin: 18px 0 0;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+.jn-apply__label {
+    margin: 0 0 18px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--teal-dark);
+}
+.jn-apply__contact {
+    margin: 30px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 14.5px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+.jn-apply__contact a {
+    color: var(--teal-dark);
+    text-underline-offset: 3px;
+}
+.jn-card {
+    display: block;
+    padding: clamp(24px, 3.4vw, 40px);
+    background: #ffffff;
+    border: 1px solid var(--line);
+    box-shadow: 0 24px 60px rgba(15, 32, 64, 0.08);
+    scroll-margin-top: 88px;
+}
+.jn-card .lp-formsection {
+    display: block;
+    margin: 0 0 18px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+}
+.jn-card .lp-formsection ~ .lp-formsection {
+    margin-top: 30px;
+}
+.jn-card .lp-formsection__title {
+    margin: 0;
+    font-family: var(--jn-display);
+    font-size: 20px;
+    color: var(--navy);
+}
+.jn-card .lp-cmsform > .lp-submit {
+    margin-top: 6px;
+}
+/* Tick boxes in the page's teal, lined up with the first line of a long label. */
+.jn-card .lp-checkbox {
+    align-items: flex-start;
+}
+.jn-card .lp-checkbox input[type='checkbox'] {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--teal);
+    box-shadow: none;
+}
+
+/* ---- Notify me ---- */
+.jn-waitlist {
+    display: block;
+}
+.jn-waitlist__title {
+    margin: 0 0 10px;
+    font-family: var(--jn-display);
+    font-size: clamp(24px, 2.6vw, 30px);
+    line-height: 1.15;
+    color: var(--navy);
+}
+.jn-waitlist__lead {
+    max-width: 52ch;
+    margin: 0 0 24px;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+.jn-waitlist__form {
+    display: flex;
+    flex-direction: column;
+}
+/* Field and button share one height and one baseline. */
+.jn-waitlist__row {
+    display: flex;
+    gap: 10px;
+}
+.jn-waitlist__row .lp-input {
+    flex: 1;
+    min-width: 0;
+}
+.jn-waitlist__row .lp-submit {
+    flex: none;
+    align-self: stretch;
+}
+.jn-waitlist__done {
+    margin: 0;
+    padding: 16px 18px;
+    border: 1px solid rgba(47, 143, 144, 0.35);
+    background: rgba(47, 143, 144, 0.08);
+    color: var(--teal-dark);
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+/* ---- Narrow screens ---- */
+@media (max-width: 960px) {
+    .jn .jn-hero__inner {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .jn-hero__visual {
+        max-width: 560px;
+        margin: 0;
+    }
+    /* The chip moves into the photo's top-left corner, so the note's arrow
+       below points at the photo rather than at the chip. */
+    .jn-hero__chip {
+        top: 12px;
+        bottom: auto;
+        left: 12px;
+        padding: 10px 16px 10px 14px;
+    }
+    .jn-hero__chip-status {
+        font-size: 16px;
+    }
+    .jn-slides__poster {
+        top: -14px;
+        right: -10px;
+        width: 30%;
+        padding: 4px;
+    }
+}
+@media (max-width: 900px) {
+    .jn-process__grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .jn .jn-apply__grid {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto;
+        grid-template-areas:
+            'head'
+            'main'
+            'steps';
+    }
+    .jn-apply__main {
+        margin-top: 28px;
+    }
+    .jn-apply__steps {
+        margin-top: 44px;
+    }
+}
+@media (max-width: 760px) {
+    .jn-bento {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: none;
+    }
+    .jn-tile,
+    .jn-tile--projects {
+        grid-row: auto;
+        min-height: 300px;
+    }
+    .jn-tile--projects .jn-tile__body {
+        padding: 64px 24px 22px;
+    }
+    .jn-tile--projects .jn-tile__title {
+        font-size: 26px;
+    }
+    .jn-ways__grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .jn-way + .jn-way {
+        margin-top: 16px;
+    }
+}
+@media (max-width: 560px) {
+    .jn-hero {
+        padding: 40px 0 64px;
+    }
+    .jn-showcase {
+        padding: 18px 18px 22px;
+    }
+    .jn-step__title {
+        font-size: 20px;
+    }
+    /* Both head buttons on one line, as on the landing page. */
+    .jn .jn-hero__ctas .lp-btn {
+        padding: 12px 18px;
+        font-size: 15px;
+    }
+    .jn-way {
+        padding: 26px 22px 24px;
+    }
+    .jn-waitlist__row {
+        flex-direction: column;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .jn-hero__dot {
+        animation: none !important;
+    }
+}

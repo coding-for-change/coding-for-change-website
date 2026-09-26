@@ -1,4 +1,4 @@
-import type { ApplicationStepId } from '../lib/applicationPhase';
+import type { ApplicationStatus, ApplicationStepId } from '../lib/applicationPhase';
 
 export type Locale = 'en' | 'de';
 
@@ -68,34 +68,72 @@ export interface Translations {
         joinTileTitle: string; joinTileHint: string;
         statMembers: string; statNgos: string; statProjects: string; };
     qa: { title: string; subtitle: string; intro: string; };
+    /**
+     * /join (the page that makes the case) and /join/apply (the form). Dates
+     * written into the copy follow `lib/applicationPhase.ts` – update both
+     * together for the next round.
+     */
     join: {
-        benefits: string; requirements: string; waysToContribute: string; applyNow: string;
-        nameLabel: string; namePlaceholder: string;
-        emailLabel: string; emailPlaceholder: string;
-        motivationLabel: string; motivationPlaceholder: string;
-        sendApplication: string; unavailable: string;
-        submitting: string; sendError: string; loadingForm: string;
-        formUnavailable: string; successFallback: string; requiredNote: string;
+        /** Head fallbacks – the CMS Membership global's title and description win. */
+        title: string; lead: string;
+        /** Secondary button in the head, down to the three steps. */
+        howItWorks: string;
+        /**
+         * The slideshow in the head: what happened in each photo – a casual,
+         * lower-case note beside a hand-drawn arrow – with the event's cover
+         * image where there is one. `{n}` is the photo number.
+         */
+        slides: {
+            label: string; goTo: string;
+            items: Record<
+                'marioKart' | 'hackathon' | 'changemakerChat',
+                { caption: string; alt: string; posterAlt?: string }
+            >;
+        };
+        /** Where the round stands: "Opens 5 Oct", "Closes 31 Oct", closed. */
+        status: Record<ApplicationStatus, string>;
+        /** The line under the status. `{n}` is the day count. */
+        countdown: {
+            opensIn: { one: string; other: string };
+            closesIn: { one: string; other: string };
+        };
+        /** The button to /join/apply, by where the round stands. */
+        cta: Record<ApplicationStatus, string>;
+        /** The logo band under the head. */
+        partnersLabel: string;
+        expect: {
+            kicker: string; heading: string; lead: string;
+            items: Record<'projects' | 'community' | 'companies', { title: string; text: string; alt: string }>;
+        };
+        ways: {
+            kicker: string; heading: string;
+            items: Record<'projects' | 'taskForce', { label: string; title: string; text: string; points: string[] }>;
+            /** Footer of each card: the member to ask. `{name}` is their first name. */
+            contactLabel: string; contactLink: string;
+        };
+        process: { kicker: string; heading: string };
+        /** Beside the steps: a project members built, linking to its case study. `{ngo}` is the partner. */
+        showcase: { kicker: string; forNgo: string; link: string; alt: string };
+        steps: Record<ApplicationStepId, { timing: string; title: string; text: string }>;
+        /** Badge on the step that is running right now. */
+        stepNow: string;
+        /** The band at the foot of /join. */
+        closing: { heading: string; text: Record<ApplicationStatus, string> };
+        /** /join/apply. `{round}` is the round label, `{email}` the contact address. */
+        apply: {
+            back: string; title: string;
+            lead: Record<ApplicationStatus, string>;
+            contact: string;
+            /** Headings the form is split into (who you are, then the application). */
+            sectionAbout: string; sectionApplication: string;
+        };
+        loadingForm: string; formUnavailable: string;
         waitlistTitle: string; waitlistLead: string;
+        /** Heading + lead over the waitlist before the round opens (in place of waitlistTitle / waitlistLead). */
+        upcomingTitle: string; upcomingLead: string;
         waitlistEmailLabel: string; waitlistEmailPlaceholder: string;
         waitlistButton: string; waitlistSubmitting: string;
         waitlistSuccess: string; waitlistError: string;
-        /** Heading + lead over the waitlist before the round opens (in place of waitlistTitle / waitlistLead). */
-        upcomingTitle: string; upcomingLead: string;
-        /**
-         * Status pill in the page head. `{n}` in daysLeft is the day count.
-         * statusOpens follows statusClosed before the round opens,
-         * statusDeadline after it has closed.
-         */
-        statusOpen: string; statusClosed: string; statusOpens: string; statusDeadline: string;
-        daysLeft: string; lastDay: string;
-        /** Top-of-page button that scrolls to the application form. */
-        toForm: string;
-        /** "How the application works" — the dated steps of the current round. */
-        phase: {
-            kicker: string; heading: string; intro: string;
-            steps: Record<ApplicationStepId, { timing: string; title: string; text: string }>;
-        };
     };
     contact: {
         title: string; intro: string;
@@ -342,84 +380,148 @@ const en: Translations = {
         intro: 'Find answers to common questions about Coding for Change below.',
     },
     join: {
-        benefits: 'What you get', requirements: 'Who we’re looking for',
-        waysToContribute: 'Ways to contribute', applyNow: 'Apply Now',
-        nameLabel: 'Your Name:', namePlaceholder: 'Name',
-        emailLabel: 'Email:', emailPlaceholder: 'Email',
-        motivationLabel: 'Why do you want to join?',
-        motivationPlaceholder: 'Tell us about your motivation...',
-        sendApplication: 'Send Application', unavailable: 'Content unavailable.',
-        submitting: 'Sending…',
-        sendError:
-            'Something went wrong sending your application. Please try again or email us directly.',
+        title: 'Build software that matters',
+        lead: 'Join a community of ambitious students who ship real software for non-profits\u00a0– and meet the people and companies shaping Munich’s tech scene.',
+        howItWorks: 'How it works',
+        slides: {
+            label: 'Moments from our events',
+            goTo: 'Show photo {n}',
+            items: {
+                marioKart: {
+                    caption: 'here, we took on the CHECK24 team in a Mario Kart tournament',
+                    alt: 'Students cheering at the Mario Kart tournament at CHECK24',
+                    posterAlt: 'Event poster: Mario Kart tournament, hosted by CHECK24',
+                },
+                hackathon: {
+                    caption: 'here, we spent a weekend building at our mini-hackathon',
+                    alt: 'Members at a long table during the mini-hackathon',
+                },
+                changemakerChat: {
+                    caption: 'here, we welcomed the former CEO of Welthungerhilfe for a chat',
+                    alt: 'A panel talk with the former CEO of Welthungerhilfe in the TUM Think Tank',
+                    posterAlt: 'Event poster: chat with Till Wahnbaeck',
+                },
+            },
+        },
+        status: { upcoming: 'Opens 5 Oct', open: 'Closes 31 Oct', closed: 'Applications closed' },
+        countdown: {
+            opensIn: { one: 'tomorrow', other: 'in {n} days' },
+            closesIn: { one: 'last day', other: '{n} days left' },
+        },
+        cta: { upcoming: 'Get notified', open: 'Apply now', closed: 'Notify me for the next round' },
+        partnersLabel: 'Non-profits we build for\u00a0– and the companies at our side',
+        expect: {
+            kicker: 'What to expect',
+            heading: 'More than a side project',
+            lead: 'A semester with us means building real software, meeting people you’ll want to keep around, and seeing Munich’s tech companies from the inside.',
+            items: {
+                projects: {
+                    title: 'Project work',
+                    text: 'Build software for a non-profit in a small team\u00a0– from the first conversation to launch.',
+                    alt: 'Members present their app to the team at Lebenshilfe München',
+                },
+                community: {
+                    title: 'Community events',
+                    text: 'Hackathons, talks, socials\u00a0– and the odd Mario Kart tournament.',
+                    alt: 'Members around a long table, listening to a talk',
+                },
+                companies: {
+                    title: 'Company visits',
+                    text: 'A look behind the scenes at Munich’s top tech companies.',
+                    alt: 'A full room of students at a Coding for Change presentation',
+                },
+            },
+        },
+        ways: {
+            kicker: 'Ways to get involved',
+            heading: 'Two ways to make a difference',
+            items: {
+                projects: {
+                    label: 'Projects',
+                    title: 'Build software people rely on',
+                    text: 'Join a small team, take on a real problem of a non-profit and turn it into a product that is used every day.',
+                    points: [
+                        'A team and project matched to your skills',
+                        'Around five hours a week\u00a0– one team meeting included',
+                        'Past partners: Lebenshilfe, Cycling Without Age, edunovo',
+                    ],
+                },
+                taskForce: {
+                    label: 'Task Force',
+                    title: 'Run the club like a startup',
+                    text: 'Behind every project, event and partnership is the Task Force\u00a0– the people who make Coding for Change happen.',
+                    points: [
+                        'Bring top tech companies on board and host hackathons',
+                        'Scout NGOs and uncover the problems worth solving',
+                        'Own legal and finance for a registered association',
+                    ],
+                },
+            },
+            contactLabel: 'Questions? Reach out!',
+            contactLink: '{name} on LinkedIn',
+        },
+        process: { kicker: 'Application', heading: 'Three steps to your first project' },
+        showcase: {
+            kicker: 'What you could build',
+            forNgo: 'for {ngo}',
+            link: 'Read the case study',
+            alt: '{title} on a laptop and a phone',
+        },
+        steps: {
+            apply: {
+                timing: '5–31 Oct 2026',
+                title: 'Apply',
+                text: 'A few lines on your motivation, plus your CV.',
+            },
+            interview: {
+                timing: '2–8 Nov 2026',
+                title: 'Interview',
+                text: 'A conversation and a small challenge: vibe-code a prototype with Lovable\u00a0– or solve a DSA problem.',
+            },
+            admission: {
+                timing: '9–11 Nov 2026',
+                title: 'You’re in',
+                text: 'Meet the others at the new-joiner event and find your team.',
+            },
+        },
+        stepNow: 'Now',
+        closing: {
+            heading: 'Your first project starts here',
+            text: {
+                upcoming: 'Applications open on 5 October. Leave your email and we’ll let you know the moment the form goes live.',
+                open: 'Applications close on 31 October at 23:59. The form takes about five minutes.',
+                closed: 'This round is closed. Leave your email and you’ll be the first to know when applications reopen.',
+            },
+        },
+        apply: {
+            back: 'All about joining',
+            title: 'Apply for {round}',
+            lead: {
+                upcoming: 'The form opens on 5 October.',
+                open: 'Takes about five minutes\u00a0– have your CV ready as a PDF.',
+                closed: 'Applications for this round are closed.',
+            },
+            contact: 'Questions about applying? Email us at {email}.',
+            sectionAbout: 'About you',
+            sectionApplication: 'Your application',
+        },
         loadingForm: 'Loading form…',
         formUnavailable:
             'The application form is currently unavailable. Please email us directly.',
-        successFallback: 'Thanks! Your application has been sent.',
-        requiredNote: '* = required',
         waitlistTitle: 'Applications are currently closed',
         waitlistLead:
-            'Sign up to be the first to know when applications reopen — we’ll email you the moment they do.',
+            'Sign up to be the first to know when applications reopen\u00a0– we’ll email you the moment they do.',
+        upcomingTitle: 'Applications open on 5 October',
+        upcomingLead:
+            'Leave your email and we’ll let you know the moment the form goes live.',
         waitlistEmailLabel: 'Email:',
         waitlistEmailPlaceholder: 'you@example.com',
         waitlistButton: 'Notify me',
         waitlistSubmitting: 'Signing up…',
         waitlistSuccess:
-            'You’re on the list! We’ll be in touch as soon as applications reopen.',
+            'You’re on the list! We’ll email you as soon as applications open.',
         waitlistError:
             'Something went wrong. Please try again or email us directly.',
-        upcomingTitle: 'Applications open on 5 October',
-        upcomingLead:
-            'Leave your email and we’ll let you know the moment the form goes live.',
-        statusOpen: 'Applications open',
-        statusClosed: 'Applications closed',
-        statusOpens: 'Opens 5 Oct 2026',
-        statusDeadline: 'Deadline 30 Oct 2026, 23:59',
-        daysLeft: '{n} days left',
-        lastDay: 'Last day to apply',
-        toForm: 'To the application form',
-        phase: {
-            kicker: 'Application phase · Winter 2026/27',
-            heading: 'How the application works',
-            intro: 'Seven steps from a first hello to your first pull request. Every date that matters for this round, in order.',
-            steps: {
-                fair: {
-                    timing: '21 Oct 2026 · 10:00–17:00',
-                    title: 'Student Club Fair',
-                    text: 'Come by our booth and meet the team. Ask us anything about the projects, the time commitment and what a semester with us looks like.',
-                },
-                apply: {
-                    timing: '5–30 Oct 2026 · until 23:59',
-                    title: 'Send your application',
-                    text: 'The form below takes five minutes: your e-mail, why you want to join, and a yes to about five hours a week.',
-                },
-                invitation: {
-                    timing: 'By 1 Nov 2026',
-                    title: 'Interview invitation',
-                    text: 'Within two days of the deadline you hear from us and pick an interview slot that works for you.',
-                },
-                interviews: {
-                    timing: '2–8 Nov 2026',
-                    title: 'Interviews',
-                    text: 'A relaxed conversation about you, your motivation and where you would fit best.',
-                },
-                onboarding: {
-                    timing: '9–11 Nov 2026',
-                    title: 'Onboarding event',
-                    text: 'We introduce this round’s projects and partner NGOs, then match you to a project and team based on your interests and skills. You also get your accounts and tools. We will confirm the exact date with your acceptance.',
-                },
-                firstMeeting: {
-                    timing: 'Mid-Nov 2026',
-                    title: 'First team meeting',
-                    text: 'Your new team meets for the first time: goals, roles and the first tasks. From then on you meet every week.',
-                },
-                project: {
-                    timing: 'Mid-Nov 2026 – mid-Jan 2027',
-                    title: 'Project phase',
-                    text: 'Two months of building for a real non-profit. Plan on about five hours a week including a one-hour team meeting, and at least one pull request per week.',
-                },
-            },
-        },
     },
     contact: {
         title: 'Contact',
@@ -708,84 +810,148 @@ const de: Translations = {
         intro: 'Hier finden Sie Antworten auf häufige Fragen zu Coding for Change.',
     },
     join: {
-        benefits: 'Was du bekommst', requirements: 'Wen wir suchen',
-        waysToContribute: 'Wie du mitwirken kannst', applyNow: 'Jetzt bewerben',
-        nameLabel: 'Dein Name:', namePlaceholder: 'Name',
-        emailLabel: 'E-Mail:', emailPlaceholder: 'E-Mail',
-        motivationLabel: 'Warum möchtest du mitmachen?',
-        motivationPlaceholder: 'Erzähl uns von deiner Motivation...',
-        sendApplication: 'Bewerbung absenden', unavailable: 'Inhalt nicht verfügbar.',
-        submitting: 'Wird gesendet…',
-        sendError:
-            'Beim Senden deiner Bewerbung ist etwas schiefgelaufen. Bitte versuche es erneut oder schreib uns direkt.',
+        title: 'Bau Software, die zählt',
+        lead: 'Werde Teil einer Community ambitionierter Studierender, die echte Software für gemeinnützige Organisationen bauen\u00a0– und lern die Menschen und Unternehmen kennen, die Münchens Tech-Szene prägen.',
+        howItWorks: 'So läuft’s ab',
+        slides: {
+            label: 'Momente von unseren Events',
+            goTo: 'Foto {n} zeigen',
+            items: {
+                marioKart: {
+                    caption: 'hier haben wir das CHECK24-Team im Mario-Kart-Turnier herausgefordert',
+                    alt: 'Studierende feuern beim Mario-Kart-Turnier bei CHECK24 an',
+                    posterAlt: 'Event-Poster: Mario-Kart-Turnier bei CHECK24',
+                },
+                hackathon: {
+                    caption: 'hier haben wir ein Wochenende lang beim Mini-Hackathon gebaut',
+                    alt: 'Mitglieder an einem langen Tisch beim Mini-Hackathon',
+                },
+                changemakerChat: {
+                    caption: 'hier war der Ex-CEO der Welthungerhilfe bei unserem Chat zu Gast',
+                    alt: 'Gesprächsrunde mit dem Ex-CEO der Welthungerhilfe im TUM Think Tank',
+                    posterAlt: 'Event-Poster: Chat mit Till Wahnbaeck',
+                },
+            },
+        },
+        status: { upcoming: 'Offen ab 5. Okt.', open: 'Offen bis 31. Okt.', closed: 'Bewerbung geschlossen' },
+        countdown: {
+            opensIn: { one: 'morgen', other: 'in {n} Tagen' },
+            closesIn: { one: 'letzter Tag', other: 'noch {n} Tage' },
+        },
+        cta: { upcoming: 'Benachrichtigen lassen', open: 'Jetzt bewerben', closed: 'Für die nächste Runde vormerken' },
+        partnersLabel: 'Organisationen, für die wir bauen\u00a0– und Unternehmen an unserer Seite',
+        expect: {
+            kicker: 'Was dich erwartet',
+            heading: 'Mehr als ein Nebenprojekt',
+            lead: 'Ein Semester bei uns heißt: echte Software bauen, Leute kennenlernen, die du nicht mehr missen willst, und Münchens Tech-Unternehmen von innen sehen.',
+            items: {
+                projects: {
+                    title: 'Projektarbeit',
+                    text: 'Bau im kleinen Team Software für eine gemeinnützige Organisation\u00a0– vom ersten Gespräch bis zum Launch.',
+                    alt: 'Mitglieder stellen dem Team der Lebenshilfe München ihre App vor',
+                },
+                community: {
+                    title: 'Community-Events',
+                    text: 'Hackathons, Talks, Socials\u00a0– und ab und zu ein Mario-Kart-Turnier.',
+                    alt: 'Mitglieder an einem langen Tisch hören einem Vortrag zu',
+                },
+                companies: {
+                    title: 'Firmenbesuche',
+                    text: 'Ein Blick hinter die Kulissen von Münchens Top-Tech-Unternehmen.',
+                    alt: 'Ein voller Raum mit Studierenden bei einer Präsentation von Coding for Change',
+                },
+            },
+        },
+        ways: {
+            kicker: 'So bringst du dich ein',
+            heading: 'Zwei Wege, etwas zu bewegen',
+            items: {
+                projects: {
+                    label: 'Projekte',
+                    title: 'Bau Software, auf die sich Menschen verlassen',
+                    text: 'Im kleinen Team nimmst du dir ein echtes Problem einer gemeinnützigen Organisation vor und machst daraus ein Produkt, das jeden Tag genutzt wird.',
+                    points: [
+                        'Team und Projekt passend zu deinen Skills',
+                        'Rund fünf Stunden pro Woche\u00a0– inklusive Team-Meeting',
+                        'Bisherige Partner: Lebenshilfe, Cycling Without Age, edunovo',
+                    ],
+                },
+                taskForce: {
+                    label: 'Task Force',
+                    title: 'Führ den Club wie ein Startup',
+                    text: 'Hinter jedem Projekt, jedem Event und jeder Partnerschaft steht die Task Force\u00a0– die Leute, die Coding for Change möglich machen.',
+                    points: [
+                        'Hol Top-Tech-Unternehmen an Bord und organisiere Hackathons',
+                        'Finde NGOs und die Probleme, die sich zu lösen lohnen',
+                        'Verantworte Recht und Finanzen eines eingetragenen Vereins',
+                    ],
+                },
+            },
+            contactLabel: 'Fragen? Melde dich!',
+            contactLink: '{name} auf LinkedIn',
+        },
+        process: { kicker: 'Bewerbung', heading: 'In drei Schritten zum ersten Projekt' },
+        showcase: {
+            kicker: 'Was du bauen kannst',
+            forNgo: 'für {ngo}',
+            link: 'Zur Case Study',
+            alt: '{title} auf Laptop und Handy',
+        },
+        steps: {
+            apply: {
+                timing: '5.–31. Okt. 2026',
+                title: 'Bewerben',
+                text: 'Ein paar Sätze zu deiner Motivation und dein Lebenslauf.',
+            },
+            interview: {
+                timing: '2.–8. Nov. 2026',
+                title: 'Interview',
+                text: 'Ein Gespräch und eine kleine Challenge: Vibe-code einen Prototyp mit Lovable\u00a0– oder lös eine DSA-Aufgabe.',
+            },
+            admission: {
+                timing: '9.–11. Nov. 2026',
+                title: 'Du bist dabei',
+                text: 'Lern beim New-Joiner-Event die anderen kennen und finde dein Team.',
+            },
+        },
+        stepNow: 'Jetzt',
+        closing: {
+            heading: 'Dein erstes Projekt beginnt hier',
+            text: {
+                upcoming: 'Die Bewerbung startet am 5. Oktober. Trag dich ein\u00a0– wir sagen dir Bescheid, sobald das Formular online ist.',
+                open: 'Bewerbungsschluss ist der 31. Oktober um 23:59 Uhr. Das Formular dauert etwa fünf Minuten.',
+                closed: 'Diese Runde ist vorbei. Trag dich ein und erfahre als Erste:r, wenn die Bewerbung wieder öffnet.',
+            },
+        },
+        apply: {
+            back: 'Alles zum Mitmachen',
+            title: 'Bewirb dich für {round}',
+            lead: {
+                upcoming: 'Das Formular öffnet am 5. Oktober.',
+                open: 'Dauert etwa fünf Minuten\u00a0– halte deinen Lebenslauf als PDF bereit.',
+                closed: 'Die Bewerbung für diese Runde ist geschlossen.',
+            },
+            contact: 'Fragen zur Bewerbung? Schreib uns an {email}.',
+            sectionAbout: 'Über dich',
+            sectionApplication: 'Deine Bewerbung',
+        },
         loadingForm: 'Formular wird geladen…',
         formUnavailable:
             'Das Bewerbungsformular ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
-        successFallback: 'Danke! Deine Bewerbung wurde gesendet.',
-        requiredNote: '* = Pflichtfeld',
         waitlistTitle: 'Bewerbungen sind derzeit geschlossen',
         waitlistLead:
-            'Trag dich ein und erfahre als Erste:r, wenn die Bewerbungen wieder öffnen – wir schreiben dir sofort, sobald es so weit ist.',
+            'Trag dich ein und erfahre als Erste:r, wenn die Bewerbungen wieder öffnen\u00a0– wir schreiben dir sofort, sobald es so weit ist.',
+        upcomingTitle: 'Bewerbungen sind ab 5. Oktober möglich',
+        upcomingLead:
+            'Trag dich ein\u00a0– wir sagen dir Bescheid, sobald das Formular online ist.',
         waitlistEmailLabel: 'E-Mail:',
         waitlistEmailPlaceholder: 'du@beispiel.de',
         waitlistButton: 'Benachrichtigt mich',
         waitlistSubmitting: 'Wird eingetragen…',
         waitlistSuccess:
-            'Du stehst auf der Liste! Wir melden uns, sobald die Bewerbungen wieder öffnen.',
+            'Du stehst auf der Liste! Wir schreiben dir, sobald die Bewerbung öffnet.',
         waitlistError:
             'Etwas ist schiefgelaufen. Bitte versuche es erneut oder schreib uns direkt.',
-        upcomingTitle: 'Bewerbungen sind ab 5. Oktober möglich',
-        upcomingLead:
-            'Trag dich ein – wir sagen dir Bescheid, sobald das Formular online ist.',
-        statusOpen: 'Bewerbungen offen',
-        statusClosed: 'Bewerbungen geschlossen',
-        statusOpens: 'Start am 5. Okt. 2026',
-        statusDeadline: 'Frist 30. Okt. 2026, 23:59 Uhr',
-        daysLeft: 'noch {n} Tage',
-        lastDay: 'Letzter Tag zum Bewerben',
-        toForm: 'Zum Bewerbungsformular',
-        phase: {
-            kicker: 'Bewerbungsphase · Winter 2026/27',
-            heading: 'So läuft die Bewerbung ab',
-            intro: 'Sieben Schritte vom ersten Hallo bis zu deinem ersten Pull Request. Alle Termine dieser Runde, der Reihe nach.',
-            steps: {
-                fair: {
-                    timing: '21. Okt. 2026 · 10–17 Uhr',
-                    title: 'Student Club Fair',
-                    text: 'Komm an unserem Stand vorbei und lern das Team kennen. Frag uns alles zu den Projekten, zum Zeitaufwand und dazu, wie ein Semester bei uns aussieht.',
-                },
-                apply: {
-                    timing: '5.–30. Okt. 2026 · bis 23:59 Uhr',
-                    title: 'Bewerbung abschicken',
-                    text: 'Das Formular unten dauert fünf Minuten: deine E-Mail, warum du mitmachen willst und ein Ja zu etwa fünf Stunden pro Woche.',
-                },
-                invitation: {
-                    timing: 'Bis 1. Nov. 2026',
-                    title: 'Einladung zum Interview',
-                    text: 'Innerhalb von zwei Tagen nach der Frist hörst du von uns und wählst einen Interviewtermin, der dir passt.',
-                },
-                interviews: {
-                    timing: '2.–8. Nov. 2026',
-                    title: 'Interviews',
-                    text: 'Ein lockeres Gespräch über dich, deine Motivation und wo du am besten hinpasst.',
-                },
-                onboarding: {
-                    timing: '9.–11. Nov. 2026',
-                    title: 'Onboarding-Event',
-                    text: 'Wir stellen die Projekte und Partner-NGOs dieser Runde vor und matchen dich anhand deiner Interessen und Fähigkeiten mit einem Projekt und Team. Außerdem bekommst du deine Zugänge und Tools. Den genauen Termin bestätigen wir dir mit der Zusage.',
-                },
-                firstMeeting: {
-                    timing: 'Mitte Nov. 2026',
-                    title: 'Erstes Team-Meeting',
-                    text: 'Dein neues Team trifft sich zum ersten Mal: Ziele, Rollen und die ersten Aufgaben. Ab dann trefft ihr euch jede Woche.',
-                },
-                project: {
-                    timing: 'Mitte Nov. 2026 – Mitte Jan. 2027',
-                    title: 'Projektphase',
-                    text: 'Zwei Monate bauen für eine echte Non-Profit-Organisation. Rechne mit etwa fünf Stunden pro Woche inklusive einem einstündigen Team-Meeting und mindestens einem Pull Request pro Woche.',
-                },
-            },
-        },
     },
     contact: {
         title: 'Kontakt',

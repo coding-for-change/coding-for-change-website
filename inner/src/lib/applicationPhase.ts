@@ -1,30 +1,23 @@
 /**
- * The membership application round: every dated step from "come and meet us"
- * to "the project is running", plus the rule for whether the application form
- * is open right now.
+ * The membership application round: the three dated steps from applying to
+ * being in, plus the rule for whether the application form is open right now.
  *
- * Dates are the single source of truth for the Join page. Each step's window
- * decides how the timeline draws it (done / current / upcoming), and the
- * opening date and deadline decide whether the form or the "notify me"
- * waitlist shows – so nobody has to redeploy at midnight to open or close a
- * round. The wording for each step lives in `i18n/translations.ts`
- * (`join.phase.steps`), keyed by the ids below.
+ * Dates are the single source of truth for /join and /join/apply. Each step's
+ * window decides how the steps are drawn (done / current / upcoming), and the
+ * opening date and deadline decide whether /join/apply shows the form or the
+ * "notify me" waitlist – so nobody has to redeploy at midnight to open or close
+ * a round. The wording for each step lives in `i18n/translations.ts`
+ * (`join.steps`), keyed by the ids below.
  *
- * To run the next round: update the dates here and the step copy in the
- * translations, including the opening date in `join.statusOpens` and
- * `join.upcomingTitle`. Offsets are written out explicitly (Europe/Berlin:
+ * To run the next round: update the dates here, `APPLICATION_ROUND`, and the
+ * dates written into the copy (`join.window`, `join.status.upcoming`,
+ * `join.steps.*.timing`, `join.closing.text`, `join.apply.lead.upcoming` and
+ * `join.upcomingTitle`). Offsets are written out explicitly (Europe/Berlin:
  * +02:00 until the clocks change on 25 Oct 2026, +01:00 after) so the result
  * does not depend on the server's time zone.
  */
 
-export type ApplicationStepId =
-    | 'fair'
-    | 'apply'
-    | 'invitation'
-    | 'interviews'
-    | 'onboarding'
-    | 'firstMeeting'
-    | 'project';
+export type ApplicationStepId = 'apply' | 'interview' | 'admission';
 
 export interface ApplicationStep {
     id: ApplicationStepId;
@@ -34,36 +27,28 @@ export interface ApplicationStep {
     end: string;
 }
 
-/** Round label used in the section kicker, e.g. "Winter 2026/27". */
+/** Round label used in kickers and the apply page title, e.g. "Winter 2026/27". */
 export const APPLICATION_ROUND = { en: 'Winter 2026/27', de: 'Winter 2026/27' } as const;
 
 /** Applications are accepted from this instant on. Before it the page names the date. */
 export const APPLICATION_OPENS = '2026-10-05T00:00:00+02:00';
 
 /** Applications are accepted up to and including this instant. */
-export const APPLICATION_DEADLINE = '2026-10-30T23:59:59+01:00';
+export const APPLICATION_DEADLINE = '2026-10-31T23:59:59+01:00';
 
 export const APPLICATION_STEPS: ApplicationStep[] = [
-    // Student Club Fair — meet the team.
-    { id: 'fair', start: '2026-10-21T10:00:00+02:00', end: '2026-10-21T17:00:00+02:00' },
-    // Applications open 5 Oct, hard deadline 30 Oct 23:59.
+    // The form is open 5–31 Oct; invitations go out within two days of the deadline.
     { id: 'apply', start: APPLICATION_OPENS, end: APPLICATION_DEADLINE },
-    // Interview invitations go out within two days of the deadline.
-    { id: 'invitation', start: '2026-10-31T00:00:00+01:00', end: '2026-11-01T23:59:59+01:00' },
-    // Interview week.
-    { id: 'interviews', start: '2026-11-02T00:00:00+01:00', end: '2026-11-08T23:59:59+01:00' },
-    // Onboarding event (projects introduced, teams matched): Mon 9 / Tue 10 / Wed 11 Nov.
-    { id: 'onboarding', start: '2026-11-09T00:00:00+01:00', end: '2026-11-11T23:59:59+01:00' },
-    // First team meeting, the week after onboarding.
-    { id: 'firstMeeting', start: '2026-11-16T00:00:00+01:00', end: '2026-11-20T23:59:59+01:00' },
-    // Two-month project phase, mid-November to mid-January.
-    { id: 'project', start: '2026-11-16T00:00:00+01:00', end: '2027-01-15T23:59:59+01:00' },
+    // Interview week: a talk plus a small (vibe-)coding challenge.
+    { id: 'interview', start: '2026-11-02T00:00:00+01:00', end: '2026-11-08T23:59:59+01:00' },
+    // New-joiner event on Mon 9, Tue 10 or Wed 11 Nov: projects introduced, teams matched.
+    { id: 'admission', start: '2026-11-09T00:00:00+01:00', end: '2026-11-11T23:59:59+01:00' },
 ];
 
 /**
  * Manual override for the form. Leave `null` so the dates decide; set 'open'
  * to accept applications outside the window (early, or late after the
- * deadline), or 'closed' to stop early. Either way the timeline keeps drawing
+ * deadline), or 'closed' to stop early. Either way the steps keep drawing
  * from the dates.
  */
 export const APPLICATIONS_OVERRIDE: 'open' | 'closed' | null = null;
@@ -77,6 +62,25 @@ export type ApplicationStatus = 'upcoming' | 'open' | 'closed';
 export type StepState = 'done' | 'current' | 'upcoming';
 
 const ms = (iso: string) => new Date(iso).getTime();
+
+const berlinDate = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Berlin',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+});
+
+/**
+ * The calendar day an instant falls on in Munich, as a day number. Counting
+ * in calendar days rather than 24-hour blocks keeps the count right across
+ * the clock change on 25 Oct: a 23:59 deadline in winter time is 25 hours
+ * away from midnight in summer time, which would otherwise round up to an
+ * extra day for the first hour of every day.
+ */
+const berlinDay = (t: number): number => {
+    const [y, m, d] = berlinDate.format(t).split('-').map(Number);
+    return Date.UTC(y, m - 1, d) / 86_400_000;
+};
 
 /** Where a step sits relative to `now` (epoch ms). */
 export const stepState = (step: ApplicationStep, now: number): StepState => {
@@ -95,6 +99,10 @@ export const applicationStatus = (now: number): ApplicationStatus => {
 /** Whether the application form (rather than the waitlist) should show. */
 export const applicationsOpen = (now: number): boolean => applicationStatus(now) === 'open';
 
-/** Whole days left until the deadline, never negative. Same-day counts as 1. */
+/** Days left to apply, today included: 1 on the deadline day, 0 once it has passed. */
 export const daysUntilDeadline = (now: number): number =>
-    Math.max(0, Math.ceil((ms(APPLICATION_DEADLINE) - now) / 86_400_000));
+    now > ms(APPLICATION_DEADLINE) ? 0 : berlinDay(ms(APPLICATION_DEADLINE)) - berlinDay(now) + 1;
+
+/** Days until the form opens: 1 the day before, 0 once it is open. */
+export const daysUntilOpening = (now: number): number =>
+    Math.max(0, berlinDay(ms(APPLICATION_OPENS)) - berlinDay(now));
