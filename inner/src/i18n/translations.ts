@@ -172,6 +172,8 @@ export interface Translations {
         send: string; submitting: string; sendError: string; required: string;
         successFallback: string; chooseAtLeastOne: string; opensNewTab: string;
         linkedUnavailable: string;
+        /** The free-text box under a dropdown's "Other" option. */
+        otherPlaceholder: string;
         uploadChoose: string; uploadHint: string; uploading: string; uploadRemove: string;
         uploadTooLarge: string; uploadWrongType: string; uploadFailed: string;
     };
@@ -585,6 +587,7 @@ const en: Translations = {
         chooseAtLeastOne: 'Choose at least one.',
         opensNewTab: 'Opens in a new tab',
         linkedUnavailable: 'This part of the form is currently unavailable. Please email us directly.',
+        otherPlaceholder: 'Please specify',
         uploadChoose: 'Choose PDF',
         uploadHint: 'PDF, max. 5 MB',
         uploading: 'Uploading…',
@@ -1015,6 +1018,7 @@ const de: Translations = {
         chooseAtLeastOne: 'Bitte wähle mindestens eine Option.',
         opensNewTab: 'Öffnet in neuem Tab',
         linkedUnavailable: 'Dieser Teil des Formulars ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
+        otherPlaceholder: 'Bitte angeben',
         uploadChoose: 'PDF auswählen',
         uploadHint: 'PDF, max. 5 MB',
         uploading: 'Wird hochgeladen…',

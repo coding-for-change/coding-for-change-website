@@ -75,10 +75,13 @@ const JoinApply: React.FC<JoinApplyProps> = (props) => {
     const sections = useMemo(
         () => [
             { at: 'firstName', title: t.join.apply.sectionAbout },
-            { at: 'why', title: t.join.apply.sectionApplication },
+            { at: 'university', title: t.join.apply.sectionApplication },
         ],
         [t]
     );
+    // "Where would you like to work?" – two teams, each with a line saying
+    // what it does, reads better as two buttons than as a dropdown.
+    const buttonSelects = useMemo(() => ['track'], []);
 
     const email = membership?.contactEmail || siteConfig.email;
     const [contactBefore, contactAfter = ''] = t.join.apply.contact.split('{email}');
@@ -135,6 +138,7 @@ const JoinApply: React.FC<JoinApplyProps> = (props) => {
                                             conversion="application"
                                             hiddenSubforms={hiddenSubforms}
                                             sections={sections}
+                                            buttonSelects={buttonSelects}
                                         />
                                     )}
                                 </>

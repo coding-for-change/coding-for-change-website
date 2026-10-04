@@ -28,6 +28,15 @@ import '../showcase/landing.css';
  *                     that form's submissions. Fields the parent already asks
  *                     (matched by name, e.g. `email`) are asked once and copied.
  *
+ * Two conventions on the plugin's own `select` block, so neither needs a schema
+ * change:
+ *
+ * - An option with the value `other` reveals a free-text box under the
+ *   dropdown; the submission stores "<option label>: <what was typed>".
+ * - A page can list selects in `buttonSelects` to draw them as a row of
+ *   buttons instead of a dropdown. An option label "Projects – build software"
+ *   becomes the button's title ("Projects") and a line under it.
+ *
  * Conversions: the parent and each submitted sub-form fire their own
  * `conversion` event and Google Ads action, named after the form title.
  */
@@ -83,6 +92,17 @@ const isInput = (f: CmsFormField): f is InputField => f.blockType !== 'message';
 const isSubform = (f: CmsFormField): f is SubformField => f.blockType === 'subform';
 const isPlainInput = (f: CmsFormField): f is PlainInput =>
     isInput(f) && !isSubform(f);
+
+/** The select option that asks for free text instead. */
+const OTHER_VALUE = 'other';
+/** Where the free text for a select's "other" option is kept in `values`. */
+const otherKey = (name: string) => `${name}__other`;
+
+/** "Projects – build software" → ["Projects", "build software"]. */
+const splitOptionLabel = (label: string): [string, string | null] => {
+    const m = /^(.+?)\s+[–—-]\s+(.+)$/.exec(label);
+    return m ? [m[1], m[2]] : [label, null];
+};
 
 /** Analytics / Ads label for a form, from its title. */
 export const conversionLabelFor = (title: string): string => {
@@ -216,6 +236,11 @@ export interface CmsFormProps {
     fieldOrder?: string[];
     /** Headings to open before named questions; see CmsFormSection. */
     sections?: CmsFormSection[];
+    /**
+     * Select fields, by name, to draw as a row of buttons rather than a
+     * dropdown. Meant for two or three options; the answer sent is the same.
+     */
+    buttonSelects?: string[];
     /** Enables "save and finish later"; see CmsFormDraft. */
     draft?: CmsFormDraft;
     className?: string;
@@ -230,6 +255,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
     checkboxGroups,
     fieldOrder,
     sections,
+    buttonSelects,
     draft,
     className,
     onSubmitted,
@@ -434,6 +460,12 @@ const CmsForm: React.FC<CmsFormProps> = ({
                 if (up?.uploading) return false;
                 return field.required ? Boolean(up?.file) : true;
             }
+            case 'select':
+                // Picking "other" is only an answer once something is typed.
+                if (value === OTHER_VALUE)
+                    return String(values[otherKey(field.name)] ?? '').trim().length > 0;
+                if (!field.required) return true;
+                return String(value).trim().length > 0;
             default:
                 if (!field.required) return true;
                 return String(value).trim().length > 0;
@@ -480,6 +512,19 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     const up = uploads[field.name]?.file;
                     if (up) files.push(up.id);
                     data.push({ field: field.name, value: up?.filename ?? '' });
+                    break;
+                }
+                case 'select': {
+                    if (value !== OTHER_VALUE) {
+                        data.push({ field: field.name, value: String(value) });
+                        break;
+                    }
+                    const opt = (field.options ?? []).find((o) => o.value === OTHER_VALUE);
+                    const typed = String(values[otherKey(field.name)] ?? '').trim();
+                    data.push({
+                        field: field.name,
+                        value: `${splitOptionLabel(opt?.label || 'Other')[0]}: ${typed}`,
+                    });
                     break;
                 }
                 default:
@@ -742,6 +787,55 @@ const CmsForm: React.FC<CmsFormProps> = ({
         }
 
         if (field.blockType === 'select') {
+            const options = field.options ?? [];
+            const otherBox = value === OTHER_VALUE && (
+                <input
+                    className="lp-input lp-select__other"
+                    type="text"
+                    name={otherKey(field.name)}
+                    aria-label={`${fieldLabel}: ${t.forms.otherPlaceholder}`}
+                    placeholder={t.forms.otherPlaceholder}
+                    value={String(values[otherKey(field.name)] ?? '')}
+                    onChange={(e) => setValue(otherKey(field.name), e.target.value)}
+                    autoFocus
+                />
+            );
+
+            if (buttonSelects?.includes(field.name)) {
+                return (
+                    <fieldset key={key} className="lp-field lp-choice">
+                        <legend className="lp-label">
+                            {star(field)}
+                            {fieldLabel}
+                        </legend>
+                        <div className="lp-choice__options">
+                            {options.map((opt) => {
+                                const [title, sub] = splitOptionLabel(opt.label);
+                                return (
+                                    <label
+                                        key={opt.value}
+                                        className={`lp-choice__option${
+                                            value === opt.value ? ' is-selected' : ''
+                                        }`}
+                                    >
+                                        <input
+                                            type="radio"
+                                            name={field.name}
+                                            value={opt.value}
+                                            checked={value === opt.value}
+                                            onChange={() => setValue(field.name, opt.value)}
+                                        />
+                                        <span className="lp-choice__title">{title}</span>
+                                        {sub && <span className="lp-choice__sub">{sub}</span>}
+                                    </label>
+                                );
+                            })}
+                        </div>
+                        {otherBox}
+                    </fieldset>
+                );
+            }
+
             return (
                 <div className="lp-field" key={key}>
                     <span className="lp-label">
@@ -754,13 +848,14 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         value={String(value)}
                         onChange={(e) => setValue(field.name, e.target.value)}
                     >
-                        <option value="">{field.placeholder || '—'}</option>
-                        {(field.options ?? []).map((opt) => (
+                        <option value="">{field.placeholder || '–'}</option>
+                        {options.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                                 {opt.label}
                             </option>
                         ))}
                     </select>
+                    {otherBox}
                 </div>
             );
         }
