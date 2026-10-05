@@ -120,7 +120,7 @@ const EN = {
         title: 'Site basics',
         description:
             'Remembers the language you chose, your decision on this banner, and a random id proving we asked — we are legally required to keep that proof. ' +
-            'If you press “save and finish later” on the TechTour registration or the membership application, it also keeps the answers you have typed so far, in this browser only: nothing reaches us until you send the form, and you can delete them on that page at any time. ' +
+            'On the membership application (automatically as you type) and the TechTour registration (when you press “save and finish later”), it also keeps the answers you have typed so far, in this browser only: nothing reaches us until you send the form, and you can delete them on that page at any time. ' +
             'Exempt from consent under § 25(2) TDDDG because the site cannot work as you asked without it, so there is nothing here to switch off. Never used to track you.',
     },
     // Audit criterion 2: ads personalisation named explicitly, and criteria 4/5:
@@ -190,7 +190,7 @@ const DE = {
         title: 'Website-Grundfunktionen',
         description:
             'Speichert die von dir gewählte Sprache, deine Entscheidung zu diesem Banner und eine zufällige Kennung als Nachweis, dass wir gefragt haben – diesen Nachweis müssen wir gesetzlich aufbewahren. ' +
-            'Wenn du bei der TechTour-Anmeldung oder der Bewerbung auf „Speichern und später weitermachen“ klickst, kommen deine bisherigen Antworten dazu – nur in diesem Browser: Bei uns kommt nichts an, bevor du das Formular abschickst, und du kannst sie auf der Seite jederzeit löschen. ' +
+            'Bei der Bewerbung (automatisch beim Tippen) und der TechTour-Anmeldung (wenn du auf „Speichern und später weitermachen“ klickst) kommen deine bisherigen Antworten dazu – nur in diesem Browser: Bei uns kommt nichts an, bevor du das Formular abschickst, und du kannst sie auf der Seite jederzeit löschen. ' +
             'Nach § 25 Abs. 2 TDDDG einwilligungsfrei, weil die Seite ohne das nicht wie gewünscht funktioniert; es gibt hier also nichts abzuschalten. Wird nie zum Tracking verwendet.',
     },
     [SERVICE_GOOGLE_ADS]: {
@@ -270,9 +270,10 @@ export function buildKlaroConfig(locale: Locale): KlaroConfig {
                 // Same reasoning for `cfc-techtour-draft` and
                 // `cfc-application-draft` (the saved TechTour registration and
                 // membership application, `components/forms/CmsForm.tsx`), listed in the
-                // text above: it is written only when the visitor presses "save
-                // and finish later", never on its own, and it stays on their
-                // device. § 25(2) TDDDG, so no consent to re-ask for — only the
+                // text above: the TechTour one is written only when the visitor
+                // presses "save and finish later", the application one as they
+                // type (input they are entering into a form they opened – the
+                // EDPB WP194 "user-input" case); both stay on their device. § 25(2) TDDDG, so no consent to re-ask for — only the
                 // Datenschutz storage table needs the matching row.
                 name: SERVICE_NECESSARY,
                 title:

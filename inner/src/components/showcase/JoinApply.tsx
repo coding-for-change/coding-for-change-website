@@ -21,8 +21,8 @@ import './join.css';
 const FORM_TITLE = 'application';
 
 /**
- * Where a half-finished application is parked when the visitor presses "save
- * and finish later". Declared as § 25(2) TDDDG storage in `lib/klaroConfig.ts`
+ * Where a half-finished application is kept while the visitor types (auto-save,
+ * see CmsForm `draft.auto`). Declared as § 25(2) TDDDG storage in `lib/klaroConfig.ts`
  * ("site basics") and allow-listed in `scripts/consent-scan.mjs`.
  */
 const DRAFT_KEY = 'cfc-application-draft';
@@ -90,6 +90,12 @@ const JoinApply: React.FC<JoinApplyProps> = (props) => {
     // "Where would you like to work?" – two teams, each with a line saying
     // what it does, reads better as two buttons than as a dropdown.
     const buttonSelects = useMemo(() => ['track'], []);
+    // A guide to how much we expect per answer: a few sentences each, a bit
+    // more for the project or activity. Questions not named here have no cap.
+    const textLimits = useMemo(
+        () => ({ proudOf: 1000, expectations: 600, vibeCoding: 600, ngo: 600 }),
+        []
+    );
 
     const email = membership?.contactEmail || siteConfig.email;
     const [contactBefore, contactAfter = ''] = t.join.apply.contact.split('{email}');
@@ -149,18 +155,20 @@ const JoinApply: React.FC<JoinApplyProps> = (props) => {
                                         hiddenSubforms={hiddenSubforms}
                                         sections={sections}
                                         buttonSelects={buttonSelects}
+                                        textLimits={textLimits}
                                         draft={{
                                             key: DRAFT_KEY,
-                                            // The TechTour page's wording says
-                                            // nothing TechTour-specific, so both
-                                            // forms share it.
+                                            auto: true,
+                                            // Saved as they type, so no button;
+                                            // the rest of the TechTour page's
+                                            // wording says nothing TechTour-specific.
                                             labels: {
                                                 save: t.techtour.draftSave,
                                                 saved: t.techtour.draftSaved,
                                                 restored: t.techtour.draftRestored,
                                                 clear: t.techtour.draftClear,
                                                 cleared: t.techtour.draftCleared,
-                                                note: t.techtour.draftNote,
+                                                note: t.join.apply.draftNote,
                                             },
                                         }}
                                     />

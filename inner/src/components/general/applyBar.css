@@ -1,0 +1,47 @@
+/* The "applications are open" bar above the nav (ApplyBar.tsx). */
+.apply-bar {
+    position: relative;
+    z-index: 40;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 38px;
+    padding: 8px 16px;
+    box-sizing: border-box;
+    background: #0f2040;
+    color: #ffffff;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 14px;
+    line-height: 1.35;
+    text-align: center;
+    text-decoration: none;
+}
+.apply-bar:hover .apply-bar__cta {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.apply-bar__dot {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #7fe3e4;
+    box-shadow: 0 0 0 3px rgba(127, 227, 228, 0.25);
+}
+.apply-bar__cta {
+    flex: none;
+    color: #7fe3e4;
+    font-weight: 600;
+}
+@media (max-width: 560px) {
+    .apply-bar {
+        font-size: 13px;
+        gap: 8px;
+    }
+    /* On a phone the link text carries itself; the arrow line would wrap. */
+    .apply-bar__dot {
+        display: none;
+    }
+}

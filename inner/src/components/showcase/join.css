@@ -944,7 +944,15 @@
     box-shadow: none;
 }
 
-/* "Save and finish later" beside the send button (CmsForm `draft`). */
+/* Characters typed of the limit, right-aligned under the box. */
+.jn-apply__main .lp-field__count {
+    align-self: flex-end;
+    font-variant-numeric: tabular-nums;
+}
+.jn-apply__main .lp-field__count.is-full {
+    color: #b5651d;
+}
+/* Auto-saved answers: the note and its "delete" link under the send button. */
 .jn-apply__main .lp-actions {
     display: flex;
     flex-wrap: wrap;

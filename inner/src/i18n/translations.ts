@@ -7,6 +7,8 @@ export interface Translations {
         home: string; events: string; projects: string;
         partners: string; team: string; blog: string; qa: string; join: string; contact: string;
         ngos: string; techtour: string;
+        /** The bar above the nav while applications are open; {round} e.g. "Winter 2026/27". */
+        applyBar: string; applyBarCta: string;
     };
     common: {
         learnMore: string; partner: string; at: string;
@@ -90,7 +92,7 @@ export interface Translations {
                 { caption: string; alt: string; posterAlt?: string }
             >;
         };
-        /** Where the round stands: "Opens 5 Oct", "Closes 31 Oct", closed. */
+        /** Where the round stands: "Opens 5 Oct", "Closes 30 Oct", closed. */
         status: Record<ApplicationStatus, string>;
         /** The line under the status. `{n}` is the day count. */
         countdown: {
@@ -126,6 +128,8 @@ export interface Translations {
             contact: string;
             /** Headings the form is split into (who you are, then the application). */
             sectionAbout: string; sectionApplication: string;
+            /** Under the form: answers are kept automatically, in this browser only. */
+            draftNote: string;
         };
         loadingForm: string; formUnavailable: string;
         waitlistTitle: string; waitlistLead: string;
@@ -174,6 +178,8 @@ export interface Translations {
         linkedUnavailable: string;
         /** The free-text box under a dropdown's "Other" option. */
         otherPlaceholder: string;
+        /** Under a textarea with a limit: {n} typed of {max}. */
+        charCount: string;
         uploadChoose: string; uploadHint: string; uploading: string; uploadRemove: string;
         uploadTooLarge: string; uploadWrongType: string; uploadFailed: string;
     };
@@ -244,6 +250,8 @@ const en: Translations = {
         home: 'Home', events: 'Events', projects: 'Projects',
         partners: 'Partners', team: 'Team', blog: 'Blog', qa: 'Q&A', join: 'Join', contact: 'Contact',
         ngos: 'NGOs', techtour: 'TechTour 2026',
+        applyBar: 'Applications for {round} are open – until 30 October',
+        applyBarCta: 'Apply now',
     },
     common: {
         learnMore: 'Learn More', partner: 'Partner:', at: 'at',
@@ -405,7 +413,7 @@ const en: Translations = {
                 },
             },
         },
-        status: { upcoming: 'Opens 5 Oct', open: 'Closes 31 Oct', closed: 'Applications closed' },
+        status: { upcoming: 'Opens 5 Oct', open: 'Closes 30 Oct', closed: 'Applications closed' },
         countdown: {
             opensIn: { one: 'tomorrow', other: 'in {n} days' },
             closesIn: { one: 'last day', other: '{n} days left' },
@@ -471,14 +479,14 @@ const en: Translations = {
         },
         steps: {
             apply: {
-                timing: '5–31 Oct 2026',
+                timing: '5–30 Oct 2026',
                 title: 'Apply',
                 text: 'A few questions about you, plus your CV.',
             },
             interview: {
                 timing: '2–8 Nov 2026',
                 title: 'Interview',
-                text: 'A conversation and a small challenge: vibe-code a prototype with Lovable\u00a0– or solve a DSA problem.',
+                text: 'A conversation and a small hands-on challenge.',
             },
             admission: {
                 timing: '9–11 Nov 2026',
@@ -491,7 +499,7 @@ const en: Translations = {
             heading: 'Your first project starts here',
             text: {
                 upcoming: 'Applications open on 5 October. Leave your email and we’ll let you know the moment the form goes live.',
-                open: 'Applications close on 31 October at 23:59. The form takes about five minutes.',
+                open: 'Applications close on 30 October at 23:59.',
                 closed: 'This round is closed. Leave your email and you’ll be the first to know when applications reopen.',
             },
         },
@@ -500,12 +508,14 @@ const en: Translations = {
             title: 'Apply for {round}',
             lead: {
                 upcoming: 'The form opens on 5 October.',
-                open: 'Takes about five minutes\u00a0– have your CV ready as a PDF.',
+                open: 'Take your time with the answers\u00a0– and have your CV ready as a PDF.',
                 closed: 'Applications for this round are closed.',
             },
             contact: 'Questions about applying? Email us at {email}.',
             sectionAbout: 'About you',
             sectionApplication: 'Your application',
+            draftNote:
+                'Your answers are saved automatically in this browser, so you can come back and finish later – we receive nothing until you send the form.',
         },
         loadingForm: 'Loading form…',
         formUnavailable:
@@ -588,6 +598,7 @@ const en: Translations = {
         opensNewTab: 'Opens in a new tab',
         linkedUnavailable: 'This part of the form is currently unavailable. Please email us directly.',
         otherPlaceholder: 'Please specify',
+        charCount: '{n} / {max} characters',
         uploadChoose: 'Choose PDF',
         uploadHint: 'PDF, max. 5 MB',
         uploading: 'Uploading…',
@@ -675,6 +686,8 @@ const de: Translations = {
         home: 'Start', events: 'Events', projects: 'Projekte',
         partners: 'Partner', team: 'Team', blog: 'Blog', qa: 'F&A', join: 'Mitmachen', contact: 'Kontakt',
         ngos: 'NGOs', techtour: 'TechTour 2026',
+        applyBar: 'Bewerbungen für {round} sind offen – bis 30. Oktober',
+        applyBarCta: 'Jetzt bewerben',
     },
     common: {
         learnMore: 'Mehr erfahren', partner: 'Partner:', at: 'um',
@@ -836,7 +849,7 @@ const de: Translations = {
                 },
             },
         },
-        status: { upcoming: 'Offen ab 5. Okt.', open: 'Offen bis 31. Okt.', closed: 'Bewerbung geschlossen' },
+        status: { upcoming: 'Offen ab 5. Okt.', open: 'Offen bis 30. Okt.', closed: 'Bewerbung geschlossen' },
         countdown: {
             opensIn: { one: 'morgen', other: 'in {n} Tagen' },
             closesIn: { one: 'letzter Tag', other: 'noch {n} Tage' },
@@ -902,14 +915,14 @@ const de: Translations = {
         },
         steps: {
             apply: {
-                timing: '5.–31. Okt. 2026',
+                timing: '5.–30. Okt. 2026',
                 title: 'Bewerben',
                 text: 'Ein paar Fragen zu dir und dein Lebenslauf.',
             },
             interview: {
                 timing: '2.–8. Nov. 2026',
                 title: 'Interview',
-                text: 'Ein Gespräch und eine kleine Challenge: Vibe-code einen Prototyp mit Lovable\u00a0– oder lös eine DSA-Aufgabe.',
+                text: 'Ein Gespräch und eine kleine praktische Challenge.',
             },
             admission: {
                 timing: '9.–11. Nov. 2026',
@@ -922,7 +935,7 @@ const de: Translations = {
             heading: 'Dein erstes Projekt beginnt hier',
             text: {
                 upcoming: 'Die Bewerbung startet am 5. Oktober. Trag dich ein\u00a0– wir sagen dir Bescheid, sobald das Formular online ist.',
-                open: 'Bewerbungsschluss ist der 31. Oktober um 23:59 Uhr. Das Formular dauert etwa fünf Minuten.',
+                open: 'Bewerbungsschluss ist der 30. Oktober um 23:59 Uhr.',
                 closed: 'Diese Runde ist vorbei. Trag dich ein und erfahre als Erste:r, wenn die Bewerbung wieder öffnet.',
             },
         },
@@ -931,12 +944,14 @@ const de: Translations = {
             title: 'Bewirb dich für {round}',
             lead: {
                 upcoming: 'Das Formular öffnet am 5. Oktober.',
-                open: 'Dauert etwa fünf Minuten\u00a0– halte deinen Lebenslauf als PDF bereit.',
+                open: 'Nimm dir Zeit für deine Antworten\u00a0– und halte deinen Lebenslauf als PDF bereit.',
                 closed: 'Die Bewerbung für diese Runde ist geschlossen.',
             },
             contact: 'Fragen zur Bewerbung? Schreib uns an {email}.',
             sectionAbout: 'Über dich',
             sectionApplication: 'Deine Bewerbung',
+            draftNote:
+                'Deine Antworten werden automatisch in diesem Browser gespeichert, du kannst also später weitermachen – bei uns kommt nichts an, bevor du das Formular abschickst.',
         },
         loadingForm: 'Formular wird geladen…',
         formUnavailable:
@@ -1019,6 +1034,7 @@ const de: Translations = {
         opensNewTab: 'Öffnet in neuem Tab',
         linkedUnavailable: 'Dieser Teil des Formulars ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
         otherPlaceholder: 'Bitte angeben',
+        charCount: '{n} / {max} Zeichen',
         uploadChoose: 'PDF auswählen',
         uploadHint: 'PDF, max. 5 MB',
         uploading: 'Wird hochgeladen…',
