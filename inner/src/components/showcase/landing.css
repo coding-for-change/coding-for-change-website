@@ -1138,7 +1138,7 @@ html[data-nav='dark'] .lp-nav .lp-nav__link--event.lp-nav__link--active::before 
 .lp-nav__cta {
     display: inline-flex;
     align-items: center;
-    padding: 10px 20px;
+    padding: 10px 30px;
     background: #2f8f90;
     color: #fff;
     font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
@@ -1150,6 +1150,29 @@ html[data-nav='dark'] .lp-nav .lp-nav__link--event.lp-nav__link--active::before 
 }
 .lp-nav__cta:hover {
     background: #246b6c;
+}
+/* While applications are open: a soft ring breathing out from the button. */
+.lp-nav__cta--pulse {
+    animation: lp-cta-pulse 2.4s ease-out infinite;
+}
+.lp-nav__cta--pulse:hover {
+    animation-play-state: paused;
+}
+@keyframes lp-cta-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(47, 143, 144, 0.55);
+    }
+    70% {
+        box-shadow: 0 0 0 12px rgba(47, 143, 144, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(47, 143, 144, 0);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lp-nav__cta--pulse {
+        animation: none;
+    }
 }
 
 /* ================================================================== */

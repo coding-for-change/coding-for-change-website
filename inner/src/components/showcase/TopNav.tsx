@@ -6,6 +6,7 @@ import Enter3DButton from '../general/Enter3DButton';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSiteFlags } from '@/api/SiteFlagsContext';
 import { useSiteConfig } from '../../api';
+import { applicationsOpen } from '../../lib/applicationPhase';
 import './landing.css';
 
 // Sections that live on the single-scroll landing page (`/`). Clicking one
@@ -157,7 +158,14 @@ const TopNav: React.FC = () => {
                         </button>
                     ))}
                 </div>
-                <Link className="lp-nav__cta" href="/join">
+                {/* Pulses while the round is open (lib/applicationPhase.ts). */}
+                <Link
+                    className={
+                        'lp-nav__cta' +
+                        (applicationsOpen(Date.now()) ? ' lp-nav__cta--pulse' : '')
+                    }
+                    href="/join"
+                >
                     {t.nav.join}
                 </Link>
             </div>

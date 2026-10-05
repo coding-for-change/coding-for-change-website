@@ -272,6 +272,16 @@ input:active {
     transform: translate3d(0, 0, 0);
 }
 
+/* Holds the overlay nav and the scroller, so the nav's top: 0 is the top of
+   this box – below the "applications are open" bar when it shows. */
+.site-main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
 .site-scroll {
     display: flex;
     flex-direction: column;

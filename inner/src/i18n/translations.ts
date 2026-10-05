@@ -7,6 +7,8 @@ export interface Translations {
         home: string; events: string; projects: string;
         partners: string; team: string; blog: string; qa: string; join: string; contact: string;
         ngos: string; techtour: string;
+        /** The bar above the nav while applications are open; {round} e.g. "Winter 2026/27". */
+        applyBar: string; applyBarCta: string;
     };
     common: {
         learnMore: string; partner: string; at: string;
@@ -248,6 +250,8 @@ const en: Translations = {
         home: 'Home', events: 'Events', projects: 'Projects',
         partners: 'Partners', team: 'Team', blog: 'Blog', qa: 'Q&A', join: 'Join', contact: 'Contact',
         ngos: 'NGOs', techtour: 'TechTour 2026',
+        applyBar: 'Applications for {round} are open – until 30 October',
+        applyBarCta: 'Apply now',
     },
     common: {
         learnMore: 'Learn More', partner: 'Partner:', at: 'at',
@@ -682,6 +686,8 @@ const de: Translations = {
         home: 'Start', events: 'Events', projects: 'Projekte',
         partners: 'Partner', team: 'Team', blog: 'Blog', qa: 'F&A', join: 'Mitmachen', contact: 'Kontakt',
         ngos: 'NGOs', techtour: 'TechTour 2026',
+        applyBar: 'Bewerbungen für {round} sind offen – bis 30. Oktober',
+        applyBarCta: 'Jetzt bewerben',
     },
     common: {
         learnMore: 'Mehr erfahren', partner: 'Partner:', at: 'um',

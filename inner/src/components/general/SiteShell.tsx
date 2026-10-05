@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import TopNav from '@/components/showcase/TopNav';
 import SiteFooter from '@/components/general/SiteFooter';
+import ApplyBar from '@/components/general/ApplyBar';
 import MobileLayout from '@/components/mobile/MobileLayout';
 import useIsMobile from '@/hooks/useIsMobile';
 
@@ -42,10 +43,15 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
     return (
         <div className="App">
             <div className="site-page">
-                <TopNav />
-                <div className="site-scroll">
-                    {children}
-                    <SiteFooter />
+                {/* Above everything, in flow: the nav and the scroller below
+                    keep their own geometry inside .site-main. */}
+                <ApplyBar />
+                <div className="site-main">
+                    <TopNav />
+                    <div className="site-scroll">
+                        {children}
+                        <SiteFooter />
+                    </div>
                 </div>
             </div>
         </div>

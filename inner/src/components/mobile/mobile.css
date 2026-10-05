@@ -18,6 +18,10 @@
 }
 .mobile-nav--overlay {
     position: fixed;
+    /* Below the "applications are open" bar while it is on screen; ApplyBar
+       keeps the offset in step with the scroll. !important beats the inline
+       top: 0 in MobileNav. */
+    top: var(--apply-bar-offset, 0px) !important;
     left: 0;
     right: 0;
     background: transparent;
