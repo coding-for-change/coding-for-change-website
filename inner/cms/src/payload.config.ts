@@ -42,6 +42,7 @@ import { Partner } from './globals/Partner';
 import { About } from './globals/About';
 import { Homepage } from './globals/Homepage';
 import { TechTour } from './globals/TechTour';
+import { brandApplicationEmails } from './lib/applicationEmail';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -144,6 +145,9 @@ export default buildConfig({
         date: false,
         payment: false,
       },
+      // The applicant's confirmation for the membership application gets the
+      // branded template (lib/applicationEmail.ts); all other mails pass through.
+      beforeEmail: brandApplicationEmails,
       // Fallback recipient when a form doesn't define its own emails.
       defaultToEmail:
         process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com',

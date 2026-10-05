@@ -58,14 +58,14 @@ export type BuiltWaitlistEmail = {
 };
 
 // Pure neutral grays — deliberately no tint, so the frame never fights the
-// artwork in the header image.
-const INK = '#171717';
-const MUTED = '#6f6f6f';
-const LINE = '#e8e8e8';
-const PAGE_BG = '#f4f4f4';
+// artwork in the header image. Shared with applicationEmailTemplate.ts.
+export const INK = '#171717';
+export const MUTED = '#6f6f6f';
+export const LINE = '#e8e8e8';
+export const PAGE_BG = '#f4f4f4';
 
-const FONT_BODY = "'IBM Plex Sans','Helvetica Neue',Helvetica,Arial,sans-serif";
-const FONT_MONO = "'IBM Plex Mono','SF Mono',Menlo,Consolas,'Courier New',monospace";
+export const FONT_BODY = "'IBM Plex Sans','Helvetica Neue',Helvetica,Arial,sans-serif";
+export const FONT_MONO = "'IBM Plex Mono','SF Mono',Menlo,Consolas,'Courier New',monospace";
 
 /** h in [0,360), s and l in [0,1] → #rrggbb (emails need literal hex). */
 const hslToHex = (h: number, s: number, l: number): string => {

@@ -50,9 +50,12 @@ export async function submitForm(
     formId: number,
     submissionData: FormSubmissionValue[],
     attribution?: Attribution | null,
-    files?: number[]
+    files?: number[],
+    /** The site language; the CMS answers the applicant's confirmation mail in it. */
+    locale?: string
 ): Promise<void> {
-    const res = await fetch(`${API_BASE}/form-submissions`, {
+    const query = locale ? `?locale=${encodeURIComponent(locale)}` : '';
+    const res = await fetch(`${API_BASE}/form-submissions${query}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
