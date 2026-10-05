@@ -8,6 +8,7 @@ import {
   choiceKeysOf,
   filesOf,
   formIdOf,
+  hostDecisionOf,
   personOf,
   SORTS,
   sortSubmissions,
@@ -30,7 +31,7 @@ import './review.css';
  * A / U / R decide, N jumps to the notes, / to the search.
  */
 
-type Props = { apiRoute: string };
+type Props = { apiRoute: string; adminRoute: string };
 
 /** These two first, in this order; any other form after them, by title. */
 const FORM_ORDER = ['application', 'techtour'];
@@ -79,7 +80,7 @@ const isTyping = (target: EventTarget | null) => {
   );
 };
 
-export function ReviewWorkspace({ apiRoute }: Props) {
+export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const [forms, setForms] = useState<FormDoc[]>([]);
   const [subs, setSubs] = useState<Submission[]>([]);
   const [files, setFiles] = useState<Map<number, FileDoc>>(new Map());
@@ -171,6 +172,14 @@ export function ReviewWorkspace({ apiRoute }: Props) {
     return c;
   }, [inForm]);
   const scored = useMemo(() => inForm.filter((s) => s.reviewScore != null).length, [inForm]);
+
+  // With one evening picked: where its host stands.
+  const hostCounts = useMemo(() => {
+    if (!choiceField?.name || choiceFilter === 'all') return null;
+    const on = inForm.filter((s) => choiceKeysOf(form, s, choiceField.name!).includes(choiceFilter));
+    const n = (d: string | null) => on.filter((s) => hostDecisionOf(s, choiceFilter) === d).length;
+    return { total: on.length, admitted: n('admitted'), declined: n('declined'), waiting: n(null) };
+  }, [inForm, form, choiceField, choiceFilter]);
 
   const matches = useCallback(
     (s: Submission) => {
@@ -390,8 +399,17 @@ export function ReviewWorkspace({ apiRoute }: Props) {
         <div>
           <h1 className="rv-head__title">Review</h1>
           <p className="rv-head__sub">
-            {scored} of {inForm.length} scored · {statusCounts.accepted ?? 0} accepted ·{' '}
-            {statusCounts.unsure ?? 0} unsure · {statusCounts.rejected ?? 0} rejected
+            {hostCounts ? (
+              <>
+                {hostCounts.total} registered for this evening · the host admitted {hostCounts.admitted}, declined{' '}
+                {hostCounts.declined}, {hostCounts.waiting} still open
+              </>
+            ) : (
+              <>
+                {scored} of {inForm.length} scored · {statusCounts.accepted ?? 0} accepted ·{' '}
+                {statusCounts.unsure ?? 0} unsure · {statusCounts.rejected ?? 0} rejected
+              </>
+            )}
           </p>
         </div>
         <div className="rv-head__actions">
@@ -463,6 +481,18 @@ export function ReviewWorkspace({ apiRoute }: Props) {
             </option>
           ))}
         </select>
+        {choiceField?.name && (
+          <a
+            className="rv-link"
+            href={
+              choiceFilter === 'all'
+                ? `${adminRoute}/collections/share-links`
+                : `${adminRoute}/collections/share-links/create?option=${encodeURIComponent(choiceFilter)}`
+            }
+          >
+            {choiceFilter === 'all' ? 'Host share links' : 'Share with the host'}
+          </a>
+        )}
       </div>
 
       <div className="rv-body">
@@ -491,6 +521,14 @@ export function ReviewWorkspace({ apiRoute }: Props) {
                   </span>
                 </span>
                 <span className="rv-item__side">
+                  {choiceFilter !== 'all' && hostDecisionOf(s, choiceFilter) && (
+                    <span
+                      className={`rv-host rv-host--${hostDecisionOf(s, choiceFilter)}`}
+                      title={`The host ${hostDecisionOf(s, choiceFilter)} this person`}
+                    >
+                      {hostDecisionOf(s, choiceFilter) === 'admitted' ? '✓' : '✕'}
+                    </span>
+                  )}
                   {also.length > 0 && (
                     <span className="rv-tag" title={also.map((o) => formName(formTitleById.get(formIdOf(o)) ?? { id: 0, title: '?' })).join(', ')}>
                       +{also.length}
@@ -616,6 +654,28 @@ export function ReviewWorkspace({ apiRoute }: Props) {
                     </button>
                   );
                 })}
+              </section>
+            )}
+
+            {choiceField?.name && choiceKeysOf(form, selected, choiceField.name).length > 0 && (
+              <section className="rv-hosts" aria-label="Host decisions">
+                <h3 className="rv-qa__q">Host decisions</h3>
+                <ul>
+                  {choiceKeysOf(form, selected, choiceField.name).map((key) => {
+                    const d = selected.hostDecisions?.[key];
+                    const label = choiceField.options?.find((o) => o.value === key)?.label ?? key;
+                    return (
+                      <li key={key} className={`rv-host-row rv-host-row--${d?.decision ?? 'open'}`}>
+                        <span className="rv-host-row__evening">{label}</span>
+                        <span className="rv-host-row__state">
+                          {d
+                            ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
+                            : 'Waiting for the host'}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
               </section>
             )}
 

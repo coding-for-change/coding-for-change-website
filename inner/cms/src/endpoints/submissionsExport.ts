@@ -13,7 +13,8 @@ import type { ApplicantFile, Form, FormSubmission } from '../payload-types';
  * One row per submission: submitted-at, the answers (one column per question,
  * in the form's current order, labelled with the question labels), links to
  * uploaded files (CV), the review status, score and notes from the CMS, the
- * language the form was sent in, and the campaign attribution. The status column carries a dropdown (accepted /
+ * language the form was sent in, the TechTour hosts' decisions (one line per
+ * evening), and the campaign attribution. The status column carries a dropdown (accepted /
  * unsure / rejected) so the sheet can be used for the review itself; what is
  * decided there still has to be typed back into the CMS — there is no import.
  */
@@ -113,12 +114,18 @@ export const submissionsExport: Endpoint = {
       { header: 'Score', key: 'reviewScore', width: 8 },
       { header: 'Notes', key: 'reviewNotes', width: 48 },
       { header: 'Language', key: 'language', width: 10 },
+      { header: 'Host decisions', key: 'hostDecisions', width: 40 },
       { header: 'Source', key: 'source', width: 16 },
       { header: 'Channel', key: 'channel', width: 14 },
       { header: 'Landing page', key: 'landingPath', width: 20 },
     ];
 
     const origin = siteOrigin(req.headers.get('referer'));
+    // Evening keys → their current labels, for the hosts' decisions.
+    const optionLabels = new Map<string, string>();
+    for (const block of (form.fields ?? []) as { blockType: string; options?: { value: string; label?: string | null }[] }[]) {
+      if (block.blockType === 'checkboxGroup') for (const o of block.options ?? []) optionLabels.set(o.value, o.label || o.value);
+    }
     for (const s of subs) {
       const row: Record<string, unknown> = {
         createdAt: new Date(s.createdAt),
@@ -132,6 +139,9 @@ export const submissionsExport: Endpoint = {
         reviewScore: s.reviewScore ?? null,
         reviewNotes: s.reviewNotes ?? '',
         language: s.language ?? '',
+        hostDecisions: Object.entries((s.hostDecisions ?? {}) as Record<string, { decision?: string; by?: string }>)
+          .map(([key, d]) => `${optionLabels.get(key) ?? key}: ${d?.decision ?? ''}${d?.by ? ` (${d.by})` : ''}`)
+          .join('\n'),
         source: s.attribution?.source ?? '',
         channel: s.attribution?.channel ?? '',
         landingPath: s.attribution?.landingPath ?? '',
@@ -149,7 +159,7 @@ export const submissionsExport: Endpoint = {
     ws.views = [{ state: 'frozen', ySplit: 1 }];
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columns.length } };
     ws.getColumn('createdAt').numFmt = 'yyyy-mm-dd hh:mm';
-    const wrapKeys = new Set(['files', 'reviewNotes', ...questions.filter((q) => q.wide).map((q) => `q_${q.name}`)]);
+    const wrapKeys = new Set(['files', 'reviewNotes', 'hostDecisions', ...questions.filter((q) => q.wide).map((q) => `q_${q.name}`)]);
     ws.columns.forEach((col) => {
       if (col.key && wrapKeys.has(col.key)) col.alignment = { wrapText: true, vertical: 'top' };
     });

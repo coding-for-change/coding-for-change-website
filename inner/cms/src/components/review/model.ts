@@ -39,7 +39,15 @@ export type Submission = {
   reviewNotes?: string | null;
   language?: 'en' | 'de' | null;
   choiceKeys?: Record<string, string[]> | null;
+  /** Per evening key, what the host company decided through its share link. */
+  hostDecisions?: Record<string, { decision: 'admitted' | 'declined'; by: string; at: string }> | null;
 };
+
+export type HostDecision = 'admitted' | 'declined';
+
+/** The host's decision on this person for one evening, if any. */
+export const hostDecisionOf = (s: Submission, option: string): HostDecision | null =>
+  s.hostDecisions?.[option]?.decision ?? null;
 
 export const formIdOf = (s: Submission): number =>
   typeof s.form === 'object' && s.form ? s.form.id : (s.form as number);

@@ -36,7 +36,7 @@ export function ReviewView({ initPageResult, params, searchParams }: AdminViewSe
       visibleEntities={visibleEntities}
     >
       <Gutter>
-        <ReviewWorkspace apiRoute={config.routes.api} />
+        <ReviewWorkspace apiRoute={config.routes.api} adminRoute={adminRoute} />
       </Gutter>
     </DefaultTemplate>
   );

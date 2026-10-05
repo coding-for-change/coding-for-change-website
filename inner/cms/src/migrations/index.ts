@@ -34,6 +34,7 @@ import * as migration_20260921_120439_drop_unrendered_techtour_and_form_fields f
 import * as migration_20260926_214026_drop_unrendered_membership_fields from './20260926_214026_drop_unrendered_membership_fields';
 import * as migration_20261005_214042_add_submission_record from './20261005_214042_add_submission_record';
 import * as migration_20261005_220120_add_review_score from './20261005_220120_add_review_score';
+import * as migration_20261005_222814_add_host_share_links from './20261005_222814_add_host_share_links';
 
 export const migrations = [
   {
@@ -214,6 +215,11 @@ export const migrations = [
   {
     up: migration_20261005_220120_add_review_score.up,
     down: migration_20261005_220120_add_review_score.down,
-    name: '20261005_220120_add_review_score'
+    name: '20261005_220120_add_review_score',
+  },
+  {
+    up: migration_20261005_222814_add_host_share_links.up,
+    down: migration_20261005_222814_add_host_share_links.down,
+    name: '20261005_222814_add_host_share_links'
   },
 ];

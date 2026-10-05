@@ -83,6 +83,8 @@ export interface Config {
     'analytics-events': AnalyticsEvent;
     'consent-records': ConsentRecord;
     'applicant-files': ApplicantFile;
+    'share-links': ShareLink;
+    'share-access-log': ShareAccessLog;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-mcp-api-keys': PayloadMcpApiKey;
@@ -108,6 +110,8 @@ export interface Config {
     'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
     'consent-records': ConsentRecordsSelect<false> | ConsentRecordsSelect<true>;
     'applicant-files': ApplicantFilesSelect<false> | ApplicantFilesSelect<true>;
+    'share-links': ShareLinksSelect<false> | ShareLinksSelect<true>;
+    'share-access-log': ShareAccessLogSelect<false> | ShareAccessLogSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
@@ -794,6 +798,46 @@ export interface ApplicantFile {
   focalY?: number | null;
 }
 /**
+ * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-links".
+ */
+export interface ShareLink {
+  id: number;
+  /**
+   * Heading of the page the host sees, e.g. "QuantCo – Wed 11 Nov".
+   */
+  title: string;
+  /**
+   * The host sees everyone who registered for this evening.
+   */
+  option: string;
+  /**
+   * Who may open the link. Each signs in with a six-digit code sent to the address entered here, so a forwarded link alone opens nothing.
+   */
+  recipients: {
+    email: string;
+    name?: string | null;
+    id?: string | null;
+  }[];
+  /**
+   * The link stops working then. Left empty, it is the end of the event week – the latest the Datenschutz allows.
+   */
+  expiresAt?: string | null;
+  /**
+   * Stops the link at once (and anyone signed in). Untick to open it again.
+   */
+  blocked?: boolean | null;
+  /**
+   * The registration form – the one titled "techtour" unless you pick another.
+   */
+  form?: (number | null) | Form;
+  token?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms".
  */
@@ -997,6 +1041,24 @@ export interface Form {
   createdAt: string;
 }
 /**
+ * Every sign-in, CV opened and decision on a host share link. Written by the link itself; deleted together with the link.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-access-log".
+ */
+export interface ShareAccessLog {
+  id: number;
+  link?: (number | null) | ShareLink;
+  email?: string | null;
+  action?: ('code' | 'sign-in' | 'cv' | 'admitted' | 'declined' | 'undone' | 'sign-out') | null;
+  /**
+   * Id of the registration the CV or decision was about.
+   */
+  submission?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
@@ -1046,6 +1108,18 @@ export interface FormSubmission {
    * The stable keys of the options picked in multi-select questions (e.g. the TechTour evenings, "tue-lio"). The answers above keep the labels as shown, which change when an option is renamed; these do not.
    */
   choiceKeys?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * What each evening’s host company decided through its share link: admitted or declined, by whom, when.
+   */
+  hostDecisions?:
     | {
         [k: string]: unknown;
       }
@@ -1476,6 +1550,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'applicant-files';
         value: number | ApplicantFile;
+      } | null)
+    | ({
+        relationTo: 'share-links';
+        value: number | ShareLink;
+      } | null)
+    | ({
+        relationTo: 'share-access-log';
+        value: number | ShareAccessLog;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1921,6 +2003,39 @@ export interface ApplicantFilesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-links_select".
+ */
+export interface ShareLinksSelect<T extends boolean = true> {
+  title?: T;
+  option?: T;
+  recipients?:
+    | T
+    | {
+        email?: T;
+        name?: T;
+        id?: T;
+      };
+  expiresAt?: T;
+  blocked?: T;
+  form?: T;
+  token?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-access-log_select".
+ */
+export interface ShareAccessLogSelect<T extends boolean = true> {
+  link?: T;
+  email?: T;
+  action?: T;
+  submission?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -2079,6 +2194,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   language?: T;
   agreedTo?: T;
   choiceKeys?: T;
+  hostDecisions?: T;
   attribution?:
     | T
     | {
