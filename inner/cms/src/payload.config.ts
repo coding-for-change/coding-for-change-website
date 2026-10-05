@@ -203,7 +203,7 @@ export default buildConfig({
           update: ({ req: { user } }) => Boolean(user),
         },
         admin: {
-          defaultColumns: ['form', 'reviewStatus', 'createdAt'],
+          defaultColumns: ['form', 'reviewStatus', 'reviewScore', 'createdAt'],
           components: {
             // "Download as Excel" — one .xlsx per form (see endpoints/submissionsExport.ts).
             beforeListTable: ['/components/submissions/ExportSubmissions#ExportSubmissions'],
@@ -271,8 +271,19 @@ export default buildConfig({
           path: '/analytics',
           exact: true,
         },
+        // Going through applications and TechTour registrations one by one:
+        // answers, CV, score, decision, notes (components/review/). Guards
+        // auth itself, like the dashboard.
+        reviewWorkspace: {
+          Component: '/components/review/ReviewView#ReviewView',
+          path: '/review',
+          exact: true,
+        },
       },
-      afterNavLinks: ['/components/analytics/AnalyticsNavLink#AnalyticsNavLink'],
+      afterNavLinks: [
+        '/components/review/ReviewNavLink#ReviewNavLink',
+        '/components/analytics/AnalyticsNavLink#AnalyticsNavLink',
+      ],
     },
   },
   // Enforce the analytics retention window (GDPR storage limitation): purge
