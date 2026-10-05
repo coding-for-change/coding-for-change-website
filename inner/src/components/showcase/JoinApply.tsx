@@ -93,7 +93,7 @@ const JoinApply: React.FC<JoinApplyProps> = (props) => {
     // A guide to how much we expect per answer: a few sentences each, a bit
     // more for the project or activity. Questions not named here have no cap.
     const textLimits = useMemo(
-        () => ({ proudOf: 1000, expectations: 600, vibeCoding: 600, ngo: 400 }),
+        () => ({ proudOf: 1000, expectations: 600, vibeCoding: 600, ngo: 600 }),
         []
     );
 
