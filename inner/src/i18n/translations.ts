@@ -473,7 +473,7 @@ const en: Translations = {
             apply: {
                 timing: '5–31 Oct 2026',
                 title: 'Apply',
-                text: 'A few lines on your motivation, plus your CV.',
+                text: 'A few questions about you, plus your CV.',
             },
             interview: {
                 timing: '2–8 Nov 2026',
@@ -633,7 +633,7 @@ const en: Translations = {
         draftClear: 'Delete saved answers',
         draftCleared: 'Saved answers deleted.',
         draftNote:
-            'Saving keeps your answers in this browser only — we receive nothing until you send the form.',
+            'Saving keeps your answers in this browser only – we receive nothing until you send the form.',
         stepApplyTitle: 'Apply',
         stepApplyText: 'by {date}',
         stepConfirmTitle: 'Get your place',
@@ -904,7 +904,7 @@ const de: Translations = {
             apply: {
                 timing: '5.–31. Okt. 2026',
                 title: 'Bewerben',
-                text: 'Ein paar Sätze zu deiner Motivation und dein Lebenslauf.',
+                text: 'Ein paar Fragen zu dir und dein Lebenslauf.',
             },
             interview: {
                 timing: '2.–8. Nov. 2026',
@@ -1064,7 +1064,7 @@ const de: Translations = {
         draftClear: 'Gespeicherte Antworten löschen',
         draftCleared: 'Gespeicherte Antworten gelöscht.',
         draftNote:
-            'Das Speichern legt deine Antworten nur in diesem Browser ab — bei uns kommt nichts an, bevor du das Formular abschickst.',
+            'Das Speichern legt deine Antworten nur in diesem Browser ab – bei uns kommt nichts an, bevor du das Formular abschickst.',
         stepApplyTitle: 'Bewerben',
         stepApplyText: 'bis {date}',
         stepConfirmTitle: 'Zusage bekommen',

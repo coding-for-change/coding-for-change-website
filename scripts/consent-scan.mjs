@@ -80,6 +80,9 @@ const ALLOWED_STORAGE_KEYS = new Map([
     // cfc-locale (EDPB WP194 "user-input"). Declared in klaroConfig's "site
     // basics" text; still needs its row in the Datenschutz storage table.
     ['cfc-techtour-draft', 'Saved TechTour registration — strictly necessary, consent-exempt'],
+    // The same "save and finish later" on the membership application
+    // (/join/apply), on the same terms.
+    ['cfc-application-draft', 'Saved membership application — strictly necessary, consent-exempt'],
 ]);
 
 /** Cookie writes are rare enough to enumerate by the file that does them. */

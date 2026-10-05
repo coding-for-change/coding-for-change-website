@@ -350,14 +350,17 @@ const CmsForm: React.FC<CmsFormProps> = ({
     const [draftState, setDraftState] = useState<'none' | 'restored' | 'saved' | 'cleared'>(
         'none'
     );
-    /** Field names whose answers we are willing to park. */
+    /** Field names whose answers we are willing to park – plus the free text
+     *  behind a select's "other" option, which is typed like any other answer. */
     const draftable = useMemo(
         () =>
             new Set(
                 fields
                     .filter(isPlainInput)
                     .filter((f) => DRAFTABLE.has(f.blockType))
-                    .map((f) => f.name)
+                    .flatMap((f) =>
+                        f.blockType === 'select' ? [f.name, otherKey(f.name)] : [f.name]
+                    )
             ),
         [fields]
     );

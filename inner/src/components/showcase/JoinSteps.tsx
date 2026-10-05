@@ -9,10 +9,11 @@ export interface JoinStepsProps {
     /** Epoch ms the steps are drawn against (done / current / upcoming). */
     now: number;
     /**
-     * 'large' – /join, beside the project showcase. 'compact' – the side
-     * column of /join/apply. Both run down a vertical line.
+     * 'large' – /join, beside the project showcase; runs down a vertical line.
+     * 'strip' – /join/apply, one row of three above the form (a vertical list
+     * again on a phone).
      */
-    variant?: 'large' | 'compact';
+    variant?: 'large' | 'strip';
 }
 
 /**
