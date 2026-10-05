@@ -270,7 +270,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
     className,
     onSubmitted,
 }) => {
-    const { t } = useLanguage();
+    const { t, locale } = useLanguage();
     const label = conversion ?? conversionLabelFor(form.title);
     const hidden = useMemo(
         () => new Set((hiddenSubforms ?? []).map((s) => s.trim().toLowerCase())),
@@ -608,7 +608,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
             if (doneRef.current.has(job.id)) continue;
             try {
                 const { data, files } = serialise(job.list);
-                await submitForm(job.id, data, attribution, files);
+                await submitForm(job.id, data, attribution, files, locale);
                 doneRef.current.add(job.id);
                 trackConversion(job.label);
                 if (isAdsAction(job.label)) trackAdsConversion(job.label);
