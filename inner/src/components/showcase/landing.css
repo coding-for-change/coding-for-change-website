@@ -1686,6 +1686,66 @@ a.lp-member__project:hover {
 .lp-checkgroup__options .lp-checkbox {
     margin: 0;
 }
+/* A select drawn as buttons (CmsForm `buttonSelects`): one card per option. */
+.lp-choice {
+    border: 0;
+    padding: 0;
+    min-width: 0;
+}
+.lp-choice legend {
+    padding: 0;
+    margin-bottom: 8px;
+}
+.lp-choice__options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+}
+.lp-choice__option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    background: #fff;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+.lp-choice__option:hover {
+    border-color: rgba(47, 143, 144, 0.55);
+}
+.lp-choice__option.is-selected {
+    border-color: var(--teal);
+    background: rgba(47, 143, 144, 0.08);
+    box-shadow: inset 0 0 0 1px var(--teal);
+}
+/* The radio stays in the accessibility tree and keyboard order; the card is the visible control. */
+.lp-choice__option input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+}
+.lp-choice__option:has(input:focus-visible) {
+    outline: 2px solid var(--teal);
+    outline-offset: 2px;
+}
+.lp-choice__title {
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+}
+.lp-choice__sub {
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--muted);
+}
+/* Free text under a select's "Other" option. */
+.lp-select__other {
+    margin-top: 8px;
+}
 /* PDF upload: a bordered drop area with a button-styled label. */
 .lp-upload__drop {
     /* The label is the containing block of its hidden file input (below). */

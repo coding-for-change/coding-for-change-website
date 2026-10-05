@@ -20,6 +20,13 @@ import './join.css';
  */
 const FORM_TITLE = 'application';
 
+/**
+ * Where a half-finished application is parked when the visitor presses "save
+ * and finish later". Declared as § 25(2) TDDDG storage in `lib/klaroConfig.ts`
+ * ("site basics") and allow-listed in `scripts/consent-scan.mjs`.
+ */
+const DRAFT_KEY = 'cfc-application-draft';
+
 export interface JoinApplyProps {
     /** For the contact address under the steps. */
     membership?: CmsMembership | null;
@@ -33,8 +40,9 @@ export interface JoinApplyProps {
 /**
  * /join/apply – the application itself, behind every button on /join.
  *
- * Beside the form, the three steps say what happens after sending it. While
- * the round is open the card holds the form, which is defined in the CMS and
+ * One column, like /techtour/apply: the head, the three steps as a strip
+ * saying what happens after sending it, then the form across the full width.
+ * While the round is open that is the form, which is defined in the CMS and
  * rendered by the shared CmsForm: every question, the CV upload, the
  * "also register for the TechTour" box. Before the window opens – and after
  * it closes – the card holds the "notify me" signup instead, so a link on a
@@ -75,20 +83,21 @@ const JoinApply: React.FC<JoinApplyProps> = (props) => {
     const sections = useMemo(
         () => [
             { at: 'firstName', title: t.join.apply.sectionAbout },
-            { at: 'why', title: t.join.apply.sectionApplication },
+            { at: 'university', title: t.join.apply.sectionApplication },
         ],
         [t]
     );
+    // "Where would you like to work?" – two teams, each with a line saying
+    // what it does, reads better as two buttons than as a dropdown.
+    const buttonSelects = useMemo(() => ['track'], []);
 
     const email = membership?.contactEmail || siteConfig.email;
     const [contactBefore, contactAfter = ''] = t.join.apply.contact.split('{email}');
 
-    // Head, form, steps – the order a phone shows them in. On a wide screen
-    // the grid lifts the form into the right-hand column beside the other two.
     return (
         <div className="lp jn jn-apply">
             <div className="lp-page">
-                <div className="lp-inner jn-apply__grid">
+                <div className="lp-inner jn-apply__col">
                     <motion.div
                         className="jn-apply__head"
                         initial={{ opacity: 0, y: 20 }}
@@ -114,52 +123,60 @@ const JoinApply: React.FC<JoinApplyProps> = (props) => {
                         <p className="jn-apply__lead">{t.join.apply.lead[status]}</p>
                     </motion.div>
 
+                    <div className="jn-apply__steps">
+                        <JoinSteps now={now} variant="strip" />
+                    </div>
+
                     <motion.div
                         className="jn-apply__main"
+                        id="apply-form"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5, delay: 0.1 }}
                     >
-                        <div className="jn-card" id="apply-form">
-                            {status === 'open' ? (
-                                <>
-                                    {formsLoading && (
-                                        <p className="lp-loading">{t.join.loadingForm}</p>
-                                    )}
-                                    {!formsLoading && (formsError || !form) && (
-                                        <p className="lp-empty">{t.join.formUnavailable}</p>
-                                    )}
-                                    {!formsLoading && form && (
-                                        <CmsForm
-                                            form={form}
-                                            conversion="application"
-                                            hiddenSubforms={hiddenSubforms}
-                                            sections={sections}
-                                        />
-                                    )}
-                                </>
-                            ) : status === 'upcoming' ? (
-                                <WaitlistSignup
-                                    title={t.join.upcomingTitle}
-                                    lead={t.join.upcomingLead}
-                                />
-                            ) : (
-                                <WaitlistSignup
-                                    title={t.join.waitlistTitle}
-                                    lead={t.join.waitlistLead}
-                                />
-                            )}
-                        </div>
-                    </motion.div>
-
-                    <motion.div
-                        className="jn-apply__steps"
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.15 }}
-                    >
-                        <p className="jn-apply__label">{t.join.howItWorks}</p>
-                        <JoinSteps now={now} variant="compact" />
+                        {status === 'open' ? (
+                            <>
+                                {formsLoading && (
+                                    <p className="lp-loading">{t.join.loadingForm}</p>
+                                )}
+                                {!formsLoading && (formsError || !form) && (
+                                    <p className="lp-empty">{t.join.formUnavailable}</p>
+                                )}
+                                {!formsLoading && form && (
+                                    <CmsForm
+                                        form={form}
+                                        conversion="application"
+                                        hiddenSubforms={hiddenSubforms}
+                                        sections={sections}
+                                        buttonSelects={buttonSelects}
+                                        draft={{
+                                            key: DRAFT_KEY,
+                                            // The TechTour page's wording says
+                                            // nothing TechTour-specific, so both
+                                            // forms share it.
+                                            labels: {
+                                                save: t.techtour.draftSave,
+                                                saved: t.techtour.draftSaved,
+                                                restored: t.techtour.draftRestored,
+                                                clear: t.techtour.draftClear,
+                                                cleared: t.techtour.draftCleared,
+                                                note: t.techtour.draftNote,
+                                            },
+                                        }}
+                                    />
+                                )}
+                            </>
+                        ) : status === 'upcoming' ? (
+                            <WaitlistSignup
+                                title={t.join.upcomingTitle}
+                                lead={t.join.upcomingLead}
+                            />
+                        ) : (
+                            <WaitlistSignup
+                                title={t.join.waitlistTitle}
+                                lead={t.join.waitlistLead}
+                            />
+                        )}
                         {email && (
                             <p className="jn-apply__contact">
                                 {contactBefore}

@@ -717,39 +717,79 @@
     color: var(--muted);
 }
 
-/* Compact: the side column of /join/apply. */
-.jn-steps--compact .jn-step {
+/* Strip: above the form on /join/apply. On a phone it stays this vertical
+   list; from 761px up it turns into one row of three (below). */
+.jn-steps--strip .jn-step {
     grid-template-columns: 34px minmax(0, 1fr);
     column-gap: 16px;
 }
-.jn-steps--compact .jn-step__line {
+.jn-steps--strip .jn-step__line {
     min-height: 14px;
     margin: 6px 0;
 }
-.jn-steps--compact .jn-step__body {
+.jn-steps--strip .jn-step__body {
     padding: 6px 0 22px;
 }
-.jn-steps--compact .jn-step:last-child .jn-step__body {
+.jn-steps--strip .jn-step:last-child .jn-step__body {
     padding-bottom: 0;
 }
-.jn-steps--compact .jn-step__node {
+.jn-steps--strip .jn-step__node {
     width: 34px;
     height: 34px;
     font-size: 14px;
 }
-.jn-steps--compact .jn-step[data-state='current'] .jn-step__node {
+.jn-steps--strip .jn-step[data-state='current'] .jn-step__node {
     box-shadow: 0 0 0 4px rgba(47, 143, 144, 0.16);
 }
-.jn-steps--compact .jn-step__timing {
+.jn-steps--strip .jn-step__timing {
     font-size: 11px;
 }
-.jn-steps--compact .jn-step__title {
+.jn-steps--strip .jn-step__title {
     margin: 4px 0 2px;
     font-size: 17px;
 }
-.jn-steps--compact .jn-step__text {
+.jn-steps--strip .jn-step__text {
     max-width: none;
     font-size: 14.5px;
+}
+
+/* From 761px the strip is one row of three: node on top, the line running
+   to the next node, text centred under it. */
+@media (min-width: 761px) {
+    .jn-steps--strip {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        column-gap: 16px;
+    }
+    .jn-steps--strip .jn-step {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .jn-steps--strip .jn-step__rail {
+        position: relative;
+        flex-direction: row;
+        align-self: stretch;
+        justify-content: center;
+    }
+    /* Node centre + radius + air, to the same point on the next node. */
+    .jn-steps--strip .jn-step__line {
+        position: absolute;
+        top: 50%;
+        left: calc(50% + 24px);
+        width: calc(100% - 32px);
+        height: 1.5px;
+        min-height: 0;
+        margin: 0;
+    }
+    .jn-steps--strip .jn-step__body,
+    .jn-steps--strip .jn-step:last-child .jn-step__body {
+        padding: 12px 0 0;
+    }
+    .jn-steps--strip .jn-step__title {
+        justify-content: center;
+    }
 }
 
 /* The project: its screens on a soft panel, then what it is and the link. */
@@ -812,31 +852,29 @@
 .jn-apply .lp-page {
     padding: 48px 0 96px;
 }
-/* Head and steps on the left, the form on the right; on a phone the form
-   comes straight after the head and the steps follow it. */
-.jn .jn-apply__grid {
-    display: grid;
-    grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr);
-    grid-template-rows: auto 1fr;
-    grid-template-areas:
-        'head main'
-        'steps main';
-    column-gap: clamp(32px, 5vw, 72px);
-    max-width: 1140px;
+.jn .jn-apply__col {
+    display: block;
+    max-width: 760px;
 }
 .jn-apply__head {
     display: block;
-    grid-area: head;
+    text-align: center;
 }
-.jn-apply__main {
-    display: block;
-    grid-area: main;
-    min-width: 0;
+.jn-apply__head .jn-apply__lead {
+    margin-left: auto;
+    margin-right: auto;
 }
 .jn-apply__steps {
     display: block;
-    grid-area: steps;
-    margin-top: 36px;
+    margin: 34px 0 36px;
+    padding: 30px 0;
+    border-top: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+}
+.jn-apply__main {
+    display: block;
+    min-width: 0;
+    scroll-margin-top: 88px;
 }
 .jn-back {
     color: var(--teal-dark);
@@ -863,13 +901,6 @@
     line-height: 1.6;
     color: var(--muted);
 }
-.jn-apply__label {
-    margin: 0 0 18px;
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--teal-dark);
-}
 .jn-apply__contact {
     margin: 30px 0 0;
     padding-top: 20px;
@@ -882,43 +913,86 @@
     color: var(--teal-dark);
     text-underline-offset: 3px;
 }
-.jn-card {
-    display: block;
-    padding: clamp(24px, 3.4vw, 40px);
-    background: #ffffff;
-    border: 1px solid var(--line);
-    box-shadow: 0 24px 60px rgba(15, 32, 64, 0.08);
-    scroll-margin-top: 88px;
-}
-.jn-card .lp-formsection {
+.jn-apply__main .lp-formsection {
     display: block;
     margin: 0 0 18px;
     padding-bottom: 12px;
     border-bottom: 1px solid var(--line);
 }
-.jn-card .lp-formsection ~ .lp-formsection {
+.jn-apply__main .lp-formsection ~ .lp-formsection {
     margin-top: 30px;
 }
-.jn-card .lp-formsection__title {
+.jn-apply__main .lp-formsection__title {
     margin: 0;
     font-family: var(--jn-display);
     font-size: 20px;
     color: var(--navy);
 }
-.jn-card .lp-cmsform > .lp-submit {
+.jn-apply__main .lp-cmsform > .lp-submit {
     margin-top: 6px;
 }
 /* Tick boxes in the page's teal, lined up with the first line of a long label. */
-.jn-card .lp-checkbox {
+.jn-apply__main .lp-checkbox {
     align-items: flex-start;
 }
-.jn-card .lp-checkbox input[type='checkbox'] {
+.jn-apply__main .lp-checkbox input[type='checkbox'] {
     flex: none;
     width: 18px;
     height: 18px;
     margin: 2px 0 0;
     accent-color: var(--teal);
     box-shadow: none;
+}
+
+/* "Save and finish later" beside the send button (CmsForm `draft`). */
+.jn-apply__main .lp-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+    margin-top: 6px;
+}
+.jn-apply__main .lp-draft__save {
+    padding: 13px 22px;
+    border: 1px solid rgba(47, 143, 144, 0.55);
+    background: none;
+    color: var(--teal-dark);
+    cursor: pointer;
+    font-family: var(--jn-display);
+    font-size: 15px;
+}
+.jn-apply__main .lp-draft__save:hover:not(:disabled) {
+    border-color: var(--teal);
+    background: rgba(47, 143, 144, 0.06);
+}
+.jn-apply__main .lp-draft__save:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.jn-apply__main .lp-draft__note {
+    margin: 12px 0 0;
+    font-size: 13px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+.jn-apply__main .lp-draft__flag {
+    color: var(--teal-dark);
+}
+.jn-apply__main .lp-draft__clear {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+@media (max-width: 560px) {
+    .jn-apply__main .lp-submit,
+    .jn-apply__main .lp-draft__save {
+        flex: 1 1 100%;
+    }
 }
 
 /* ---- Notify me ---- */
@@ -996,20 +1070,6 @@
 @media (max-width: 900px) {
     .jn-process__grid {
         grid-template-columns: minmax(0, 1fr);
-    }
-    .jn .jn-apply__grid {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto;
-        grid-template-areas:
-            'head'
-            'main'
-            'steps';
-    }
-    .jn-apply__main {
-        margin-top: 28px;
-    }
-    .jn-apply__steps {
-        margin-top: 44px;
     }
 }
 @media (max-width: 760px) {
