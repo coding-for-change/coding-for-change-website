@@ -1,0 +1,66 @@
+/* Host share links in the admin: the evening dropdown and the link panel. */
+
+.share-evening__select {
+  width: 100%;
+  font: inherit;
+  color: var(--theme-text);
+  background: var(--theme-input-bg, var(--theme-elevation-0));
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-s, 4px);
+  padding: 10px 12px;
+}
+
+.share-url {
+  margin-bottom: 24px;
+}
+
+.share-url__label {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.share-url__input {
+  width: 100%;
+  font: inherit;
+  font-size: 12px;
+  color: var(--theme-text);
+  background: var(--theme-elevation-50);
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+.share-url__status,
+.share-url__hint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--theme-elevation-600);
+}
+
+.share-url__status.is-off {
+  color: var(--theme-error-600);
+}
+
+.share-url__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.share-url__btn {
+  display: inline-block;
+  font: inherit;
+  font-size: 13px;
+  color: var(--theme-text);
+  background: transparent;
+  border: 1px solid var(--theme-elevation-250);
+  border-radius: 4px;
+  padding: 6px 12px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.share-url__btn:hover {
+  background: var(--theme-elevation-50);
+}

@@ -300,8 +300,9 @@ The Datenschutz now promises deletion: applications six months after the round
 (deadline 30 Oct 2026 → delete by **30 Apr 2027**), TechTour registrations
 three months after the event week (13 Nov 2026 → delete by **13 Feb 2027**).
 Put both dates in the team calendar. Deleting is manual: **Forms → Form
-Submissions** (filter by form, select all, delete) and **Forms → Applicant
-files** for the CVs. Accepted members' applications may be kept for the
+Submissions** (filter by form, select all, delete), **Forms → Applicant
+files** for the CVs, and for the TechTour **Forms → Host share links** (their
+activity log goes with them). Accepted members' applications may be kept for the
 duration of their involvement.
 
 ### 7e. TechTour form: the host companies decide who attends
@@ -331,6 +332,34 @@ Do **not** re-run `upsert-forms.mjs --apply` for this: it replaces every
 question with the starting definitions and would undo the edits made in the
 admin since. When Monday's or Friday's company is announced, set it on the
 TechTour page and run this script again to carry the name into the form.
+
+### 7f. Host share links: each company sees its evening's registrations
+
+Once registrations come in (and at the latest a few days before each
+evening): **Admin → Forms → Host share links → Create New**, one per evening.
+In the review workspace (**Review applications → TechTour**), pick the evening
+in the dropdown and click **Share with the host** to start with the evening
+filled in.
+
+- **Title** – what the host sees as the heading, e.g. `QuantCo – Wed 11 Nov`.
+- **Evening** – everyone who registered for it is on the host's list.
+- **Contacts at the company** – the addresses that may open the link. Each
+  signs in with a six-digit code sent to that address, so a forwarded link
+  alone opens nothing.
+- **Expires** – leave empty: it becomes the Sunday of the event week, 23:59,
+  the latest the Datenschutz allows.
+
+Save, then **Write to the contacts** (sidebar) opens a prepared email with the
+link in your own mail program. The host sees name, CV and the other answers
+(never the email address), admits or declines each person, and can admit
+everyone still open in one go. Their decisions show up right away in the
+review workspace (✓ / ✕ in the list, "Host decisions" on each person) and in
+the Excel export – that is where to send the confirmations from. Every
+sign-in, CV opened and decision is under **Host link activity**. Tick
+**Blocked** to stop a link at once.
+
+When the TechTour data is deleted (7d), delete the share links too – their
+activity log goes with them.
 
 ## 7½. Keep the TechTour page out of search results until it is ready
 

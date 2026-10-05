@@ -21,10 +21,14 @@ import { WaitlistSignups } from './collections/WaitlistSignups';
 import { AnalyticsEvents } from './collections/AnalyticsEvents';
 import { ConsentRecords } from './collections/ConsentRecords';
 import { ApplicantFiles } from './collections/ApplicantFiles';
+import { ShareLinks } from './collections/ShareLinks';
+import { ShareAccessLog } from './collections/ShareAccessLog';
 import { attributionField } from './fields/attribution';
 import { reviewFields } from './fields/review';
 import { recordSubmission, submissionRecordFields } from './fields/submissionRecord';
+import { hostDecisionsField } from './fields/hostDecisions';
 import { submissionsExport } from './endpoints/submissionsExport';
+import { shareEndpoints } from './endpoints/share';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -96,12 +100,14 @@ const questionsWithoutWidth = (field: Field): Field =>
 
 export default buildConfig({
   editor: lexicalEditor(),
-  collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles],
+  collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles, ShareLinks, ShareAccessLog],
   globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour],
   // Admin-only analytics reporting: JSON aggregates for the /admin/analytics
   // dashboard, plus CSV exports (campaign funnel, raw events, signups) and
   // the bulk "email the waitlist" sender (individual mails via Resend).
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport],
+  // The host share links (/api/share/:token…) are public, guarded by their
+  // token and an emailed sign-in code – see endpoints/share.ts.
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -193,6 +199,7 @@ export default buildConfig({
           ...defaultFields.map(readOnlyInAdmin),
           submissionFilesField,
           ...submissionRecordFields,
+          hostDecisionsField,
           attributionField,
         ],
         hooks: {

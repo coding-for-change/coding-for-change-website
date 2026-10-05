@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
             // it doesn't sit one letter away from /partners.
             { source: '/sponsors', destination: '/partners', permanent: true },
             { source: '/partner', destination: '/ngos', permanent: true },
+            // A TechTour host's private link to the registrations for its
+            // evening. The page is the CMS's (inner/cms/src/endpoints/share.ts,
+            // under /api, which the outer server already sends there); this is
+            // the shorter address the team copies from the admin.
+            { source: '/share/:token', destination: '/api/share/:token', permanent: false },
         ];
     },
 };
