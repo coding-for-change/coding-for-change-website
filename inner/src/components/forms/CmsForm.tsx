@@ -164,8 +164,9 @@ export interface CmsFormSection {
  * Opt-in "save and finish later". Off unless a page passes it, so /join and
  * /contact keep storing nothing at all.
  *
- * Only what the visitor typed is kept, and only when they press the button —
- * never on a keystroke. Consent ticks, linked-form toggles and uploaded files
+ * Only what the visitor typed is kept – by default only when they press the
+ * button, or, with `auto`, a moment after each change (the page then shows no
+ * save button, only the note and a way to delete what was kept). Consent ticks, linked-form toggles and uploaded files
  * are deliberately left out: a consent box must be ticked deliberately each
  * time, and a file lives in the CMS already. The key is declared as § 25(2)
  * TDDDG storage in `lib/klaroConfig.ts` and allow-listed in
@@ -174,6 +175,8 @@ export interface CmsFormSection {
 export interface CmsFormDraft {
     /** localStorage key the answers are parked under. */
     key: string;
+    /** Save on every change (debounced) instead of on a button press. */
+    auto?: boolean;
     /** Copy for the save row, so this component carries no page wording. */
     labels: {
         save: string;
@@ -243,6 +246,12 @@ export interface CmsFormProps {
     buttonSelects?: string[];
     /** Enables "save and finish later"; see CmsFormDraft. */
     draft?: CmsFormDraft;
+    /**
+     * A character limit per textarea, by field name: the box stops there and
+     * a counter under it shows how much is left. A guide to the expected
+     * length as much as a cap; fields not named here have none.
+     */
+    textLimits?: Record<string, number>;
     className?: string;
     onSubmitted?: () => void;
 }
@@ -257,6 +266,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
     sections,
     buttonSelects,
     draft,
+    textLimits,
     className,
     onSubmitted,
 }) => {
@@ -402,8 +412,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
         }
     }, [draftKey]);
 
-    const saveDraft = () => {
-        if (!draftKey) return;
+    /** What would be parked right now; empty when nothing is typed yet. */
+    const draftPayload = (): StoredDraft['values'] => {
         const payload: StoredDraft['values'] = {};
         draftable.forEach((name) => {
             const value = values[name];
@@ -413,6 +423,12 @@ const CmsForm: React.FC<CmsFormProps> = ({
                 payload[name] = value;
             }
         });
+        return payload;
+    };
+
+    const saveDraft = () => {
+        if (!draftKey) return;
+        const payload = draftPayload();
         if (Object.keys(payload).length === 0) return;
         try {
             window.localStorage.setItem(
@@ -431,6 +447,29 @@ const CmsForm: React.FC<CmsFormProps> = ({
         forgetDraft();
         setDraftState('cleared');
     };
+
+    // Auto-save: a short pause after the last change, so typing is not a
+    // storage write per keystroke. Waits for the restore above, which would
+    // otherwise be overwritten by the still-empty form. The flag stays as it
+    // is – a "Saved" flashing on every pause would only distract.
+    const autoSave = Boolean(draft?.auto);
+    useEffect(() => {
+        if (!autoSave || !draftKey || !restoredRef.current || submitted) return;
+        const timer = window.setTimeout(() => {
+            const payload = draftPayload();
+            if (Object.keys(payload).length === 0) return;
+            try {
+                window.localStorage.setItem(
+                    draftKey,
+                    JSON.stringify({ v: 1, savedAt: Date.now(), values: payload } satisfies StoredDraft)
+                );
+            } catch {
+                /* storage refused – the form still works, it just won't be kept */
+            }
+        }, 600);
+        return () => window.clearTimeout(timer);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [values, autoSave, draftKey, submitted]);
 
     const valueOf = (field: PlainInput): Value => {
         const v = values[field.name];
@@ -773,6 +812,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
         }
 
         if (field.blockType === 'textarea') {
+            const limit = textLimits?.[field.name];
+            const length = String(value).length;
             return (
                 <div className="lp-field" key={key}>
                     <span className="lp-label">
@@ -783,8 +824,21 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         className="lp-textarea"
                         name={field.name}
                         value={String(value)}
+                        maxLength={limit}
                         onChange={(e) => setValue(field.name, e.target.value)}
                     />
+                    {limit && (
+                        <p
+                            className={`lp-field__hint lp-field__count${
+                                length >= limit ? ' is-full' : ''
+                            }`}
+                            aria-live="polite"
+                        >
+                            {t.forms.charCount
+                                .replace('{n}', String(length))
+                                .replace('{max}', String(limit))}
+                        </p>
+                    )}
                 </div>
             );
         }
@@ -1021,7 +1075,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
                 forms that don't opt in keep their exact markup. The draft row's
                 styling lives with the page that does opt in, today only
                 showcase/techtourApply.css. */}
-            {draft ? (
+            {draft && !draft.auto ? (
                 <div className="lp-actions">
                     {submitButton}
                     <button
@@ -1048,7 +1102,11 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         <span className="lp-draft__flag">{draft.labels.cleared} </span>
                     )}
                     {draft.labels.note}
-                    {(draftState === 'restored' || draftState === 'saved') && (
+                    {/* With auto-save something may be kept at any moment, so
+                        the way to delete it is always there. */}
+                    {(draftState === 'restored' ||
+                        draftState === 'saved' ||
+                        (draft.auto && draftState !== 'cleared')) && (
                         <>
                             {' '}
                             <button

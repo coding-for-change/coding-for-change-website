@@ -34,10 +34,10 @@ export const APPLICATION_ROUND = { en: 'Winter 2026/27', de: 'Winter 2026/27' } 
 export const APPLICATION_OPENS = '2026-10-05T00:00:00+02:00';
 
 /** Applications are accepted up to and including this instant. */
-export const APPLICATION_DEADLINE = '2026-10-31T23:59:59+01:00';
+export const APPLICATION_DEADLINE = '2026-10-30T23:59:59+01:00';
 
 export const APPLICATION_STEPS: ApplicationStep[] = [
-    // The form is open 5–31 Oct; invitations go out within two days of the deadline.
+    // The form is open 5–30 Oct; interview invitations go out by the evening of 31 Oct.
     { id: 'apply', start: APPLICATION_OPENS, end: APPLICATION_DEADLINE },
     // Interview week: a talk plus a small (vibe-)coding challenge.
     { id: 'interview', start: '2026-11-02T00:00:00+01:00', end: '2026-11-08T23:59:59+01:00' },
