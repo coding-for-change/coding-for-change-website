@@ -139,7 +139,7 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
         [props.projects]
     );
 
-    // The line under "Opens 5 Oct" / "Closes 31 Oct", or none: a deadline
+    // The line under "Opens 5 Oct" / "Closes 30 Oct", or none: a deadline
     // pushed past its date (APPLICATIONS_OVERRIDE) has no day to count to.
     const c = t.join.countdown;
     const countdown = (() => {
