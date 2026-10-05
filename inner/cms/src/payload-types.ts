@@ -1023,6 +1023,34 @@ export interface FormSubmission {
    */
   files?: (number | ApplicantFile)[] | null;
   /**
+   * The language the form was sent in. Write back in it.
+   */
+  language?: ('en' | 'de') | null;
+  /**
+   * Every box the person ticked, worded exactly as they saw it when they sent the form. Kept as proof: the form’s own labels may be edited later.
+   */
+  agreedTo?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * The stable keys of the options picked in multi-select questions (e.g. the TechTour evenings, "tue-lio"). The answers above keep the labels as shown, which change when an option is renamed; these do not.
+   */
+  choiceKeys?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
    * Where this submission came from — captured from the landing URL (?src / utm_*) and carried through the session. Empty for direct/organic visits. Used only in aggregate for campaign analysis.
    */
   attribution?: {
@@ -2043,6 +2071,9 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         id?: T;
       };
   files?: T;
+  language?: T;
+  agreedTo?: T;
+  choiceKeys?: T;
   attribution?:
     | T
     | {

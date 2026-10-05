@@ -23,6 +23,7 @@ import { ConsentRecords } from './collections/ConsentRecords';
 import { ApplicantFiles } from './collections/ApplicantFiles';
 import { attributionField } from './fields/attribution';
 import { reviewFields } from './fields/review';
+import { recordSubmission, submissionRecordFields } from './fields/submissionRecord';
 import { submissionsExport } from './endpoints/submissionsExport';
 import {
   CheckboxGroupBlock,
@@ -180,16 +181,23 @@ export default buildConfig({
       },
       // Submissions get: the reviewer's status + notes (sidebar), the answers
       // (read-only in the admin — what the applicant sent stays as sent), the
-      // documents (CV) uploaded to `applicant-files`, and the campaign /
-      // traffic-source attribution (same shared field as WaitlistSignups) so
-      // conversions can be attributed to the poster or link a visitor came from.
+      // documents (CV) uploaded to `applicant-files`, what the submission
+      // records about itself on arrival (language, the wording of the ticked
+      // boxes, the keys of the picked options – fields/submissionRecord.ts),
+      // and the campaign / traffic-source attribution (same shared field as
+      // WaitlistSignups) so conversions can be attributed to the poster or
+      // link a visitor came from.
       formSubmissionOverrides: {
         fields: ({ defaultFields }) => [
           ...reviewFields,
           ...defaultFields.map(readOnlyInAdmin),
           submissionFilesField,
+          ...submissionRecordFields,
           attributionField,
         ],
+        hooks: {
+          beforeChange: [recordSubmission],
+        },
         // The plugin forbids updates; admins need them for the review fields.
         access: {
           update: ({ req: { user } }) => Boolean(user),

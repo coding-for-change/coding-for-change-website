@@ -34,9 +34,8 @@ const L = {
     cvHint: 'PDF, max. 5 MB',
     university: 'University',
     course: 'Course of study',
-    techtourCv: 'Your CV (optional)',
-    techtourCvHint:
-        'Only if you want the companies to see it. PDF, max. 5 MB — the TechTour is open to you either way.',
+    techtourCv: 'Your CV',
+    techtourCvHint: 'PDF, max. 5 MB. The host companies of your evenings see it with your registration.',
     hoursCommit: 'I can commit about 5 hours per week for the project phase.',
     privacy:
       'I agree that Coding for Change e.V. processes the data in this form to handle my application, as described in the [privacy policy](/privacy).',
@@ -50,6 +49,8 @@ const L = {
     'thu-quantco': 'Thu 12 Nov · QuantCo',
     'fri-tba': 'Fri 13 Nov · To be announced',
     attendCommit: 'I commit to attending the evenings I selected. Spots are limited and the companies plan for us.',
+    hostSharing:
+      'I agree that the host company of each evening I pick sees my registration and my CV (not my email address) and decides whether I can join that evening.',
     alsoApply: 'I also want to apply to become a Coding for Change member.',
     alsoApplyLink: 'About membership',
     applicationSubmit: 'Send application',
@@ -57,7 +58,7 @@ const L = {
       'Thanks! Your application is in. Within two days of the deadline you will hear from us with an invitation to pick an interview slot.',
     techtourSubmit: 'Register',
     techtourConfirm:
-      'You are registered! We will email you the details for each evening as soon as times and locations are confirmed.',
+      'You are registered! The host companies decide who joins their evening – we will email you as soon as they have, with the time and place.',
   },
   de: {
     firstName: 'Vorname',
@@ -68,9 +69,8 @@ const L = {
     cvHint: 'PDF, max. 5 MB',
     university: 'Hochschule',
     course: 'Studiengang',
-    techtourCv: 'Dein Lebenslauf (optional)',
-    techtourCvHint:
-        'Nur wenn du willst, dass die Unternehmen ihn sehen. PDF, max. 5 MB — zur TechTour kannst du auch ohne kommen.',
+    techtourCv: 'Dein Lebenslauf',
+    techtourCvHint: 'PDF, max. 5 MB. Die gastgebenden Unternehmen deiner Abende sehen ihn mit deiner Anmeldung.',
     hoursCommit: 'Ich kann in der Projektphase etwa 5 Stunden pro Woche einbringen.',
     privacy:
       'Ich bin einverstanden, dass Coding for Change e.V. die Angaben in diesem Formular zur Bearbeitung meiner Bewerbung verarbeitet, wie in der [Datenschutzerklärung](/privacy) beschrieben.',
@@ -84,6 +84,8 @@ const L = {
     'thu-quantco': 'Do 12. Nov · QuantCo',
     'fri-tba': 'Fr 13. Nov · Wird noch bekannt gegeben',
     attendCommit: 'Ich verpflichte mich, an den ausgewählten Abenden dabei zu sein. Die Plätze sind begrenzt und die Unternehmen planen mit uns.',
+    hostSharing:
+      'Ich bin einverstanden, dass das gastgebende Unternehmen jedes von mir gewählten Abends meine Anmeldung und meinen Lebenslauf sieht (nicht meine E-Mail-Adresse) und entscheidet, ob ich an dem Abend dabei bin.',
     alsoApply: 'Ich möchte mich auch als Mitglied bei Coding for Change bewerben.',
     alsoApplyLink: 'Mehr zur Mitgliedschaft',
     applicationSubmit: 'Bewerbung absenden',
@@ -91,7 +93,7 @@ const L = {
       'Danke! Deine Bewerbung ist eingegangen. Innerhalb von zwei Tagen nach der Frist hörst du von uns und wählst einen Interviewtermin.',
     techtourSubmit: 'Anmelden',
     techtourConfirm:
-      'Du bist angemeldet! Sobald Uhrzeiten und Orte feststehen, schicken wir dir die Details zu jedem Abend per E-Mail.',
+      'Du bist angemeldet! Die gastgebenden Unternehmen entscheiden, wer an ihrem Abend dabei ist – sobald sie das getan haben, schreiben wir dir per E-Mail, mit Uhrzeit und Ort.',
   },
 };
 
@@ -161,17 +163,21 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
       description: t.eventsHint,
       options: EVENT_OPTIONS.map((value) => ({ value, label: t[value] })),
     },
-    // Optional, deliberately: the tour is free and open to every student, so a
-    // required CV would contradict the promise on the page. It exists because
-    // the host companies ask who is coming.
+    // Each evening's host company decides who joins it, and it decides on the
+    // registration it can see (see `hostSharing` below) – the CV included.
     {
       blockType: 'upload',
       name: 'cv',
       label: t.techtourCv,
-      required: false,
+      required: true,
       description: t.techtourCvHint,
     },
     { blockType: 'checkbox', name: 'attendCommit', label: t.attendCommit, required: true },
+    // Required, not an opt-in: registering *is* asking the host to admit you,
+    // so the host seeing the registration is part of the event (Art. 6(1)(b)
+    // GDPR, Datenschutz section 5). The box says so in plain words, and the
+    // wording ticked is kept on the submission (`agreedTo`).
+    { blockType: 'checkbox', name: 'hostSharing', label: t.hostSharing, required: true },
     { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true },
   ];
   if (applicationFormId) {
