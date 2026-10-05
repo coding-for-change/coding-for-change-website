@@ -1,19 +1,21 @@
 /**
- * The Datenschutz edits that go with the WS 2026/27 application forms and the
- * Munich TechTour, applied structurally to the Legal global's `privacyPolicy`
- * rich text (Payload Lexical JSON) instead of by hand in the editor:
+ * The Datenschutz edits that go with the application forms and the Munich
+ * TechTour, applied structurally to the Legal global's `privacyPolicy` rich
+ * text (Payload Lexical JSON) instead of by hand in the editor:
  *
- *   1. section 5 "Application form" → "Application and registration forms
- *      (membership, Munich TechTour)": both forms, the CV storage, the internal
- *      review notes, recipients, retention;
+ *   1. section 5 → "Application and registration forms (membership, Munich
+ *      TechTour)": both forms, the CV storage, the TechTour's host companies
+ *      (each sees the registrations for its evening and decides who attends),
+ *      the internal assessment, recipients, retention;
  *   2. section 8, storage list → one more bullet for `cfc-techtour-intro`;
- *   3. section 3 "Hosting" → a closing paragraph naming the email provider.
+ *   3. section 3 "Hosting" → a closing paragraph naming the email provider;
+ *   4. the closing section's "dated …" line → the month of this version.
  *
  * Sections are located by their heading number and topic, never by position,
  * and every edit is idempotent: running it twice changes nothing the second
  * time. Anything it cannot find it reports and leaves alone. The texts here
- * mirror GO-LIVE-RUNBOOK.md §7; two wording choices are options because they
- * are decisions for the association (see `defaultOptions`).
+ * mirror GO-LIVE-RUNBOOK.md §7; the email provider's transfer basis is an
+ * option because it is a decision for the association (see `defaultOptions`).
  */
 
 // ---- Lexical builders (shapes copied from the live document) -------------
@@ -106,30 +108,29 @@ const sectionNodes = (title, paragraphs) => [
 // ---- Texts ------------------------------------------------------------------
 
 /**
- * `shareNames`: whether attendee names may be passed to a host company for
- * building access (false = the sentence is omitted). `transfer`: the legal
- * basis for the email provider's US transfer, 'scc' (Standard Contractual
- * Clauses) or 'dpf' (EU–US Data Privacy Framework) — check Resend's DPA.
+ * `transfer`: the legal basis for the email provider's US transfer, 'scc'
+ * (Standard Contractual Clauses) or 'dpf' (EU–US Data Privacy Framework) —
+ * check Resend's DPA.
  */
-export const defaultOptions = { shareNames: false, transfer: 'scc' };
+export const defaultOptions = { transfer: 'scc' };
 
 const TEXTS = {
   en: {
     section5Match: (h) => /^5\./.test(h) && /application/i.test(h),
-    section5Done: (h) => /TechTour/.test(h),
+    // This version is the one that names the host companies; any older
+    // section 5 (the original "Application form", or the first TechTour
+    // version that said names are not passed on) is replaced.
+    section5Current: (text) => text.includes('Host companies of the TechTour'),
     section5Title: '5. Application and registration forms (membership, Munich TechTour)',
-    section5: ({ shareNames }) => [
-      'Via our forms you can apply to contribute to Coding for Change e.V. (page "Join") and register for our event series Munich TechTour (page "TechTour"). The two can be combined: if you tick the box for the other form inside one of them, its additional questions appear and we create two separate records — an application and a registration.',
-      'For a **membership application** we process your first and last name, email address, your motivation, your CV (PDF) and your confirmation of the expected time commitment. For a **TechTour registration** we process your first and last name, email address, your university and course of study, the evenings you selected, your commitment to attend and — only if you choose to attach one — your CV (PDF). In both cases we also store the time of submission, the language of the page and — without any reference to you as a person — the channel through which you reached the page (for example a poster QR code), see section 7.',
-      'Processing of an application is based on Art. 6(1)(b) GDPR (pre-contractual measures towards a participation relationship); processing of a TechTour registration is based on Art. 6(1)(b) GDPR (organising the event you asked to attend). Insofar as you tick the consent box in the form, Art. 6(1)(a) GDPR is the additional legal basis; you can withdraw that consent at any time with effect for the future by emailing info@codingforchange.com.',
-      'Your CV is uploaded to our server when you select the file and stored so that only logged-in members of our selection team, or of the team organising the TechTour, can open it; it is never publicly accessible. On the TechTour registration it is optional — you can register without one. A file you upload without then submitting the form is deleted automatically within 24 hours.',
-      'During the selection process we keep an internal assessment for every application and registration (for example "accepted", "unsure", "declined") together with notes. These serve solely to decide on your application or registration, are deleted together with the other data, and are covered by your right of access (Art. 15 GDPR).',
-      'The data is stored on our servers (section 3) and within the association is accessible only to the members entrusted with the selection or with organising the TechTour. For a TechTour registration we tell the host company the number of participants in advance.' +
-        (shareNames
-          ? ' We pass on your name only where the company requires it for access to its premises; we inform you of this by email beforehand.'
-          : ' We do not pass on your name or contact details to the host companies.') +
-        ' Our team is notified of every new application and registration by email; that email contains your answers (not your CV) and is sent through the email service described in section 3.',
-      'If your application is successful, your data is stored for the duration of your involvement in the association. If it is unsuccessful, we delete the application including the CV at the latest six months after the application round has closed, unless you have consented to longer storage for future opportunities. TechTour registrations, including any CV attached to them, are deleted at the latest three months after the event week.',
+    section5: [
+      'Via our forms you can apply to contribute to Coding for Change e.V. (page "Join") and register for our event series Munich TechTour (page "TechTour"). The two can be combined: if you tick the box for the other form inside one of them, its additional questions appear and we create two separate records – an application and a registration.',
+      'For a **membership application** we process your first and last name, email address, where you study, your answers to our questions (for example about your motivation, your experience and where you would like to contribute), your CV (PDF) and your confirmations (for example of the expected time commitment). For a **TechTour registration** we process your first and last name, email address, the evenings you selected, your CV (PDF), any further details the form asks for (for example your university) and your confirmations (your commitment to attend, and that the host companies see your registration). In both cases we also store the time of submission, the language of the page, the wording of the boxes you ticked (as proof of what you confirmed) and – without any reference to you as a person – the channel through which you reached the page (for example a poster QR code), see section 7.',
+      "Processing of an application is based on Art. 6(1)(b) GDPR (pre-contractual measures towards a participation relationship); processing of a TechTour registration is based on Art. 6(1)(b) GDPR (organising the event you asked to attend, including the host company's decision on who attends, see below). Insofar as you tick the consent box in the form, Art. 6(1)(a) GDPR is the additional legal basis; you can withdraw that consent at any time with effect for the future by emailing info@codingforchange.com.",
+      'Your CV is uploaded to our server when you select the file and is never publicly accessible: within the association only logged-in members of our selection team, or of the team organising the TechTour, can open it, and for a TechTour registration also the host companies of the evenings you selected (see the next paragraph). A file you upload without then submitting the form is deleted automatically within 24 hours.',
+      "**Host companies of the TechTour.** Every TechTour evening is hosted by a company, and that company decides who attends its evening. For this purpose we give the host company of each evening you selected access to your registration for that evening – your name, your CV and the other details you entered (for example your university), but not your email address – through a private link that only that company's contacts can open, that expires at the end of the event week at the latest and that we can block at any time; every access is logged. You confirm this in the form. The host company decides on your attendance and prepares the evening (for example access to its premises) under its own responsibility (Art. 4(7) GDPR); we ask the companies to use your data for nothing else and to delete any copies they downloaded after the event. We store the company's decision in order to let you know.",
+      'During the selection process we keep an internal assessment for every application and registration (for example a score from 1 to 10, or "accepted", "unsure", "declined") together with notes. These serve solely to decide on your application or registration, are not passed on to the host companies, are deleted together with the other data, and are covered by your right of access (Art. 15 GDPR).',
+      'The data is stored on our servers (section 3) and within the association is accessible only to the members entrusted with the selection or with organising the TechTour. Our team is notified of every new application and registration by email; that email contains your answers (not your CV) and is sent through the email service described in section 3.',
+      "If your application is successful, your data is stored for the duration of your involvement in the association. If it is unsuccessful, we delete the application including the CV at the latest six months after the application round has closed, unless you have consented to longer storage for future opportunities. TechTour registrations, including the CV and the host company's decision, are deleted at the latest three months after the event week.",
     ],
     storageAnchor: /^- cfc-locale\b/,
     storageBullet:
@@ -141,23 +142,23 @@ const TEXTS = {
         ? 'Transfers to the USA are based on the EU–US Data Privacy Framework, under which Resend is certified. '
         : 'Transfers to the USA are based on the EU Standard Contractual Clauses. ') +
       'Legal basis: Art. 6(1)(f) GDPR (reliable delivery of the emails you or we have requested).',
+    datedMatch: (h) => /^\d+\./.test(h) && /currency/i.test(h),
+    dated: /\bdated [A-Z][a-z]+ \d{4}\b/,
+    datedNow: 'dated October 2026',
   },
   de: {
     section5Match: (h) => /^5\./.test(h) && /bewerbung/i.test(h),
-    section5Done: (h) => /TechTour/.test(h),
+    section5Current: (text) => text.includes('Gastgebende Unternehmen der TechTour'),
     section5Title: '5. Bewerbungs- und Anmeldeformulare (Mitgliedschaft, Munich TechTour)',
-    section5: ({ shareNames }) => [
+    section5: [
       'Über unsere Formulare können Sie sich für eine Mitwirkung bei Coding for Change e.V. bewerben (Seite „Mitmachen“) und sich für unsere Veranstaltungsreihe Munich TechTour anmelden (Seite „TechTour“). Beides lässt sich kombinieren: Wenn Sie in einem der Formulare das Kästchen für das jeweils andere setzen, erscheinen dessen zusätzliche Fragen, und wir legen zwei getrennte Datensätze an – eine Bewerbung und eine Anmeldung.',
-      'Bei einer **Mitgliedsbewerbung** verarbeiten wir Vor- und Nachname, E-Mail-Adresse, Ihre Motivation, Ihren Lebenslauf (PDF) sowie Ihre Bestätigung des zu erwartenden Zeitaufwands. Bei einer **TechTour-Anmeldung** verarbeiten wir Vor- und Nachname, E-Mail-Adresse, Hochschule und Studiengang, die von Ihnen gewählten Abende, Ihre Teilnahmezusage sowie – nur wenn Sie ihn freiwillig anhängen – Ihren Lebenslauf (PDF). In beiden Fällen speichern wir außerdem den Zeitpunkt der Übermittlung, die Sprache der Seite und – ohne Bezug zu Ihrer Person – über welchen Kanal Sie auf die Seite gekommen sind (z. B. ein Plakat-QR-Code), siehe Ziffer 7.',
-      'Die Verarbeitung einer Bewerbung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahmen zur Begründung eines Mitwirkungsverhältnisses); die Verarbeitung einer TechTour-Anmeldung auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Durchführung der Veranstaltung, an der Sie teilnehmen möchten). Soweit Sie im Formular das Einwilligungskästchen setzen, ist zusätzlich Art. 6 Abs. 1 lit. a DSGVO Rechtsgrundlage; diese Einwilligung können Sie jederzeit mit Wirkung für die Zukunft per E-Mail an info@codingforchange.com widerrufen.',
-      'Ihr Lebenslauf wird beim Auswählen der Datei auf unseren Server hochgeladen und dort so gespeichert, dass nur eingeloggte Mitglieder unseres Auswahlteams oder des TechTour-Organisationsteams ihn öffnen können; er ist zu keinem Zeitpunkt öffentlich abrufbar. Bei der TechTour-Anmeldung ist er freiwillig – Sie können sich auch ohne anmelden. Eine Datei, die Sie hochladen, ohne das Formular anschließend abzuschicken, wird automatisch innerhalb von 24 Stunden gelöscht.',
-      'Im Auswahlverfahren halten wir zu jeder Bewerbung und Anmeldung intern eine Bewertung (z. B. „angenommen“, „unsicher“, „abgelehnt“) sowie Notizen fest. Diese dienen ausschließlich der Entscheidung über Ihre Bewerbung bzw. Anmeldung, werden zusammen mit den übrigen Daten gelöscht und sind von Ihrem Auskunftsrecht (Art. 15 DSGVO) umfasst.',
-      'Die Daten werden auf unseren Servern (Ziffer 3) gespeichert und innerhalb des Vereins nur den mit der Auswahl bzw. der Organisation der TechTour betrauten Mitgliedern zugänglich gemacht. Bei einer TechTour-Anmeldung teilen wir dem gastgebenden Unternehmen vorab die Teilnehmerzahl mit.' +
-        (shareNames
-          ? ' Ihren Namen geben wir nur weiter, wenn das Unternehmen dies für den Zutritt zu seinen Räumen verlangt; darüber informieren wir Sie vorher per E-Mail.'
-          : ' Ihren Namen und Ihre Kontaktdaten geben wir nicht an die gastgebenden Unternehmen weiter.') +
-        ' Über jede neue Bewerbung und Anmeldung wird unser Team per E-Mail benachrichtigt; diese E-Mail enthält Ihre Angaben (nicht den Lebenslauf) und wird über den in Ziffer 3 beschriebenen E-Mail-Dienst versendet.',
-      'Im Falle einer Zusage werden Ihre Daten für die Dauer Ihrer Mitwirkung im Verein gespeichert. Im Falle einer Absage löschen wir die Bewerbung einschließlich Lebenslauf spätestens sechs Monate nach Ende der Bewerbungsrunde, sofern Sie nicht in eine längere Speicherung für künftige Gelegenheiten eingewilligt haben. TechTour-Anmeldungen löschen wir einschließlich eines etwaigen Lebenslaufs spätestens drei Monate nach der Veranstaltungswoche.',
+      'Bei einer **Mitgliedsbewerbung** verarbeiten wir Vor- und Nachname, E-Mail-Adresse, wo Sie studieren, Ihre Antworten auf unsere Fragen (z. B. zu Ihrer Motivation, Ihren Erfahrungen und dem Bereich, in dem Sie mitwirken möchten), Ihren Lebenslauf (PDF) sowie Ihre Bestätigungen (z. B. des zu erwartenden Zeitaufwands). Bei einer **TechTour-Anmeldung** verarbeiten wir Vor- und Nachname, E-Mail-Adresse, die von Ihnen gewählten Abende, Ihren Lebenslauf (PDF), weitere im Formular erfragte Angaben (z. B. Ihre Hochschule) sowie Ihre Bestätigungen (Ihre Teilnahmezusage und dass die gastgebenden Unternehmen Ihre Anmeldung sehen). In beiden Fällen speichern wir außerdem den Zeitpunkt der Übermittlung, die Sprache der Seite, den Wortlaut der Kästchen, die Sie gesetzt haben (als Nachweis dessen, was Sie bestätigt haben), und – ohne Bezug zu Ihrer Person – über welchen Kanal Sie auf die Seite gekommen sind (z. B. ein Plakat-QR-Code), siehe Ziffer 7.',
+      'Die Verarbeitung einer Bewerbung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahmen zur Begründung eines Mitwirkungsverhältnisses); die Verarbeitung einer TechTour-Anmeldung auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Durchführung der Veranstaltung, an der Sie teilnehmen möchten, einschließlich der Entscheidung des gastgebenden Unternehmens, wer teilnimmt, siehe unten). Soweit Sie im Formular das Einwilligungskästchen setzen, ist zusätzlich Art. 6 Abs. 1 lit. a DSGVO Rechtsgrundlage; diese Einwilligung können Sie jederzeit mit Wirkung für die Zukunft per E-Mail an info@codingforchange.com widerrufen.',
+      'Ihr Lebenslauf wird beim Auswählen der Datei auf unseren Server hochgeladen und ist zu keinem Zeitpunkt öffentlich abrufbar: Innerhalb des Vereins können ihn nur eingeloggte Mitglieder unseres Auswahlteams oder des TechTour-Organisationsteams öffnen, bei einer TechTour-Anmeldung außerdem die gastgebenden Unternehmen der von Ihnen gewählten Abende (siehe den nächsten Absatz). Eine Datei, die Sie hochladen, ohne das Formular anschließend abzuschicken, wird automatisch innerhalb von 24 Stunden gelöscht.',
+      '**Gastgebende Unternehmen der TechTour.** Jeder TechTour-Abend wird von einem Unternehmen ausgerichtet, und dieses Unternehmen entscheidet, wer an seinem Abend teilnimmt. Zu diesem Zweck geben wir dem gastgebenden Unternehmen jedes von Ihnen gewählten Abends Zugriff auf Ihre Anmeldung zu diesem Abend – Ihren Namen, Ihren Lebenslauf und Ihre weiteren Angaben (z. B. Ihre Hochschule), nicht aber Ihre E-Mail-Adresse – über einen privaten Link, den nur die Ansprechpersonen dieses Unternehmens öffnen können, der spätestens mit Ende der Veranstaltungswoche abläuft und den wir jederzeit sperren können; jeder Zugriff wird protokolliert. Dies bestätigen Sie im Formular. Das gastgebende Unternehmen entscheidet in eigener Verantwortung (Art. 4 Nr. 7 DSGVO) über Ihre Teilnahme und bereitet den Abend vor (z. B. den Zutritt zu seinen Räumen); wir bitten die Unternehmen, Ihre Daten für nichts anderes zu nutzen und heruntergeladene Kopien nach der Veranstaltung zu löschen. Die Entscheidung des Unternehmens speichern wir, um Sie darüber zu informieren.',
+      'Im Auswahlverfahren halten wir zu jeder Bewerbung und Anmeldung intern eine Bewertung (z. B. eine Punktzahl von 1 bis 10 oder „angenommen“, „unsicher“, „abgelehnt“) sowie Notizen fest. Diese dienen ausschließlich der Entscheidung über Ihre Bewerbung bzw. Anmeldung, werden nicht an die gastgebenden Unternehmen weitergegeben, werden zusammen mit den übrigen Daten gelöscht und sind von Ihrem Auskunftsrecht (Art. 15 DSGVO) umfasst.',
+      'Die Daten werden auf unseren Servern (Ziffer 3) gespeichert und innerhalb des Vereins nur den mit der Auswahl bzw. der Organisation der TechTour betrauten Mitgliedern zugänglich gemacht. Über jede neue Bewerbung und Anmeldung wird unser Team per E-Mail benachrichtigt; diese E-Mail enthält Ihre Angaben (nicht den Lebenslauf) und wird über den in Ziffer 3 beschriebenen E-Mail-Dienst versendet.',
+      'Im Falle einer Zusage werden Ihre Daten für die Dauer Ihrer Mitwirkung im Verein gespeichert. Im Falle einer Absage löschen wir die Bewerbung einschließlich Lebenslauf spätestens sechs Monate nach Ende der Bewerbungsrunde, sofern Sie nicht in eine längere Speicherung für künftige Gelegenheiten eingewilligt haben. TechTour-Anmeldungen löschen wir einschließlich Lebenslauf und der Entscheidung des gastgebenden Unternehmens spätestens drei Monate nach der Veranstaltungswoche.',
     ],
     storageAnchor: /^- cfc-locale\b/,
     storageBullet:
@@ -169,6 +170,9 @@ const TEXTS = {
         ? 'Die Übermittlung in die USA erfolgt auf Grundlage des EU-US Data Privacy Framework, unter dem Resend zertifiziert ist. '
         : 'Die Übermittlung in die USA erfolgt auf Grundlage der EU-Standardvertragsklauseln. ') +
       'Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (zuverlässige Zustellung der von Ihnen oder uns veranlassten E-Mails).',
+    datedMatch: (h) => /^\d+\./.test(h) && /aktualität/i.test(h),
+    dated: /\bStand [A-ZÄÖÜ][a-zäöü]+ \d{4}\b/,
+    datedNow: 'Stand Oktober 2026',
   },
 };
 
@@ -191,10 +195,10 @@ export function applyPrivacyEdits(doc, locale, options = {}) {
   const s5 = findSection(children, t.section5Match);
   if (!s5) {
     skipped.push('section 5 (application form) not found — left unchanged');
-  } else if (t.section5Done(plain(children[s5.start]))) {
-    skipped.push('section 5 already covers the TechTour — left unchanged');
+  } else if (t.section5Current(children.slice(s5.start, s5.end).map(plain).join('\n'))) {
+    skipped.push('section 5 already names the host companies — left unchanged');
   } else {
-    children.splice(s5.start, s5.end - s5.start, ...sectionNodes(t.section5Title, t.section5(opts)));
+    children.splice(s5.start, s5.end - s5.start, ...sectionNodes(t.section5Title, t.section5));
     changes.push(`section 5 replaced → "${t.section5Title}"`);
   }
 
@@ -221,6 +225,26 @@ export function applyPrivacyEdits(doc, locale, options = {}) {
     const insertAt = isEmptyParagraph(children[s3.end - 1]) ? s3.end - 1 : s3.end;
     children.splice(insertAt, 0, paragraph(), paragraph(inline(t.emailProvider(opts))));
     changes.push('section 3: email provider paragraph appended');
+  }
+
+  // 4. "This privacy policy is dated …" in the closing section
+  const s17 = findSection(children, t.datedMatch);
+  const datedAt = s17
+    ? children.slice(s17.start, s17.end).findIndex((n) => n.type === 'paragraph' && t.dated.test(plain(n)))
+    : -1;
+  if (!s17 || datedAt === -1) {
+    skipped.push('closing section with the "dated …" line not found — date not updated');
+  } else {
+    const node = children[s17.start + datedAt];
+    const textChild = (node.children ?? []).find((c) => c.type === 'text' && t.dated.test(c.text ?? ''));
+    if (plain(node).includes(t.datedNow)) {
+      skipped.push(`closing section already says "${t.datedNow}"`);
+    } else if (!textChild) {
+      skipped.push('the "dated …" line is split across formatting — date not updated');
+    } else {
+      textChild.text = textChild.text.replace(t.dated, t.datedNow);
+      changes.push(`closing section: "${t.datedNow}"`);
+    }
   }
 
   return { doc: out, changes, skipped };

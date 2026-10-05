@@ -3,15 +3,14 @@
  * Apply the Datenschutz edits for the application forms + Munich TechTour to
  * a running CMS (Legal global → Privacy Policy, English and German). The edits
  * are structural and idempotent — see scripts/lib/privacyEdits.mjs; the texts
- * are the ones in GO-LIVE-RUNBOOK.md §7.
+ * are the ones in GO-LIVE-RUNBOOK.md §7. Re-run it whenever those texts change:
+ * an outdated section 5 is replaced, a current one is left alone.
  *
  *   CMS_URL=https://codingforchange.com CMS_EMAIL=… CMS_PASSWORD=… \
  *     node scripts/upsert-content.mjs                 # dry run: shows what would change, writes nothing
  *     node scripts/upsert-content.mjs --apply         # writes both locales
  *
  * Options (decisions for the association, see the runbook):
- *   --share-names      say that attendee names may be passed to a host company for
- *                      building access (default: say they are not passed on)
  *   --transfer=dpf     name the EU–US Data Privacy Framework as the basis for the
  *                      email provider's US transfer (default: scc = Standard
  *                      Contractual Clauses) — check Resend's DPA before choosing
@@ -31,7 +30,6 @@ const opt = (name, fallback) => {
   return hit ? hit.slice(name.length + 3) : fallback;
 };
 const options = {
-  shareNames: args.includes('--share-names'),
   transfer: opt('transfer', 'scc'),
 };
 const locales = opt('locale', 'en,de').split(',').map((l) => l.trim()).filter(Boolean);
@@ -62,7 +60,7 @@ if (!cookie) {
 }
 const headers = { cookie, 'content-type': 'application/json' };
 
-console.log(`Datenschutz edits on ${BASE} — options: shareNames=${options.shareNames}, transfer=${options.transfer}${APPLY ? '' : ' — DRY RUN'}`);
+console.log(`Datenschutz edits on ${BASE} — options: transfer=${options.transfer}${APPLY ? '' : ' — DRY RUN'}`);
 
 let failed = false;
 for (const locale of locales) {
