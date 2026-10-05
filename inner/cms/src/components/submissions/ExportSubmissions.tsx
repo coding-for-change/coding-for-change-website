@@ -52,9 +52,11 @@ export const ExportSubmissions: React.FC = () => {
       <div className="sub-export__head">
         <strong>Download as Excel</strong>
         <span className="sub-export__hint">
-          One file per form: every answer, links to uploaded CVs, review status and notes, and where the
-          applicant came from. The status column has a dropdown (Accepted / Unsure / Rejected) for
-          reviewing in the sheet — remember to enter the decision here as well.
+          One file per form: every answer, links to uploaded CVs, review status, score and notes, and
+          where the applicant came from. The status column has a dropdown (Accepted / Unsure / Rejected)
+          for reviewing in the sheet — remember to enter the decision here as well. Or review here, one
+          person at a time with the CV beside the answers:{' '}
+          <a href="/admin/review">open the review workspace</a>.
         </span>
       </div>
       {error && <p className="sub-export__error">Could not load the list of forms.</p>}

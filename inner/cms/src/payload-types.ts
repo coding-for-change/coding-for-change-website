@@ -1007,6 +1007,10 @@ export interface FormSubmission {
    */
   reviewStatus?: ('unreviewed' | 'accepted' | 'unsure' | 'rejected') | null;
   /**
+   * How strong the applicant is, from 1 (weak) to 10 (outstanding). Leave empty until reviewed.
+   */
+  reviewScore?: number | null;
+  /**
    * Internal notes — never shown to the applicant. Included in the Excel export.
    */
   reviewNotes?: string | null;
@@ -2061,6 +2065,7 @@ export interface FormsSelect<T extends boolean = true> {
  */
 export interface FormSubmissionsSelect<T extends boolean = true> {
   reviewStatus?: T;
+  reviewScore?: T;
   reviewNotes?: T;
   form?: T;
   submissionData?:

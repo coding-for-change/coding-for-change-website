@@ -23,8 +23,10 @@ import { BoldFeatureClient as BoldFeatureClient_e70f5e05f09f93e00b997edb1ef0c864
 import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864 } from '@payloadcms/richtext-lexical/client'
 import { SendWaitlistEmail as SendWaitlistEmail_f8956b0e243cad3221291f0dfe2d4ba3 } from '../../../components/waitlist/SendWaitlistEmail'
 import { ExportSubmissions as ExportSubmissions_6ea02889351cc84afeb57e6c6b8e6635 } from '../../../components/submissions/ExportSubmissions'
+import { ReviewNavLink as ReviewNavLink_73e403c0f30261a621e36bbdfd90b1cd } from '../../../components/review/ReviewNavLink'
 import { AnalyticsNavLink as AnalyticsNavLink_3f97209c7ee78461118a93ecfba89874 } from '../../../components/analytics/AnalyticsNavLink'
 import { AnalyticsDashboardView as AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93 } from '../../../components/analytics/AnalyticsDashboardView'
+import { ReviewView as ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be } from '../../../components/review/ReviewView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
@@ -53,7 +55,9 @@ export const importMap = {
   "@payloadcms/richtext-lexical/client#ItalicFeatureClient": ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0c864,
   "/components/waitlist/SendWaitlistEmail#SendWaitlistEmail": SendWaitlistEmail_f8956b0e243cad3221291f0dfe2d4ba3,
   "/components/submissions/ExportSubmissions#ExportSubmissions": ExportSubmissions_6ea02889351cc84afeb57e6c6b8e6635,
+  "/components/review/ReviewNavLink#ReviewNavLink": ReviewNavLink_73e403c0f30261a621e36bbdfd90b1cd,
   "/components/analytics/AnalyticsNavLink#AnalyticsNavLink": AnalyticsNavLink_3f97209c7ee78461118a93ecfba89874,
   "/components/analytics/AnalyticsDashboardView#AnalyticsDashboardView": AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93,
+  "/components/review/ReviewView#ReviewView": ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

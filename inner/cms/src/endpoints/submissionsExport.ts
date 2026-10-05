@@ -12,8 +12,8 @@ import type { ApplicantFile, Form, FormSubmission } from '../payload-types';
  *
  * One row per submission: submitted-at, the answers (one column per question,
  * in the form's current order, labelled with the question labels), links to
- * uploaded files (CV), the review status and notes from the CMS, and the
- * campaign attribution. The status column carries a dropdown (accepted /
+ * uploaded files (CV), the review status, score and notes from the CMS, the
+ * language the form was sent in, and the campaign attribution. The status column carries a dropdown (accepted /
  * unsure / rejected) so the sheet can be used for the review itself; what is
  * decided there still has to be typed back into the CMS — there is no import.
  */
@@ -110,7 +110,9 @@ export const submissionsExport: Endpoint = {
       ...questions.map((q) => ({ header: q.label, key: `q_${q.name}`, width: q.wide ? 48 : 22 })),
       { header: 'Files', key: 'files', width: 44 },
       { header: 'Status', key: 'reviewStatus', width: 14 },
+      { header: 'Score', key: 'reviewScore', width: 8 },
       { header: 'Notes', key: 'reviewNotes', width: 48 },
+      { header: 'Language', key: 'language', width: 10 },
       { header: 'Source', key: 'source', width: 16 },
       { header: 'Channel', key: 'channel', width: 14 },
       { header: 'Landing page', key: 'landingPath', width: 20 },
@@ -127,7 +129,9 @@ export const submissionsExport: Endpoint = {
           .join('\n'),
         reviewStatus:
           REVIEW_STATUSES.find((o) => o.value === s.reviewStatus && o.value !== 'unreviewed')?.label ?? '',
+        reviewScore: s.reviewScore ?? null,
         reviewNotes: s.reviewNotes ?? '',
+        language: s.language ?? '',
         source: s.attribution?.source ?? '',
         channel: s.attribution?.channel ?? '',
         landingPath: s.attribution?.landingPath ?? '',

@@ -1,0 +1,775 @@
+/*
+ * /admin/review – the review workspace. Built on Payload's own theme tokens
+ * (--theme-elevation-*, --theme-warning/error-*), which the admin flips for
+ * dark mode itself: the status scales are mirrored around 500, so a 100 tint
+ * with 800 ink reads the same way round in both themes. "Accepted" is the
+ * exception: Payload's "success" scale is blue, and a yes should read green,
+ * so it has its own three values per theme (ink ≥ 6:1 on its tint).
+ *
+ * The workspace fills the window below the admin header; the list, the
+ * applicant and the CV each scroll on their own.
+ */
+
+.rv {
+  --rv-line: var(--theme-elevation-150);
+  --rv-line-soft: var(--theme-elevation-100);
+  --rv-muted: var(--theme-elevation-600);
+  --rv-ink: var(--theme-elevation-1000);
+  --rv-paper: var(--theme-elevation-0);
+  --rv-yes: #1a7f37;
+  --rv-yes-tint: #dafbe1;
+  --rv-yes-ink: #116329;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: calc(100vh - var(--app-header-height, 56px) - 24px);
+  min-height: 560px;
+  padding-bottom: 8px;
+  color: var(--theme-text);
+}
+
+html[data-theme='dark'] .rv {
+  --rv-yes: #3fb950;
+  --rv-yes-tint: rgba(46, 160, 67, 0.18);
+  --rv-yes-ink: #7ee787;
+}
+
+.rv--message {
+  height: auto;
+  min-height: 0;
+  padding: 40px 0;
+  color: var(--rv-muted);
+}
+
+.rv-btn {
+  appearance: none;
+  border: 1px solid var(--rv-line);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.rv-btn:hover:not(:disabled) {
+  background: var(--theme-elevation-50);
+}
+
+.rv-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.rv-btn--icon {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+}
+
+/* ---- header ---------------------------------------------------------------- */
+
+.rv-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px 24px;
+}
+
+.rv-head__title {
+  margin: 0;
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.rv-head__sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--rv-muted);
+}
+
+.rv-head__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+}
+
+.rv-tabs {
+  display: inline-flex;
+  border: 1px solid var(--rv-line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rv-tab {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--theme-elevation-700);
+  font: inherit;
+  font-size: 14px;
+  padding: 7px 14px;
+  cursor: pointer;
+}
+
+.rv-tab + .rv-tab {
+  border-left: 1px solid var(--rv-line);
+}
+
+.rv-tab:hover {
+  background: var(--theme-elevation-50);
+}
+
+.rv-tab.is-active {
+  background: var(--rv-ink);
+  color: var(--rv-paper);
+}
+
+.rv-tab__count {
+  margin-left: 4px;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- toolbar --------------------------------------------------------------- */
+
+.rv-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.rv-search,
+.rv-select {
+  font: inherit;
+  font-size: 13px;
+  color: inherit;
+  background: var(--theme-input-bg, var(--rv-paper));
+  border: 1px solid var(--rv-line);
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+
+.rv-search {
+  flex: 0 1 260px;
+  min-width: 180px;
+}
+
+.rv-select {
+  max-width: 230px;
+  text-overflow: ellipsis;
+}
+
+.rv-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.rv-chip {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--rv-line);
+  border-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.rv-chip:hover {
+  background: var(--theme-elevation-50);
+}
+
+.rv-chip.is-active {
+  background: var(--theme-elevation-100);
+  border-color: var(--theme-elevation-400);
+}
+
+.rv-chip__count {
+  color: var(--rv-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-link {
+  font-size: 13px;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* ---- list | applicant | CV ------------------------------------------------- */
+
+/*
+ * Laid out by the workspace's own width, not the window's: the admin's
+ * sidebar may be open or closed. Wide, the list, the applicant and the CV sit
+ * side by side and scroll on their own; narrower, the CV follows the answers
+ * in one scrolling column; on a phone the list goes on top.
+ */
+.rv {
+  container: rv / inline-size;
+}
+
+.rv-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 270px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  border: 1px solid var(--rv-line);
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--rv-paper);
+}
+
+.rv-main {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(360px, 1fr) minmax(360px, 1.1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.rv-main--no-cv {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.rv-empty {
+  padding: 24px 16px;
+  margin: 0;
+  color: var(--rv-muted);
+  font-size: 14px;
+}
+
+/* list */
+
+.rv-list {
+  overflow-y: auto;
+  border-right: 1px solid var(--rv-line);
+}
+
+.rv-item {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-bottom: 1px solid var(--rv-line-soft);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rv-item:hover {
+  background: var(--theme-elevation-50);
+}
+
+.rv-item.is-active {
+  background: var(--theme-elevation-100);
+  box-shadow: inset 3px 0 0 var(--rv-ink);
+}
+
+.rv-item__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.rv-item__name,
+.rv-item__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rv-item__name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.rv-item__meta {
+  font-size: 12px;
+  color: var(--rv-muted);
+}
+
+.rv-item__side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rv-score {
+  min-width: 26px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 4px;
+  display: inline-grid;
+  place-items: center;
+  background: var(--theme-elevation-150);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-score--none {
+  background: transparent;
+  color: var(--theme-elevation-400);
+  font-weight: 400;
+}
+
+.rv-tag {
+  padding: 1px 6px;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 999px;
+  color: var(--theme-elevation-700);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.rv-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--theme-elevation-300);
+}
+
+.rv-dot--accepted {
+  background: var(--rv-yes);
+}
+
+.rv-dot--unsure {
+  background: var(--theme-warning-500);
+}
+
+.rv-dot--rejected {
+  background: var(--theme-error-500);
+}
+
+.rv-dot--unreviewed {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--theme-elevation-400);
+}
+
+/* applicant */
+
+.rv-detail {
+  container: rv-detail / inline-size;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 0 20px 24px;
+}
+
+.rv-person {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 0 10px;
+}
+
+.rv-person__name {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.rv-person__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--rv-muted);
+}
+
+.rv-person__meta a {
+  color: inherit;
+}
+
+.rv-lang {
+  padding: 0 4px;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 3px;
+  font-size: 11px;
+}
+
+.rv-person__nav {
+  flex: none;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--rv-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the review itself – stays in view while the answers scroll */
+
+.rv-panel {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 12px;
+  background: var(--rv-paper);
+  border-bottom: 1px solid var(--rv-line);
+}
+
+.rv-panel__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+
+.rv-panel__label {
+  width: 64px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rv-muted);
+}
+
+.rv-scale {
+  display: inline-flex;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.rv-scale__btn {
+  appearance: none;
+  width: 32px;
+  height: 30px;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.rv-scale__btn + .rv-scale__btn {
+  border-left: 1px solid var(--rv-line);
+}
+
+.rv-scale__btn:hover {
+  background: var(--theme-elevation-50);
+}
+
+.rv-scale__btn.is-active {
+  background: var(--rv-ink);
+  color: var(--rv-paper);
+  font-weight: 600;
+}
+
+.rv-decisions {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.rv-decision {
+  appearance: none;
+  border: 1px solid var(--theme-elevation-200);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 14px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+
+.rv-decision:hover {
+  background: var(--theme-elevation-50);
+}
+
+.rv-decision--accepted.is-active {
+  background: var(--rv-yes-tint);
+  border-color: var(--rv-yes);
+  color: var(--rv-yes-ink);
+}
+
+.rv-decision--unsure.is-active {
+  background: var(--theme-warning-100);
+  border-color: var(--theme-warning-500);
+  color: var(--theme-warning-800);
+}
+
+.rv-decision--rejected.is-active {
+  background: var(--theme-error-100);
+  border-color: var(--theme-error-500);
+  color: var(--theme-error-800);
+}
+
+.rv-save {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--rv-muted);
+}
+
+.rv-save--error {
+  color: var(--theme-error-600);
+}
+
+.rv-notes {
+  width: 100%;
+  min-height: 52px;
+  resize: vertical;
+  box-sizing: border-box;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  color: inherit;
+  background: var(--theme-input-bg, var(--rv-paper));
+  border: 1px solid var(--rv-line);
+  border-radius: 4px;
+  padding: 8px 10px;
+}
+
+/* same person elsewhere */
+
+.rv-others {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 14px;
+}
+
+.rv-other {
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border: 1px dashed var(--theme-elevation-300);
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rv-other:hover {
+  background: var(--theme-elevation-50);
+}
+
+.rv-other span {
+  color: var(--rv-muted);
+}
+
+/* answers */
+
+.rv-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 16px;
+}
+
+.rv-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+}
+
+.rv-fact dt {
+  font-size: 12px;
+  color: var(--rv-muted);
+}
+
+.rv-fact dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.rv-qa__q {
+  margin: 0 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--theme-elevation-800);
+}
+
+.rv-qa__a {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.rv-qa__len {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--theme-elevation-500);
+}
+
+.rv-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-picks li {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--theme-elevation-100);
+  font-size: 13px;
+}
+
+.rv-confirms {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--rv-line-soft);
+  list-style: none;
+  font-size: 12px;
+  color: var(--rv-muted);
+}
+
+.rv-confirms li.is-checked span {
+  color: var(--rv-yes);
+}
+
+/* CV */
+
+.rv-cv {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--rv-line);
+}
+
+.rv-cv__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rv-line);
+  font-size: 13px;
+}
+
+.rv-cv__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--rv-muted);
+}
+
+.rv-cv__frame {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  border: 0;
+  background: var(--theme-elevation-50);
+}
+
+/* keys */
+
+.rv-keys {
+  margin: 0;
+  font-size: 12px;
+  color: var(--rv-muted);
+}
+
+.rv-keys kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--theme-elevation-200);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font: inherit;
+  font-size: 11px;
+  text-align: center;
+}
+
+/* A narrow applicant column: the buttons explain themselves without the row labels. */
+@container rv-detail (max-width: 440px) {
+  .rv-panel__label {
+    display: none;
+  }
+
+  .rv-scale__btn {
+    width: 29px;
+  }
+}
+
+/* ---- narrower ----------------------------------------------------------------- */
+
+@container rv (max-width: 1080px) {
+  .rv-main {
+    display: block;
+    overflow-y: auto;
+  }
+
+  .rv-detail {
+    overflow: visible;
+  }
+
+  .rv-cv {
+    height: 85vh;
+    border-left: none;
+    border-top: 1px solid var(--rv-line);
+  }
+}
+
+@container rv (max-width: 700px) {
+  .rv-body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .rv-list {
+    flex: none;
+    max-height: 40vh;
+    border-right: none;
+    border-bottom: 1px solid var(--rv-line);
+  }
+
+  .rv-main {
+    flex: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .rv {
+    height: auto;
+  }
+}
