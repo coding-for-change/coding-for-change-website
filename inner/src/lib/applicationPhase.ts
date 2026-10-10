@@ -12,7 +12,7 @@
  * To run the next round: update the dates here, `APPLICATION_ROUND`, and the
  * dates written into the copy (`join.window`, `join.status.upcoming`,
  * `join.steps.*.timing`, `join.closing.text`, `join.apply.lead.upcoming` and
- * `join.upcomingTitle`). Offsets are written out explicitly (Europe/Berlin:
+ * `join.upcomingTitle`, `nav.applyBar`, `nav.applyBarShort`). Offsets are written out explicitly (Europe/Berlin:
  * +02:00 until the clocks change on 25 Oct 2026, +01:00 after) so the result
  * does not depend on the server's time zone.
  */
