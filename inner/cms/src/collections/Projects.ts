@@ -97,6 +97,40 @@ export const Projects: CollectionConfig = {
       localized: true,
       admin: { description: 'A one-line impact highlight shown under the headline (e.g. "Saves ~150 companions hours of paperwork a month").' },
     },
+    {
+      // Coverage of the project. Not localized: an article exists in one
+      // language, and a German newspaper piece is worth showing to an English
+      // reader too.
+      name: 'press',
+      label: 'Press',
+      type: 'array',
+      labels: { singular: 'Article', plural: 'Articles' },
+      admin: {
+        description: 'Articles about this project. Shown as a "featured in" badge at the top of the case study.',
+      },
+      fields: [
+        {
+          name: 'outlet',
+          type: 'text',
+          required: true,
+          admin: { description: 'e.g. "Süddeutsche Zeitung"' },
+        },
+        {
+          name: 'headline',
+          type: 'text',
+          required: true,
+          admin: { description: 'The article headline, in its original language.' },
+        },
+        { name: 'url', type: 'text', required: true },
+        { name: 'date', type: 'date' },
+        {
+          name: 'logo',
+          type: 'upload',
+          relationTo: 'media',
+          admin: { description: 'The outlet’s mark, ideally a trimmed SVG/PNG without background. Optional – the badge names the outlet either way.' },
+        },
+      ],
+    },
     // ---- Case-study body: freely-orderable content blocks ----
     {
       name: 'layout',

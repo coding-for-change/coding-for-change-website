@@ -30,6 +30,9 @@
     background: #7fe3e4;
     box-shadow: 0 0 0 3px rgba(127, 227, 228, 0.25);
 }
+.apply-bar__text--short {
+    display: none;
+}
 .apply-bar__cta {
     flex: none;
     color: #7fe3e4;
@@ -43,5 +46,13 @@
     /* On a phone the link text carries itself; the arrow line would wrap. */
     .apply-bar__dot {
         display: none;
+    }
+    /* The full line wraps to two rows on a phone; the short one fits beside
+       the link. */
+    .apply-bar__text {
+        display: none;
+    }
+    .apply-bar__text--short {
+        display: inline;
     }
 }

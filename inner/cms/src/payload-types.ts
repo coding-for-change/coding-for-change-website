@@ -349,6 +349,28 @@ export interface Project {
    */
   impact?: string | null;
   /**
+   * Articles about this project. Shown as a "featured in" badge at the top of the case study.
+   */
+  press?:
+    | {
+        /**
+         * e.g. "Süddeutsche Zeitung"
+         */
+        outlet: string;
+        /**
+         * The article headline, in its original language.
+         */
+        headline: string;
+        url: string;
+        date?: string | null;
+        /**
+         * The outlet’s mark, ideally a trimmed SVG/PNG without background. Optional – the badge names the outlet either way.
+         */
+        logo?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * The body of the case-study page. Add, remove and reorder blocks freely — text sections, quote, gallery, product demo, timeline, team and FAQ.
    */
   layout?:
@@ -1605,6 +1627,16 @@ export interface ProjectsSelect<T extends boolean = true> {
       };
   impactHeadline?: T;
   impact?: T;
+  press?:
+    | T
+    | {
+        outlet?: T;
+        headline?: T;
+        url?: T;
+        date?: T;
+        logo?: T;
+        id?: T;
+      };
   layout?:
     | T
     | {

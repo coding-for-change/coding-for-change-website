@@ -73,8 +73,20 @@ export interface CmsProject {
     // Case-study head.
     impactHeadline?: string | null;
     impact?: string | null;
+    // Coverage of the project, shown at the top of the case study.
+    press?: CmsPressItem[] | null;
     // Case-study body — freely-orderable content blocks, rendered in order.
     layout?: CmsCaseStudyBlock[] | null;
+}
+
+/** An article about a project. */
+export interface CmsPressItem {
+    id?: string;
+    outlet: string;
+    headline: string;
+    url: string;
+    date?: string | null;
+    logo?: CmsMedia | null;
 }
 
 /** One person on a project, with the role they hold on it. */

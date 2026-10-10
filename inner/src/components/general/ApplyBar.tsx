@@ -59,6 +59,7 @@ const ApplyBar: React.FC<{ variant?: 'desktop' | 'mobile' }> = ({ variant = 'des
             <span className="apply-bar__text">
                 {t.nav.applyBar.replace('{round}', APPLICATION_ROUND[locale])}
             </span>
+            <span className="apply-bar__text apply-bar__text--short">{t.nav.applyBarShort}</span>
             <span className="apply-bar__cta">{t.nav.applyBarCta} →</span>
         </Link>
     );
