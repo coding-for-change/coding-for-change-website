@@ -1,9 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useFormFields } from '@payloadcms/ui';
+import { Button, CopyToClipboard, FieldDescription, TextInput, useFormFields } from '@payloadcms/ui';
 import './share.css';
-
-type Contact = { email?: string; name?: string };
 
 const fmt = new Intl.DateTimeFormat('en-GB', {
   timeZone: 'Europe/Berlin',
@@ -15,9 +13,10 @@ const fmt = new Intl.DateTimeFormat('en-GB', {
 });
 
 /**
- * The share link itself, in the sidebar: the address to send, whether it
- * works right now, a copy button and a ready-made email to the contacts
- * (opens the team's own mail program – nothing is sent from here).
+ * The share link itself, in the sidebar like any other field: the address
+ * (read-only, with Payload's copy button), whether it works right now, and a
+ * ready-made email to the contacts – it opens the team's own mail program;
+ * nothing is sent from here.
  */
 export const ShareLinkUrl: React.FC = () => {
   const token = useFormFields(([f]) => f.token?.value) as string | undefined;
@@ -30,16 +29,14 @@ export const ShareLinkUrl: React.FC = () => {
       .map(([, v]) => v?.value as string)
       .filter(Boolean),
   ) as string[];
-  const [copied, setCopied] = useState(false);
   // The site's own address – read in the browser, never during server rendering.
   const [origin, setOrigin] = useState('');
   useEffect(() => setOrigin(window.location.origin), []);
 
   if (!token) {
     return (
-      <div className="share-url">
-        <p className="share-url__label">Link</p>
-        <p className="share-url__hint">The link appears here once you save.</p>
+      <div className="field-type share-url">
+        <TextInput path="shareLink" label="Link" readOnly value="" placeholder="Appears once you save" />
       </div>
     );
   }
@@ -67,28 +64,20 @@ export const ShareLinkUrl: React.FC = () => {
   )}`;
 
   return (
-    <div className="share-url">
-      <p className="share-url__label">Link</p>
-      <input className="share-url__input" readOnly value={url} onFocus={(e) => e.currentTarget.select()} />
-      <p className={`share-url__status${blocked || expired ? ' is-off' : ''}`}>{status}</p>
-      <div className="share-url__actions">
-        <button
-          type="button"
-          className="share-url__btn"
-          onClick={async () => {
-            await navigator.clipboard.writeText(url);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-          }}
-        >
-          {copied ? 'Copied' : 'Copy link'}
-        </button>
-        {contacts.length > 0 && (
-          <a className="share-url__btn" href={mail}>
-            Write to the contacts
-          </a>
-        )}
-      </div>
+    <div className={`field-type share-url${blocked || expired ? ' share-url--off' : ''}`}>
+      <TextInput
+        path="shareLink"
+        label="Link"
+        readOnly
+        value={url}
+        AfterInput={<CopyToClipboard value={url} defaultMessage="Copy link" successMessage="Copied" />}
+      />
+      <FieldDescription path="shareLink" description={status} />
+      {contacts.length > 0 && (
+        <Button buttonStyle="secondary" size="small" el="anchor" url={mail} margin={false}>
+          Write to the contacts
+        </Button>
+      )}
     </div>
   );
 };

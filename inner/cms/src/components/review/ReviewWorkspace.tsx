@@ -1,5 +1,17 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  Banner,
+  Button,
+  ChevronIcon,
+  Pill,
+  Popup,
+  PopupList,
+  SearchIcon,
+  SetStepNav,
+  TextareaInput,
+  ViewDescription,
+} from '@payloadcms/ui';
 import { REVIEW_SCORE_MAX, REVIEW_SCORE_MIN, REVIEW_STATUSES } from '../../fields/review';
 import {
   answerRows,
@@ -99,7 +111,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
 
   const listRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
-  const notesRef = useRef<HTMLTextAreaElement>(null);
+  const notesRef = useRef<HTMLDivElement>(null);
 
   // ---- load ----------------------------------------------------------------
   useEffect(() => {
@@ -350,7 +362,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
       else if (key === 'arrowup' || key === 'k') move(-1);
       else if (/^[0-9]$/.test(key)) setScore(key === '0' ? 10 : Number(key));
       else if (DECISION_KEYS[key]) setDecision(DECISION_KEYS[key]);
-      else if (key === 'n') notesRef.current?.focus();
+      else if (key === 'n') notesRef.current?.querySelector('textarea')?.focus();
       else if (key === '/') searchRef.current?.focus();
       else return;
       e.preventDefault();
@@ -375,17 +387,24 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   };
 
   // ---- render --------------------------------------------------------------------
-  if (loading) return <div className="rv rv--message">Loading submissions…</div>;
-  if (error)
+  const heading = 'Review applications';
+  if (loading || error || tabs.length === 0)
     return (
-      <div className="rv rv--message" role="alert">
-        <p>{error}</p>
-        <button type="button" className="rv-btn" onClick={() => setReloadKey((k) => k + 1)}>
-          Try again
-        </button>
+      <div className="rv rv--message">
+        <SetStepNav nav={[{ label: heading }]} />
+        <PageHeader title={heading} />
+        {loading && <p className="rv-empty">Loading submissions…</p>}
+        {!loading && error && (
+          <Banner type="error">
+            {error}{' '}
+            <Button buttonStyle="pill" size="small" margin={false} onClick={() => setReloadKey((k) => k + 1)}>
+              Try again
+            </Button>
+          </Banner>
+        )}
+        {!loading && !error && <p className="rv-empty">No forms yet.</p>}
       </div>
     );
-  if (tabs.length === 0) return <div className="rv rv--message">No forms yet.</div>;
 
   const person = selected ? personOf(selected) : null;
   const rows = selected ? answerRows(form, selected) : [];
@@ -393,115 +412,103 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const others = selected && person?.email ? (people.get(person.email.toLowerCase()) ?? []).filter((s) => s.id !== selected.id) : [];
   const exportHref = form ? `${apiRoute}/submissions-export.xlsx?form=${encodeURIComponent(form.title)}` : undefined;
 
+  const summary = hostCounts
+    ? `${hostCounts.total} registered for this evening · the host admitted ${hostCounts.admitted}, declined ${hostCounts.declined}, ${hostCounts.waiting} still open`
+    : `${scored} of ${inForm.length} scored · ${statusCounts.accepted ?? 0} accepted · ${statusCounts.unsure ?? 0} unsure · ${statusCounts.rejected ?? 0} rejected`;
+
+  const statusOptions = (['all', 'unreviewed', ...DECISIONS.map((d) => d.value)] as StatusFilter[]).map((key) => ({
+    value: key,
+    label: key === 'all' ? 'All' : (REVIEW_STATUSES.find((s) => s.value === key)?.label ?? key),
+    count: statusCounts[key] ?? 0,
+    dot: key === 'all' ? undefined : key,
+  }));
+
   return (
     <div className="rv">
-      <header className="rv-head">
-        <div>
-          <h1 className="rv-head__title">Review</h1>
-          <p className="rv-head__sub">
-            {hostCounts ? (
-              <>
-                {hostCounts.total} registered for this evening · the host admitted {hostCounts.admitted}, declined{' '}
-                {hostCounts.declined}, {hostCounts.waiting} still open
-              </>
-            ) : (
-              <>
-                {scored} of {inForm.length} scored · {statusCounts.accepted ?? 0} accepted ·{' '}
-                {statusCounts.unsure ?? 0} unsure · {statusCounts.rejected ?? 0} rejected
-              </>
-            )}
-          </p>
-        </div>
-        <div className="rv-head__actions">
-        {exportHref && (
-          <a className="rv-link" href={exportHref} download>
-            Download as Excel
-          </a>
-        )}
-        <nav className="rv-tabs" aria-label="Forms">
-          {tabs.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              className={`rv-tab${f.id === formId ? ' is-active' : ''}`}
-              aria-pressed={f.id === formId}
-              onClick={() => switchForm(f.id)}
-            >
-              {formName(f)} <span className="rv-tab__count">{counts.get(f.id) ?? 0}</span>
-            </button>
-          ))}
-        </nav>
-        </div>
-      </header>
-
-      <div className="rv-toolbar">
-        <input
-          ref={searchRef}
-          className="rv-search"
-          type="search"
-          placeholder="Search name or email  ( / )"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Escape' && (e.currentTarget as HTMLInputElement).blur()}
-        />
-        <div className="rv-chips" role="group" aria-label="Decision">
-          {(['all', 'unreviewed', ...DECISIONS.map((d) => d.value)] as StatusFilter[]).map((key) => (
-            <button
-              key={key}
-              type="button"
-              className={`rv-chip${statusFilter === key ? ' is-active' : ''}`}
-              aria-pressed={statusFilter === key}
-              onClick={() => setStatusFilter(key)}
-            >
-              {key !== 'all' && <span className={`rv-dot rv-dot--${key}`} aria-hidden />}
-              {key === 'all' ? 'All' : REVIEW_STATUSES.find((s) => s.value === key)?.label}
-              <span className="rv-chip__count">{statusCounts[key] ?? 0}</span>
-            </button>
-          ))}
-        </div>
-        {choiceField?.name && (
-          <select
-            className="rv-select"
-            value={choiceFilter}
-            onChange={(e) => setChoiceFilter(e.target.value)}
-            aria-label={choiceField.label ?? choiceField.name}
-          >
-            <option value="all">Every option</option>
-            {(choiceField.options ?? []).map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
+      <SetStepNav nav={[{ label: heading }]} />
+      <PageHeader
+        title={heading}
+        titleActions={
+          exportHref
+            ? [
+                <Button key="export" buttonStyle="pill" size="small" margin={false} el="anchor" url={exportHref}>
+                  Download as Excel
+                </Button>,
+              ]
+            : []
+        }
+        actions={[
+          <div key="forms" className="rv-tabs" role="group" aria-label="Forms">
+            {tabs.map((f) => (
+              <Button
+                key={f.id}
+                buttonStyle="tab"
+                margin={false}
+                disabled={f.id === formId}
+                onClick={() => switchForm(f.id)}
+              >
+                {formName(f)}
+                <span className="rv-tabs__count">{counts.get(f.id) ?? 0}</span>
+              </Button>
             ))}
-          </select>
-        )}
-        <select className="rv-select" value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort">
-          {SORTS.map((s) => (
-            <option key={s.key} value={s.key}>
-              {s.label}
-            </option>
-          ))}
-        </select>
-        {choiceField?.name && (
-          <a
-            className="rv-link"
-            href={
-              choiceFilter === 'all'
-                ? `${adminRoute}/collections/share-links`
-                : `${adminRoute}/collections/share-links/create?option=${encodeURIComponent(choiceFilter)}`
-            }
-          >
-            {choiceFilter === 'all' ? 'Host share links' : 'Share with the host'}
-          </a>
-        )}
+          </div>,
+        ]}
+        after={<ViewDescription description={summary} />}
+      />
+
+      <div className="search-bar rv-search">
+        <SearchIcon />
+        <div className="search-filter">
+          <input
+            ref={searchRef}
+            className="search-filter__input"
+            type="text"
+            aria-label="Search by name or email"
+            placeholder="Search by name or email"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === 'Escape' && e.currentTarget.blur()}
+          />
+        </div>
+        <div className="search-bar__actions">
+          <FilterMenu label="Decision" value={statusFilter} options={statusOptions} onChange={(v) => setStatusFilter(v as StatusFilter)} />
+          {choiceField?.name && (
+            <FilterMenu
+              label="Evening"
+              value={choiceFilter}
+              options={[
+                { value: 'all', label: 'Every evening' },
+                ...(choiceField.options ?? []).map((o) => ({ value: o.value, label: o.label || o.value })),
+              ]}
+              onChange={setChoiceFilter}
+            />
+          )}
+          <FilterMenu label="Sort" value={sort} options={SORTS.map((o) => ({ value: o.key, label: o.label }))} onChange={(v) => setSort(v as SortKey)} showValue />
+          {choiceField?.name && (
+            <Button
+              buttonStyle="pill"
+              size="small"
+              margin={false}
+              el="link"
+              to={
+                choiceFilter === 'all'
+                  ? `${adminRoute}/collections/share-links`
+                  : `${adminRoute}/collections/share-links/create?option=${encodeURIComponent(choiceFilter)}`
+              }
+            >
+              {choiceFilter === 'all' ? 'Host share links' : 'Share with the host'}
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="rv-body">
         <div className="rv-list" ref={listRef} role="listbox" aria-label="Submissions">
-          {list.length === 0 && <p className="rv-empty">Nothing here with these filters.</p>}
+          {list.length === 0 && <p className="rv-empty">Nobody matches these filters.</p>}
           {list.map((s) => {
             const p = personOf(s);
-            const score = s.reviewScore;
             const also = (people.get(p.email.toLowerCase()) ?? []).filter((o) => o.id !== s.id);
+            const host = choiceFilter !== 'all' ? hostDecisionOf(s, choiceFilter) : null;
             return (
               <button
                 key={s.id}
@@ -509,32 +516,29 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                 role="option"
                 aria-selected={s.id === selectedId}
                 data-id={s.id}
-                className={`rv-item${s.id === selectedId ? ' is-active' : ''}`}
+                className={`rv-row${s.id === selectedId ? ' is-active' : ''}`}
                 onClick={() => select(s.id)}
               >
-                <span className={`rv-dot rv-dot--${statusOf(s)}`} aria-hidden />
-                <span className="rv-item__main">
-                  <span className="rv-item__name">{p.name}</span>
-                  <span className="rv-item__meta">
+                <span className={`rv-dot rv-dot--${statusOf(s)}`} title={REVIEW_STATUSES.find((x) => x.value === statusOf(s))?.label} />
+                <span className="rv-row__main">
+                  <span className="rv-row__name">{p.name}</span>
+                  <span className="rv-row__meta">
                     {day.format(new Date(s.createdAt))}
                     {summaryOf(form, s) && ` · ${summaryOf(form, s)}`}
                   </span>
                 </span>
-                <span className="rv-item__side">
-                  {choiceFilter !== 'all' && hostDecisionOf(s, choiceFilter) && (
-                    <span
-                      className={`rv-host rv-host--${hostDecisionOf(s, choiceFilter)}`}
-                      title={`The host ${hostDecisionOf(s, choiceFilter)} this person`}
-                    >
-                      {hostDecisionOf(s, choiceFilter) === 'admitted' ? '✓' : '✕'}
+                <span className="rv-row__side">
+                  {host && (
+                    <span className={`rv-badge rv-badge--${host}`} title={`The host ${host} this person`}>
+                      {host === 'admitted' ? 'Admitted' : 'Declined'}
                     </span>
                   )}
                   {also.length > 0 && (
-                    <span className="rv-tag" title={also.map((o) => formName(formTitleById.get(formIdOf(o)) ?? { id: 0, title: '?' })).join(', ')}>
+                    <span className="rv-badge" title={also.map((o) => formName(formTitleById.get(formIdOf(o)) ?? { id: 0, title: '?' })).join(', ')}>
                       +{also.length}
                     </span>
                   )}
-                  <span className={`rv-score${score == null ? ' rv-score--none' : ''}`}>{score ?? '–'}</span>
+                  <span className={`rv-badge rv-badge--score${s.reviewScore == null ? ' is-empty' : ''}`}>{s.reviewScore ?? '–'}</span>
                 </span>
               </button>
             );
@@ -542,202 +546,303 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
         </div>
 
         <div className={`rv-main${cvs.length ? '' : ' rv-main--no-cv'}`}>
-        {selected && person ? (
-          <article className="rv-detail" aria-label={person.name}>
-            <header className="rv-person">
-              <div className="rv-person__who">
-                <h2 className="rv-person__name">{person.name}</h2>
-                <p className="rv-person__meta">
-                  {person.email && <a href={`mailto:${person.email}`}>{person.email}</a>}
-                  <span>{when.format(new Date(selected.createdAt))}</span>
-                  {selected.language && <span className="rv-lang">{selected.language.toUpperCase()}</span>}
-                </p>
-              </div>
-              <div className="rv-person__nav">
-                <button type="button" className="rv-btn rv-btn--icon" onClick={() => move(-1)} disabled={position <= 0} aria-label="Previous (↑)">
-                  ↑
-                </button>
-                <span className="rv-person__pos">
-                  {position + 1} / {list.length}
-                </span>
-                <button
-                  type="button"
-                  className="rv-btn rv-btn--icon"
-                  onClick={() => move(1)}
-                  disabled={position >= list.length - 1}
-                  aria-label="Next (↓)"
-                >
-                  ↓
-                </button>
-              </div>
-            </header>
+          {selected && person ? (
+            <article className="rv-detail" aria-label={person.name}>
+              <header className="rv-person">
+                <div className="rv-person__who">
+                  <h2 className="rv-person__name">{person.name}</h2>
+                  <p className="rv-person__meta">
+                    {person.email && <a href={`mailto:${person.email}`}>{person.email}</a>}
+                    <span>{when.format(new Date(selected.createdAt))}</span>
+                    {selected.language && <span className="rv-badge">{selected.language.toUpperCase()}</span>}
+                  </p>
+                </div>
+                <div className="rv-person__nav">
+                  <Button
+                    buttonStyle="pill"
+                    size="small"
+                    margin={false}
+                    icon={<ChevronIcon direction="up" />}
+                    disabled={position <= 0}
+                    onClick={() => move(-1)}
+                    aria-label="Previous (↑)"
+                  />
+                  <span className="rv-person__pos">
+                    {position + 1} / {list.length}
+                  </span>
+                  <Button
+                    buttonStyle="pill"
+                    size="small"
+                    margin={false}
+                    icon={<ChevronIcon direction="down" />}
+                    disabled={position >= list.length - 1}
+                    onClick={() => move(1)}
+                    aria-label="Next (↓)"
+                  />
+                </div>
+              </header>
 
-            <section className="rv-panel" aria-label="Your review">
-              <div className="rv-panel__row">
-                <span className="rv-panel__label">Score</span>
-                <div className="rv-scale" role="group" aria-label="Score from 1 to 10">
-                  {SCORES.map((n) => (
-                    <button
-                      key={n}
-                      type="button"
-                      className={`rv-scale__btn${selected.reviewScore === n ? ' is-active' : ''}`}
-                      aria-pressed={selected.reviewScore === n}
-                      onClick={() => setScore(n)}
-                      title={n === 10 ? 'Key 0' : `Key ${n}`}
-                    >
-                      {n}
-                    </button>
-                  ))}
+              <section className="rv-review" aria-label="Your review">
+                <div className="rv-review__field">
+                  <span className="field-label">Score</span>
+                  <div className="rv-segments" role="group" aria-label="Score from 1 to 10">
+                    {SCORES.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        className={`rv-segments__btn rv-segments__btn--num${selected.reviewScore === n ? ' is-active' : ''}`}
+                        aria-pressed={selected.reviewScore === n}
+                        onClick={() => setScore(n)}
+                        title={n === 10 ? 'Key 0' : `Key ${n}`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div className="rv-panel__row">
-                <span className="rv-panel__label">Decision</span>
-                <div className="rv-decisions" role="group" aria-label="Decision">
-                  {DECISIONS.map((d) => (
-                    <button
-                      key={d.value}
-                      type="button"
-                      className={`rv-decision rv-decision--${d.value}${statusOf(selected) === d.value ? ' is-active' : ''}`}
-                      aria-pressed={statusOf(selected) === d.value}
-                      onClick={() => setDecision(d.value)}
-                      title={`Key ${d.label.charAt(0)}`}
-                    >
-                      {d.label}
-                    </button>
-                  ))}
+                <div className="rv-review__field">
+                  <span className="field-label">Decision</span>
+                  <div className="rv-review__line">
+                    <div className="rv-segments" role="group" aria-label="Decision">
+                      {DECISIONS.map((d) => (
+                        <button
+                          key={d.value}
+                          type="button"
+                          className={`rv-segments__btn${statusOf(selected) === d.value ? ' is-active' : ''}`}
+                          aria-pressed={statusOf(selected) === d.value}
+                          onClick={() => setDecision(d.value)}
+                          title={`Key ${d.label.charAt(0)}`}
+                        >
+                          <span className={`rv-dot rv-dot--${d.value}`} />
+                          {d.label}
+                        </button>
+                      ))}
+                    </div>
+                    <span className={`rv-save rv-save--${saveState}`} aria-live="polite">
+                      {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved – try again' : ''}
+                    </span>
+                  </div>
                 </div>
-                <span className={`rv-save rv-save--${saveState}`} aria-live="polite">
-                  {saveState === 'saving' ? 'Saving…' : saveState === 'saved' ? 'Saved' : saveState === 'error' ? 'Not saved – try again' : ''}
-                </span>
-              </div>
-              <textarea
-                ref={notesRef}
+              </section>
+
+              <div
                 className="rv-notes"
-                rows={2}
-                placeholder="Notes – only the team sees these  ( N )"
-                value={notes}
-                onChange={(e) => onNotesChange(e.target.value)}
+                ref={notesRef}
                 onBlur={flushNotes}
-                onKeyDown={(e) => e.key === 'Escape' && e.currentTarget.blur()}
-              />
-            </section>
+                onKeyDown={(e) => e.key === 'Escape' && (e.target as HTMLElement).blur()}
+              >
+                <TextareaInput
+                  path="reviewNotes"
+                  label="Notes"
+                  rows={2}
+                  placeholder="Only the team sees these – press N to jump here"
+                  value={notes}
+                  onChange={(e) => onNotesChange(e.target.value)}
+                />
+              </div>
 
-            {others.length > 0 && (
-              <section className="rv-others" aria-label="Same email elsewhere">
-                {others.map((o) => {
-                  const of = formTitleById.get(formIdOf(o));
-                  const choice = choiceFieldOf(of);
-                  const picked = choice?.name ? choiceKeysOf(of, o, choice.name) : [];
-                  const labels = picked.map((k) => choice?.options?.find((x) => x.value === k)?.label ?? k);
-                  return (
-                    <button
-                      key={o.id}
-                      type="button"
-                      className="rv-other"
-                      onClick={() => {
-                        if (formIdOf(o) !== formId) {
-                          flushNotes();
-                          setFormId(formIdOf(o));
-                        }
-                        setStatusFilter('all');
-                        setChoiceFilter('all');
-                        setQuery('');
-                        select(o.id);
-                      }}
-                    >
-                      <strong>{formIdOf(o) === formId ? 'Also sent this form' : `Also in ${of ? formName(of) : 'another form'}`}</strong>
-                      <span>
+              {others.length > 0 && (
+                <div className="rv-others">
+                  {others.map((o) => {
+                    const of = formTitleById.get(formIdOf(o));
+                    const choice = choiceFieldOf(of);
+                    const picked = choice?.name ? choiceKeysOf(of, o, choice.name) : [];
+                    const labels = picked.map((k) => choice?.options?.find((x) => x.value === k)?.label ?? k);
+                    return (
+                      <Banner
+                        key={o.id}
+                        type="info"
+                        onClick={() => {
+                          if (formIdOf(o) !== formId) {
+                            flushNotes();
+                            setFormId(formIdOf(o));
+                          }
+                          setStatusFilter('all');
+                          setChoiceFilter('all');
+                          setQuery('');
+                          select(o.id);
+                        }}
+                      >
+                        <strong>{formIdOf(o) === formId ? 'Sent this form again' : `Also in ${of ? formName(of) : 'another form'}`}</strong>
+                        {' · '}
                         {day.format(new Date(o.createdAt))}
                         {labels.length > 0 && ` · ${labels.join(', ')}`}
-                        {o.reviewScore != null && ` · score ${o.reviewScore}`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </section>
-            )}
-
-            {choiceField?.name && choiceKeysOf(form, selected, choiceField.name).length > 0 && (
-              <section className="rv-hosts" aria-label="Host decisions">
-                <h3 className="rv-qa__q">Host decisions</h3>
-                <ul>
-                  {choiceKeysOf(form, selected, choiceField.name).map((key) => {
-                    const d = selected.hostDecisions?.[key];
-                    const label = choiceField.options?.find((o) => o.value === key)?.label ?? key;
-                    return (
-                      <li key={key} className={`rv-host-row rv-host-row--${d?.decision ?? 'open'}`}>
-                        <span className="rv-host-row__evening">{label}</span>
-                        <span className="rv-host-row__state">
-                          {d
-                            ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
-                            : 'Waiting for the host'}
-                        </span>
-                      </li>
+                        {o.reviewScore != null && ` · score ${o.reviewScore}`} →
+                      </Banner>
                     );
                   })}
-                </ul>
-              </section>
-            )}
+                </div>
+              )}
 
-            <section className="rv-answers">
-              {rows.filter((r) => r.kind === 'short').length > 0 && (
-                <dl className="rv-facts">
-                  {rows.map((r) =>
-                    r.kind === 'short' ? (
-                      <div key={r.name} className="rv-fact">
-                        <dt>{r.label}</dt>
-                        <dd>{r.value}</dd>
+              {choiceField?.name && choiceKeysOf(form, selected, choiceField.name).length > 0 && (
+                <section className="rv-section" aria-label="Host decisions">
+                  <span className="field-label">Host decisions</span>
+                  <ul className="rv-hosts">
+                    {choiceKeysOf(form, selected, choiceField.name).map((key) => {
+                      const d = selected.hostDecisions?.[key];
+                      const label = choiceField.options?.find((o) => o.value === key)?.label ?? key;
+                      return (
+                        <li key={key} className="rv-hosts__row">
+                          <span>{label}</span>
+                          <span className={`rv-badge${d ? ` rv-badge--${d.decision}` : ''}`}>
+                            {d
+                              ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
+                              : 'Waiting for the host'}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              )}
+
+              <section className="rv-answers">
+                {rows.some((r) => r.kind === 'short') && (
+                  <dl className="rv-facts">
+                    {rows.map((r) =>
+                      r.kind === 'short' ? (
+                        <div key={r.name} className="rv-fact">
+                          <dt className="field-label">{r.label}</dt>
+                          <dd>{r.value}</dd>
+                        </div>
+                      ) : null,
+                    )}
+                  </dl>
+                )}
+                {rows.map((r) => {
+                  if (r.kind === 'long')
+                    return (
+                      <div key={r.name} className="rv-qa">
+                        <span className="field-label">{r.label}</span>
+                        <p className="rv-qa__a">{r.value || '–'}</p>
+                        <span className="rv-qa__len">{r.value.length} characters</span>
                       </div>
-                    ) : null,
-                  )}
-                </dl>
-              )}
-              {rows.map((r) => {
-                if (r.kind === 'long')
-                  return (
-                    <div key={r.name} className="rv-qa">
-                      <h3 className="rv-qa__q">{r.label}</h3>
-                      <p className="rv-qa__a">{r.value || '–'}</p>
-                      <span className="rv-qa__len">{r.value.length} characters</span>
-                    </div>
-                  );
-                if (r.kind === 'choices')
-                  return (
-                    <div key={r.name} className="rv-qa">
-                      <h3 className="rv-qa__q">{r.label}</h3>
-                      <ul className="rv-picks">
-                        {r.values.length ? r.values.map((v) => <li key={v}>{v}</li>) : <li>–</li>}
-                      </ul>
-                    </div>
-                  );
-                return null;
-              })}
-              {rows.some((r) => r.kind === 'confirm' || r.kind === 'linked') && (
-                <ul className="rv-confirms" aria-label="Boxes">
-                  {rows.map((r) =>
-                    r.kind === 'confirm' || r.kind === 'linked' ? (
-                      <li key={r.name} className={r.checked ? 'is-checked' : ''}>
-                        <span aria-hidden>{r.checked ? '✓' : '–'}</span> {r.label}
-                      </li>
-                    ) : null,
-                  )}
-                </ul>
-              )}
-            </section>
-          </article>
-        ) : (
-          <div className="rv-detail rv-empty">Pick someone from the list.</div>
-        )}
+                    );
+                  if (r.kind === 'choices')
+                    return (
+                      <div key={r.name} className="rv-qa">
+                        <span className="field-label">{r.label}</span>
+                        <div className="rv-picks">
+                          {r.values.length ? r.values.map((v) => <Pill key={v} size="small">{v}</Pill>) : '–'}
+                        </div>
+                      </div>
+                    );
+                  return null;
+                })}
+                {rows.some((r) => r.kind === 'confirm' || r.kind === 'linked') && (
+                  <ul className="rv-confirms" aria-label="Boxes">
+                    {rows.map((r) =>
+                      r.kind === 'confirm' || r.kind === 'linked' ? (
+                        <li key={r.name} className={r.checked ? 'is-checked' : ''}>
+                          <span aria-hidden>{r.checked ? '✓' : '–'}</span>
+                          {r.label}
+                        </li>
+                      ) : null,
+                    )}
+                  </ul>
+                )}
+              </section>
+            </article>
+          ) : (
+            <div className="rv-detail">
+              <p className="rv-empty">Pick someone from the list.</p>
+            </div>
+          )}
 
-        {selected && cvs.length > 0 && <CvViewer key={selected.id} files={cvs} name={person?.name ?? ''} />}
+          {selected && cvs.length > 0 && <CvViewer key={selected.id} files={cvs} name={person?.name ?? ''} />}
         </div>
       </div>
 
       <p className="rv-keys">
-        <kbd>↑</kbd> <kbd>↓</kbd> move · <kbd>1</kbd>–<kbd>9</kbd>, <kbd>0</kbd> score · <kbd>A</kbd> <kbd>U</kbd> <kbd>R</kbd>{' '}
-        decide · <kbd>N</kbd> notes · <kbd>/</kbd> search. Saved as you go, one shared review per person.
+        <kbd>↑</kbd> <kbd>↓</kbd> move · <kbd>1</kbd>–<kbd>9</kbd> <kbd>0</kbd> score · <kbd>A</kbd> <kbd>U</kbd> <kbd>R</kbd> decide ·{' '}
+        <kbd>N</kbd> notes · <kbd>/</kbd> search. Saved as you go – one shared review per person.
       </p>
     </div>
+  );
+}
+
+/**
+ * The header of Payload's collection lists – title, small actions beside it,
+ * actions on the right, a description below – in its own markup and classes,
+ * so it looks the same. (`ListHeader` from @payloadcms/ui is the collection
+ * version and needs a collection.)
+ */
+function PageHeader({
+  title,
+  titleActions = [],
+  actions = [],
+  after,
+}: {
+  title: string;
+  titleActions?: React.ReactNode[];
+  actions?: React.ReactNode[];
+  after?: React.ReactNode;
+}) {
+  return (
+    <header className="list-header">
+      <div className="list-header__content">
+        <div className="list-header__title-and-actions">
+          <h1 className="list-header__title">{title}</h1>
+          {titleActions.length > 0 && <div className="list-header__title-actions">{titleActions}</div>}
+        </div>
+        {actions.length > 0 && <div className="list-header__actions">{actions}</div>}
+      </div>
+      {after && <div className="list-header__after-header-content">{after}</div>}
+    </header>
+  );
+}
+
+type MenuOption = { value: string; label: string; count?: number; dot?: string };
+
+/** A filter as Payload's list controls draw theirs: a pill that opens a menu. */
+function FilterMenu({
+  label,
+  value,
+  options,
+  onChange,
+  showValue = false,
+}: {
+  label: string;
+  value: string;
+  options: MenuOption[];
+  onChange: (value: string) => void;
+  /** Always name the current choice (e.g. the sort), not only once it differs from the first. */
+  showValue?: boolean;
+}) {
+  const current = options.find((o) => o.value === value);
+  const named = showValue || value !== options[0]?.value;
+  return (
+    <Popup
+      buttonType="custom"
+      noBackground
+      horizontalAlign="right"
+      button={
+        <Pill pillStyle={named && !showValue ? 'dark' : 'light'} icon={<ChevronIcon />} alignIcon="right">
+          {label}
+          {named && current ? `: ${current.label}` : ''}
+        </Pill>
+      }
+      render={({ close }) => (
+        <PopupList.ButtonGroup>
+          {options.map((o) => (
+            <PopupList.Button
+              key={o.value}
+              active={o.value === value}
+              onClick={() => {
+                onChange(o.value);
+                close();
+              }}
+            >
+              <span className="rv-menu">
+                {o.dot && <span className={`rv-dot rv-dot--${o.dot}`} />}
+                <span className="rv-menu__label">{o.label}</span>
+                {o.count != null && <span className="rv-menu__count">{o.count}</span>}
+              </span>
+            </PopupList.Button>
+          ))}
+        </PopupList.ButtonGroup>
+      )}
+    />
   );
 }
 
@@ -749,17 +854,19 @@ function CvViewer({ files, name }: { files: FileDoc[]; name: string }) {
     <section className="rv-cv" aria-label="CV">
       <div className="rv-cv__bar">
         {files.length > 1 ? (
-          files.map((f, i) => (
-            <button key={f.id} type="button" className={`rv-chip${i === at ? ' is-active' : ''}`} onClick={() => setAt(i)}>
-              {f.filename}
-            </button>
-          ))
+          <div className="rv-tabs">
+            {files.map((f, i) => (
+              <Button key={f.id} buttonStyle="tab" size="small" margin={false} disabled={i === at} onClick={() => setAt(i)}>
+                {f.filename}
+              </Button>
+            ))}
+          </div>
         ) : (
           <span className="rv-cv__name">{file.filename}</span>
         )}
-        <a className="rv-link" href={file.url ?? '#'} target="_blank" rel="noreferrer">
-          Open in new tab ↗
-        </a>
+        <Button buttonStyle="pill" size="small" margin={false} el="anchor" url={file.url ?? '#'} newTab>
+          Open in new tab
+        </Button>
       </div>
       <iframe className="rv-cv__frame" src={`${file.url}#navpanes=0&view=FitH`} title={`CV of ${name}`} />
     </section>
