@@ -33,6 +33,7 @@ import * as migration_20260919_120100_techtour_event_image from './20260919_1201
 import * as migration_20260921_120439_drop_unrendered_techtour_and_form_fields from './20260921_120439_drop_unrendered_techtour_and_form_fields';
 import * as migration_20260926_214026_drop_unrendered_membership_fields from './20260926_214026_drop_unrendered_membership_fields';
 import * as migration_20261009_155009_add_project_press from './20261009_155009_add_project_press';
+import * as migration_20261011_095039_add_project_screens from './20261011_095039_add_project_screens';
 
 export const migrations = [
   {
@@ -208,6 +209,11 @@ export const migrations = [
   {
     up: migration_20261009_155009_add_project_press.up,
     down: migration_20261009_155009_add_project_press.down,
-    name: '20261009_155009_add_project_press'
+    name: '20261009_155009_add_project_press',
+  },
+  {
+    up: migration_20261011_095039_add_project_screens.up,
+    down: migration_20261011_095039_add_project_screens.down,
+    name: '20261011_095039_add_project_screens'
   },
 ];
