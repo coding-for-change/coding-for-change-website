@@ -34,7 +34,38 @@ export const Projects: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     { name: 'description', type: 'textarea', required: true, localized: true },
-    { name: 'image', type: 'upload', relationTo: 'media' },
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+      admin: { description: 'The partner organisation’s logo.' },
+    },
+    {
+      // The product itself, shown on the projects overview tile. Bare
+      // screenshots: the window chrome and the phone bezel are drawn by the
+      // site, so a pre-framed mock-up would end up framed twice.
+      name: 'screens',
+      label: 'Interface screenshots',
+      type: 'group',
+      admin: {
+        description:
+          'Shown on the projects overview. Upload bare screenshots without device frames – the browser window and phone bezel are drawn by the site. Either one is enough.',
+      },
+      fields: [
+        {
+          name: 'desktop',
+          type: 'upload',
+          relationTo: 'media',
+          admin: { description: 'Landscape, e.g. 2880×1800.' },
+        },
+        {
+          name: 'mobile',
+          type: 'upload',
+          relationTo: 'media',
+          admin: { description: 'Portrait phone screenshot, e.g. 1170×2532.' },
+        },
+      ],
+    },
     {
       name: 'technologies',
       type: 'array',

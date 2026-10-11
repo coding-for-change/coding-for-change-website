@@ -59,7 +59,10 @@ export interface CmsProject {
     title: string;
     ngoPartner: string;
     description: string;
+    /** The partner organisation's logo. */
     image?: CmsMedia | null;
+    /** Bare interface screenshots for the overview tile (frames are drawn by the site). */
+    screens?: { desktop?: CmsMedia | null; mobile?: CmsMedia | null } | null;
     technologies?: { name: string; id?: string }[];
     status: 'active' | 'completed' | 'recruiting';
     links?: { label: string; url: string; id?: string }[];
