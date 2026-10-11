@@ -14,167 +14,118 @@ const reveal = {
     viewport: { once: true, amount: 0.15 },
 } as const;
 
-const statusColors: Record<string, string> = {
-    active: '#2f8f90',
-    completed: '#246b6c',
-    recruiting: '#b5651d',
-};
-
 // Defined in lib/projects.ts (the Team page needs it too); re-exported here
 // because this is where callers have always imported it from.
 export { hasCaseStudy };
 
 /**
- * Projects laid out as one editorial feature for the flagship and a quiet
- * partner strip for the rest. Deliberately low-chrome: the partner mark is a
- * contained logo (as on the sponsors wall), not a full-bleed hero, so the
- * typography carries the block instead of a big slab of brand colour.
- * Shared by the /projects page and the homepage projects section.
+ * One project as a picture of the product: its interface on a tinted stage –
+ * the desktop screenshot in a browser window, the phone screenshot in a bezel
+ * in front of it – under a head with the partner's logo, the project title
+ * and the partner's name. The story lives on the case study; a tile with
+ * one links there.
  */
-const ProjectShowcase: React.FC<{ projects: CmsProject[] }> = ({ projects }) => {
+const ProjectTile: React.FC<{ project: CmsProject; wide: boolean; index: number }> = ({
+    project,
+    wide,
+    index,
+}) => {
     const { t, locale } = useLanguage();
-    const statusLabel = (s: string) =>
-        (t.projects.status as Record<string, string>)[s] || s;
-    const featured = projects.find((p) => p.featured) ?? null;
-    const rest = projects.filter((p) => p !== featured);
-    const featuredMark = featured ? mediaUrl(featured.image) : '';
-    const featuredHasCaseStudy = !!featured && hasCaseStudy(featured);
-    const caseStudyLabel = locale === 'de' ? 'Fallstudie lesen' : 'Read the case study';
+    const logo = mediaUrl(project.image);
+    const desktop = mediaUrl(project.screens?.desktop);
+    const mobile = mediaUrl(project.screens?.mobile);
+    const linked = hasCaseStudy(project);
+    const shots = desktop && mobile ? 'pair' : desktop ? 'desktop' : mobile ? 'mobile' : 'none';
+
+    const inner = (
+        <div className={`lp-ptile__stage lp-ptile__stage--${shots}`}>
+            {/* The head sits on the stage itself: logo, title and one line,
+                with the way into the case study at the far end. */}
+            <div className="lp-ptile__head">
+                {logo && shots !== 'none' && (
+                    <span className="lp-ptile__logo">
+                        <img src={logo} alt={project.ngoPartner} />
+                    </span>
+                )}
+                <div className="lp-ptile__text">
+                    <h3 className="lp-ptile__title">{project.title}</h3>
+                    <p className="lp-ptile__sub">{project.ngoPartner}</p>
+                </div>
+                {project.status === 'recruiting' && (
+                    <span className="lp-ptile__badge">{t.projects.status.recruiting}</span>
+                )}
+                {linked && (
+                    <span className="lp-ptile__more">
+                        {locale === 'de' ? 'Mehr erfahren' : 'Learn more'}
+                        <span aria-hidden> →</span>
+                    </span>
+                )}
+            </div>
+            {shots === 'none' ? (
+                logo ? (
+                    <span className="lp-ptile__solo-logo">
+                        <img src={logo} alt="" />
+                    </span>
+                ) : (
+                    <span className="lp-ptile__initial">{project.title.charAt(0)}</span>
+                )
+            ) : (
+                <>
+                    {desktop && (
+                        <span className="lp-ptile__window">
+                            <span className="lp-ptile__bar" aria-hidden>
+                                <span />
+                                <span />
+                                <span />
+                            </span>
+                            <img src={desktop} alt="" loading="lazy" />
+                        </span>
+                    )}
+                    {mobile && (
+                        <span className="lp-ptile__phone">
+                            <img src={mobile} alt="" loading="lazy" />
+                        </span>
+                    )}
+                </>
+            )}
+        </div>
+    );
 
     return (
-        <>
-            {featured && (
-                <motion.article
-                    className={
-                        'lp-feature' + (featuredMark ? '' : ' lp-feature--nomark')
-                    }
-                    {...reveal}
-                    transition={{ duration: 0.5 }}
-                >
-                    {featuredMark && (
-                        <div className="lp-feature__mark">
-                            <img src={featuredMark} alt={featured.title} />
-                        </div>
-                    )}
-                    <div className="lp-feature__body">
-                        <p className="lp-feature__eyebrow">
-                            <span
-                                className="lp-dot"
-                                style={{
-                                    backgroundColor:
-                                        statusColors[featured.status] || '#808080',
-                                }}
-                            />
-                            {statusLabel(featured.status)}
-                            <span className="lp-feature__sep">·</span>
-                            {featured.ngoPartner}
-                        </p>
-                        <h2 className="lp-feature__title">{featured.title}</h2>
-                        {/* The impact sentence and the description say the same
-                            thing at different lengths, and the partner is already
-                            in the eyebrow — so show the impact when there is one
-                            and fall back to the description only when there is
-                            not, rather than stacking both.
-                            The copy is editor-written and unbounded, so the teaser
-                            is capped at three lines — but only when the case-study
-                            link is there to carry the rest. Without somewhere to
-                            read on, an ellipsis would just swallow content. */}
-                        <p
-                            className={
-                                'lp-feature__lead' +
-                                (featuredHasCaseStudy ? ' lp-feature__lead--clamp' : '')
-                            }
-                        >
-                            {featured.impact || featured.description}
-                        </p>
-                        {(featured.technologies ?? []).length > 0 && (
-                            <p className="lp-feature__stack">
-                                {(featured.technologies ?? [])
-                                    .map((tech) => tech.name)
-                                    .join(' · ')}
-                            </p>
-                        )}
-                        {featuredHasCaseStudy && (
-                            <Link
-                                className="lp-feature__cta"
-                                href={`/projects/${featured.slug}`}
-                            >
-                                {caseStudyLabel} →
-                            </Link>
-                        )}
-                    </div>
-                </motion.article>
+        <motion.article
+            className={'lp-ptile' + (wide ? ' lp-ptile--wide' : '') + (linked ? ' lp-ptile--linked' : '')}
+            {...reveal}
+            transition={{ duration: 0.5, delay: Math.min(index * 0.06, 0.3) }}
+        >
+            {linked ? (
+                <Link className="lp-ptile__link" href={`/projects/${project.slug}`}>
+                    {inner}
+                </Link>
+            ) : (
+                <div className="lp-ptile__link">{inner}</div>
             )}
+        </motion.article>
+    );
+};
 
-            {rest.length > 0 && (
-                <div className="lp-projstrip">
-                    {featured && (
-                        <p className="lp-projstrip__head">{t.projects.more}</p>
-                    )}
-                    <div className="lp-projstrip__row">
-                        {rest.map((project, i) => {
-                            // The non-flagship projects stay quiet: the partner mark
-                            // contained in a hairline frame (same treatment as the
-                            // sponsors wall) with the name beneath it. The feature
-                            // above carries the full story.
-                            const img = mediaUrl(project.image);
-                            const linked = hasCaseStudy(project);
-                            const inner = (
-                                <>
-                                    <span className="lp-projstrip__mark">
-                                        {img ? (
-                                            <img src={img} alt={project.title} />
-                                        ) : (
-                                            <span className="lp-projstrip__initial">
-                                                {project.title.charAt(0)}
-                                            </span>
-                                        )}
-                                    </span>
-                                    <span className="lp-projstrip__name">
-                                        <span
-                                            className="lp-dot"
-                                            style={{
-                                                backgroundColor:
-                                                    statusColors[project.status] ||
-                                                    '#808080',
-                                            }}
-                                            title={statusLabel(project.status)}
-                                        />
-                                        <span className="lp-projstrip__label">
-                                            {project.title}
-                                        </span>
-                                    </span>
-                                </>
-                            );
-                            return (
-                                <motion.div
-                                    key={project.id}
-                                    className="lp-projstrip__cell"
-                                    {...reveal}
-                                    transition={{
-                                        duration: 0.45,
-                                        delay: Math.min(i * 0.05, 0.3),
-                                    }}
-                                >
-                                    {linked ? (
-                                        <Link
-                                            className="lp-projstrip__item"
-                                            href={`/projects/${project.slug}`}
-                                        >
-                                            {inner}
-                                        </Link>
-                                    ) : (
-                                        <span className="lp-projstrip__item">
-                                            {inner}
-                                        </span>
-                                    )}
-                                </motion.div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-        </>
+/**
+ * The projects as a grid of interface tiles, the flagship first and across the
+ * full width. Shared by the /projects page and the homepage projects section.
+ */
+const ProjectShowcase: React.FC<{ projects: CmsProject[] }> = ({ projects }) => {
+    const featured = projects.find((p) => p.featured) ?? null;
+    const ordered = featured ? [featured, ...projects.filter((p) => p !== featured)] : projects;
+    return (
+        <div className="lp-pgrid">
+            {ordered.map((project, i) => (
+                <ProjectTile
+                    key={project.id}
+                    project={project}
+                    wide={project === featured}
+                    index={i}
+                />
+            ))}
+        </div>
     );
 };
 
