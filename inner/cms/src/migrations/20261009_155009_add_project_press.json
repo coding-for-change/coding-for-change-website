@@ -1499,6 +1499,140 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.projects_press": {
+      "name": "projects_press",
+      "schema": "",
+      "columns": {
+        "_order": {
+          "name": "_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "_parent_id": {
+          "name": "_parent_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id": {
+          "name": "id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "outlet": {
+          "name": "outlet",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "headline": {
+          "name": "headline",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "url": {
+          "name": "url",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "name": "date",
+          "type": "timestamp(3) with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo_id": {
+          "name": "logo_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "projects_press_order_idx": {
+          "name": "projects_press_order_idx",
+          "columns": [
+            {
+              "expression": "_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "projects_press_parent_id_idx": {
+          "name": "projects_press_parent_id_idx",
+          "columns": [
+            {
+              "expression": "_parent_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "projects_press_logo_idx": {
+          "name": "projects_press_logo_idx",
+          "columns": [
+            {
+              "expression": "logo_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "projects_press_logo_id_media_id_fk": {
+          "name": "projects_press_logo_id_media_id_fk",
+          "tableFrom": "projects_press",
+          "tableTo": "media",
+          "columnsFrom": [
+            "logo_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        },
+        "projects_press_parent_id_fk": {
+          "name": "projects_press_parent_id_fk",
+          "tableFrom": "projects_press",
+          "tableTo": "projects",
+          "columnsFrom": [
+            "_parent_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.projects_blocks_text": {
       "name": "projects_blocks_text",
       "schema": "",
@@ -8392,25 +8526,6 @@
           "primaryKey": false,
           "notNull": true
         },
-        "language": {
-          "name": "language",
-          "type": "enum_form_submissions_language",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "agreed_to": {
-          "name": "agreed_to",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "choice_keys": {
-          "name": "choice_keys",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
         "attribution_source": {
           "name": "attribution_source",
           "type": "varchar",
@@ -13180,14 +13295,6 @@
         "rejected"
       ]
     },
-    "public.enum_form_submissions_language": {
-      "name": "enum_form_submissions_language",
-      "schema": "public",
-      "values": [
-        "en",
-        "de"
-      ]
-    },
     "public.enum_form_submissions_attribution_channel": {
       "name": "enum_form_submissions_attribution_channel",
       "schema": "public",
@@ -13237,6 +13344,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "c336e5ea-9b52-4a6c-be5b-227c65de3456",
+  "id": "e07ad519-54e5-424b-a889-9e20c670d365",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

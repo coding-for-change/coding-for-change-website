@@ -34,7 +34,38 @@ export const Projects: CollectionConfig = {
       admin: { position: 'sidebar' },
     },
     { name: 'description', type: 'textarea', required: true, localized: true },
-    { name: 'image', type: 'upload', relationTo: 'media' },
+    {
+      name: 'image',
+      type: 'upload',
+      relationTo: 'media',
+      admin: { description: 'The partner organisation’s logo.' },
+    },
+    {
+      // The product itself, shown on the projects overview tile. Bare
+      // screenshots: the window chrome and the phone bezel are drawn by the
+      // site, so a pre-framed mock-up would end up framed twice.
+      name: 'screens',
+      label: 'Interface screenshots',
+      type: 'group',
+      admin: {
+        description:
+          'Shown on the projects overview. Upload bare screenshots without device frames – the browser window and phone bezel are drawn by the site. Either one is enough.',
+      },
+      fields: [
+        {
+          name: 'desktop',
+          type: 'upload',
+          relationTo: 'media',
+          admin: { description: 'Landscape, e.g. 2880×1800.' },
+        },
+        {
+          name: 'mobile',
+          type: 'upload',
+          relationTo: 'media',
+          admin: { description: 'Portrait phone screenshot, e.g. 1170×2532.' },
+        },
+      ],
+    },
     {
       name: 'technologies',
       type: 'array',
@@ -96,6 +127,40 @@ export const Projects: CollectionConfig = {
       type: 'text',
       localized: true,
       admin: { description: 'A one-line impact highlight shown under the headline (e.g. "Saves ~150 companions hours of paperwork a month").' },
+    },
+    {
+      // Coverage of the project. Not localized: an article exists in one
+      // language, and a German newspaper piece is worth showing to an English
+      // reader too.
+      name: 'press',
+      label: 'Press',
+      type: 'array',
+      labels: { singular: 'Article', plural: 'Articles' },
+      admin: {
+        description: 'Articles about this project. Shown as a "featured in" badge at the top of the case study.',
+      },
+      fields: [
+        {
+          name: 'outlet',
+          type: 'text',
+          required: true,
+          admin: { description: 'e.g. "Süddeutsche Zeitung"' },
+        },
+        {
+          name: 'headline',
+          type: 'text',
+          required: true,
+          admin: { description: 'The article headline, in its original language.' },
+        },
+        { name: 'url', type: 'text', required: true },
+        { name: 'date', type: 'date' },
+        {
+          name: 'logo',
+          type: 'upload',
+          relationTo: 'media',
+          admin: { description: 'The outlet’s mark, ideally a trimmed SVG/PNG without background. Optional – the badge names the outlet either way.' },
+        },
+      ],
     },
     // ---- Case-study body: freely-orderable content blocks ----
     {

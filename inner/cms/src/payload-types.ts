@@ -316,7 +316,23 @@ export interface Project {
   slug?: string | null;
   featured?: boolean | null;
   description: string;
+  /**
+   * The partner organisation’s logo.
+   */
   image?: (number | null) | Media;
+  /**
+   * Shown on the projects overview. Upload bare screenshots without device frames – the browser window and phone bezel are drawn by the site. Either one is enough.
+   */
+  screens?: {
+    /**
+     * Landscape, e.g. 2880×1800.
+     */
+    desktop?: (number | null) | Media;
+    /**
+     * Portrait phone screenshot, e.g. 1170×2532.
+     */
+    mobile?: (number | null) | Media;
+  };
   technologies?:
     | {
         name: string;
@@ -352,6 +368,28 @@ export interface Project {
    * A one-line impact highlight shown under the headline (e.g. "Saves ~150 companions hours of paperwork a month").
    */
   impact?: string | null;
+  /**
+   * Articles about this project. Shown as a "featured in" badge at the top of the case study.
+   */
+  press?:
+    | {
+        /**
+         * e.g. "Süddeutsche Zeitung"
+         */
+        outlet: string;
+        /**
+         * The article headline, in its original language.
+         */
+        headline: string;
+        url: string;
+        date?: string | null;
+        /**
+         * The outlet’s mark, ideally a trimmed SVG/PNG without background. Optional – the badge names the outlet either way.
+         */
+        logo?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
   /**
    * The body of the case-study page. Add, remove and reorder blocks freely — text sections, quote, gallery, product demo, timeline, team and FAQ.
    */
@@ -1696,6 +1734,12 @@ export interface ProjectsSelect<T extends boolean = true> {
   featured?: T;
   description?: T;
   image?: T;
+  screens?:
+    | T
+    | {
+        desktop?: T;
+        mobile?: T;
+      };
   technologies?:
     | T
     | {
@@ -1719,6 +1763,16 @@ export interface ProjectsSelect<T extends boolean = true> {
       };
   impactHeadline?: T;
   impact?: T;
+  press?:
+    | T
+    | {
+        outlet?: T;
+        headline?: T;
+        url?: T;
+        date?: T;
+        logo?: T;
+        id?: T;
+      };
   layout?:
     | T
     | {

@@ -8,7 +8,8 @@ export interface Translations {
         partners: string; team: string; blog: string; qa: string; join: string; contact: string;
         ngos: string; techtour: string;
         /** The bar above the nav while applications are open; {round} e.g. "Winter 2026/27". */
-        applyBar: string; applyBarCta: string;
+        /** `applyBarShort` replaces `applyBar` on a phone, where the full line wraps. */
+        applyBar: string; applyBarShort: string; applyBarCta: string;
     };
     common: {
         learnMore: string; partner: string; at: string;
@@ -38,7 +39,6 @@ export interface Translations {
     };
     projects: {
         title: string; subtitle: string; intro: string; viewAll: string;
-        more: string;
         status: { active: string; completed: string; recruiting: string };
     };
     threed: {
@@ -60,6 +60,8 @@ export interface Translations {
         workingHeading: string; workingPoints: string[]; partnerLink: string;
         faqHeading: string; bookHeading: string; bookText: string;
         eyebrow: string; teamLink: string; moreProjects: string;
+        pressLabel: string; pressRead: string;
+        stepNow: string; stepNext: string;
     };
     events: {
         title: string; subtitle: string; intro: string;
@@ -251,6 +253,7 @@ const en: Translations = {
         partners: 'Partners', team: 'Team', blog: 'Blog', qa: 'Q&A', join: 'Join', contact: 'Contact',
         ngos: 'NGOs', techtour: 'TechTour 2026',
         applyBar: 'Applications for {round} are open – until 30 October',
+        applyBarShort: 'Applications open until 30 Oct',
         applyBarCta: 'Apply now',
     },
     common: {
@@ -318,7 +321,6 @@ const en: Translations = {
         title: 'Projects', subtitle: 'Building Tech for Social Good',
         intro: 'We build software for NGOs that makes a real difference — by student teams, together with our partners.',
         viewAll: 'See all projects',
-        more: 'More projects',
         status: { active: 'Active', completed: 'Completed', recruiting: 'Recruiting' },
     },
     threed: {
@@ -361,6 +363,10 @@ const en: Translations = {
         faqHeading: 'Questions nonprofits ask',
         bookHeading: 'Have a problem worth solving?',
         bookText: 'Tell us about it — grab a slot and we’ll explore whether we can help.',
+        pressLabel: 'Featured in',
+        pressRead: 'Read the article',
+        stepNow: 'In progress',
+        stepNext: 'Up next',
         eyebrow: 'Case study',
         teamLink: 'Meet the whole team',
         moreProjects: 'See all projects',
@@ -687,6 +693,7 @@ const de: Translations = {
         partners: 'Partner', team: 'Team', blog: 'Blog', qa: 'F&A', join: 'Mitmachen', contact: 'Kontakt',
         ngos: 'NGOs', techtour: 'TechTour 2026',
         applyBar: 'Bewerbungen für {round} sind offen – bis 30. Oktober',
+        applyBarShort: 'Bewerbung bis 30. Okt. offen',
         applyBarCta: 'Jetzt bewerben',
     },
     common: {
@@ -754,7 +761,6 @@ const de: Translations = {
         title: 'Projekte', subtitle: 'Technologie für das Gemeinwohl',
         intro: 'Wir bauen Software für NGOs, die wirklich etwas verändert – von Studierendenteams, gemeinsam mit unseren Partnern.',
         viewAll: 'Alle Projekte ansehen',
-        more: 'Weitere Projekte',
         status: { active: 'Aktiv', completed: 'Abgeschlossen', recruiting: 'Team gesucht' },
     },
     threed: {
@@ -768,7 +774,7 @@ const de: Translations = {
         backCta: 'Zurück zur normalen Seite',
     },
     projectDetail: {
-        back: 'Zurück zu Projekten', problem: 'Das Problem', approach: 'Unser Vorgehen',
+        back: 'Zurück zu den Projekten', problem: 'Das Problem', approach: 'Unser Vorgehen',
         outcome: 'Was wir geliefert haben', impact: 'Wirkung', stack: 'Gebaut mit', links: 'Links',
         timeline: 'Ablauf', team: 'Das Team', partnerLabel: 'Partner',
     },
@@ -781,8 +787,8 @@ const de: Translations = {
         impactCardText: 'Was ein solches Projekt für Ihre Organisation bedeuten könnte. Ideal, wenn Sie als NGO eine Partnerschaft erwägen.',
         technicalLabel: 'Technischer Deep-Dive',
         impactLabel: 'Impact-Story',
-        joinHeading: 'Willst du sowas bauen?',
-        joinText: 'Genau solche echte, ausgelieferte Software baust du als Mitglied – im Team, mit echtem Partner und Menschen, die darauf angewiesen sind.',
+        joinHeading: 'Lust, so etwas zu bauen?',
+        joinText: 'Als Mitglied baust du genau solche Software: im Team, für einen echten Partner und für Menschen, die sie jeden Tag nutzen.',
         joinButton: 'Mitglied werden',
         challengeHeading: 'Die Herausforderung',
         solutionHeading: 'Was wir gebaut haben',
@@ -796,10 +802,14 @@ const de: Translations = {
         partnerLink: 'So funktioniert eine Partnerschaft',
         faqHeading: 'Fragen von NGOs',
         eyebrow: 'Fallstudie',
-        teamLink: 'Das ganze Team ansehen',
+        teamLink: 'Das ganze Team kennenlernen',
         moreProjects: 'Alle Projekte ansehen',
-        bookHeading: 'Ein Problem, das es zu lösen lohnt?',
-        bookText: 'Erzählen Sie uns davon – wählen Sie einen Termin und wir schauen, ob wir helfen können.',
+        bookHeading: 'Haben Sie ein ähnliches Problem?',
+        bookText: 'Erzählen Sie uns davon: Buchen Sie einen Termin, und wir schauen gemeinsam, ob wir helfen können.',
+        pressLabel: 'Bekannt aus',
+        pressRead: 'Zum Artikel',
+        stepNow: 'Aktuell',
+        stepNext: 'Als Nächstes',
     },
     events: {
         title: 'Events', subtitle: 'Workshops, Hackathons & Mehr',
