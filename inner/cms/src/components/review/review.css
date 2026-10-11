@@ -166,6 +166,7 @@ html[data-theme='dark'] .rv {
 }
 
 .rv-row.is-active {
+  --rv-badge-bg: var(--theme-elevation-0);
   background: var(--theme-elevation-150);
   box-shadow: inset 2px 0 0 var(--theme-elevation-800);
 }
@@ -214,7 +215,8 @@ html[data-theme='dark'] .rv {
   min-width: 22px;
   padding: 0 calc(var(--base) * 0.3);
   border-radius: var(--style-radius-s);
-  background: var(--theme-elevation-150);
+  /* via a property, so the open row can lighten them and a coloured badge keeps its own */
+  background: var(--rv-badge-bg, var(--theme-elevation-150));
   color: var(--theme-elevation-800);
   font-size: 12px;
   line-height: 20px;
@@ -227,18 +229,18 @@ html[data-theme='dark'] .rv {
 }
 
 .rv-badge--score.is-empty {
-  background: transparent;
+  --rv-badge-bg: transparent;
   color: var(--theme-elevation-400);
   font-weight: 400;
 }
 
 .rv-badge--admitted {
-  background: var(--rv-yes-tint);
+  --rv-badge-bg: var(--rv-yes-tint);
   color: var(--rv-yes-ink);
 }
 
 .rv-badge--declined {
-  background: var(--theme-error-100);
+  --rv-badge-bg: var(--theme-error-100);
   color: var(--theme-error-750);
 }
 
