@@ -87,7 +87,7 @@ export interface TechTourApplyProps {
  * Where "Apply now" on /techtour leads: the registration itself, on the same
  * dark stage, with nothing on the page that is not part of sending it.
  *
- * What the week contains is told on /techtour (the Explore section), so this
+ * What the week contains is told on /techtour (one stop per evening), so this
  * page does not repeat it — each evening appears only as a row inside the
  * form's "which evenings" question, with the company's logo, its one-liner and
  * the date next to the checkbox that picks it. Above the form, three steps say
