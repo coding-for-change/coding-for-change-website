@@ -55,7 +55,7 @@ const JoinWays: React.FC<JoinWaysProps> = ({ team }) => {
                     const copy = t.join.ways.items[way.id];
                     const member = findMember(team, way.contact);
                     const linkedIn = member ? linkedInOf(member) : null;
-                    const photo = member ? mediaUrl(member.image) : null;
+                    const photo = member ? mediaUrl(member.image, 'thumbnail') : null;
                     return (
                         <motion.article
                             key={way.id}

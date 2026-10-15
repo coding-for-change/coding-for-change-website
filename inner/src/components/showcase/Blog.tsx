@@ -31,7 +31,7 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, onOpen, locale, index }) => {
-    const imgSrc = mediaUrl(post.featuredImage ?? null);
+    const imgSrc = mediaUrl(post.featuredImage ?? null, 'card');
     const author =
         post.author && typeof post.author !== 'number' ? post.author : null;
     const project =

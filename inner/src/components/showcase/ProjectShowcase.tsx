@@ -31,9 +31,9 @@ const ProjectTile: React.FC<{ project: CmsProject; wide: boolean; index: number 
     index,
 }) => {
     const { t, locale } = useLanguage();
-    const logo = mediaUrl(project.image);
-    const desktop = mediaUrl(project.screens?.desktop);
-    const mobile = mediaUrl(project.screens?.mobile);
+    const logo = mediaUrl(project.image, 'thumbnail');
+    const desktop = mediaUrl(project.screens?.desktop, 'large');
+    const mobile = mediaUrl(project.screens?.mobile, 'large');
     const linked = hasCaseStudy(project);
     const shots = desktop && mobile ? 'pair' : desktop ? 'desktop' : mobile ? 'mobile' : 'none';
 

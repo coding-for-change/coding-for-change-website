@@ -308,7 +308,7 @@ const DetailCard: React.FC<{
                         </span>
                         <span className="lp-heap__logos">
                             {companies.map((company) => {
-                                const logo = mediaUrl(company.logo);
+                                const logo = mediaUrl(company.logo, 'thumbnail');
                                 return logo ? (
                                     <img
                                         className="lp-heap__logo"
@@ -628,7 +628,7 @@ const TeamBubbles: React.FC<TeamBubblesProps> = (props) => {
                             >
                                 {members.map((member, i) => {
                                     const node = seed.nodes[i];
-                                    const img = mediaUrl(member.image);
+                                    const img = mediaUrl(member.image, 'card');
                                     const isSelected = member.id === selectedId;
                                     // Server-rendered fallback position; the
                                     // simulation overwrites these on mount.

@@ -32,7 +32,7 @@ const Partner: React.FC<PartnerProps> = (props) => {
 
     const title = partner?.title || t.partner.fallbackTitle;
     const intro = partner?.intro || t.partner.fallbackLead;
-    const heroImage = mediaUrl(partner?.heroImage);
+    const heroImage = mediaUrl(partner?.heroImage, 'large');
     const email = partner?.contactEmail || siteConfig.email;
     const valuesTitle = about?.valuesTitle || t.aboutPage.valuesTitle;
     const values = about?.values?.length ? about.values : t.aboutPage.values;

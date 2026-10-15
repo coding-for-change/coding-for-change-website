@@ -21,7 +21,7 @@ const externalHref = (url: string) =>
     /^https?:\/\//i.test(url) ? url : `https://${url.replace(/^\/+/, '')}`;
 
 const SponsorLogo: React.FC<{ sponsor: CmsSponsor }> = ({ sponsor }) => {
-    const logo = mediaUrl(sponsor.logo);
+    const logo = mediaUrl(sponsor.logo, 'card');
     const url = sponsor.url?.trim();
     const inner = logo ? (
         <img src={logo} alt={sponsor.name} />

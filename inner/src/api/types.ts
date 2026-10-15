@@ -1,4 +1,16 @@
 /** Payload CMS media object (populated upload field) */
+/** The WebP renditions made on upload (cms collections/Media.ts), by width. */
+export type MediaSize = 'thumbnail' | 'card' | 'large';
+
+export interface CmsMediaRendition {
+    url?: string | null;
+    width?: number | null;
+    height?: number | null;
+    mimeType?: string | null;
+    filesize?: number | null;
+    filename?: string | null;
+}
+
 export interface CmsMedia {
     id: number;
     url: string;
@@ -8,6 +20,14 @@ export interface CmsMedia {
     filesize: number;
     width?: number;
     height?: number;
+    /**
+     * Renditions made on upload. A size the original was too small for, or a
+     * file sharp does not touch (SVG, video, anything uploaded before the
+     * pipeline existed), has no url — `mediaUrl()` falls back to the original.
+     */
+    sizes?: Partial<Record<MediaSize, CmsMediaRendition | null>> | null;
+    focalX?: number | null;
+    focalY?: number | null;
 }
 
 /** GET /api/team-groups — teams shown as sections on the Team page. */

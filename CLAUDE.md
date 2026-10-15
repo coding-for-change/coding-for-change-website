@@ -116,6 +116,7 @@ Hard rules / gotchas:
 - The inner site's UI component (`outer/src/Application/UI/`) is a React app rendered alongside the Three.js canvas for overlay controls.
 - The inner site mimics a desktop OS with Window, Desktop, Toolbar, and DesktopShortcut components under `inner/src/components/os/`.
 - Content pages (Home, About, Team, Events, Projects, Sponsors, etc.) live in `inner/src/components/showcase/`.
+- **Images**: every upload to the Media collection is capped at 2400px, re-encoded as WebP and given three renditions (thumbnail 400 / card 800 / large 1600 px wide) — see `inner/cms/src/collections/Media.ts`. The site requests a rendition with `mediaUrl(media, 'card')` (`inner/src/api/client.ts`) and falls back to the original. Images uploaded before the pipeline keep their files until `inner/cms/scripts/reprocess-media.mjs --apply` is run once against the CMS. HEIC uploads are rejected by design (sharp cannot decode them); export as JPEG/PNG first.
 - The `INNER_SITE_URL` env var is baked into the 3D bundle at build time (webpack DefinePlugin) and controls the iframe URL the 3D monitor loads. It is set to `/` in Docker so the iframe loads the inner site through the outer Express proxy (same as production).
 
 ## Environment Variables

@@ -75,7 +75,7 @@ const MemberCard: React.FC<{
     onToggle: () => void;
 }> = ({ member, index, role, projects, open, onToggle }) => {
     const { t } = useLanguage();
-    const imgSrc = mediaUrl(member.image);
+    const imgSrc = mediaUrl(member.image, 'card');
     const companies = populatedCompanies(member);
     const detailId = `member-detail-${member.id}`;
     const links = member.links ?? [];
@@ -250,7 +250,7 @@ const Team: React.FC<TeamProps> = (props) => {
     );
     const { t } = useLanguage();
     const siteConfig = useSiteConfig();
-    const teamHero = mediaUrl(siteConfig.teamHeroImage);
+    const teamHero = mediaUrl(siteConfig.teamHeroImage, 'large');
     // Only one tile is expanded at a time, so the grid never fills with panels.
     const [openId, setOpenId] = useState<number | null>(null);
 
@@ -298,7 +298,7 @@ const Team: React.FC<TeamProps> = (props) => {
                     <p className="lp-loading">Loading…</p>
                 ) : grouped ? (
                     sections.map(({ group, members: people }) => {
-                        const logo = mediaUrl(group.logo);
+                        const logo = mediaUrl(group.logo, 'thumbnail');
                         return (
                             <div className="lp-team__group" key={group.id}>
                                 <div className="lp-team__group-head-row">
