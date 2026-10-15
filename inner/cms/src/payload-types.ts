@@ -973,10 +973,6 @@ export interface Form {
              * Shown under the field, e.g. "PDF, max. 5 MB".
              */
             description?: string | null;
-            /**
-             * Optional. The name of a text question on this form that may stand in for the file, e.g. "linkedin" for "or your LinkedIn profile". The site shows that question right under the upload and then needs either a file or a full web address.
-             */
-            alternative?: string | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'upload';
@@ -2184,7 +2180,6 @@ export interface FormsSelect<T extends boolean = true> {
               label?: T;
               required?: T;
               description?: T;
-              alternative?: T;
               id?: T;
               blockName?: T;
             };

@@ -55,20 +55,6 @@ export const UploadBlock: Block = {
       ...description,
       admin: { description: 'Shown under the field, e.g. "PDF, max. 5 MB".' },
     },
-    {
-      // "CV or LinkedIn": the link is an ordinary text question, so its label
-      // is edited like any other and its answer lands in the export, the
-      // review and the host's view like any other. This only ties the two
-      // together – the site draws the question under the upload and accepts
-      // either one where the upload is required.
-      name: 'alternative',
-      type: 'text',
-      label: 'Or instead: a link',
-      admin: {
-        description:
-          'Optional. The name of a text question on this form that may stand in for the file, e.g. "linkedin" for "or your LinkedIn profile". The site shows that question right under the upload and then needs either a file or a full web address.',
-      },
-    },
   ],
 };
 

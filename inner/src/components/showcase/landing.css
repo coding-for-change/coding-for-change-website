@@ -1862,17 +1862,6 @@ a.lp-member__project:hover {
 .lp-upload__remove:hover {
     color: var(--ink);
 }
-/* "…or a link instead" under an upload (the CMS block's `alternative`): one
-   question with two ways to answer it, so the second sits inside the first. */
-.lp-upload__alt {
-    display: flex;
-    flex-direction: column;
-    margin-top: 14px;
-}
-.lp-upload__alt-field {
-    display: flex;
-    flex-direction: column;
-}
 /* The spam trap (CmsForm): a 1px clipped box rather than display:none, which
    some scripts skip. aria-hidden and tabindex -1 keep it from people. */
 .lp-hp {

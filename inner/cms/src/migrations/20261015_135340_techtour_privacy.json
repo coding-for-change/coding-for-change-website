@@ -7749,12 +7749,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "alternative": {
-          "name": "alternative",
-          "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
         "block_name": {
           "name": "block_name",
           "type": "varchar",
@@ -13861,6 +13855,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "69897663-bda4-4681-94ad-17b11def29b0",
+  "id": "e85e65ae-6c0b-4d8a-85df-1e2aa71b1ceb",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }

@@ -184,9 +184,6 @@ export interface Translations {
         charCount: string;
         uploadChoose: string; uploadHint: string; uploading: string; uploadRemove: string;
         uploadTooLarge: string; uploadWrongType: string; uploadFailed: string;
-        /** Under the link question that may stand in for an upload, when what
-            was typed is not a web address. */
-        linkInvalid: string;
     };
     /**
      * Munich TechTour page (/techtour). The page's own wording lives here and
@@ -623,7 +620,6 @@ const en: Translations = {
         uploadTooLarge: 'That file is too large. The limit is 5 MB.',
         uploadWrongType: 'Please upload a PDF.',
         uploadFailed: 'The upload failed. Please try again.',
-        linkInvalid: 'Please enter a full web address, e.g. https://www.linkedin.com/in/…',
     },
     techtour: {
         statusOpen: 'Registration open',
@@ -1066,7 +1062,6 @@ const de: Translations = {
         uploadTooLarge: 'Die Datei ist zu groß. Das Limit sind 5 MB.',
         uploadWrongType: 'Bitte lade ein PDF hoch.',
         uploadFailed: 'Der Upload ist fehlgeschlagen. Bitte versuche es erneut.',
-        linkInvalid: 'Bitte gib eine vollständige Webadresse an, z. B. https://www.linkedin.com/in/…',
     },
     techtour: {
         statusOpen: 'Anmeldung offen',

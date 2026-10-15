@@ -214,12 +214,6 @@ const SCRIPT = `
 })();
 `;
 
-/** An answer, as a link when it is a web address (e.g. a LinkedIn profile instead of a CV). */
-const answer = (value: string) =>
-  /^https?:\/\/[^\s"'<>]+$/i.test(value.trim())
-    ? `<a href="${esc(value.trim())}" target="_blank" rel="noopener noreferrer">${esc(value.trim())}</a>`
-    : esc(value);
-
 const eveningLine = (e: Evening | null) =>
   e
     ? [e.label.split(' · ')[0], e.time, e.location].filter(Boolean).map((x) => esc(String(x))).join(' · ')
@@ -296,7 +290,7 @@ export function sharePage(input: PageInput): string {
   <div class="who">
     <strong>${esc(r.name)}</strong>
     <small>registered ${esc(fmtDay.format(new Date(r.registeredAt)))}</small>
-    ${r.details.length ? `<p class="details">${r.details.map((d) => `<span>${esc(d.label)}:</span> ${answer(d.value)}`).join(' · ')}</p>` : ''}
+    ${r.details.length ? `<p class="details">${r.details.map((d) => `<span>${esc(d.label)}:</span> ${esc(d.value)}`).join(' · ')}</p>` : ''}
     <p class="contact">${r.email ? `<span>Email: </span><a href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : ''}</p>
   </div>
   <div class="act">

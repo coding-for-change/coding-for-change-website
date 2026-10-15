@@ -38,11 +38,6 @@ import '../showcase/landing.css';
  *   buttons instead of a dropdown. An option label "Projects – build software"
  *   becomes the button's title ("Projects") and a line under it.
  *
- * And one on our `upload` block: its `alternative` names a text question that
- * may stand in for the file – "your CV, or your LinkedIn profile". That
- * question is drawn under the upload instead of on its own, must then be a web
- * address, and a required upload is satisfied by either.
- *
  * Every form also carries a spam trap: a text box nobody sees, sent along as
  * `hp`; the CMS refuses a submission that arrives with it filled. No reCAPTCHA
  * or any other third party. And no checkbox starts ticked, whatever default the
@@ -99,7 +94,6 @@ type Values = Record<string, Value>;
 type InputField = Exclude<CmsFormField, { blockType: 'message' }>;
 type SubformField = Extract<CmsFormField, { blockType: 'subform' }>;
 type PlainInput = Exclude<InputField, { blockType: 'subform' }>;
-type TextInput = Extract<PlainInput, { blockType: 'text' }>;
 
 const isInput = (f: CmsFormField): f is InputField => f.blockType !== 'message';
 const isSubform = (f: CmsFormField): f is SubformField => f.blockType === 'subform';
@@ -115,23 +109,6 @@ const otherKey = (name: string) => `${name}__other`;
 const splitOptionLabel = (label: string): [string, string | null] => {
     const m = /^(.+?)\s+[–—-]\s+(.+)$/.exec(label);
     return m ? [m[1], m[2]] : [label, null];
-};
-
-/**
- * What was typed into a link question, as a full web address – "linkedin.com/
- * in/x" gets its https:// – or null when it is not one (no host with a dot,
- * another scheme, spaces).
- */
-const asLink = (text: string): string | null => {
-    const typed = text.trim();
-    if (!typed || /\s/.test(typed)) return null;
-    try {
-        const url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(typed) ? typed : `https://${typed}`);
-        if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
-        return url.hostname.includes('.') ? url.toString() : null;
-    } catch {
-        return null;
-    }
 };
 
 /** Analytics / Ads label for a form, from its title. */
@@ -367,38 +344,6 @@ const CmsForm: React.FC<CmsFormProps> = ({
         [parentNames]
     );
 
-    /**
-     * Upload name → the text question that may stand in for its file (the
-     * block's `alternative`), across this form and its linked forms. A name
-     * that matches no text question on the form is ignored.
-     */
-    const alternatives = useMemo(() => {
-        const all = [
-            ...fields,
-            ...fields.filter(isSubform).flatMap((f) => {
-                const sub = typeof f.form === 'object' && f.form ? f.form : null;
-                return sub ? subFields(sub) : [];
-            }),
-        ];
-        const texts = new Map(
-            all
-                .filter((f): f is TextInput => f.blockType === 'text')
-                .map((f) => [f.name, f] as const)
-        );
-        const map = new Map<string, TextInput>();
-        all.forEach((f) => {
-            if (f.blockType !== 'upload' || !f.alternative) return;
-            const alt = texts.get(f.alternative.trim());
-            if (alt) map.set(f.name, alt);
-        });
-        return map;
-    }, [fields, subFields]);
-    /** The link questions, which the upload draws and which must be web addresses. */
-    const alternativeNames = useMemo(
-        () => new Set(Array.from(alternatives.values(), (f) => f.name)),
-        [alternatives]
-    );
-
     const setValue = (name: string, value: Value) =>
         setValues((prev) => ({ ...prev, [name]: value }));
 
@@ -575,10 +520,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
             case 'upload': {
                 const up = uploads[field.name];
                 if (up?.uploading) return false;
-                if (!field.required || up?.file) return true;
-                // "Your CV, or your LinkedIn profile": the link will do.
-                const alt = alternatives.get(field.name);
-                return Boolean(alt && asLink(String(values[alt.name] ?? '')));
+                return field.required ? Boolean(up?.file) : true;
             }
             case 'select':
                 // Picking "other" is only an answer once something is typed.
@@ -587,10 +529,6 @@ const CmsForm: React.FC<CmsFormProps> = ({
                 if (!field.required) return true;
                 return String(value).trim().length > 0;
             default:
-                // A link question may be left empty (its upload decides), but
-                // what is typed into it has to be a web address.
-                if (alternativeNames.has(field.name) && String(value).trim() && !asLink(String(value)))
-                    return false;
                 if (!field.required) return true;
                 return String(value).trim().length > 0;
         }
@@ -652,14 +590,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     break;
                 }
                 default:
-                    data.push({
-                        field: field.name,
-                        // A link question goes in as a full address, so the
-                        // admin, the export and the hosts get a working link.
-                        value: alternativeNames.has(field.name)
-                            ? asLink(String(value)) ?? String(value).trim()
-                            : String(value),
-                    });
+                    data.push({ field: field.name, value: String(value) });
             }
         });
         return { data, files };
@@ -766,39 +697,6 @@ const CmsForm: React.FC<CmsFormProps> = ({
     const star = (field: PlainInput) =>
         field.required ? <span className="lp-required">*</span> : null;
 
-    /**
-     * The link question under an upload. Its label says the "or" – "…or your
-     * LinkedIn profile" – so nothing is drawn between the two.
-     */
-    const renderAlternative = (alt: TextInput) => {
-        const value = String(values[alt.name] ?? '');
-        const wrong = touched[alt.name] && value.trim() !== '' && !asLink(value);
-        return (
-            <div className="lp-upload__alt">
-                <label className="lp-upload__alt-field">
-                    <span className="lp-label">
-                        {star(alt)}
-                        {alt.label || alt.name}
-                    </span>
-                    <input
-                        className="lp-input"
-                        type="url"
-                        inputMode="url"
-                        autoComplete="url"
-                        name={alt.name}
-                        placeholder="https://www.linkedin.com/in/…"
-                        value={value}
-                        onChange={(e) => setValue(alt.name, e.target.value)}
-                        onBlur={() => markTouched(alt.name)}
-                    />
-                </label>
-                {wrong && (
-                    <p className="lp-field__hint lp-field__hint--req">{t.forms.linkInvalid}</p>
-                )}
-            </div>
-        );
-    };
-
     const renderInput = (field: PlainInput, key: string) => {
         const value = valueOf(field);
         const fieldLabel = field.label || field.name;
@@ -888,7 +786,6 @@ const CmsForm: React.FC<CmsFormProps> = ({
 
         if (field.blockType === 'upload') {
             const up = uploads[field.name] ?? {};
-            const alt = alternatives.get(field.name);
             return (
                 <div key={key} className="lp-field lp-upload">
                     <span className="lp-label">
@@ -934,7 +831,6 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         </label>
                     )}
                     {up.error && <p className="lp-field__hint lp-field__hint--req">{up.error}</p>}
-                    {alt && renderAlternative(alt)}
                 </div>
             );
         }
@@ -1069,8 +965,6 @@ const CmsForm: React.FC<CmsFormProps> = ({
     };
 
     const renderField = (field: CmsFormField, key: string): React.ReactNode => {
-        // A link question is drawn by the upload it stands in for.
-        if (isPlainInput(field) && alternativeNames.has(field.name)) return null;
         if (field.blockType === 'message') {
             return (
                 <div key={key} className="lp-field lp-field--message">

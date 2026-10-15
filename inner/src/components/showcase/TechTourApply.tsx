@@ -23,13 +23,6 @@ const FORM_TITLE = 'techtour';
 const DRAFT_KEY = 'cfc-techtour-draft';
 
 /**
- * "A few words on why", if the CMS form asks for it under this name: optional
- * and short, so the box stops where a short answer ends (Datenschutz: only
- * what we need). Questions not named here have no cap.
- */
-const TEXT_LIMITS = { motivation: 500 };
-
-/**
  * First sentence only. A description written for /techtour, where the evening
  * has a panel to itself, has to become one line in a row here — and the
  * opening sentence is the part that identifies the visit.
@@ -338,7 +331,6 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
                                         checkboxGroups={checkboxGroups}
                                         fieldOrder={fieldOrder}
                                         sections={sections}
-                                        textLimits={TEXT_LIMITS}
                                         // Nothing goes to Google from this form
                                         // without marketing consent.
                                         adsOnlyWithConsent
