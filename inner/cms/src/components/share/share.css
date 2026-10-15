@@ -1,0 +1,28 @@
+/*
+ * Host share links in the admin. Both fields are Payload's own inputs (select,
+ * read-only text with the copy button); this only lines up the copy button
+ * beside the link and colours the status when the link is off.
+ */
+
+.share-url .field-type.text {
+  margin-bottom: 0;
+}
+
+.share-url .field-type.text .input-wrapper,
+.share-url .field-type.text > div:has(> input) {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--base) * 0.25);
+}
+
+.share-url .field-type.text input {
+  font-size: 12px;
+}
+
+.share-url--off .field-description {
+  color: var(--theme-error-500);
+}
+
+.share-url .btn {
+  margin-top: calc(var(--base) * 0.5);
+}

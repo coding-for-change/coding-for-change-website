@@ -36,6 +36,10 @@ import * as migration_20261009_155009_add_project_press from './20261009_155009_
 import * as migration_20261011_095039_add_project_screens from './20261011_095039_add_project_screens';
 import * as migration_20261014_233556_techtour_event_wordmark from './20261014_233556_techtour_event_wordmark';
 import * as migration_20261015_103530_drop_techtour_event_wordmark from './20261015_103530_drop_techtour_event_wordmark';
+import * as migration_20261015_105856_add_submission_record from './20261015_105856_add_submission_record';
+import * as migration_20261015_105913_add_review_score from './20261015_105913_add_review_score';
+import * as migration_20261015_105928_add_host_share_links from './20261015_105928_add_host_share_links';
+import * as migration_20261015_135340_techtour_privacy from './20261015_135340_techtour_privacy';
 
 export const migrations = [
   {
@@ -226,6 +230,26 @@ export const migrations = [
   {
     up: migration_20261015_103530_drop_techtour_event_wordmark.up,
     down: migration_20261015_103530_drop_techtour_event_wordmark.down,
-    name: '20261015_103530_drop_techtour_event_wordmark'
+    name: '20261015_103530_drop_techtour_event_wordmark',
+  },
+  {
+    up: migration_20261015_105856_add_submission_record.up,
+    down: migration_20261015_105856_add_submission_record.down,
+    name: '20261015_105856_add_submission_record',
+  },
+  {
+    up: migration_20261015_105913_add_review_score.up,
+    down: migration_20261015_105913_add_review_score.down,
+    name: '20261015_105913_add_review_score',
+  },
+  {
+    up: migration_20261015_105928_add_host_share_links.up,
+    down: migration_20261015_105928_add_host_share_links.down,
+    name: '20261015_105928_add_host_share_links',
+  },
+  {
+    up: migration_20261015_135340_techtour_privacy.up,
+    down: migration_20261015_135340_techtour_privacy.down,
+    name: '20261015_135340_techtour_privacy'
   },
 ];
