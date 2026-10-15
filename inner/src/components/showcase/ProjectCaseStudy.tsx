@@ -75,7 +75,7 @@ const Lightbox: React.FC<{
     if (typeof document === 'undefined') return null;
 
     const shot = shots[index];
-    const src = mediaUrl(shot.image) || '';
+    const src = mediaUrl(shot.image, 'large') || '';
 
     return createPortal(
         <div
@@ -208,7 +208,7 @@ const GalleryBlock: React.FC<{
                                 g.caption ? `View image: ${g.caption}` : `View image ${i + 1}`
                             }
                         >
-                            <img src={mediaUrl(g.image) || ''} alt={g.caption ?? title} />
+                            <img src={mediaUrl(g.image, 'large') || ''} alt={g.caption ?? title} />
                         </button>
                         {g.caption && (
                             <figcaption className="lp-cs-gal__cap">{g.caption}</figcaption>
@@ -245,7 +245,7 @@ const GalleryBlock: React.FC<{
  */
 const DemoBlock: React.FC<{ block: CmsDemoBlock }> = ({ block }) => {
     const file = mediaUrl(block.video);
-    const poster = mediaUrl(block.poster);
+    const poster = mediaUrl(block.poster, 'large');
     if (!file) return null;
 
     return (
@@ -296,7 +296,7 @@ const TimelineBlock: React.FC<{ block: CmsTimelineBlock }> = ({ block }) => {
             <ol className="lp-cs-journey__list">
                 {points.map((p, i) => {
                     const state = stateOf(i);
-                    const img = mediaUrl(p.image);
+                    const img = mediaUrl(p.image, 'thumbnail');
                     return (
                         <motion.li
                             key={p.id ?? i}
@@ -358,7 +358,7 @@ const TeamBlock: React.FC<{
             <ul className="lp-cs-team">
                 {members.map((m, i) => {
                     const person = m.member;
-                    const photo = mediaUrl(person.image);
+                    const photo = mediaUrl(person.image, 'thumbnail');
                     return (
                         <li className="lp-cs-team__card" key={m.id ?? i}>
                             {photo ? (
@@ -493,7 +493,7 @@ const DeviceStage: React.FC<{ laptop?: Shot; phone?: Shot; title: string }> = ({
                     </div>
                     <img
                         className="lp-cs-window__screen"
-                        src={mediaUrl(laptop.image) || ''}
+                        src={mediaUrl(laptop.image, 'large') || ''}
                         alt={laptop.caption ?? title}
                     />
                 </motion.div>
@@ -501,7 +501,7 @@ const DeviceStage: React.FC<{ laptop?: Shot; phone?: Shot; title: string }> = ({
             {phone && (
                 <motion.img
                     className="lp-cs-stage__phone"
-                    src={mediaUrl(phone.image) || ''}
+                    src={mediaUrl(phone.image, 'large') || ''}
                     alt={phone.caption ?? title}
                     initial={{ opacity: 0, y: 70 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -519,7 +519,7 @@ const PressBadges: React.FC<{ items: CmsPressItem[] }> = ({ items }) => {
     return (
         <ul className="lp-cs-press">
             {items.map((item, i) => {
-                const logo = mediaUrl(item.logo);
+                const logo = mediaUrl(item.logo, 'thumbnail');
                 return (
                     <li key={item.id ?? i}>
                         <a
@@ -555,7 +555,7 @@ const PressBadges: React.FC<{ items: CmsPressItem[] }> = ({ items }) => {
    wide for designed panels (journey, media, team, the closing cards). */
 const ProjectCaseStudy: React.FC<{ project: CmsProject }> = ({ project }) => {
     const { t } = useLanguage();
-    const mark = mediaUrl(project.image);
+    const mark = mediaUrl(project.image, 'thumbnail');
     const statusLabel =
         (t.projects.status as Record<string, string>)[project.status] || project.status;
     const stack = (project.technologies ?? [])

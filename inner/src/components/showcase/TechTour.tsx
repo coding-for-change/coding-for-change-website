@@ -39,7 +39,7 @@ const known = (value?: string | null): string => {
  * set in type in the same place.
  */
 const HostLogo: React.FC<{ ev: CmsTechTourEvent; className: string }> = ({ ev, className }) => {
-    const logo = mediaUrl(ev.logo);
+    const logo = mediaUrl(ev.logo, 'card');
     return logo ? (
         <img className={`${className} tt-logo`} src={logo} alt={ev.company} />
     ) : (

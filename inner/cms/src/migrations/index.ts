@@ -41,6 +41,7 @@ import * as migration_20261015_105913_add_review_score from './20261015_105913_a
 import * as migration_20261015_105928_add_host_share_links from './20261015_105928_add_host_share_links';
 import * as migration_20261015_135340_techtour_privacy from './20261015_135340_techtour_privacy';
 import * as migration_20261015_143428_student_homepage_mode from './20261015_143428_student_homepage_mode';
+import * as migration_20261015_213816_media_webp_renditions from './20261015_213816_media_webp_renditions';
 
 export const migrations = [
   {
@@ -256,6 +257,11 @@ export const migrations = [
   {
     up: migration_20261015_143428_student_homepage_mode.up,
     down: migration_20261015_143428_student_homepage_mode.down,
-    name: '20261015_143428_student_homepage_mode'
+    name: '20261015_143428_student_homepage_mode',
+  },
+  {
+    up: migration_20261015_213816_media_webp_renditions.up,
+    down: migration_20261015_213816_media_webp_renditions.down,
+    name: '20261015_213816_media_webp_renditions'
   },
 ];

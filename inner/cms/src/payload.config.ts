@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url';
 import { buildConfig, type Field } from 'payload';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
+import sharp from 'sharp';
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder';
 import { mcpPlugin } from '@payloadcms/plugin-mcp';
 import { resendAdapter } from '@payloadcms/email-resend';
@@ -101,6 +102,9 @@ const questionsWithoutWidth = (field: Field): Field =>
     : field;
 
 export default buildConfig({
+  // Image processing for the Media collection (WebP conversion + renditions,
+  // see collections/Media.ts). Payload only resizes when sharp is handed in.
+  sharp,
   editor: lexicalEditor(),
   collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles, ShareLinks, ShareAccessLog],
   globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour],

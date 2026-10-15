@@ -1,5 +1,5 @@
 import type { Attribution } from '../lib/attribution';
-import type { CmsApplicantFile } from './types';
+import type { CmsApplicantFile, MediaSize } from './types';
 
 const API_BASE = process.env.REACT_APP_API_URL || '/api';
 
@@ -136,13 +136,26 @@ export async function uploadApplicantFile(
     return data.doc;
 }
 
+/**
+ * The URL of a media document — or, with `size`, of the WebP rendition of
+ * that width (thumbnail 400 · card 800 · large 1600, see the CMS Media
+ * collection). Pick the smallest size that still covers the slot at 2×.
+ * Falls back to the original when the rendition does not exist: SVGs and
+ * videos are never resized, small originals are not enlarged, and files
+ * uploaded before the pipeline have none until they are reprocessed.
+ */
 export function mediaUrl(
-    media: { url?: string | null } | null | undefined
+    media:
+        | { url?: string | null; sizes?: Partial<Record<MediaSize, { url?: string | null } | null>> | null }
+        | null
+        | undefined,
+    size?: MediaSize
 ): string | null {
     if (!media?.url) return null;
+    const url = (size && media.sizes?.[size]?.url) || media.url;
     // If it's already absolute, return as-is
-    if (media.url.startsWith('http')) return media.url;
+    if (url.startsWith('http')) return url;
     // Otherwise prefix with API base (strip /api suffix)
     const base = API_BASE.replace(/\/api$/, '');
-    return `${base}${media.url}`;
+    return `${base}${url}`;
 }

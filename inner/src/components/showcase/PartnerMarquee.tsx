@@ -33,12 +33,12 @@ export const joinPartners = (
 
     const ngos: MarqueePartner[] = [];
     (projects ?? []).forEach((p) => {
-        if (p.ngoPartner) add(ngos, { key: `ngo-${p.id}`, name: p.ngoPartner, logo: mediaUrl(p.image) });
+        if (p.ngoPartner) add(ngos, { key: `ngo-${p.id}`, name: p.ngoPartner, logo: mediaUrl(p.image, 'card') });
     });
 
     const companies: MarqueePartner[] = [];
     (sponsors ?? []).forEach((s) =>
-        add(companies, { key: `partner-${s.id}`, name: s.name, logo: mediaUrl(s.logo) })
+        add(companies, { key: `partner-${s.id}`, name: s.name, logo: mediaUrl(s.logo, 'card') })
     );
     if (techTourListed(techTour)) {
         // Only evenings with a confirmed host – a tentative company has not said yes yet.
@@ -48,7 +48,7 @@ export const joinPartners = (
                 add(companies, {
                     key: `techtour-${ev.company}`,
                     name: ev.company,
-                    logo: mediaUrl(ev.logo),
+                    logo: mediaUrl(ev.logo, 'card'),
                 })
             );
     }

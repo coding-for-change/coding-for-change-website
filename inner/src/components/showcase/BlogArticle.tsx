@@ -31,12 +31,12 @@ const BlogArticle: React.FC<{ post: CmsBlogPost }> = ({ post }) => {
         </button>
     );
 
-    const imgSrc = mediaUrl(post.featuredImage ?? null);
+    const imgSrc = mediaUrl(post.featuredImage ?? null, 'large');
     const author =
         post.author && typeof post.author !== 'number' ? post.author : null;
     const project =
         post.project && typeof post.project !== 'number' ? post.project : null;
-    const authorImgSrc = author ? mediaUrl(author.image ?? null) : null;
+    const authorImgSrc = author ? mediaUrl(author.image ?? null, 'thumbnail') : null;
 
     return (
         <div className="lp lp-page">

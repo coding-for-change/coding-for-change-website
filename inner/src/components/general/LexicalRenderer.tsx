@@ -73,7 +73,7 @@ function renderNode(node: LexicalNode, key: string): React.ReactNode {
         case 'upload': {
             const val = node.value;
             if (!val?.url) return null;
-            const src = val.url.startsWith('http') ? val.url : mediaUrl(val as any);
+            const src = val.url.startsWith('http') ? val.url : mediaUrl(val as any, 'large');
             if (val.mimeType?.startsWith('video/')) {
                 return (
                     <video key={key} controls style={{ maxWidth: '100%', marginBottom: 16 }}>

@@ -171,7 +171,7 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
             if (!ev) return null;
             const tba = ev.status === 'tba';
             const company = tba ? t.techtour.tbaCompany : ev.company;
-            const logo = tba ? null : mediaUrl(ev.logo);
+            const logo = tba ? null : mediaUrl(ev.logo, 'card');
             const line = tba
                 ? null
                 : ev.title || (ev.description ? firstSentence(ev.description) : null);
