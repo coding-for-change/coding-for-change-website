@@ -152,28 +152,17 @@
 .tt-hosts__logo {
     --tt-logo-h: 38px;
 }
-/* A wordmark sits at one height and takes the width it needs. */
+/* A logo sits at one height and takes the width it needs. */
 .tt-logo {
     display: block;
     height: var(--tt-logo-h);
     width: auto;
     max-width: 100%;
 }
-/* No wordmark yet: the square icon, with the name set beside it. */
-.tt-logo--set {
+/* No logo yet: the name, set in type at the logo's height. */
+.tt-logo--name {
     display: inline-flex;
     align-items: center;
-    gap: calc(var(--tt-logo-h) * 0.28);
-    width: auto;
-}
-.tt-logo__icon {
-    display: block;
-    height: 100%;
-    aspect-ratio: 1;
-    border-radius: 22%;
-    object-fit: cover;
-}
-.tt-logo__name {
     font-family: var(--tt-display);
     font-weight: 700;
     font-size: calc(var(--tt-logo-h) * 0.52);

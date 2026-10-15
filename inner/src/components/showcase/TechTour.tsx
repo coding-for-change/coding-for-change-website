@@ -34,21 +34,16 @@ const known = (value?: string | null): string => {
 };
 
 /**
- * The host's logo as the page sets it: the wordmark when there is one, and
- * otherwise the square icon with the company's name beside it, so a host
- * without a wordmark still reads as deliberate.
+ * The host's logo – the full one, with the company's name in it – at one
+ * height and whatever width it needs. A host without a logo yet gets its name
+ * set in type in the same place.
  */
 const HostLogo: React.FC<{ ev: CmsTechTourEvent; className: string }> = ({ ev, className }) => {
-    const wordmark = mediaUrl(ev.wordmark);
-    if (wordmark) {
-        return <img className={`${className} tt-logo`} src={wordmark} alt={ev.company} />;
-    }
-    const icon = mediaUrl(ev.logo);
-    return (
-        <span className={`${className} tt-logo tt-logo--set`}>
-            {icon && <img className="tt-logo__icon" src={icon} alt="" />}
-            <span className="tt-logo__name">{ev.company}</span>
-        </span>
+    const logo = mediaUrl(ev.logo);
+    return logo ? (
+        <img className={`${className} tt-logo`} src={logo} alt={ev.company} />
+    ) : (
+        <span className={`${className} tt-logo tt-logo--name`}>{ev.company}</span>
     );
 };
 

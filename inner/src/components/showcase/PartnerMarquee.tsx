@@ -8,13 +8,8 @@ import './join.css';
 export interface MarqueePartner {
     key: string;
     name: string;
+    /** A logo with the name in it; without one the tile prints the name. */
     logo: string | null;
-    /**
-     * Print the name beside the logo. TechTour logos are square marks drawn
-     * for the line-up, where the company name always sits next to them – on
-     * their own they don't say who it is. Partner and NGO logos are wordmarks.
-     */
-    named?: boolean;
 }
 
 /**
@@ -54,7 +49,6 @@ export const joinPartners = (
                     key: `techtour-${ev.company}`,
                     name: ev.company,
                     logo: mediaUrl(ev.logo),
-                    named: true,
                 })
             );
     }
@@ -75,7 +69,7 @@ const MIN_TILES_PER_PASS = 16;
 
 const Tile: React.FC<{ partner: MarqueePartner; hidden: boolean }> = ({ partner, hidden }) => (
     <li
-        className={`jn-logo${partner.named || !partner.logo ? ' jn-logo--named' : ''}`}
+        className={`jn-logo${partner.logo ? '' : ' jn-logo--named'}`}
         aria-hidden={hidden || undefined}
     >
         {partner.logo && (
@@ -83,12 +77,12 @@ const Tile: React.FC<{ partner: MarqueePartner; hidden: boolean }> = ({ partner,
             // loading as it slides into view – a blank tile first.
             <img
                 src={partner.logo}
-                alt={partner.named ? '' : partner.name}
+                alt={partner.name}
                 decoding="async"
                 draggable={false}
             />
         )}
-        {(partner.named || !partner.logo) && <span className="jn-logo__name">{partner.name}</span>}
+        {!partner.logo && <span className="jn-logo__name">{partner.name}</span>}
     </li>
 );
 
