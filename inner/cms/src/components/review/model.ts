@@ -39,6 +39,8 @@ export type Submission = {
   reviewNotes?: string | null;
   language?: 'en' | 'de' | null;
   choiceKeys?: Record<string, string[]> | null;
+  /** The boxes ticked, as recorded on arrival (fields/submissionRecord.ts). */
+  agreedTo?: { field: string; label?: string; version?: string; at?: string }[] | null;
   /** Per evening key, what the host company decided through its share link. */
   hostDecisions?: Record<string, { decision: 'admitted' | 'declined'; by: string; at: string }> | null;
 };

@@ -1862,6 +1862,30 @@ a.lp-member__project:hover {
 .lp-upload__remove:hover {
     color: var(--ink);
 }
+/* "…or a link instead" under an upload (the CMS block's `alternative`): one
+   question with two ways to answer it, so the second sits inside the first. */
+.lp-upload__alt {
+    display: flex;
+    flex-direction: column;
+    margin-top: 14px;
+}
+.lp-upload__alt-field {
+    display: flex;
+    flex-direction: column;
+}
+/* The spam trap (CmsForm): a 1px clipped box rather than display:none, which
+   some scripts skip. aria-hidden and tabindex -1 keep it from people. */
+.lp-hp {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    border: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
 /* Linked form: checkbox + "what is this?" link; the revealed questions sit in
    an indented panel with a teal rail so they read as one optional block. */
 .lp-subform {
@@ -3946,6 +3970,8 @@ a.lp-member__project:hover {
     /* Generous space above, tight below: binds each heading to its own text
        rather than floating midway between two sections. */
     margin: 48px 0 12px;
+    /* Linked to as /privacy#munich-techtour: land below the fixed nav. */
+    scroll-margin-top: 88px;
 }
 
 .lp-prose h3 {

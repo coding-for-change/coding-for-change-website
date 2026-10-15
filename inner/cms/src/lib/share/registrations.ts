@@ -1,18 +1,28 @@
 import type { Payload, PayloadRequest } from 'payload';
 import { pickedKeys } from '../choiceKeys';
+import { consentedToSharing } from '../sharingConsent';
 import { eveningOf, eveningsFieldOf, type Evening } from './evening';
 
 /**
  * What a host company sees through its share link, and nothing more: the
- * registrations for its evening, each with the name, the CV and the other
- * answers to the form's own questions (e.g. university). Never the email
- * address, the other evenings a person picked, their ticks, our review, or
- * anything about a membership application (Datenschutz section 5).
+ * registrations for its evening whose sender agreed to it, each with the name,
+ * the CV and the other answers to the form's own questions (e.g. university).
+ * The email address only once the host admits the person – the consent lets
+ * the host contact them to register, and nobody else needs it. Never the other
+ * evenings a person picked, their ticks, our review, or anything about a
+ * membership application (Datenschutz section 5a).
+ *
+ * "Agreed to it" means the ticked `hostSharing` box in the registration's own
+ * record (lib/sharingConsent.ts) – the consent to pass the registration on to
+ * the host companies of the evenings picked. A registration without it (sent
+ * before the box existed, or posted around the form) is not shown, cannot be
+ * decided on, and its CV cannot be opened through the link.
  *
  * Also records the host's decision on a registration, under the evening's key
  * in the submission's `hostDecisions` – so it is deleted together with the
  * registration.
  */
+
 
 export type HostDecision = 'admitted' | 'declined';
 export type HostDecisions = Record<string, { decision: HostDecision; by: string; at: string }>;
@@ -35,6 +45,8 @@ export type HostRow = {
   details: { label: string; value: string }[];
   hasCv: boolean;
   decision: HostDecision | null;
+  /** Only once admitted, so the host can contact them to register. */
+  email: string | null;
 };
 
 type Block = {
@@ -51,6 +63,7 @@ type SubmissionDoc = {
   submissionData?: { field: string; value: string }[] | null;
   files?: (number | { id: number })[] | null;
   choiceKeys?: Record<string, string[]> | null;
+  agreedTo?: { field: string }[] | null;
   hostDecisions?: HostDecisions | null;
 };
 
@@ -75,9 +88,12 @@ async function scopeOf(payload: Payload, link: ShareLinkDoc, req?: PayloadReques
   if (formId == null) return null;
   const evening = await eveningOf(payload, formId, link.option, req);
   if (!evening) return null;
+  // Not with `req`: a local-API call with a `locale` writes it onto the
+  // request, so two of them in parallel on one `req` both read the language
+  // set last – the host's (English) page came out with the German labels.
   const [en, de] = await Promise.all(
     (['en', 'de'] as const).map((locale) =>
-      payload.findByID({ collection: 'forms', id: formId, depth: 0, locale, req }).catch(() => null),
+      payload.findByID({ collection: 'forms', id: formId, depth: 0, locale }).catch(() => null),
     ),
   );
   const fields = (en?.fields ?? []) as Block[];
@@ -92,6 +108,7 @@ async function scopeOf(payload: Payload, link: ShareLinkDoc, req?: PayloadReques
 }
 
 const inScope = (scope: Scope, s: SubmissionDoc): boolean => {
+  if (!consentedToSharing(s)) return false;
   const recorded = s.choiceKeys?.[scope.evening.field];
   if (Array.isArray(recorded)) return recorded.includes(scope.evening.option);
   const answer = (s.submissionData ?? []).find((kv) => kv.field === scope.evening.field)?.value ?? '';
@@ -110,14 +127,22 @@ const rowOf = (scope: Scope, s: SubmissionDoc): HostRow => {
     details.push({ label, value: shown });
   }
   const name = [answers.get('firstName'), answers.get('lastName')].filter((x) => x?.trim()).join(' ').trim();
+  const decision = s.hostDecisions?.[scope.evening.option]?.decision ?? null;
   return {
     id: s.id,
     name: name || `Registration ${s.id}`,
     registeredAt: s.createdAt,
     details,
     hasCv: (s.files ?? []).length > 0,
-    decision: s.hostDecisions?.[scope.evening.option]?.decision ?? null,
+    decision,
+    email: decision === 'admitted' ? emailOf(scope, s) : null,
   };
+};
+
+/** The answer to the form's email question. */
+const emailOf = (scope: Scope, s: SubmissionDoc): string | null => {
+  const field = scope.fields.find((b) => b.blockType === 'email' && b.name)?.name ?? 'email';
+  return (s.submissionData ?? []).find((kv) => kv.field === field)?.value?.trim() || null;
 };
 
 /** Everyone registered for the link's evening, first come first. */
@@ -158,7 +183,11 @@ export async function registrationInScope(
   return docForm === formIdOf(link) && inScope(scope, doc) ? { scope, doc } : null;
 }
 
-/** Record (or with null, take back) the host's decision on one registration. */
+/**
+ * Record (or with null, take back) the host's decision on one registration.
+ * Null when the link may not act on it; otherwise the email address the host
+ * may now see – the person's when admitted, none otherwise.
+ */
 export async function decide(
   payload: Payload,
   link: ShareLinkDoc,
@@ -166,9 +195,9 @@ export async function decide(
   decision: HostDecision | null,
   by: string,
   req?: PayloadRequest,
-): Promise<boolean> {
+): Promise<{ email: string | null } | null> {
   const found = await registrationInScope(payload, link, id, req);
-  if (!found) return false;
+  if (!found) return null;
   const next: HostDecisions = { ...(found.doc.hostDecisions ?? {}) };
   if (decision) next[found.scope.evening.option] = { decision, by, at: new Date().toISOString() };
   else delete next[found.scope.evening.option];
@@ -179,7 +208,7 @@ export async function decide(
     overrideAccess: true,
     req,
   });
-  return true;
+  return { email: decision === 'admitted' ? emailOf(found.scope, found.doc) : null };
 }
 
 /** The first file of a registration (its CV), for the link's CV route. */

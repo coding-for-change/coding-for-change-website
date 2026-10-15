@@ -38,6 +38,7 @@ import * as migration_20261014_233556_techtour_event_wordmark from './20261014_2
 import * as migration_20261015_095217_add_submission_record from './20261015_095217_add_submission_record';
 import * as migration_20261015_095300_add_review_score from './20261015_095300_add_review_score';
 import * as migration_20261015_095336_add_host_share_links from './20261015_095336_add_host_share_links';
+import * as migration_20261015_102136_techtour_privacy from './20261015_102136_techtour_privacy';
 
 export const migrations = [
   {
@@ -238,6 +239,11 @@ export const migrations = [
   {
     up: migration_20261015_095336_add_host_share_links.up,
     down: migration_20261015_095336_add_host_share_links.down,
-    name: '20261015_095336_add_host_share_links'
+    name: '20261015_095336_add_host_share_links',
+  },
+  {
+    up: migration_20261015_102136_techtour_privacy.up,
+    down: migration_20261015_102136_techtour_privacy.down,
+    name: '20261015_102136_techtour_privacy'
   },
 ];

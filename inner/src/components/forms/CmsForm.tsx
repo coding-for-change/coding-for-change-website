@@ -7,6 +7,7 @@ import type { CmsApplicantFile, CmsForm as CmsFormDoc, CmsFormField } from '../.
 import { getAttribution } from '../../lib/attribution';
 import { trackConversion, trackFormStart } from '../../lib/analytics';
 import { trackAdsConversion, type AdsConversionAction } from '../../lib/googleAds';
+import { consentFor } from '../../lib/consent';
 import { useLanguage } from '../../contexts/LanguageContext';
 import RichText from '../RichText';
 import '../showcase/landing.css';
@@ -37,8 +38,19 @@ import '../showcase/landing.css';
  *   buttons instead of a dropdown. An option label "Projects – build software"
  *   becomes the button's title ("Projects") and a line under it.
  *
+ * And one on our `upload` block: its `alternative` names a text question that
+ * may stand in for the file – "your CV, or your LinkedIn profile". That
+ * question is drawn under the upload instead of on its own, must then be a web
+ * address, and a required upload is satisfied by either.
+ *
+ * Every form also carries a spam trap: a text box nobody sees, sent along as
+ * `hp`; the CMS refuses a submission that arrives with it filled. No reCAPTCHA
+ * or any other third party. And no checkbox starts ticked, whatever default the
+ * admin set – a consent is a deliberate tick.
+ *
  * Conversions: the parent and each submitted sub-form fire their own
- * `conversion` event and Google Ads action, named after the form title.
+ * `conversion` event and Google Ads action, named after the form title. With
+ * `adsOnlyWithConsent` the Google Ads action waits for marketing consent.
  */
 
 const validateEmail = (email: string) => {
@@ -87,6 +99,7 @@ type Values = Record<string, Value>;
 type InputField = Exclude<CmsFormField, { blockType: 'message' }>;
 type SubformField = Extract<CmsFormField, { blockType: 'subform' }>;
 type PlainInput = Exclude<InputField, { blockType: 'subform' }>;
+type TextInput = Extract<PlainInput, { blockType: 'text' }>;
 
 const isInput = (f: CmsFormField): f is InputField => f.blockType !== 'message';
 const isSubform = (f: CmsFormField): f is SubformField => f.blockType === 'subform';
@@ -102,6 +115,23 @@ const otherKey = (name: string) => `${name}__other`;
 const splitOptionLabel = (label: string): [string, string | null] => {
     const m = /^(.+?)\s+[–—-]\s+(.+)$/.exec(label);
     return m ? [m[1], m[2]] : [label, null];
+};
+
+/**
+ * What was typed into a link question, as a full web address – "linkedin.com/
+ * in/x" gets its https:// – or null when it is not one (no host with a dot,
+ * another scheme, spaces).
+ */
+const asLink = (text: string): string | null => {
+    const typed = text.trim();
+    if (!typed || /\s/.test(typed)) return null;
+    try {
+        const url = new URL(/^[a-z][a-z0-9+.-]*:/i.test(typed) ? typed : `https://${typed}`);
+        if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+        return url.hostname.includes('.') ? url.toString() : null;
+    } catch {
+        return null;
+    }
 };
 
 /** Analytics / Ads label for a form, from its title. */
@@ -252,6 +282,13 @@ export interface CmsFormProps {
      * length as much as a cap; fields not named here have none.
      */
     textLimits?: Record<string, number>;
+    /**
+     * Send the Google Ads conversion only once the visitor has agreed to
+     * marketing cookies. /techtour/apply asks for it: nothing goes to Google
+     * from that form without consent. Off elsewhere, where Consent Mode's
+     * cookieless ping is the gate (see lib/googleAds.ts).
+     */
+    adsOnlyWithConsent?: boolean;
     className?: string;
     onSubmitted?: () => void;
 }
@@ -267,6 +304,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
     buttonSelects,
     draft,
     textLimits,
+    adsOnlyWithConsent,
     className,
     onSubmitted,
 }) => {
@@ -282,6 +320,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [sendError, setSendError] = useState(false);
+    // The spam trap's content: stays empty unless a script fills it in.
+    const [honeypot, setHoneypot] = useState('');
     // Submissions that already went through, so a retry after a partial
     // failure does not create duplicates.
     const doneRef = useRef<Set<number>>(new Set());
@@ -325,6 +365,38 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     (isPlainInput(f) && !parentNames.has(f.name))
             ),
         [parentNames]
+    );
+
+    /**
+     * Upload name → the text question that may stand in for its file (the
+     * block's `alternative`), across this form and its linked forms. A name
+     * that matches no text question on the form is ignored.
+     */
+    const alternatives = useMemo(() => {
+        const all = [
+            ...fields,
+            ...fields.filter(isSubform).flatMap((f) => {
+                const sub = typeof f.form === 'object' && f.form ? f.form : null;
+                return sub ? subFields(sub) : [];
+            }),
+        ];
+        const texts = new Map(
+            all
+                .filter((f): f is TextInput => f.blockType === 'text')
+                .map((f) => [f.name, f] as const)
+        );
+        const map = new Map<string, TextInput>();
+        all.forEach((f) => {
+            if (f.blockType !== 'upload' || !f.alternative) return;
+            const alt = texts.get(f.alternative.trim());
+            if (alt) map.set(f.name, alt);
+        });
+        return map;
+    }, [fields, subFields]);
+    /** The link questions, which the upload draws and which must be web addresses. */
+    const alternativeNames = useMemo(
+        () => new Set(Array.from(alternatives.values(), (f) => f.name)),
+        [alternatives]
     );
 
     const setValue = (name: string, value: Value) =>
@@ -474,7 +546,10 @@ const CmsForm: React.FC<CmsFormProps> = ({
     const valueOf = (field: PlainInput): Value => {
         const v = values[field.name];
         if (v !== undefined) return v;
-        if (field.blockType === 'checkbox') return field.defaultValue ?? false;
+        // Never ticked in advance, whatever default the admin set: a consent
+        // has to be a deliberate tick (CJEU, Planet49), and every box on our
+        // forms is a consent or a commitment.
+        if (field.blockType === 'checkbox') return false;
         if (field.blockType === 'checkboxGroup') return [];
         if (field.blockType === 'number')
             return field.defaultValue != null ? String(field.defaultValue) : '';
@@ -500,7 +575,10 @@ const CmsForm: React.FC<CmsFormProps> = ({
             case 'upload': {
                 const up = uploads[field.name];
                 if (up?.uploading) return false;
-                return field.required ? Boolean(up?.file) : true;
+                if (!field.required || up?.file) return true;
+                // "Your CV, or your LinkedIn profile": the link will do.
+                const alt = alternatives.get(field.name);
+                return Boolean(alt && asLink(String(values[alt.name] ?? '')));
             }
             case 'select':
                 // Picking "other" is only an answer once something is typed.
@@ -509,6 +587,10 @@ const CmsForm: React.FC<CmsFormProps> = ({
                 if (!field.required) return true;
                 return String(value).trim().length > 0;
             default:
+                // A link question may be left empty (its upload decides), but
+                // what is typed into it has to be a web address.
+                if (alternativeNames.has(field.name) && String(value).trim() && !asLink(String(value)))
+                    return false;
                 if (!field.required) return true;
                 return String(value).trim().length > 0;
         }
@@ -570,7 +652,14 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     break;
                 }
                 default:
-                    data.push({ field: field.name, value: String(value) });
+                    data.push({
+                        field: field.name,
+                        // A link question goes in as a full address, so the
+                        // admin, the export and the hosts get a working link.
+                        value: alternativeNames.has(field.name)
+                            ? asLink(String(value)) ?? String(value).trim()
+                            : String(value),
+                    });
             }
         });
         return { data, files };
@@ -608,10 +697,14 @@ const CmsForm: React.FC<CmsFormProps> = ({
             if (doneRef.current.has(job.id)) continue;
             try {
                 const { data, files } = serialise(job.list);
-                await submitForm(job.id, data, attribution, files, locale);
+                await submitForm(job.id, data, attribution, files, locale, honeypot);
                 doneRef.current.add(job.id);
                 trackConversion(job.label);
-                if (isAdsAction(job.label)) trackAdsConversion(job.label);
+                if (
+                    isAdsAction(job.label) &&
+                    (!adsOnlyWithConsent || consentFor('marketing') === true)
+                )
+                    trackAdsConversion(job.label);
             } catch {
                 failed = true;
                 break;
@@ -672,6 +765,39 @@ const CmsForm: React.FC<CmsFormProps> = ({
     // rules are readable at a glance rather than disappearing as you type.
     const star = (field: PlainInput) =>
         field.required ? <span className="lp-required">*</span> : null;
+
+    /**
+     * The link question under an upload. Its label says the "or" – "…or your
+     * LinkedIn profile" – so nothing is drawn between the two.
+     */
+    const renderAlternative = (alt: TextInput) => {
+        const value = String(values[alt.name] ?? '');
+        const wrong = touched[alt.name] && value.trim() !== '' && !asLink(value);
+        return (
+            <div className="lp-upload__alt">
+                <label className="lp-upload__alt-field">
+                    <span className="lp-label">
+                        {star(alt)}
+                        {alt.label || alt.name}
+                    </span>
+                    <input
+                        className="lp-input"
+                        type="url"
+                        inputMode="url"
+                        autoComplete="url"
+                        name={alt.name}
+                        placeholder="https://www.linkedin.com/in/…"
+                        value={value}
+                        onChange={(e) => setValue(alt.name, e.target.value)}
+                        onBlur={() => markTouched(alt.name)}
+                    />
+                </label>
+                {wrong && (
+                    <p className="lp-field__hint lp-field__hint--req">{t.forms.linkInvalid}</p>
+                )}
+            </div>
+        );
+    };
 
     const renderInput = (field: PlainInput, key: string) => {
         const value = valueOf(field);
@@ -762,6 +888,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
 
         if (field.blockType === 'upload') {
             const up = uploads[field.name] ?? {};
+            const alt = alternatives.get(field.name);
             return (
                 <div key={key} className="lp-field lp-upload">
                     <span className="lp-label">
@@ -807,6 +934,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         </label>
                     )}
                     {up.error && <p className="lp-field__hint lp-field__hint--req">{up.error}</p>}
+                    {alt && renderAlternative(alt)}
                 </div>
             );
         }
@@ -941,6 +1069,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
     };
 
     const renderField = (field: CmsFormField, key: string): React.ReactNode => {
+        // A link question is drawn by the upload it stands in for.
+        if (isPlainInput(field) && alternativeNames.has(field.name)) return null;
         if (field.blockType === 'message') {
             return (
                 <div key={key} className="lp-field lp-field--message">
@@ -1071,6 +1201,22 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     </React.Fragment>
                 );
             })}
+            {/* Spam trap: out of sight, out of the tab order and hidden from
+                screen readers, so only a script filling in every box finds
+                it – and the CMS then refuses the submission. */}
+            <div className="lp-hp" aria-hidden="true">
+                <label>
+                    Website
+                    <input
+                        type="text"
+                        name="website"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={honeypot}
+                        onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                </label>
+            </div>
             {/* Without a draft this is the bare button it has always been —
                 forms that don't opt in keep their exact markup. The draft row's
                 styling lives with the page that does opt in, today only

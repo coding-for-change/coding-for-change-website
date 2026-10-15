@@ -430,6 +430,8 @@ export type CmsFormField =
           label?: string | null;
           required?: boolean | null;
           description?: string | null;
+          /** A text question that may stand in for the file (e.g. a LinkedIn link). */
+          alternative?: string | null;
           width?: number | null;
       }
     /** Multi-select rendered as one checkbox per option. */

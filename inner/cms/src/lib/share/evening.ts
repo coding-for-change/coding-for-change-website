@@ -110,6 +110,13 @@ const berlinOffset = (date: Date): number => {
   return m ? (m[1] === '-' ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3] ?? 0)) : 60;
 };
 
+/** 00:00 Munich time on the day `date` falls on (in Munich). */
+export function startOfBerlinDay(date: Date): Date {
+  const p = berlinParts(date);
+  const midnight = new Date(Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day)));
+  return new Date(midnight.getTime() - berlinOffset(midnight) * 60_000);
+}
+
 /** 23:59:59 Munich time on the Sunday of the week the evening falls in. */
 export function endOfEventWeek(date: Date): Date {
   const p = berlinParts(date);

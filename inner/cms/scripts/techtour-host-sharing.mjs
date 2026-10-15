@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
  * Bring the live "techtour" form in line with how the TechTour now works: the
- * host company of each evening sees the registrations for its evening and
- * decides who attends (Datenschutz section 5 – apply it with
- * upsert-content.mjs in the same sitting).
+ * partner company of each evening sees the registrations for its evening –
+ * from everyone who consented – and decides who attends (Datenschutz section
+ * 5a – apply it with upsert-content.mjs in the same sitting).
  *
  *   CMS_URL=https://codingforchange.com CMS_EMAIL=… CMS_PASSWORD=… \
  *     node scripts/techtour-host-sharing.mjs            # dry run: shows the changes, writes nothing
@@ -12,8 +12,10 @@
  * Unlike upsert-forms.mjs, which replaces every question with the definitions
  * in lib/formDefinitions.mjs, this changes three things and nothing else:
  *
- *   1. adds the required "the host company sees my registration" box
- *      (`hostSharing`) right before the privacy box, in both languages;
+ *   1. adds the required consent box for passing the registration on to the
+ *      partner companies (`hostSharing`) right after the privacy box, in both
+ *      languages – or, where it is there already, brings its wording up to the
+ *      current text (what someone agreed to stays on their registration);
  *   2. replaces the confirmation message if it is still the original one, which
  *      promised the details of every evening (any other wording is left alone);
  *   3. names each evening option after the company the TechTour page shows on
@@ -139,18 +141,27 @@ const plan = (en, de, newBlockId) => {
   const enFields = [...(en.fields ?? [])];
   const deFields = [...(de.fields ?? [])];
 
-  // 1. The host-sharing box.
+  // 1. The consent box for passing registrations on to the partner companies.
   const at = enFields.findIndex((f) => f.name === 'hostSharing');
   if (at === -1) {
-    const privacy = enFields.findIndex((f) => f.name === 'privacy');
-    const pos = privacy === -1 ? enFields.length : privacy;
+    // After the privacy box (under whichever name the admin gave it): first
+    // the consent to our processing, then the one to passing it on. Without
+    // one, before the "also apply" box.
+    const privacy = enFields.findIndex((f) => f.name === 'privacyTechtour' || f.name === 'privacy');
+    const linked = enFields.findIndex((f) => f.blockType === 'subform');
+    const pos = privacy !== -1 ? privacy + 1 : linked !== -1 ? linked : enFields.length;
     const { blockType, name, required } = boxOf(wanted.en);
     enFields.splice(pos, 0, { blockType, name, required, label: boxOf(wanted.en).label, ...(newBlockId ? { id: newBlockId } : {}) });
     deFields.splice(pos, 0, { blockType, name, required, label: boxOf(wanted.de).label, ...(newBlockId ? { id: newBlockId } : {}) });
-    changes.push(`add the required "hostSharing" box before ${privacy === -1 ? 'the end' : '"privacy"'} (en + de)`);
-  } else if (!deFields[at]?.label) {
-    deFields[at] = { ...deFields[at], label: boxOf(wanted.de).label };
-    changes.push('give the existing "hostSharing" box its German label');
+    changes.push(`add the required "hostSharing" box ${privacy !== -1 ? `after "${enFields[privacy].name}"` : 'at the end'} (en + de)`);
+  } else {
+    for (const [locale, list] of [['en', enFields], ['de', deFields]]) {
+      const label = boxOf(wanted[locale]).label;
+      if (list[at]?.label !== label || !list[at]?.required) {
+        list[at] = { ...list[at], label, required: true };
+        changes.push(`[${locale}] "hostSharing" box: wording brought up to date (and required)`);
+      }
+    }
   }
 
   // 3. Evening options named after the page's company on that date.
@@ -229,7 +240,7 @@ for (const [before, after, locale] of [[en, enAfter, 'en'], [de, deAfter, 'de']]
   for (const block of before.fields ?? []) {
     const now = (after.fields ?? []).find((f) => f.id === block.id);
     if (!now) lost.push(`[${locale}] block "${block.name}" is gone`);
-    else if ((now.label ?? null) !== (block.label ?? null)) lost.push(`[${locale}] "${block.name}" label changed`);
+    else if (block.name !== 'hostSharing' && (now.label ?? null) !== (block.label ?? null)) lost.push(`[${locale}] "${block.name}" label changed`);
   }
 }
 if (again.length || lost.length) {

@@ -812,7 +812,7 @@ export interface ConsentRecord {
   createdAt: string;
 }
 /**
- * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file not attached to any submission within 24 hours is deleted automatically.
+ * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "applicant-files".
@@ -836,7 +836,7 @@ export interface ApplicantFile {
   focalY?: number | null;
 }
 /**
- * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
+ * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers; the email address once they admit someone, so they can contact them to register) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "share-links".
@@ -973,6 +973,10 @@ export interface Form {
              * Shown under the field, e.g. "PDF, max. 5 MB".
              */
             description?: string | null;
+            /**
+             * Optional. The name of a text question on this form that may stand in for the file, e.g. "linkedin" for "or your LinkedIn profile". The site shows that question right under the upload and then needs either a file or a full web address.
+             */
+            alternative?: string | null;
             id?: string | null;
             blockName?: string | null;
             blockType: 'upload';
@@ -1097,6 +1101,8 @@ export interface ShareAccessLog {
   createdAt: string;
 }
 /**
+ * Someone withdrew their consent or asked to be deleted? Delete their submission – its CV is deleted with it. TechTour registrations are also deleted automatically on the day set under TechTour Page → "Delete registrations on".
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
@@ -1131,7 +1137,7 @@ export interface FormSubmission {
    */
   language?: ('en' | 'de') | null;
   /**
-   * Every box the person ticked, worded exactly as they saw it when they sent the form. Kept as proof: the form’s own labels may be edited later.
+   * Every box the person ticked, worded exactly as they saw it, with the version of that wording and the time it was sent – the proof of their consent. Kept as sent: the form’s own labels may be edited later, and nobody can change this record.
    */
   agreedTo?:
     | {
@@ -2178,6 +2184,7 @@ export interface FormsSelect<T extends boolean = true> {
               label?: T;
               required?: T;
               description?: T;
+              alternative?: T;
               id?: T;
               blockName?: T;
             };
@@ -2718,6 +2725,10 @@ export interface TechTour {
    */
   visibility?: ('hidden' | 'unlisted' | 'public') | null;
   /**
+   * On this day every TechTour registration sent before it is deleted automatically – with its CV, the host companies' decisions and the host share links. The Datenschutz names the date: at most three months after the event week (2026: 31 Jan 2027). Registrations sent later are kept until you set the next date. Empty = nothing is deleted automatically.
+   */
+  deleteRegistrationsOn?: string | null;
+  /**
    * Untick to close registration: the page shows the "registration closed" message instead of the form.
    */
   registrationOpen?: boolean | null;
@@ -2958,6 +2969,7 @@ export interface HomepageSelect<T extends boolean = true> {
  */
 export interface TechTourSelect<T extends boolean = true> {
   visibility?: T;
+  deleteRegistrationsOn?: T;
   registrationOpen?: T;
   registrationDeadline?: T;
   events?:
