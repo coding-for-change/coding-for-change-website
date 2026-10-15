@@ -836,7 +836,7 @@ export interface ApplicantFile {
   focalY?: number | null;
 }
 /**
- * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers; the email address once they admit someone, so they can contact them to register) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
+ * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "share-links".

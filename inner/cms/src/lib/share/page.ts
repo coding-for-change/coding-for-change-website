@@ -89,9 +89,6 @@ ol.people { list-style:none; margin:0; padding:0; }
 .person .who small { display:block; color:var(--muted); font-size:13px; }
 .person .who .details { margin:4px 0 0; font-size:14px; color:var(--ink); }
 .person .who .details span { color:var(--muted); }
-.person .who .contact { margin:4px 0 0; font-size:14px; }
-.person .who .contact span { color:var(--muted); }
-.person .who .contact:empty { display:none; }
 .act { display:flex; align-items:center; gap:16px; }
 .cv { font-size:14px; white-space:nowrap; padding:6px 12px; border:1px solid var(--line); border-radius:4px; text-decoration:none; min-width:64px; text-align:center; }
 .cv:hover { background:var(--soft); }
@@ -173,21 +170,11 @@ const SCRIPT = `
   };
   let filter = 'all';
   $$('.seg button').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.filter; show(filter); }));
-  // An admitted person's address arrives with the decision and leaves with it.
-  const contact = (row, email) => {
-    const el = $('.contact', row); if (!el) return;
-    el.textContent = '';
-    if (!email) return;
-    const label = document.createElement('span'); label.textContent = 'Email: ';
-    const a = document.createElement('a'); a.href = 'mailto:' + email; a.textContent = email;
-    el.append(label, a);
-  };
-  const apply = (decisions, contacts) => {
+  const apply = (decisions) => {
     Object.entries(decisions).forEach(([id, d]) => {
       const row = $('.person[data-id="' + id + '"]'); if (!row) return;
       row.dataset.decision = d || '';
       $$('.decide button', row).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.d === d)));
-      contact(row, contacts && contacts[id]);
     });
     counts(); show(filter);
   };
@@ -196,7 +183,7 @@ const SCRIPT = `
     const row = btn.closest('.person');
     const next = row.dataset.decision === btn.dataset.d ? null : btn.dataset.d;
     $$('.decide button', row).forEach((b) => (b.disabled = true));
-    try { const res = await post('/decision', { submissions: [Number(row.dataset.id)], decision: next }); apply(res.decisions, res.contacts); say($('#list-msg'), ''); }
+    try { apply((await post('/decision', { submissions: [Number(row.dataset.id)], decision: next })).decisions); say($('#list-msg'), ''); }
     catch (err) { say($('#list-msg'), err.message, true); }
     $$('.decide button', row).forEach((b) => (b.disabled = false));
   });
@@ -206,7 +193,7 @@ const SCRIPT = `
     if (!open.length) return;
     if (!bulk.dataset.armed) { bulk.dataset.armed = '1'; bulk.textContent = 'Admit ' + open.length + (open.length === 1 ? ' person' : ' people') + '? Click again'; setTimeout(() => { if (bulk.dataset.armed) counts(); }, 5000); return; }
     bulk.disabled = true; say($('#list-msg'), 'Saving…');
-    try { const res = await post('/decision', { submissions: open, decision: 'admitted' }); apply(res.decisions, res.contacts); say($('#list-msg'), ''); }
+    try { apply((await post('/decision', { submissions: open, decision: 'admitted' })).decisions); say($('#list-msg'), ''); }
     catch (err) { say($('#list-msg'), err.message, true); counts(); }
   });
   $('#sign-out').addEventListener('click', async () => { await post('/sign-out').catch(() => {}); location.reload(); });
@@ -291,7 +278,6 @@ export function sharePage(input: PageInput): string {
     <strong>${esc(r.name)}</strong>
     <small>registered ${esc(fmtDay.format(new Date(r.registeredAt)))}</small>
     ${r.details.length ? `<p class="details">${r.details.map((d) => `<span>${esc(d.label)}:</span> ${esc(d.value)}`).join(' · ')}</p>` : ''}
-    <p class="contact">${r.email ? `<span>Email: </span><a href="mailto:${esc(r.email)}">${esc(r.email)}</a>` : ''}</p>
   </div>
   <div class="act">
     ${r.hasCv ? `<a class="cv" href="${base}/cv/${r.id}" target="_blank" rel="noopener">CV ↗</a>` : '<span class="cv none">No CV</span>'}
@@ -331,7 +317,7 @@ export function sharePage(input: PageInput): string {
   <ol class="people">${rows}</ol>
   <p class="empty${input.rows.length ? ' hidden' : ''}" id="none">${input.rows.length ? 'Nobody in this view.' : 'Nobody has registered for this evening yet.'}</p>
 </section>
-<aside class="notice"><strong>Please use these registrations only to decide who joins your evening and to prepare it</strong> (for example access to your building), and delete any CVs you downloaded once the evening is over. When you admit someone, their email address appears so you can contact them to register for your evening – please use it for nothing else. Everyone here agreed to this. Your decisions reach us right away – we let everyone know. Questions: <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a></aside>`,
+<aside class="notice"><strong>Please use these registrations only to decide who joins your evening and to prepare it</strong> (for example access to your building), and delete any CVs you downloaded once the evening is over. Your decisions reach us right away – we let everyone know. Questions: <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a></aside>`,
     base,
   );
 }

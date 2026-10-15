@@ -34,7 +34,6 @@ import {
  *   POST /api/share/:token/code               { email } → a code by mail, if listed
  *   POST /api/share/:token/verify             { email, code } → sign-in cookie
  *   POST /api/share/:token/decision           { submissions: [id…], decision: 'admitted' | 'declined' | null }
- *                                             → { decisions, contacts } (an admitted person's email address)
  *   GET  /api/share/:token/cv/:submission     the registration's CV (PDF)
  *   POST /api/share/:token/sign-out
  *
@@ -221,18 +220,13 @@ const decision: Endpoint = {
       return json({ error: 'That did not work – please reload the page.' }, 400);
     }
     const decisions: Record<number, HostDecision | null> = {};
-    // The page shows an address only next to someone admitted, and learns it
-    // here – it is never in the page for anyone else.
-    const contacts: Record<number, string | null> = {};
     for (const id of ids) {
-      const done = await decide(req.payload, ctx.link, id, value, ctx.email, req);
-      if (done) {
+      if (await decide(req.payload, ctx.link, id, value, ctx.email, req)) {
         decisions[id] = value;
-        contacts[id] = done.email;
         await log(req, ctx.link, ctx.email, value ?? 'undone', id);
       }
     }
-    return json({ decisions, contacts });
+    return json({ decisions });
   },
 };
 

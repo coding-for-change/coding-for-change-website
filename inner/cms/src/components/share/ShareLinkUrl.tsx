@@ -55,7 +55,7 @@ export const ShareLinkUrl: React.FC = () => {
       url,
       'Sign in with this email address – you will get a six-digit code. For each person you can admit or decline; we let everyone know.',
       until ? `The link works until ${fmt.format(until)}.` : '',
-      'Please use the registrations only to decide who joins your evening and to prepare it, and delete any CVs you download once the evening is over. Once you admit someone you will see their email address, so you can contact them to register – please use it for nothing else.',
+      'Please use the registrations only to decide who joins your evening and to prepare it, and delete any CVs you download once the evening is over.',
       'Thank you!',
       'Coding for Change',
     ]
