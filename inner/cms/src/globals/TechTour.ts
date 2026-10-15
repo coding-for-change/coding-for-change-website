@@ -6,14 +6,25 @@ import { GlobalConfig } from 'payload';
  * the registration settings. The registration form itself is the form-builder
  * form titled "techtour", so questions are added in the admin.
  *
- * Every field here is rendered by the site. The page's own wording – the
- * headline, the "Apply for one stop or all four" lines, the stop labels – is
- * not content but part of the layout, and lives in the site's translation table
+ * Every field here is rendered by the site, or – like the deletion date – acted
+ * on by the CMS itself. The page's own wording – the headline, the "Apply for
+ * one stop or all four" lines, the stop labels – is not content but part of
+ * the layout, and lives in the site's translation table
  * (`inner/src/i18n/translations.ts`, key `techtour`); a field for it here would
  * be a knob that changes nothing. Anything added below has to be rendered by
- * `components/showcase/TechTour*.tsx` in the same change, or it becomes the
- * same dead weight.
+ * `components/showcase/TechTour*.tsx` (or used by the CMS) in the same change,
+ * or it becomes the same dead weight.
  */
+
+/** The last evening's date, or null without any. */
+const lastEvening = (data: unknown): Date | null => {
+  const events = (data as { events?: { date?: string | null }[] | null } | null)?.events ?? [];
+  const times = events
+    .map((ev) => (ev?.date ? new Date(ev.date).getTime() : Number.NaN))
+    .filter(Number.isFinite);
+  return times.length ? new Date(Math.max(...times)) : null;
+};
+
 export const TechTour: GlobalConfig = {
   slug: 'tech-tour',
   label: 'TechTour Page',
@@ -51,6 +62,33 @@ export const TechTour: GlobalConfig = {
         position: 'sidebar',
         description:
           'Switch to "Public" once the content is complete. Hidden and Unlisted pages carry a noindex tag and are left out of the sitemap; Hidden also removes the "TechTour 2026" link from the navigation and footer.',
+      },
+    },
+    {
+      // Storage limitation (Art. 5(1)(e) GDPR): the Datenschutz promises a
+      // date, and lib/retention.ts keeps it. Only registrations sent *before*
+      // the date go, so a date left over from last year can never touch the
+      // next TechTour's registrations – it just stops deleting until a new
+      // date is set. And it has to lie after the last evening, so a slip of
+      // the date picker cannot delete this year's registrations early.
+      name: 'deleteRegistrationsOn',
+      type: 'date',
+      label: 'Delete registrations on',
+      validate: (value: unknown, { data }: { data: unknown }) => {
+        if (!value) return true;
+        const on = new Date(value as string);
+        if (Number.isNaN(on.getTime())) return 'This is not a valid date.';
+        const last = lastEvening(data);
+        if (last && on.getTime() <= last.getTime()) {
+          return `Pick a day after the last evening (${last.toISOString().slice(0, 10)}) – an earlier one would delete this TechTour's registrations before it takes place.`;
+        }
+        return true;
+      },
+      admin: {
+        position: 'sidebar',
+        date: { pickerAppearance: 'dayOnly' },
+        description:
+          'On this day every TechTour registration sent before it is deleted automatically – with its CV, the host companies\' decisions and the host share links. The Datenschutz names the date: at most three months after the event week (2026: 31 Jan 2027). Registrations sent later are kept until you set the next date. Empty = nothing is deleted automatically.',
       },
     },
     {

@@ -21,10 +21,14 @@ import { WaitlistSignups } from './collections/WaitlistSignups';
 import { AnalyticsEvents } from './collections/AnalyticsEvents';
 import { ConsentRecords } from './collections/ConsentRecords';
 import { ApplicantFiles } from './collections/ApplicantFiles';
+import { ShareLinks } from './collections/ShareLinks';
+import { ShareAccessLog } from './collections/ShareAccessLog';
 import { attributionField } from './fields/attribution';
 import { reviewFields } from './fields/review';
 import { recordSubmission, submissionRecordFields } from './fields/submissionRecord';
+import { hostDecisionsField } from './fields/hostDecisions';
 import { submissionsExport } from './endpoints/submissionsExport';
+import { shareEndpoints } from './endpoints/share';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -32,6 +36,8 @@ import {
   submissionFilesField,
 } from './lib/formBlocks';
 import { purgeOrphanApplicantFiles } from './lib/purgeApplicantFiles';
+import { deleteSubmissionFiles, purgeTechTourRegistrations } from './lib/retention';
+import { rejectHoneypot } from './lib/honeypot';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
 import { analyticsSummary } from './endpoints/analyticsSummary';
 import { waitlistEmailEndpoints } from './endpoints/waitlistEmail';
@@ -96,12 +102,14 @@ const questionsWithoutWidth = (field: Field): Field =>
 
 export default buildConfig({
   editor: lexicalEditor(),
-  collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles],
+  collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles, ShareLinks, ShareAccessLog],
   globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour],
   // Admin-only analytics reporting: JSON aggregates for the /admin/analytics
   // dashboard, plus CSV exports (campaign funnel, raw events, signups) and
   // the bulk "email the waitlist" sender (individual mails via Resend).
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport],
+  // The host share links (/api/share/:token…) are public, guarded by their
+  // token and an emailed sign-in code – see endpoints/share.ts.
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -186,24 +194,31 @@ export default buildConfig({
       // boxes, the keys of the picked options – fields/submissionRecord.ts),
       // and the campaign / traffic-source attribution (same shared field as
       // WaitlistSignups) so conversions can be attributed to the poster or
-      // link a visitor came from.
+      // link a visitor came from. A submission whose hidden spam-trap box is
+      // filled is refused (lib/honeypot.ts); a deleted one takes its CV with
+      // it (lib/retention.ts).
       formSubmissionOverrides: {
         fields: ({ defaultFields }) => [
           ...reviewFields,
           ...defaultFields.map(readOnlyInAdmin),
           submissionFilesField,
           ...submissionRecordFields,
+          hostDecisionsField,
           attributionField,
         ],
         hooks: {
+          beforeOperation: [rejectHoneypot],
           beforeChange: [recordSubmission],
+          afterDelete: [deleteSubmissionFiles],
         },
         // The plugin forbids updates; admins need them for the review fields.
         access: {
           update: ({ req: { user } }) => Boolean(user),
         },
         admin: {
-          defaultColumns: ['form', 'reviewStatus', 'createdAt'],
+          defaultColumns: ['form', 'reviewStatus', 'reviewScore', 'createdAt'],
+          description:
+            'Someone withdrew their consent or asked to be deleted? Delete their submission – its CV is deleted with it. TechTour registrations are also deleted automatically on the day set under TechTour Page → "Delete registrations on".',
           components: {
             // "Download as Excel" — one .xlsx per form (see endpoints/submissionsExport.ts).
             beforeListTable: ['/components/submissions/ExportSubmissions#ExportSubmissions'],
@@ -271,19 +286,34 @@ export default buildConfig({
           path: '/analytics',
           exact: true,
         },
+        // Going through applications and TechTour registrations one by one:
+        // answers, CV, score, decision, notes (components/review/). Guards
+        // auth itself, like the dashboard.
+        reviewWorkspace: {
+          Component: '/components/review/ReviewView#ReviewView',
+          path: '/review',
+          exact: true,
+        },
       },
-      afterNavLinks: ['/components/analytics/AnalyticsNavLink#AnalyticsNavLink'],
+      afterNavLinks: [
+        '/components/review/ReviewNavLink#ReviewNavLink',
+        '/components/analytics/AnalyticsNavLink#AnalyticsNavLink',
+      ],
     },
   },
   // Enforce the analytics retention window (GDPR storage limitation): purge
   // old behavioural events once at startup, then daily while the server runs.
-  // The same schedule removes applicant uploads that never made it onto a
-  // submission. Failures are logged, never fatal; the interval is unref'd so
-  // it never holds a build/CLI process open.
+  // The same schedule deletes the TechTour registrations once their deletion
+  // day has come (lib/retention.ts) and removes applicant uploads that never
+  // made it onto a submission. Failures are logged, never fatal; the interval
+  // is unref'd so it never holds a build/CLI process open.
   onInit: async (payload) => {
     const run = async () => {
       await purgeAnalyticsEvents(payload).catch((err) =>
         payload.logger.error(err, '[analytics] retention purge failed'),
+      );
+      await purgeTechTourRegistrations(payload).catch((err) =>
+        payload.logger.error(err, '[retention] TechTour purge failed'),
       );
       await purgeOrphanApplicantFiles(payload).catch((err) =>
         payload.logger.error(err, '[applicant-files] orphan purge failed'),

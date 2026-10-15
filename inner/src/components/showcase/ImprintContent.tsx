@@ -21,7 +21,8 @@ const ImprintContent: React.FC<{
         return <RichText className="lp-prose" content={legal.impressum} />;
     }
     if (props.section === 'privacy') {
-        return <RichText className="lp-prose" content={legal.privacyPolicy} />;
+        // Anchored, so a form can link to its own section (/privacy#munich-techtour).
+        return <RichText className="lp-prose" content={legal.privacyPolicy} anchors />;
     }
 
     return (

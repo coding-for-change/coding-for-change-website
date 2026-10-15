@@ -83,6 +83,8 @@ export interface Config {
     'analytics-events': AnalyticsEvent;
     'consent-records': ConsentRecord;
     'applicant-files': ApplicantFile;
+    'share-links': ShareLink;
+    'share-access-log': ShareAccessLog;
     forms: Form;
     'form-submissions': FormSubmission;
     'payload-mcp-api-keys': PayloadMcpApiKey;
@@ -108,6 +110,8 @@ export interface Config {
     'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
     'consent-records': ConsentRecordsSelect<false> | ConsentRecordsSelect<true>;
     'applicant-files': ApplicantFilesSelect<false> | ApplicantFilesSelect<true>;
+    'share-links': ShareLinksSelect<false> | ShareLinksSelect<true>;
+    'share-access-log': ShareAccessLogSelect<false> | ShareAccessLogSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
     'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
@@ -808,7 +812,7 @@ export interface ConsentRecord {
   createdAt: string;
 }
 /**
- * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file not attached to any submission within 24 hours is deleted automatically.
+ * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "applicant-files".
@@ -830,6 +834,46 @@ export interface ApplicantFile {
   height?: number | null;
   focalX?: number | null;
   focalY?: number | null;
+}
+/**
+ * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-links".
+ */
+export interface ShareLink {
+  id: number;
+  /**
+   * Heading of the page the host sees, e.g. "QuantCo – Wed 11 Nov".
+   */
+  title: string;
+  /**
+   * The host sees everyone who registered for this evening.
+   */
+  option: string;
+  /**
+   * Who may open the link. Each signs in with a six-digit code sent to the address entered here, so a forwarded link alone opens nothing.
+   */
+  recipients: {
+    email: string;
+    name?: string | null;
+    id?: string | null;
+  }[];
+  /**
+   * The link stops working then. Left empty, it is the end of the event week – the latest the Datenschutz allows.
+   */
+  expiresAt?: string | null;
+  /**
+   * Stops the link at once (and anyone signed in). Untick to open it again.
+   */
+  blocked?: boolean | null;
+  /**
+   * The registration form – the one titled "techtour" unless you pick another.
+   */
+  form?: (number | null) | Form;
+  token?: string | null;
+  updatedAt: string;
+  createdAt: string;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1035,6 +1079,26 @@ export interface Form {
   createdAt: string;
 }
 /**
+ * Every sign-in, CV opened and decision on a host share link. Written by the link itself; deleted together with the link.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-access-log".
+ */
+export interface ShareAccessLog {
+  id: number;
+  link?: (number | null) | ShareLink;
+  email?: string | null;
+  action?: ('code' | 'sign-in' | 'cv' | 'admitted' | 'declined' | 'undone' | 'sign-out') | null;
+  /**
+   * Id of the registration the CV or decision was about.
+   */
+  submission?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Someone withdrew their consent or asked to be deleted? Delete their submission – its CV is deleted with it. TechTour registrations are also deleted automatically on the day set under TechTour Page → "Delete registrations on".
+ *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "form-submissions".
  */
@@ -1044,6 +1108,10 @@ export interface FormSubmission {
    * Your verdict on this applicant.
    */
   reviewStatus?: ('unreviewed' | 'accepted' | 'unsure' | 'rejected') | null;
+  /**
+   * How strong the applicant is, from 1 (weak) to 10 (outstanding). Leave empty until reviewed.
+   */
+  reviewScore?: number | null;
   /**
    * Internal notes — never shown to the applicant. Included in the Excel export.
    */
@@ -1065,7 +1133,7 @@ export interface FormSubmission {
    */
   language?: ('en' | 'de') | null;
   /**
-   * Every box the person ticked, worded exactly as they saw it when they sent the form. Kept as proof: the form’s own labels may be edited later.
+   * Every box the person ticked, worded exactly as they saw it, with the version of that wording and the time it was sent – the proof of their consent. Kept as sent: the form’s own labels may be edited later, and nobody can change this record.
    */
   agreedTo?:
     | {
@@ -1080,6 +1148,18 @@ export interface FormSubmission {
    * The stable keys of the options picked in multi-select questions (e.g. the TechTour evenings, "tue-lio"). The answers above keep the labels as shown, which change when an option is renamed; these do not.
    */
   choiceKeys?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * What each evening’s host company decided through its share link: admitted or declined, by whom, when.
+   */
+  hostDecisions?:
     | {
         [k: string]: unknown;
       }
@@ -1510,6 +1590,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'applicant-files';
         value: number | ApplicantFile;
+      } | null)
+    | ({
+        relationTo: 'share-links';
+        value: number | ShareLink;
+      } | null)
+    | ({
+        relationTo: 'share-access-log';
+        value: number | ShareAccessLog;
       } | null)
     | ({
         relationTo: 'forms';
@@ -1971,6 +2059,39 @@ export interface ApplicantFilesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-links_select".
+ */
+export interface ShareLinksSelect<T extends boolean = true> {
+  title?: T;
+  option?: T;
+  recipients?:
+    | T
+    | {
+        email?: T;
+        name?: T;
+        id?: T;
+      };
+  expiresAt?: T;
+  blocked?: T;
+  form?: T;
+  token?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-access-log_select".
+ */
+export interface ShareAccessLogSelect<T extends boolean = true> {
+  link?: T;
+  email?: T;
+  action?: T;
+  submission?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "forms_select".
  */
 export interface FormsSelect<T extends boolean = true> {
@@ -2115,6 +2236,7 @@ export interface FormsSelect<T extends boolean = true> {
  */
 export interface FormSubmissionsSelect<T extends boolean = true> {
   reviewStatus?: T;
+  reviewScore?: T;
   reviewNotes?: T;
   form?: T;
   submissionData?:
@@ -2128,6 +2250,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   language?: T;
   agreedTo?: T;
   choiceKeys?: T;
+  hostDecisions?: T;
   attribution?:
     | T
     | {
@@ -2597,6 +2720,10 @@ export interface TechTour {
    */
   visibility?: ('hidden' | 'unlisted' | 'public') | null;
   /**
+   * On this day every TechTour registration sent before it is deleted automatically – with its CV, the host companies' decisions and the host share links. The Datenschutz names the date: at most three months after the event week (2026: 31 Jan 2027). Registrations sent later are kept until you set the next date. Empty = nothing is deleted automatically.
+   */
+  deleteRegistrationsOn?: string | null;
+  /**
    * Untick to close registration: the page shows the "registration closed" message instead of the form.
    */
   registrationOpen?: boolean | null;
@@ -2833,6 +2960,7 @@ export interface HomepageSelect<T extends boolean = true> {
  */
 export interface TechTourSelect<T extends boolean = true> {
   visibility?: T;
+  deleteRegistrationsOn?: T;
   registrationOpen?: T;
   registrationDeadline?: T;
   events?:
