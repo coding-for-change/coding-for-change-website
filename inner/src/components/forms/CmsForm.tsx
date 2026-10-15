@@ -7,6 +7,7 @@ import type { CmsApplicantFile, CmsForm as CmsFormDoc, CmsFormField } from '../.
 import { getAttribution } from '../../lib/attribution';
 import { trackConversion, trackFormStart } from '../../lib/analytics';
 import { trackAdsConversion, type AdsConversionAction } from '../../lib/googleAds';
+import { consentFor } from '../../lib/consent';
 import { useLanguage } from '../../contexts/LanguageContext';
 import RichText from '../RichText';
 import '../showcase/landing.css';
@@ -37,8 +38,14 @@ import '../showcase/landing.css';
  *   buttons instead of a dropdown. An option label "Projects – build software"
  *   becomes the button's title ("Projects") and a line under it.
  *
+ * Every form also carries a spam trap: a text box nobody sees, sent along as
+ * `hp`; the CMS refuses a submission that arrives with it filled. No reCAPTCHA
+ * or any other third party. And no checkbox starts ticked, whatever default the
+ * admin set – a consent is a deliberate tick.
+ *
  * Conversions: the parent and each submitted sub-form fire their own
- * `conversion` event and Google Ads action, named after the form title.
+ * `conversion` event and Google Ads action, named after the form title. With
+ * `adsOnlyWithConsent` the Google Ads action waits for marketing consent.
  */
 
 const validateEmail = (email: string) => {
@@ -252,6 +259,13 @@ export interface CmsFormProps {
      * length as much as a cap; fields not named here have none.
      */
     textLimits?: Record<string, number>;
+    /**
+     * Send the Google Ads conversion only once the visitor has agreed to
+     * marketing cookies. /techtour/apply asks for it: nothing goes to Google
+     * from that form without consent. Off elsewhere, where Consent Mode's
+     * cookieless ping is the gate (see lib/googleAds.ts).
+     */
+    adsOnlyWithConsent?: boolean;
     className?: string;
     onSubmitted?: () => void;
 }
@@ -267,6 +281,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
     buttonSelects,
     draft,
     textLimits,
+    adsOnlyWithConsent,
     className,
     onSubmitted,
 }) => {
@@ -282,6 +297,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [sendError, setSendError] = useState(false);
+    // The spam trap's content: stays empty unless a script fills it in.
+    const [honeypot, setHoneypot] = useState('');
     // Submissions that already went through, so a retry after a partial
     // failure does not create duplicates.
     const doneRef = useRef<Set<number>>(new Set());
@@ -474,7 +491,10 @@ const CmsForm: React.FC<CmsFormProps> = ({
     const valueOf = (field: PlainInput): Value => {
         const v = values[field.name];
         if (v !== undefined) return v;
-        if (field.blockType === 'checkbox') return field.defaultValue ?? false;
+        // Never ticked in advance, whatever default the admin set: a consent
+        // has to be a deliberate tick (CJEU, Planet49), and every box on our
+        // forms is a consent or a commitment.
+        if (field.blockType === 'checkbox') return false;
         if (field.blockType === 'checkboxGroup') return [];
         if (field.blockType === 'number')
             return field.defaultValue != null ? String(field.defaultValue) : '';
@@ -608,10 +628,14 @@ const CmsForm: React.FC<CmsFormProps> = ({
             if (doneRef.current.has(job.id)) continue;
             try {
                 const { data, files } = serialise(job.list);
-                await submitForm(job.id, data, attribution, files, locale);
+                await submitForm(job.id, data, attribution, files, locale, honeypot);
                 doneRef.current.add(job.id);
                 trackConversion(job.label);
-                if (isAdsAction(job.label)) trackAdsConversion(job.label);
+                if (
+                    isAdsAction(job.label) &&
+                    (!adsOnlyWithConsent || consentFor('marketing') === true)
+                )
+                    trackAdsConversion(job.label);
             } catch {
                 failed = true;
                 break;
@@ -1071,6 +1095,22 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     </React.Fragment>
                 );
             })}
+            {/* Spam trap: out of sight, out of the tab order and hidden from
+                screen readers, so only a script filling in every box finds
+                it – and the CMS then refuses the submission. */}
+            <div className="lp-hp" aria-hidden="true">
+                <label>
+                    Website
+                    <input
+                        type="text"
+                        name="website"
+                        tabIndex={-1}
+                        autoComplete="off"
+                        value={honeypot}
+                        onChange={(e) => setHoneypot(e.target.value)}
+                    />
+                </label>
+            </div>
             {/* Without a draft this is the bare button it has always been —
                 forms that don't opt in keep their exact markup. The draft row's
                 styling lives with the page that does opt in, today only

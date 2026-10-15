@@ -22,10 +22,27 @@ const renderText = (node: LexicalNode, key: React.Key): React.ReactNode => {
     return <React.Fragment key={key}>{element}</React.Fragment>;
 };
 
-const renderChildren = (node: LexicalNode): React.ReactNode =>
-    (node.children ?? []).map((child, i) => renderNode(child, i));
+const plainText = (node: LexicalNode): string =>
+    node.type === 'text' ? node.text ?? '' : (node.children ?? []).map(plainText).join('');
 
-const renderNode = (node: LexicalNode, key: React.Key): React.ReactNode => {
+/**
+ * A heading's anchor: its words without the section number, so a link survives
+ * renumbering – "5a. Munich TechTour" → "munich-techtour", and the forms can
+ * point at /privacy#munich-techtour.
+ */
+export const headingAnchor = (text: string): string =>
+    text
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/^\s*\d+[a-z]?\.\s*/, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+const renderChildren = (node: LexicalNode, anchors = false): React.ReactNode =>
+    (node.children ?? []).map((child, i) => renderNode(child, i, anchors));
+
+const renderNode = (node: LexicalNode, key: React.Key, anchors = false): React.ReactNode => {
     switch (node.type) {
         case 'text':
             return renderText(node, key);
@@ -35,7 +52,12 @@ const renderNode = (node: LexicalNode, key: React.Key): React.ReactNode => {
             return <p key={key}>{renderChildren(node)}</p>;
         case 'heading': {
             const Tag = (node.tag as keyof JSX.IntrinsicElements) || 'h2';
-            return <Tag key={key}>{renderChildren(node)}</Tag>;
+            const id = anchors ? headingAnchor(plainText(node)) : '';
+            return (
+                <Tag key={key} id={id || undefined}>
+                    {renderChildren(node)}
+                </Tag>
+            );
         }
         case 'horizontalrule':
             return <hr key={key} style={styles.divider} />;
@@ -82,11 +104,13 @@ interface RichTextProps {
      * rhythm — see the note on that class in `landing.css`.
      */
     className?: string;
+    /** Give the document's top-level headings ids to link to (see headingAnchor). */
+    anchors?: boolean;
 }
 
-const RichText: React.FC<RichTextProps> = ({ content, className }) => {
+const RichText: React.FC<RichTextProps> = ({ content, className, anchors = false }) => {
     if (!content?.root?.children) return null;
-    const nodes = content.root.children.map((node, i) => renderNode(node, i));
+    const nodes = content.root.children.map((node, i) => renderNode(node, i, anchors));
     return className ? <div className={className}>{nodes}</div> : <>{nodes}</>;
 };
 

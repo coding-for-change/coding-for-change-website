@@ -1,4 +1,5 @@
 import type { CollectionBeforeChangeHook, Field } from 'payload';
+import { createHash } from 'node:crypto';
 import { pickedKeys, type OptionRow } from '../lib/choiceKeys';
 
 /**
@@ -12,7 +13,9 @@ import { pickedKeys, type OptionRow } from '../lib/choiceKeys';
  * labels as shown ("Tue 10 Nov · Lio"), in the visitor's language, and those
  * stop matching as soon as a "to be announced" evening gets its company. So
  * both are copied out of the form once, on create, in the submission's
- * language; nothing writes them afterwards.
+ * language; nothing writes them afterwards – the API cannot either (field
+ * access), so the record stands as proof of consent (Art. 7(1) GDPR): when,
+ * which wording, which version of it, and which evenings.
  */
 
 export const SUBMISSION_LANGUAGES = [
@@ -22,8 +25,25 @@ export const SUBMISSION_LANGUAGES = [
 
 export type SubmissionLanguage = (typeof SUBMISSION_LANGUAGES)[number]['value'];
 
-/** One ticked box, worded as the person saw it. */
-export type AgreedTo = { field: string; label: string }[];
+/**
+ * One ticked box, worded as the person saw it: the label, a fingerprint of
+ * that exact wording (`version`, see `wordingVersion`) and when it was ticked
+ * – the moment the form was sent. Entries recorded before October 2026 carry
+ * only `field` and `label`.
+ */
+export type AgreedTo = { field: string; label: string; version?: string; at?: string }[];
+
+/**
+ * The version of a box's wording: the first twelve hex digits of its SHA-256.
+ * Any edit to the label – a word, a link, the other language – gives a new
+ * version, and the same wording always the same one, so nobody has to keep a
+ * version number by hand and a consent can be matched to its exact text.
+ */
+export const wordingVersion = (label: string): string =>
+  createHash('sha256').update(label.normalize('NFC'), 'utf8').digest('hex').slice(0, 12);
+
+/** Fields that only the hook below writes, on create. */
+const recordOnly = { update: () => false };
 
 /** Option keys picked per multi-select question, e.g. `{ events: ['tue-lio'] }`. */
 export type ChoiceKeys = Record<string, string[]>;
@@ -31,6 +51,7 @@ export type ChoiceKeys = Record<string, string[]>;
 export const submissionRecordFields: Field[] = [
   {
     name: 'language',
+    access: recordOnly,
     type: 'select',
     label: 'Language',
     options: [...SUBMISSION_LANGUAGES],
@@ -42,16 +63,18 @@ export const submissionRecordFields: Field[] = [
   },
   {
     name: 'agreedTo',
+    access: recordOnly,
     type: 'json',
     label: 'Agreed to',
     admin: {
       readOnly: true,
       description:
-        'Every box the person ticked, worded exactly as they saw it when they sent the form. Kept as proof: the form’s own labels may be edited later.',
+        'Every box the person ticked, worded exactly as they saw it, with the version of that wording and the time it was sent – the proof of their consent. Kept as sent: the form’s own labels may be edited later, and nobody can change this record.',
     },
   },
   {
     name: 'choiceKeys',
+    access: recordOnly,
     type: 'json',
     label: 'Picked options',
     admin: {
@@ -95,13 +118,15 @@ export const recordSubmission: CollectionBeforeChangeHook = async ({ data, opera
       String(kv.value ?? ''),
     ]),
   );
+  const at = new Date().toISOString();
   const agreedTo: AgreedTo = [];
   const choiceKeys: ChoiceKeys = {};
   for (const block of (form.fields ?? []) as FormBlock[]) {
     const answer = block.name ? answers.get(block.name) : undefined;
     if (!block.name || answer === undefined) continue;
     if (block.blockType === 'checkbox' && answer === 'true') {
-      agreedTo.push({ field: block.name, label: block.label || block.name });
+      const label = block.label || block.name;
+      agreedTo.push({ field: block.name, label, version: wordingVersion(label), at });
     } else if (block.blockType === 'checkboxGroup' && answer) {
       choiceKeys[block.name] = pickedKeys(answer, block.options ?? []);
     }

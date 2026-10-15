@@ -50,7 +50,7 @@ const L = {
     'fri-tba': 'Fri 13 Nov · To be announced',
     attendCommit: 'I commit to attending the evenings I selected. Spots are limited and the companies plan for us.',
     hostSharing:
-      'I agree that the host company of each evening I pick sees my registration and my CV (not my email address) and decides whether I can join that evening.',
+      'I consent to Coding for Change e.V. passing on my details and my CV to the partner companies of the events I selected (Project A, Lio, QuantCo, QuantumBlack/McKinsey) so that they can select the participants, and to these companies contacting me to register. I can withdraw this consent at any time by emailing info@codingforchange.com.',
     alsoApply: 'I also want to apply to become a Coding for Change member.',
     alsoApplyLink: 'About membership',
     applicationSubmit: 'Send application',
@@ -85,7 +85,7 @@ const L = {
     'fri-tba': 'Fr 13. Nov · Wird noch bekannt gegeben',
     attendCommit: 'Ich verpflichte mich, an den ausgewählten Abenden dabei zu sein. Die Plätze sind begrenzt und die Unternehmen planen mit uns.',
     hostSharing:
-      'Ich bin einverstanden, dass das gastgebende Unternehmen jedes von mir gewählten Abends meine Anmeldung und meinen Lebenslauf sieht (nicht meine E-Mail-Adresse) und entscheidet, ob ich an dem Abend dabei bin.',
+      'Ich willige ein, dass Coding for Change e.V. meine Angaben und meinen Lebenslauf an die Partnerunternehmen der von mir ausgewählten Events (Project A, Lio, QuantCo, QuantumBlack/McKinsey) zur Auswahl der Teilnehmenden weitergibt und diese mich zur Registrierung kontaktieren dürfen. Die Einwilligung kann ich jederzeit per Mail an info@codingforchange.com widerrufen.',
     alsoApply: 'Ich möchte mich auch als Mitglied bei Coding for Change bewerben.',
     alsoApplyLink: 'Mehr zur Mitgliedschaft',
     applicationSubmit: 'Bewerbung absenden',
@@ -173,10 +173,12 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
       description: t.techtourCvHint,
     },
     { blockType: 'checkbox', name: 'attendCommit', label: t.attendCommit, required: true },
-    // Required, not an opt-in: registering *is* asking the host to admit you,
-    // so the host seeing the registration is part of the event (Art. 6(1)(b)
-    // GDPR, Datenschutz section 5). The box says so in plain words, and the
-    // wording ticked is kept on the submission (`agreedTo`).
+    // The consent to pass the registration on to the partner companies of the
+    // evenings picked (Art. 6(1)(a) GDPR, Datenschutz section 5a). Required:
+    // the partner companies select the participants, so a registration is
+    // only ever considered with it. The wording ticked is kept on the
+    // submission (`agreedTo`), and the host share links show only
+    // registrations with this box there.
     { blockType: 'checkbox', name: 'hostSharing', label: t.hostSharing, required: true },
     { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true },
   ];

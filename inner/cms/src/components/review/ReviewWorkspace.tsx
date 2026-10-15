@@ -13,6 +13,7 @@ import {
   ViewDescription,
 } from '@payloadcms/ui';
 import { REVIEW_SCORE_MAX, REVIEW_SCORE_MIN, REVIEW_STATUSES } from '../../fields/review';
+import { consentedToSharing } from '../../lib/sharingConsent';
 import {
   answerRows,
   byEmail,
@@ -20,6 +21,7 @@ import {
   choiceKeysOf,
   filesOf,
   formIdOf,
+  hostDecisionOf,
   personOf,
   SORTS,
   sortSubmissions,
@@ -42,7 +44,7 @@ import './review.css';
  * A / U / R decide, N jumps to the notes, / to the search.
  */
 
-type Props = { apiRoute: string };
+type Props = { apiRoute: string; adminRoute: string };
 
 /** These two first, in this order; any other form after them, by title. */
 const FORM_ORDER = ['application', 'techtour'];
@@ -91,7 +93,7 @@ const isTyping = (target: EventTarget | null) => {
   );
 };
 
-export function ReviewWorkspace({ apiRoute }: Props) {
+export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const [forms, setForms] = useState<FormDoc[]>([]);
   const [subs, setSubs] = useState<Submission[]>([]);
   const [files, setFiles] = useState<Map<number, FileDoc>>(new Map());
@@ -184,6 +186,13 @@ export function ReviewWorkspace({ apiRoute }: Props) {
   }, [inForm]);
   const scored = useMemo(() => inForm.filter((s) => s.reviewScore != null).length, [inForm]);
 
+  // With one evening picked: where its host stands.
+  const hostCounts = useMemo(() => {
+    if (!choiceField?.name || choiceFilter === 'all') return null;
+    const on = inForm.filter((s) => choiceKeysOf(form, s, choiceField.name!).includes(choiceFilter));
+    const n = (d: string | null) => on.filter((s) => hostDecisionOf(s, choiceFilter) === d).length;
+    return { total: on.length, admitted: n('admitted'), declined: n('declined'), waiting: n(null) };
+  }, [inForm, form, choiceField, choiceFilter]);
 
   const matches = useCallback(
     (s: Submission) => {
@@ -404,7 +413,9 @@ export function ReviewWorkspace({ apiRoute }: Props) {
   const others = selected && person?.email ? (people.get(person.email.toLowerCase()) ?? []).filter((s) => s.id !== selected.id) : [];
   const exportHref = form ? `${apiRoute}/submissions-export.xlsx?form=${encodeURIComponent(form.title)}` : undefined;
 
-  const summary = `${scored} of ${inForm.length} scored · ${statusCounts.accepted ?? 0} accepted · ${statusCounts.unsure ?? 0} unsure · ${statusCounts.rejected ?? 0} rejected`;
+  const summary = hostCounts
+    ? `${hostCounts.total} registered for this evening · the host admitted ${hostCounts.admitted}, declined ${hostCounts.declined}, ${hostCounts.waiting} still open`
+    : `${scored} of ${inForm.length} scored · ${statusCounts.accepted ?? 0} accepted · ${statusCounts.unsure ?? 0} unsure · ${statusCounts.rejected ?? 0} rejected`;
 
   const statusOptions = (['all', 'unreviewed', ...DECISIONS.map((d) => d.value)] as StatusFilter[]).map((key) => ({
     value: key,
@@ -474,6 +485,21 @@ export function ReviewWorkspace({ apiRoute }: Props) {
             />
           )}
           <FilterMenu label="Sort" value={sort} options={SORTS.map((o) => ({ value: o.key, label: o.label }))} onChange={(v) => setSort(v as SortKey)} showValue />
+          {choiceField?.name && (
+            <Button
+              buttonStyle="pill"
+              size="small"
+              margin={false}
+              el="link"
+              to={
+                choiceFilter === 'all'
+                  ? `${adminRoute}/collections/share-links`
+                  : `${adminRoute}/collections/share-links/create?option=${encodeURIComponent(choiceFilter)}`
+              }
+            >
+              {choiceFilter === 'all' ? 'Host share links' : 'Share with the host'}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -483,6 +509,7 @@ export function ReviewWorkspace({ apiRoute }: Props) {
           {list.map((s) => {
             const p = personOf(s);
             const also = (people.get(p.email.toLowerCase()) ?? []).filter((o) => o.id !== s.id);
+            const host = choiceFilter !== 'all' ? hostDecisionOf(s, choiceFilter) : null;
             return (
               <button
                 key={s.id}
@@ -502,6 +529,11 @@ export function ReviewWorkspace({ apiRoute }: Props) {
                   </span>
                 </span>
                 <span className="rv-row__side">
+                  {host && (
+                    <span className={`rv-badge rv-badge--${host}`} title={`The host ${host} this person`}>
+                      {host === 'admitted' ? 'Admitted' : 'Declined'}
+                    </span>
+                  )}
                   {also.length > 0 && (
                     <span className="rv-badge" title={also.map((o) => formName(formTitleById.get(formIdOf(o)) ?? { id: 0, title: '?' })).join(', ')}>
                       +{also.length}
@@ -641,6 +673,33 @@ export function ReviewWorkspace({ apiRoute }: Props) {
                     );
                   })}
                 </div>
+              )}
+
+              {choiceField?.name && choiceKeysOf(form, selected, choiceField.name).length > 0 && (
+                <section className="rv-section" aria-label="Host decisions">
+                  <span className="field-label">Host decisions</span>
+                  <ul className="rv-hosts">
+                    {choiceKeysOf(form, selected, choiceField.name).map((key) => {
+                      const d = selected.hostDecisions?.[key];
+                      const label = choiceField.options?.find((o) => o.value === key)?.label ?? key;
+                      // The host share links leave out anyone who did not agree
+                      // to it (lib/sharingConsent.ts) – say so rather than wait.
+                      const shared = consentedToSharing(selected);
+                      return (
+                        <li key={key} className="rv-hosts__row">
+                          <span>{label}</span>
+                          <span className={`rv-badge${d ? ` rv-badge--${d.decision}` : ''}`}>
+                            {d
+                              ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
+                              : shared
+                                ? 'Waiting for the host'
+                                : 'Not shared – no consent to pass it on'}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
               )}
 
               <section className="rv-answers">

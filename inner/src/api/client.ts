@@ -44,7 +44,9 @@ export interface FormSubmissionValue {
 /**
  * Create a form-builder submission. `files` are ids returned by
  * `uploadApplicantFile`; they land in the submission's `files` relationship so
- * an admin can open the CV from the submission.
+ * an admin can open the CV from the submission. `honeypot` is whatever ended up
+ * in the form's hidden spam-trap box – the CMS refuses the submission when it
+ * is not empty (inner/cms/src/lib/honeypot.ts) and never stores it.
  */
 export async function submitForm(
     formId: number,
@@ -52,7 +54,8 @@ export async function submitForm(
     attribution?: Attribution | null,
     files?: number[],
     /** The site language; the CMS answers the applicant's confirmation mail in it. */
-    locale?: string
+    locale?: string,
+    honeypot?: string
 ): Promise<void> {
     const query = locale ? `?locale=${encodeURIComponent(locale)}` : '';
     const res = await fetch(`${API_BASE}/form-submissions${query}`, {
@@ -63,6 +66,7 @@ export async function submitForm(
             submissionData,
             ...(files?.length ? { files } : {}),
             ...(attribution ? { attribution } : {}),
+            hp: honeypot ?? '',
         }),
     });
     if (!res.ok) {

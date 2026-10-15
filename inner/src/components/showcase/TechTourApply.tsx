@@ -331,6 +331,9 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
                                         checkboxGroups={checkboxGroups}
                                         fieldOrder={fieldOrder}
                                         sections={sections}
+                                        // Nothing goes to Google from this form
+                                        // without marketing consent.
+                                        adsOnlyWithConsent
                                         draft={{
                                             key: DRAFT_KEY,
                                             labels: {

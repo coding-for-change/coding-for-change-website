@@ -3,8 +3,8 @@
  * Apply the Datenschutz edits for the application forms + Munich TechTour to
  * a running CMS (Legal global → Privacy Policy, English and German). The edits
  * are structural and idempotent — see scripts/lib/privacyEdits.mjs; the texts
- * are the ones in GO-LIVE-RUNBOOK.md §7. Re-run it whenever those texts change:
- * an outdated section 5 is replaced, a current one is left alone.
+ * are the ones in TECHTOUR-DATENSCHUTZ.md. Re-run it whenever those texts
+ * change: an outdated section 5 or 5a is replaced, a current one is left alone.
  *
  *   CMS_URL=https://codingforchange.com CMS_EMAIL=… CMS_PASSWORD=… \
  *     node scripts/upsert-content.mjs                 # dry run: shows what would change, writes nothing
@@ -64,7 +64,9 @@ console.log(`Datenschutz edits on ${BASE} — options: transfer=${options.transf
 
 let failed = false;
 for (const locale of locales) {
-  const res = await fetch(`${BASE}/api/globals/legal?locale=${locale}&depth=0`, { headers: { cookie } });
+  // `fallback-locale=none`: with the fallback a missing German text comes back
+  // in English, and saving it would write English into the German version.
+  const res = await fetch(`${BASE}/api/globals/legal?locale=${locale}&fallback-locale=none&depth=0`, { headers: { cookie } });
   if (!res.ok) {
     console.error(`[${locale}] could not load the Legal global: ${res.status}`);
     failed = true;
@@ -99,7 +101,7 @@ for (const locale of locales) {
     continue;
   }
   // Read back and prove the edits landed.
-  const check = await (await fetch(`${BASE}/api/globals/legal?locale=${locale}&depth=0`, { headers: { cookie } })).json();
+  const check = await (await fetch(`${BASE}/api/globals/legal?locale=${locale}&fallback-locale=none&depth=0`, { headers: { cookie } })).json();
   const again = applyPrivacyEdits(check.privacyPolicy, locale, options);
   console.log(again.changes.length === 0 ? '  ✓ saved and verified' : `  ✗ saved, but a re-run still wants to change: ${again.changes.join('; ')}`);
   if (again.changes.length) failed = true;

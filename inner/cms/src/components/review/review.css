@@ -10,12 +10,14 @@
  * lists, field labels like the edit view, and a divider between the columns
  * like the edit view's sidebar. Dark mode comes with the tokens.
  *
- * "Accepted" is the one colour of our own: Payload's "success" scale is blue,
- * and a yes should read green.
+ * "Accepted" and "admitted" are the one colour of our own: Payload's
+ * "success" scale is blue, and a yes should read green (ink ≥ 6:1 on its tint).
  */
 
 .rv {
   --rv-yes: #1a7f37;
+  --rv-yes-tint: #dafbe1;
+  --rv-yes-ink: #116329;
   --rv-gap: calc(var(--base) * 0.8);
 
   container: rv / inline-size;
@@ -29,6 +31,8 @@
 
 html[data-theme='dark'] .rv {
   --rv-yes: #3fb950;
+  --rv-yes-tint: rgba(46, 160, 67, 0.18);
+  --rv-yes-ink: #7ee787;
 }
 
 .rv--message {
@@ -230,6 +234,16 @@ html[data-theme='dark'] .rv {
   font-weight: 400;
 }
 
+.rv-badge--admitted {
+  --rv-badge-bg: var(--rv-yes-tint);
+  color: var(--rv-yes-ink);
+}
+
+.rv-badge--declined {
+  --rv-badge-bg: var(--theme-error-100);
+  color: var(--theme-error-750);
+}
+
 .rv-dot {
   flex: none;
   display: inline-block;
@@ -414,6 +428,32 @@ html[data-theme='dark'] .rv {
   text-align: start;
 }
 
+/* host decisions (TechTour) */
+
+.rv-section {
+  padding-top: calc(var(--base) * 0.8);
+}
+
+.rv-hosts {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--base) * 0.2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-hosts__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--base) * 0.2) calc(var(--base) * 0.6);
+  padding: calc(var(--base) * 0.4) calc(var(--base) * 0.6);
+  border-radius: var(--style-radius-s);
+  background: var(--theme-elevation-50);
+}
+
 /* answers */
 
 .rv-answers {
@@ -431,7 +471,8 @@ html[data-theme='dark'] .rv {
 }
 
 .rv-fact dt,
-.rv-qa .field-label {
+.rv-qa .field-label,
+.rv-section .field-label {
   color: var(--theme-elevation-500);
 }
 
