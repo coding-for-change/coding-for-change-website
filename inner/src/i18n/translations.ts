@@ -192,21 +192,29 @@ export interface Translations {
      */
     techtour: {
         statusOpen: string; statusClosed: string;
-        tbaCompany: string; tbaTime: string; tbaLocation: string; tentative: string;
+        tbaCompany: string; tentative: string;
         formHeading: string; closedFallback: string; formUnavailable: string;
-        /** The poster's headline. Two words, unlike the one-word brand usage
+        /** The page's headline. Three words, unlike the one-word brand usage
          *  in the nav and the footer. */
-        posterTitle: string;
-        /** The three facts on the poster; {count} is the number of evenings. */
-        factFormatLabel: string; factDatesLabel: string; factDeadlineLabel: string;
-        factEvenings: string;
+        title: string;
+        /** The chip above it, and the line under it: "Open event series ·
+         *  9–12 Nov 2026 · Munich" (the dates come from the CMS). */
+        badgeOpen: string; badgeClosed: string; kicker: string; city: string;
+        /**
+         * {count} is the number of evenings, spelled out from `numbers` while
+         * it has a word there ("four"), in figures beyond that. The lead
+         * starts a sentence, so the page capitalises its first letter.
+         */
+        lead: string; applyNote: string; until: string; numbers: string[];
         /** The one ask: the button, and the page behind it (/techtour/apply). */
-        applyCta: string; detailsCta: string; backToTour: string;
-        /** The Explore section below the poster. */
-        learnMoreCta: string; scrollHint: string; exploreKicker: string;
-        exploreHeading: string; exploreLead: string;
-        eventApplyCta: string; eventSiteCta: string; tileHint: string;
-        factTimeLabel: string; factPlaceLabel: string;
+        applyCta: string; backToTour: string;
+        /** Accessible names for the logo row and the route. */
+        hostsLabel: string; routeLabel: string;
+        /** One stop on the route. {n} is its number, {company} the host. */
+        stop: string; stopApply: string; stopNote: string;
+        timeTba: string; placeTba: string; websiteLabel: string;
+        /** The ask again, under the route. {date} is the deadline. */
+        endKicker: string; endTitle: string; endText: string;
         /**
          * /techtour/apply — the half-filled form a visitor can park and come
          * back to. Saved only when they press the button, only in their own
@@ -617,33 +625,35 @@ const en: Translations = {
         statusOpen: 'Registration open',
         statusClosed: 'Registration closed',
         tbaCompany: 'Company to be announced',
-        tbaTime: 'Time to be announced',
-        tbaLocation: 'Location to be announced',
         tentative: 'Tentative',
         formHeading: 'Register for the TechTour',
         closedFallback:
             'Registration for this TechTour has closed. Follow us on LinkedIn to hear about the next one.',
         formUnavailable:
             'The registration form is currently unavailable. Please email us directly.',
-        posterTitle: 'Munich Tech Tour',
-        factFormatLabel: 'Format',
-        factDatesLabel: 'When',
-        factDeadlineLabel: 'Apply by',
-        factEvenings: '{count} evenings · free',
+        title: 'Munich Tech Tour',
+        badgeOpen: 'Applications open',
+        badgeClosed: 'Applications closed',
+        kicker: 'Open event series',
+        city: 'Munich',
+        lead: '{count} independent evenings at {count} tech companies – hop on at any stop.',
+        applyNote: 'Apply for one stop or all {count}',
+        until: 'until {date}',
+        numbers: ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'],
         applyCta: 'Apply now',
-        detailsCta: 'See the details',
-        backToTour: 'Back to the line-up',
-        learnMoreCta: 'Learn more',
-        scrollHint: 'Scroll down to learn more',
-        exploreKicker: 'The week, evening by evening',
-        exploreHeading: 'What each visit looks like',
-        exploreLead:
-            'Come to one evening or to all of them. Every visit is hosted by the company itself — you are in their office, with the people who work there.',
-        eventApplyCta: 'Apply for this evening',
-        eventSiteCta: 'Company website',
-        tileHint: 'Click to learn more',
-        factTimeLabel: 'Time',
-        factPlaceLabel: 'Where',
+        backToTour: 'Back to the tour',
+        hostsLabel: 'Host companies',
+        routeLabel: 'The stops',
+        stop: 'Stop {n}',
+        stopApply: 'Apply for this stop',
+        stopNote: 'Separate event · open to all students',
+        timeTba: 'time TBA',
+        placeTba: 'location TBA',
+        websiteLabel: '{company} website',
+        endKicker: 'Your stop?',
+        endTitle: 'Apply by {date}',
+        endText:
+            'Pick one stop or all {count}. Every evening is a separate event, open to all students – no matter what you study.',
         draftSave: 'Save and finish later',
         draftSaved: 'Saved in this browser',
         draftRestored: 'We brought back the answers you saved here.',
@@ -1057,33 +1067,35 @@ const de: Translations = {
         statusOpen: 'Anmeldung offen',
         statusClosed: 'Anmeldung geschlossen',
         tbaCompany: 'Unternehmen wird noch bekannt gegeben',
-        tbaTime: 'Uhrzeit wird noch bekannt gegeben',
-        tbaLocation: 'Ort wird noch bekannt gegeben',
         tentative: 'Vorläufig',
         formHeading: 'Für die TechTour anmelden',
         closedFallback:
             'Die Anmeldung für diese TechTour ist geschlossen. Folg uns auf LinkedIn, um von der nächsten zu erfahren.',
         formUnavailable:
             'Das Anmeldeformular ist derzeit nicht verfügbar. Bitte schreib uns direkt.',
-        posterTitle: 'Munich Tech Tour',
-        factFormatLabel: 'Format',
-        factDatesLabel: 'Wann',
-        factDeadlineLabel: 'Bewerbung bis',
-        factEvenings: '{count} Abende · kostenlos',
+        title: 'Munich Tech Tour',
+        badgeOpen: 'Bewerbung offen',
+        badgeClosed: 'Bewerbung geschlossen',
+        kicker: 'Offene Eventreihe',
+        city: 'München',
+        lead: '{count} unabhängige Abende bei {count} Tech-Unternehmen – steig an jedem Stopp zu.',
+        applyNote: 'Bewirb dich für einen Stopp oder alle {count}',
+        until: 'bis {date}',
+        numbers: ['null', 'eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn', 'elf', 'zwölf'],
         applyCta: 'Jetzt bewerben',
-        detailsCta: 'Details ansehen',
-        backToTour: 'Zurück zum Line-up',
-        learnMoreCta: 'Mehr erfahren',
-        scrollHint: 'Runterscrollen für Details',
-        exploreKicker: 'Die Woche, Abend für Abend',
-        exploreHeading: 'Was bei den Besuchen passiert',
-        exploreLead:
-            'Komm zu einem Abend oder zu allen. Jeder Besuch wird vom Unternehmen selbst ausgerichtet — du bist in deren Büro, bei den Leuten, die dort arbeiten.',
-        eventApplyCta: 'Für diesen Abend bewerben',
-        eventSiteCta: 'Zur Website',
-        tileHint: 'Klicken für Details',
-        factTimeLabel: 'Uhrzeit',
-        factPlaceLabel: 'Ort',
+        backToTour: 'Zurück zur Tour',
+        hostsLabel: 'Gastgebende Unternehmen',
+        routeLabel: 'Die Stopps',
+        stop: 'Stopp {n}',
+        stopApply: 'Für diesen Stopp bewerben',
+        stopNote: 'Eigenes Event · offen für alle Studierenden',
+        timeTba: 'Uhrzeit folgt',
+        placeTba: 'Ort folgt',
+        websiteLabel: 'Website von {company}',
+        endKicker: 'Dein Stopp?',
+        endTitle: 'Bewirb dich bis {date}',
+        endText:
+            'Such dir einen Stopp aus oder komm zu allen {count}. Jeder Abend ist ein eigenes Event, offen für alle Studierenden – egal, was du studierst.',
         draftSave: 'Speichern und später weitermachen',
         draftSaved: 'In diesem Browser gespeichert',
         draftRestored: 'Wir haben deine hier gespeicherten Antworten zurückgeholt.',

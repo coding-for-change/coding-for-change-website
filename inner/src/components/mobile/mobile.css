@@ -46,7 +46,7 @@ html[data-nav='light'] .mobile-nav--overlay .mobile-nav__line {
     background: #000;
 }
 
-/* A page that is dark from top to bottom — the TechTour, which stamps
+/* A page that is dark from top to bottom — /techtour/apply, which stamps
    html[data-nav='dark'] through useDarkNav — keeps the solid sticky bar (it
    is in flow, and making it the landing's fixed overlay would move the page
    under it) but takes the page's own colours, so the header stops being a
@@ -63,6 +63,12 @@ html[data-nav='dark'] .mobile-nav:not(.mobile-nav--overlay) .mobile-nav__logo {
 }
 html[data-nav='dark'] .mobile-nav:not(.mobile-nav--overlay) .mobile-nav__line {
     background: #fff;
+}
+/* The tour page (/techtour) is set on warm paper (data-nav='paper'), and the
+   bar takes the same ground instead of being a white lid on it. */
+html[data-nav='paper'] .mobile-nav:not(.mobile-nav--overlay) {
+    background: #f2efe7;
+    border-bottom-color: #e2ded3;
 }
 
 /* Entrance animations for the mobile menu overlay. */

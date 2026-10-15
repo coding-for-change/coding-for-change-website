@@ -2574,7 +2574,7 @@ export interface TechTour {
    */
   registrationDeadline?: string | null;
   /**
-   * One entry per visit, in date order. The page counts them, takes its date range from the first and last, and gives each one a panel in the "Explore" section and a row in the registration form. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown — the page says so instead of showing a blank.
+   * One entry per visit, in date order. The page counts them ("four evenings at four tech companies"), takes its date range from the first and last, and gives each one a stop on the route and a row in the registration form. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown – the page says "time TBA" instead of showing a blank.
    */
   events?:
     | {
@@ -2596,18 +2596,21 @@ export interface TechTour {
          */
         location?: string | null;
         /**
-         * What happens at this visit and why a student should come. The "Explore" panel shows it in full; the registration form shows its first sentence next to the tick box, so make that sentence the one that identifies the visit.
+         * What happens at this visit. The registration form shows its first sentence next to the tick box when the visit has no headline, so make that sentence the one that identifies the visit.
          */
         description?: string | null;
         /**
-         * Company logo (SVG or PNG on transparent).
+         * Logo with the company name, in dark ink on transparent (SVG, or PNG at least 100 px tall), landscape. Shown on the tour page. Without one the page shows the icon with the name beside it.
+         */
+        wordmark?: (number | null) | Media;
+        /**
+         * Square icon (SVG or PNG): the evening's row in the registration form.
          */
         logo?: (number | null) | Media;
-        website?: string | null;
         /**
-         * Photo for this visit in the "Explore" section further down the page — the office, the team, the space. Landscape works best. Without one the section falls back to the logo on a plain panel.
+         * Opens from the logo on the tour page.
          */
-        image?: (number | null) | Media;
+        website?: string | null;
         /**
          * "Tentative" marks a visit that is not certain yet; "To be announced" is a placeholder slot without a company.
          */
@@ -2814,9 +2817,9 @@ export interface TechTourSelect<T extends boolean = true> {
         time?: T;
         location?: T;
         description?: T;
+        wordmark?: T;
         logo?: T;
         website?: T;
-        image?: T;
         status?: T;
         id?: T;
       };

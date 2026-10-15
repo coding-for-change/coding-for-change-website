@@ -16,9 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
     const locale = await getServerLocale();
     const techTour = await fetchGlobal<CmsTechTour>('tech-tour', locale);
     return {
-        title: 'Munich TechTour — Coding for Change',
+        title: 'Munich Tech Tour – Coding for Change',
         description:
-            'One week, one company visit per evening: the Munich TechTour takes students inside the tech companies shaping Munich. Free, open to every student. Register now.',
+            'Independent evenings at Munich tech companies, one stop per night. Every evening is its own event, free and open to every student – apply for one stop or all of them.',
         robots: techTourIndexable(techTour) ? undefined : { index: false, follow: true },
     };
 }

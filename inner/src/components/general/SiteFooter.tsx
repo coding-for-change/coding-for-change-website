@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import RouterLink from 'next/link';
 import { useSiteConfig, useLanguage } from '../../api';
 import { useSiteFlags } from '@/api/SiteFlagsContext';
-import { useDarkChrome } from '../../hooks/useDarkNav';
+import { useChromeTone } from '../../hooks/useDarkNav';
+import type { PageTone } from '../../hooks/useDarkNav';
 import {
     openConsentSettings,
     consentUiAvailable,
@@ -15,11 +16,11 @@ const GRAY = '#6b7280';
 const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
 
 /**
- * The footer on a page that is dark from top to bottom — the TechTour, which
+ * The footer on a page that is dark from top to bottom – /techtour/apply, which
  * declares it with `useDarkNav`. Off-white on white would leave the footer
  * sitting under the page like a strip of paper taped to the bottom of a
- * screen, so it takes the stage's own colours (`.lp--techtour` and the Explore
- * panels in landing.css) rather than a generic dark grey.
+ * screen, so it takes the stage's own colours (`.lp--techtour` in
+ * landing.css) rather than a generic dark grey.
  */
 const DARK = {
     background: '#060d12',
@@ -29,6 +30,16 @@ const DARK = {
     strong: '#ffffff',
     muted: 'rgba(255, 255, 255, 0.62)',
     faint: 'rgba(255, 255, 255, 0.38)',
+} as const;
+
+/**
+ * The footer under the tour page (/techtour), which is set on warm paper
+ * rather than white (`--tt-paper` in techtour.css): the same strip-of-paper
+ * problem, the other way round. Only the ground and the rule change.
+ */
+const PAPER = {
+    background: '#f2efe7',
+    border: '#e2ded3',
 } as const;
 
 /**
@@ -42,10 +53,12 @@ const SiteFooter: React.FC = () => {
     const siteConfig = useSiteConfig();
     const { t } = useLanguage();
     const { techTourListed } = useSiteFlags();
-    const dark = useDarkChrome();
-    /** A style from `styles`, with the dark page's override folded in if it has one. */
-    const sx = (key: string): React.CSSProperties =>
-        dark && darkStyles[key] ? { ...styles[key], ...darkStyles[key] } : styles[key];
+    const tone = useChromeTone();
+    /** A style from `styles`, with the page tone's override folded in if it has one. */
+    const sx = (key: string): React.CSSProperties => {
+        const override = tone ? toneStyles[tone][key] : undefined;
+        return override ? { ...styles[key], ...override } : styles[key];
+    };
 
     const f = t.footer;
     const PAGE_LINKS = [
@@ -155,6 +168,17 @@ const darkStyles: StyleSheetCSS = {
     divider: { backgroundColor: DARK.border },
     copyright: { color: DARK.faint },
 };
+
+/** What changes on the paper page. */
+const paperStyles: StyleSheetCSS = {
+    footer: {
+        backgroundColor: PAPER.background,
+        borderTopColor: PAPER.border,
+    },
+    divider: { backgroundColor: PAPER.border },
+};
+
+const toneStyles: Record<PageTone, StyleSheetCSS> = { dark: darkStyles, paper: paperStyles };
 
 const styles: StyleSheetCSS = {
     footer: {

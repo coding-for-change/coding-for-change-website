@@ -374,10 +374,11 @@
     gap: 6px 14px;
     min-width: 0;
 }
-/* The line-up's app icons, at row size: same 24% corner, artwork filling the
-   tile edge to edge. Padding plus `contain` left a white frame around every
-   logo, which read as a border nobody had drawn on purpose. The white ground
-   stays as the backing for logos that arrive with transparency. */
+/* The evenings' square icons (the CMS `logo`), at row size: 24% corner,
+   artwork filling the tile edge to edge. Padding plus `contain` left a white
+   frame around every logo, which read as a border nobody had drawn on
+   purpose. The white ground stays as the backing for logos that arrive with
+   transparency. */
 .tta-ev__logo {
     display: flex;
     flex: none;
@@ -405,8 +406,7 @@
     font-size: 18px;
     color: #2f8f90;
 }
-/* An evening still being confirmed: an outline where an icon will be, like
-   the poster's own TBA slot. */
+/* An evening still being confirmed: an outline where an icon will be. */
 .tta-ev__logo--tba {
     background: #0c181d;
     border: 2px dashed rgba(127, 227, 228, 0.5);
