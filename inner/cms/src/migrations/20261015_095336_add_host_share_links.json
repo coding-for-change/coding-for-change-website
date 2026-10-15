@@ -13332,6 +13332,12 @@
           "primaryKey": false,
           "notNull": true
         },
+        "wordmark_id": {
+          "name": "wordmark_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
         "logo_id": {
           "name": "logo_id",
           "type": "integer",
@@ -13341,12 +13347,6 @@
         "website": {
           "name": "website",
           "type": "varchar",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "image_id": {
-          "name": "image_id",
-          "type": "integer",
           "primaryKey": false,
           "notNull": false
         },
@@ -13390,6 +13390,21 @@
           "method": "btree",
           "with": {}
         },
+        "tech_tour_events_wordmark_idx": {
+          "name": "tech_tour_events_wordmark_idx",
+          "columns": [
+            {
+              "expression": "wordmark_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
         "tech_tour_events_logo_idx": {
           "name": "tech_tour_events_logo_idx",
           "columns": [
@@ -13404,30 +13419,15 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
-        },
-        "tech_tour_events_image_idx": {
-          "name": "tech_tour_events_image_idx",
-          "columns": [
-            {
-              "expression": "image_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
         }
       },
       "foreignKeys": {
-        "tech_tour_events_logo_id_media_id_fk": {
-          "name": "tech_tour_events_logo_id_media_id_fk",
+        "tech_tour_events_wordmark_id_media_id_fk": {
+          "name": "tech_tour_events_wordmark_id_media_id_fk",
           "tableFrom": "tech_tour_events",
           "tableTo": "media",
           "columnsFrom": [
-            "logo_id"
+            "wordmark_id"
           ],
           "columnsTo": [
             "id"
@@ -13435,12 +13435,12 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "tech_tour_events_image_id_media_id_fk": {
-          "name": "tech_tour_events_image_id_media_id_fk",
+        "tech_tour_events_logo_id_media_id_fk": {
+          "name": "tech_tour_events_logo_id_media_id_fk",
           "tableFrom": "tech_tour_events",
           "tableTo": "media",
           "columnsFrom": [
-            "image_id"
+            "logo_id"
           ],
           "columnsTo": [
             "id"
@@ -13883,6 +13883,6 @@
     "tables": {},
     "columns": {}
   },
-  "id": "5911db88-71ea-4897-a36a-2ee5ba79c583",
+  "id": "b98eea1a-fde5-4927-9f36-344d9c3049e5",
   "prevId": "00000000-0000-0000-0000-000000000000"
 }
