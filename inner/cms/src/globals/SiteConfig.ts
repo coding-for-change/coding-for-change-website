@@ -87,5 +87,29 @@ export const SiteConfig: GlobalConfig = {
           'Controls the site colour theme. "Auto" shows each visitor light or dark based on their device/browser preference; the forced options apply one theme for everyone.',
       },
     },
+    {
+      // Which audience the homepage speaks to. The site has two front doors:
+      // the regular partner-oriented page (NGOs book a first talk), and a
+      // student-oriented page for the membership application round, which
+      // borrows the Join page's look — round status, dated application
+      // timeline, benefits and tracks — and sends every button straight to
+      // the application form. Flipping this is the whole switch: the hero,
+      // the section order, the nav button, the closing call-to-action and
+      // the homepage <title> all follow it (inner/src/lib/homepageMode.ts).
+      // The round's dates live in code: inner/src/lib/applicationPhase.ts.
+      name: 'homepageMode',
+      type: 'select',
+      label: 'Homepage audience',
+      required: true,
+      defaultValue: 'partners',
+      options: [
+        { label: 'Partners — the professional, NGO-oriented homepage', value: 'partners' },
+        { label: 'Students — application-phase homepage, styled like the Join page', value: 'students' },
+      ],
+      admin: {
+        description:
+          'Who the homepage is written for. Switch to "Students" while membership applications are open and back to "Partners" afterwards. Takes effect on the next page load — no deploy needed.',
+      },
+    },
   ],
 };

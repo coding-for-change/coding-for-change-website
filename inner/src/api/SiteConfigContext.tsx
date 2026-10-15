@@ -2,6 +2,7 @@
 import React, { createContext, useContext } from 'react';
 import { useCmsGlobal } from './useCms';
 import { CmsSiteConfig } from './types';
+import { resolveHomepageMode, type HomepageMode } from '../lib/homepageMode';
 
 interface SiteConfigState {
     config: CmsSiteConfig | null;
@@ -27,9 +28,14 @@ export const useSiteConfig = (): CmsSiteConfig & { loading: boolean } => {
         bookingUrl: config?.bookingUrl ?? '',
         memberCount: config?.memberCount ?? '',
         stats: config?.stats ?? [],
+        homepageMode: resolveHomepageMode(config),
         loading,
     };
 };
+
+/** The "Homepage audience" switch (Site Configuration); 'partners' until loaded. */
+export const useHomepageMode = (): HomepageMode =>
+    resolveHomepageMode(useContext(SiteConfigContext).config);
 
 export const useSiteConfigLoading = (): boolean => {
     return useContext(SiteConfigContext).loading;

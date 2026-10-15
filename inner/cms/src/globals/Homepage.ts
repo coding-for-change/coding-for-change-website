@@ -135,5 +135,42 @@ export const Homepage: GlobalConfig = {
         { name: 'ctaContact', type: 'text', localized: true },
       ],
     },
+    {
+      type: 'collapsible',
+      label: 'Student mode (application phase)',
+      admin: {
+        initCollapsed: true,
+        description:
+          'Used only while Site Configuration → Homepage audience is "Students". Every field is optional — left blank, the built-in wording is shown. Benefits, requirements and "ways to contribute" come from the Membership Page.',
+      },
+      fields: [
+        {
+          name: 'studentHeroTitle',
+          type: 'text',
+          localized: true,
+          admin: { description: 'The big headline, e.g. "Build software for a non-profit. This semester."' },
+        },
+        { name: 'studentHeroLead', type: 'textarea', localized: true },
+        {
+          name: 'studentHeroCtaPrimary',
+          type: 'text',
+          localized: true,
+          admin: {
+            description:
+              'The apply button — used in the hero, under the timeline and in the closing call-to-action. Links straight to the application form.',
+          },
+        },
+        {
+          name: 'studentHeroCtaSecondary',
+          type: 'text',
+          localized: true,
+          admin: { description: 'The second hero button; scrolls down to the application timeline.' },
+        },
+        { name: 'studentWhyHeading', type: 'text', localized: true },
+        { name: 'studentWhyIntro', type: 'textarea', localized: true },
+        { name: 'studentProjectsTitle', type: 'text', localized: true },
+        { name: 'studentProjectsIntro', type: 'textarea', localized: true },
+      ],
+    },
   ],
 };

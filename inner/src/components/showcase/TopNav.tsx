@@ -5,8 +5,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import Enter3DButton from '../general/Enter3DButton';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSiteFlags } from '@/api/SiteFlagsContext';
-import { useSiteConfig } from '../../api';
-import { applicationsOpen } from '../../lib/applicationPhase';
+import { useSiteConfig, useHomepageMode } from '../../api';
+import useNow from '../../hooks/useNow';
+import {
+    applicationsOpen,
+    applicationStatus,
+    daysUntilDeadline,
+} from '../../lib/applicationPhase';
 import './landing.css';
 
 // Sections that live on the single-scroll landing page (`/`). Clicking one
@@ -16,6 +21,12 @@ const SECTION_IDS = ['home', 'process', 'partners', 'qa'];
 const TopNav: React.FC = () => {
     const { t, locale, setLocale } = useLanguage();
     const siteConfig = useSiteConfig();
+    // Student mode (application round): the one button on every page says
+    // "Apply now", counts down the days, and lands straight on the form.
+    const students = useHomepageMode() === 'students';
+    const now = useNow();
+    const status = applicationStatus(now);
+    const daysLeft = daysUntilDeadline(now);
     const pathname = usePathname() ?? '/';
     const router = useRouter();
     const [active, setActive] = useState('home');
@@ -161,12 +172,19 @@ const TopNav: React.FC = () => {
                 {/* Pulses while the round is open (lib/applicationPhase.ts). */}
                 <Link
                     className={
-                        'lp-nav__cta' +
-                        (applicationsOpen(Date.now()) ? ' lp-nav__cta--pulse' : '')
+                        'lp-nav__cta' + (applicationsOpen(now) ? ' lp-nav__cta--pulse' : '')
                     }
-                    href="/join"
+                    href={students ? '/join/apply' : '/join'}
                 >
-                    {t.nav.join}
+                    {students ? t.join.cta[status] : t.nav.join}
+                    {students && status === 'open' && daysLeft > 0 && (
+                        <span className="lp-nav__cta-days">
+                            ·{' '}
+                            {daysLeft === 1
+                                ? t.join.countdown.closesIn.one
+                                : t.join.countdown.closesIn.other.replace('{n}', String(daysLeft))}
+                        </span>
+                    )}
                 </Link>
             </div>
         </nav>

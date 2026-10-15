@@ -4380,3 +4380,30 @@ a.lp-heap__pill:hover {
         transition: opacity 0.2s ease;
     }
 }
+
+/* ================================================================== */
+/* Student-oriented homepage (Site Configuration → Homepage audience)  */
+/*                                                                     */
+/* The application round's landing page. The Join page's round-status  */
+/* pill takes the hero kicker's place, the headline runs a little      */
+/* smaller (it is a sentence, not a slogan), and the nav button counts */
+/* down the days — a detail only wide screens have room for.           */
+/* ================================================================== */
+.lp-hero__status {
+    display: block;
+    margin: 0 0 22px;
+}
+.lp-hero--students .lp-hero__title {
+    font-size: clamp(34px, 4.2vw, 54px);
+}
+.lp-nav__cta-days {
+    margin-left: 6px;
+    font-weight: 400;
+    opacity: 0.85;
+    white-space: nowrap;
+}
+@media (max-width: 1180px) {
+    .lp-nav__cta-days {
+        display: none;
+    }
+}

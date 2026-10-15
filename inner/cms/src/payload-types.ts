@@ -2490,6 +2490,10 @@ export interface SiteConfig {
    * Controls the site colour theme. "Auto" shows each visitor light or dark based on their device/browser preference; the forced options apply one theme for everyone.
    */
   colorMode: 'auto' | 'dark' | 'light';
+  /**
+   * Who the homepage is written for. Switch to "Students" while membership applications are open and back to "Partners" afterwards. Takes effect on the next page load — no deploy needed.
+   */
+  homepageMode: 'partners' | 'students';
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2704,6 +2708,23 @@ export interface Homepage {
   ctaText?: string | null;
   ctaJoin?: string | null;
   ctaContact?: string | null;
+  /**
+   * The big headline, e.g. "Build software for a non-profit. This semester."
+   */
+  studentHeroTitle?: string | null;
+  studentHeroLead?: string | null;
+  /**
+   * The apply button — used in the hero, under the timeline and in the closing call-to-action. Links straight to the application form.
+   */
+  studentHeroCtaPrimary?: string | null;
+  /**
+   * The second hero button; scrolls down to the application timeline.
+   */
+  studentHeroCtaSecondary?: string | null;
+  studentWhyHeading?: string | null;
+  studentWhyIntro?: string | null;
+  studentProjectsTitle?: string | null;
+  studentProjectsIntro?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -2812,6 +2833,7 @@ export interface SiteConfigSelect<T extends boolean = true> {
         id?: T;
       };
   colorMode?: T;
+  homepageMode?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -2950,6 +2972,14 @@ export interface HomepageSelect<T extends boolean = true> {
   ctaText?: T;
   ctaJoin?: T;
   ctaContact?: T;
+  studentHeroTitle?: T;
+  studentHeroLead?: T;
+  studentHeroCtaPrimary?: T;
+  studentHeroCtaSecondary?: T;
+  studentWhyHeading?: T;
+  studentWhyIntro?: T;
+  studentProjectsTitle?: T;
+  studentProjectsIntro?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -166,7 +166,10 @@ export default async function RootLayout({
                 <Providers
                     initialLocale={locale}
                     initialConfig={siteConfig}
-                    flags={{ techTourListed: techTourListed(techTour) }}
+                    flags={{
+                        techTourListed: techTourListed(techTour),
+                        serverNow: Date.now(),
+                    }}
                 >
                     {children}
                 </Providers>

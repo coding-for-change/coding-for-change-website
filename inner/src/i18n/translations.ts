@@ -77,6 +77,19 @@ export interface Translations {
      * written into the copy follow `lib/applicationPhase.ts` – update both
      * together for the next round.
      */
+    /**
+     * Student-oriented homepage – shown while Site Configuration → Homepage
+     * audience is "Students" (the application round). It reuses the Join
+     * page's sections and strings; these are only what the homepage adds.
+     * The `homepage` global can override the hero and projects copy.
+     */
+    studentHome: {
+        heroTitle: string; heroLead: string;
+        projectsSubtitle: string; projectsTitle: string; projectsIntro: string;
+        /** The NGO panel of "Talk to us" when the booking tool is not on the page. */
+        ngoText: string; ngoCta: string;
+        metaTitle: string; metaDescription: string;
+    };
     join: {
         /** Head fallbacks – the CMS Membership global's title and description win. */
         title: string; lead: string;
@@ -402,6 +415,21 @@ const en: Translations = {
     qa: {
         title: 'Q&A', subtitle: 'Frequently Asked Questions',
         intro: 'Find answers to common questions about Coding for Change below.',
+    },
+    studentHome: {
+        heroTitle: 'Build software for a non-profit. This semester.',
+        heroLead:
+            'Join a student team in Munich, ship a product an NGO actually uses, and learn more in two months than in any lecture. Whatever you study.',
+        projectsSubtitle: 'What you would be building',
+        projectsTitle: 'Real products for real non-profits',
+        projectsIntro:
+            'Every project is a product a non-profit uses day to day. This is what previous teams shipped.',
+        ngoText:
+            'You’re an NGO with a problem worth solving? Tell us about it — we start with a relaxed 30-minute call, free and non-binding.',
+        ngoCta: 'Partner with us',
+        metaTitle: 'Join Coding for Change — applications open for Winter 2026/27',
+        metaDescription:
+            'Build software for a non-profit with a student team in Munich. Applications for the Winter 2026/27 round are open until 30 Oct 2026 — about five hours a week, any degree.',
     },
     join: {
         title: 'Build software that matters',
@@ -844,6 +872,21 @@ const de: Translations = {
     qa: {
         title: 'F&A', subtitle: 'Häufig Gestellte Fragen',
         intro: 'Hier finden Sie Antworten auf häufige Fragen zu Coding for Change.',
+    },
+    studentHome: {
+        heroTitle: 'Entwickle Software für eine NGO. Noch dieses Semester.',
+        heroLead:
+            'Werde Teil eines Studierenden-Teams in München, liefere ein Produkt, das eine NGO wirklich nutzt, und lerne in zwei Monaten mehr als in jeder Vorlesung. Egal, was du studierst.',
+        projectsSubtitle: 'Woran du arbeiten würdest',
+        projectsTitle: 'Echte Produkte für echte Non-Profits',
+        projectsIntro:
+            'Jedes Projekt ist ein Produkt, das eine NGO im Alltag nutzt. Das haben frühere Teams gebaut.',
+        ngoText:
+            'Sie sind eine NGO mit einem Problem, das es zu lösen lohnt? Erzählen Sie uns davon – wir starten mit einem lockeren 30-Minuten-Gespräch, kostenlos und unverbindlich.',
+        ngoCta: 'Partner werden',
+        metaTitle: 'Mitmachen bei Coding for Change – Bewerbungen für Winter 2026/27 offen',
+        metaDescription:
+            'Entwickle Software für eine NGO – im Studierenden-Team in München. Bewerbungen für die Runde Winter 2026/27 sind bis 30. Oktober 2026 offen: etwa fünf Stunden pro Woche, jeder Studiengang.',
     },
     join: {
         title: 'Bau Software, die zählt',
