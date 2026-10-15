@@ -13,7 +13,7 @@
  * in lib/formDefinitions.mjs, this changes three things and nothing else:
  *
  *   1. adds the required consent box for passing the registration on to the
- *      partner companies (`hostSharing`) right after the privacy box, in both
+ *      partner companies (`hostSharing`) right before the privacy box, in both
  *      languages – or, where it is there already, brings its wording up to the
  *      current text (what someone agreed to stays on their registration);
  *   2. replaces the confirmation message if it is still the original one, which
@@ -141,19 +141,15 @@ const plan = (en, de, newBlockId) => {
   const enFields = [...(en.fields ?? [])];
   const deFields = [...(de.fields ?? [])];
 
-  // 1. The consent box for passing registrations on to the partner companies.
+  // 1. The host-sharing box.
   const at = enFields.findIndex((f) => f.name === 'hostSharing');
   if (at === -1) {
-    // After the privacy box (under whichever name the admin gave it): first
-    // the consent to our processing, then the one to passing it on. Without
-    // one, before the "also apply" box.
-    const privacy = enFields.findIndex((f) => f.name === 'privacyTechtour' || f.name === 'privacy');
-    const linked = enFields.findIndex((f) => f.blockType === 'subform');
-    const pos = privacy !== -1 ? privacy + 1 : linked !== -1 ? linked : enFields.length;
+    const privacy = enFields.findIndex((f) => f.name === 'privacy');
+    const pos = privacy === -1 ? enFields.length : privacy;
     const { blockType, name, required } = boxOf(wanted.en);
     enFields.splice(pos, 0, { blockType, name, required, label: boxOf(wanted.en).label, ...(newBlockId ? { id: newBlockId } : {}) });
     deFields.splice(pos, 0, { blockType, name, required, label: boxOf(wanted.de).label, ...(newBlockId ? { id: newBlockId } : {}) });
-    changes.push(`add the required "hostSharing" box ${privacy !== -1 ? `after "${enFields[privacy].name}"` : 'at the end'} (en + de)`);
+    changes.push(`add the required "hostSharing" box before ${privacy === -1 ? 'the end' : '"privacy"'} (en + de)`);
   } else {
     for (const [locale, list] of [['en', enFields], ['de', deFields]]) {
       const label = boxOf(wanted[locale]).label;

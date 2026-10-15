@@ -6,10 +6,9 @@
  *
  * Field names are shared deliberately: when one form is embedded in the other
  * (the "also apply / also register" checkbox), fields with the same `name` are
- * asked once and copied into both submissions. So `firstName`, `lastName` and
- * `email` match across the two forms. The consent boxes do not: each form asks
- * its own (`privacy` / `privacyTechtour`), so the wording a submission records
- * as agreed (`agreedTo`) is the wording the person actually saw.
+ * asked once and copied into both submissions. So `firstName`, `lastName`,
+ * `email` and `privacy` match across the two forms, while the two commitment
+ * boxes have distinct names because they mean different things.
  */
 
 const paragraph = (text) => ({
@@ -33,14 +32,10 @@ const L = {
     why: 'Why do you want to join Coding for Change?',
     cv: 'Your CV',
     cvHint: 'PDF, max. 5 MB',
-    university: 'Where do you study?',
-    other: 'Other',
-    course: 'Degree programme',
-    semester: 'Current semester',
-    techtourCv: 'Your CV (PDF)',
-    techtourCvHint: 'PDF, max. 5 MB. The partner companies of your evenings see it with your registration.',
-    linkedin: '…or your LinkedIn profile',
-    motivation: 'Why do you want to join? (optional)',
+    university: 'University',
+    course: 'Course of study',
+    techtourCv: 'Your CV',
+    techtourCvHint: 'PDF, max. 5 MB. The host companies of your evenings see it with your registration.',
     hoursCommit: 'I can commit about 5 hours per week for the project phase.',
     privacy:
       'I agree that Coding for Change e.V. processes the data in this form to handle my application, as described in the [privacy policy](/privacy).',
@@ -53,12 +48,9 @@ const L = {
     'wed-quantumblack': 'Wed 11 Nov · McKinsey QuantumBlack',
     'thu-quantco': 'Thu 12 Nov · QuantCo',
     'fri-tba': 'Fri 13 Nov · To be announced',
-    privacyTechtour:
-      'I consent to Coding for Change e.V. processing the details in this form to handle my TechTour registration, as described in the [privacy policy](/privacy#munich-techtour).',
+    attendCommit: 'I commit to attending the evenings I selected. Spots are limited and the companies plan for us.',
     hostSharing:
       'I consent to Coding for Change e.V. passing on my details and my CV to the partner companies of the events I selected (Project A, Lio, QuantCo, QuantumBlack/McKinsey) so that they can select the participants, and to these companies contacting me to register. I can withdraw this consent at any time by emailing info@codingforchange.com.',
-    futureEvents:
-      'Keep me posted by email about future Coding for Change events (optional; you can withdraw this any time by emailing info@codingforchange.com).',
     alsoApply: 'I also want to apply to become a Coding for Change member.',
     alsoApplyLink: 'About membership',
     applicationSubmit: 'Send application',
@@ -66,7 +58,7 @@ const L = {
       'Thanks! Your application is in. Within two days of the deadline you will hear from us with an invitation to pick an interview slot.',
     techtourSubmit: 'Register',
     techtourConfirm:
-      'You are registered! The partner companies decide who joins their evening – we will email you as soon as they have, with the time and place.',
+      'You are registered! The host companies decide who joins their evening – we will email you as soon as they have, with the time and place.',
   },
   de: {
     firstName: 'Vorname',
@@ -75,14 +67,10 @@ const L = {
     why: 'Warum möchtest du bei Coding for Change mitmachen?',
     cv: 'Dein Lebenslauf',
     cvHint: 'PDF, max. 5 MB',
-    university: 'Wo studierst du?',
-    other: 'Andere',
+    university: 'Hochschule',
     course: 'Studiengang',
-    semester: 'Fachsemester',
-    techtourCv: 'Dein Lebenslauf (PDF)',
-    techtourCvHint: 'PDF, max. 5 MB. Die Partnerunternehmen deiner Abende sehen ihn mit deiner Anmeldung.',
-    linkedin: '…oder dein LinkedIn-Profil',
-    motivation: 'Warum möchtest du dabei sein? (optional)',
+    techtourCv: 'Dein Lebenslauf',
+    techtourCvHint: 'PDF, max. 5 MB. Die gastgebenden Unternehmen deiner Abende sehen ihn mit deiner Anmeldung.',
     hoursCommit: 'Ich kann in der Projektphase etwa 5 Stunden pro Woche einbringen.',
     privacy:
       'Ich bin einverstanden, dass Coding for Change e.V. die Angaben in diesem Formular zur Bearbeitung meiner Bewerbung verarbeitet, wie in der [Datenschutzerklärung](/privacy) beschrieben.',
@@ -95,12 +83,9 @@ const L = {
     'wed-quantumblack': 'Mi 11. Nov · McKinsey QuantumBlack',
     'thu-quantco': 'Do 12. Nov · QuantCo',
     'fri-tba': 'Fr 13. Nov · Wird noch bekannt gegeben',
-    privacyTechtour:
-      'Ich willige ein, dass Coding for Change e.V. meine Angaben in diesem Formular zur Bearbeitung meiner TechTour-Anmeldung verarbeitet, wie in der [Datenschutzerklärung](/privacy#munich-techtour) beschrieben.',
+    attendCommit: 'Ich verpflichte mich, an den ausgewählten Abenden dabei zu sein. Die Plätze sind begrenzt und die Unternehmen planen mit uns.',
     hostSharing:
       'Ich willige ein, dass Coding for Change e.V. meine Angaben und meinen Lebenslauf an die Partnerunternehmen der von mir ausgewählten Events (Project A, Lio, QuantCo, QuantumBlack/McKinsey) zur Auswahl der Teilnehmenden weitergibt und diese mich zur Registrierung kontaktieren dürfen. Die Einwilligung kann ich jederzeit per Mail an info@codingforchange.com widerrufen.',
-    futureEvents:
-      'Informiert mich per E-Mail über künftige Events von Coding for Change (freiwillig, jederzeit per Mail an info@codingforchange.com widerrufbar).',
     alsoApply: 'Ich möchte mich auch als Mitglied bei Coding for Change bewerben.',
     alsoApplyLink: 'Mehr zur Mitgliedschaft',
     applicationSubmit: 'Bewerbung absenden',
@@ -108,7 +93,7 @@ const L = {
       'Danke! Deine Bewerbung ist eingegangen. Innerhalb von zwei Tagen nach der Frist hörst du von uns und wählst einen Interviewtermin.',
     techtourSubmit: 'Anmelden',
     techtourConfirm:
-      'Du bist angemeldet! Die Partnerunternehmen entscheiden, wer an ihrem Abend dabei ist – sobald sie das getan haben, schreiben wir dir per E-Mail, mit Uhrzeit und Ort.',
+      'Du bist angemeldet! Die gastgebenden Unternehmen entscheiden, wer an ihrem Abend dabei ist – sobald sie das getan haben, schreiben wir dir per E-Mail, mit Uhrzeit und Ort.',
   },
 };
 
@@ -161,36 +146,15 @@ export const applicationForm = (locale, { techtourFormId, toEmail, fromEmail } =
   };
 };
 
-/**
- * The TechTour registration. `applicationFormId` for the "also apply" box.
- *
- * Only what the selection needs (Datenschutz section 5a): name, email,
- * university, degree programme and semester, the evenings, a CV or instead a
- * LinkedIn link, and an optional few words on why. Nothing else is required.
- */
+/** The TechTour registration. `applicationFormId` for the "also apply" box. */
 export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } = {}) => {
   const t = L[locale];
   const fields = [
     { blockType: 'text', name: 'firstName', label: t.firstName, required: true },
     { blockType: 'text', name: 'lastName', label: t.lastName, required: true },
     { blockType: 'email', name: 'email', label: t.email, required: true },
-    // Same name and options as the membership application's question, so it
-    // is asked once when both forms are sent together. No placeholder: the
-    // plugin keeps one for both languages.
-    {
-      blockType: 'select',
-      name: 'university',
-      label: t.university,
-      required: true,
-      options: [
-        { value: 'TUM', label: 'TUM' },
-        { value: 'LMU', label: 'LMU' },
-        { value: 'HM', label: 'HM' },
-        { value: 'other', label: t.other },
-      ],
-    },
+    { blockType: 'text', name: 'university', label: t.university, required: true },
     { blockType: 'text', name: 'course', label: t.course, required: true },
-    { blockType: 'number', name: 'semester', label: t.semester, required: true },
     {
       blockType: 'checkboxGroup',
       name: 'events',
@@ -199,30 +163,24 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
       description: t.eventsHint,
       options: EVENT_OPTIONS.map((value) => ({ value, label: t[value] })),
     },
-    // Each evening's partner company selects who joins it, from the
-    // registration it can see – the CV, or the LinkedIn profile instead
-    // (`alternative`: the site draws that question under the upload and
-    // accepts either).
+    // Each evening's host company decides who joins it, and it decides on the
+    // registration it can see (see `hostSharing` below) – the CV included.
     {
       blockType: 'upload',
       name: 'cv',
       label: t.techtourCv,
       required: true,
       description: t.techtourCvHint,
-      alternative: 'linkedin',
     },
-    { blockType: 'text', name: 'linkedin', label: t.linkedin },
-    { blockType: 'textarea', name: 'motivation', label: t.motivation },
-    // The registration rests on consent (Art. 6(1)(a) GDPR, Datenschutz
-    // section 5a): to our processing, and – its own box, as the selection
-    // needs it – to passing it on to the partner companies of the evenings
-    // picked, who may then contact the person. The wording ticked is kept on
-    // the submission (`agreedTo`), and the host share links only show
-    // registrations with `hostSharing` there.
-    { blockType: 'checkbox', name: 'privacyTechtour', label: t.privacyTechtour, required: true },
+    { blockType: 'checkbox', name: 'attendCommit', label: t.attendCommit, required: true },
+    // The consent to pass the registration on to the partner companies of the
+    // evenings picked (Art. 6(1)(a) GDPR, Datenschutz section 5a). Required:
+    // the partner companies select the participants, so a registration is
+    // only ever considered with it. The wording ticked is kept on the
+    // submission (`agreedTo`), and the host share links show only
+    // registrations with this box there.
     { blockType: 'checkbox', name: 'hostSharing', label: t.hostSharing, required: true },
-    // Optional and separate – never a condition of registering.
-    { blockType: 'checkbox', name: 'futureEvents', label: t.futureEvents },
+    { blockType: 'checkbox', name: 'privacy', label: t.privacy, required: true },
   ];
   if (applicationFormId) {
     fields.push({

@@ -199,10 +199,10 @@ the option labels there too (e.g. `Mon 9 Nov · Company to be announced` →
 **Since October 2026 the steps for the TechTour are in
 [`TECHTOUR-DATENSCHUTZ.md`](TECHTOUR-DATENSCHUTZ.md)** (German, with every
 text in German and English): the Datenschutz (section 5 for the membership
-application, a new section 5a for the TechTour), the techtour form (the
-fields, the consent boxes, the evening labels), the deletion day, checks, and
-what to do with registrations sent before the consent box existed. Do them
-before the TechTour page goes public. (The former 7a–7c – the Datenschutz
+application, a new section 5a for the TechTour), the consent box on the
+techtour form, the deletion day, checks, and what to do with registrations
+sent before the consent box existed. Do them before the TechTour page goes
+public. (The former 7a–7c – the Datenschutz
 texts to paste – are in that file now; 7d–7f keep their letters.)
 
 In short, the Datenschutz edits are scripted and idempotent:
@@ -233,13 +233,10 @@ submission takes its CV with it.
 `node scripts/techtour-host-sharing.mjs` (dry run, then `--apply`) adds the
 required consent box `hostSharing` – the registrant's consent to pass their
 details and CV on to the partner companies of the evenings they picked, who
-may then contact them to register – right after the privacy box, names the
+may then contact them to register – right before the privacy box, names the
 evening options after the companies the TechTour page shows on those dates
 (the option **values** never change), and replaces the original confirmation
-message. Every other question stays as it is in the admin; the remaining
-form changes (university, degree programme, semester, LinkedIn instead of the
-CV, motivation, "future events", renaming `privacy`) are described in
-`TECHTOUR-DATENSCHUTZ.md`, step 2.
+message. Every other question stays as it is in the admin.
 
 Do **not** re-run `upsert-forms.mjs --apply` for this: it replaces every
 question with the starting definitions and would undo the edits made in the
@@ -265,10 +262,11 @@ filled in.
   the latest the Datenschutz allows.
 
 Save, then **Write to the contacts** (sidebar) opens a prepared email with the
-link in your own mail program. The host sees name, CV (or LinkedIn link) and
-the other answers, admits or declines each person, and can admit everyone
-still open in one go. **The email address of a person appears once the host
-admits them**, so the company can contact them to register. Their decisions
+link in your own mail program. The host sees name, CV and the other answers
+(never the email address), admits or declines each person, and can admit
+everyone still open in one go. If a company wants to contact the people it
+admitted to register them, the consent allows sending it their addresses –
+from the Excel export, for its evening only. Their decisions
 show up right away in the review workspace (✓ / ✕ in the list, "Host
 decisions" on each person) and in the Excel export – that is where to send the
 confirmations from. Every sign-in, CV opened and decision is under **Host link
