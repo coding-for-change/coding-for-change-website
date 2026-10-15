@@ -1,0 +1,680 @@
+/* ------------------------------------------------------------------ */
+/* /techtour – the Munich Tech Tour (TechTour.tsx, TechTourSkyline.tsx). */
+/* Warm paper, black ink, one teal line. Self-contained: none of these  */
+/* classes shares an element with an .lp-* class, so the order this     */
+/* file loads in against landing.css does not matter.                   */
+/* NOTE: App.css sets a global `div { display: flex }`, so every div    */
+/* below sets its own `display`.                                        */
+/* ------------------------------------------------------------------ */
+
+.tt {
+    --tt-paper: #f2efe7;
+    --tt-ink: #0a0a0a;
+    --tt-text: #3b3934;
+    --tt-muted: #6b675e;
+    /* The line and its stations. Teal set as text takes the darker step, so
+       it still reads at body size on the paper (4.6:1). */
+    --tt-teal: #15898b;
+    --tt-teal-text: #11777a;
+    /* The route: how thick the line is, how big a station, and how far a
+       stop's text stands from the line's centre. */
+    --tt-rail: 6px;
+    --tt-node: 28px;
+    --tt-gutter: 72px;
+    --tt-display: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    --tt-mono: var(--font-roboto-mono), 'Roboto Mono', ui-monospace, monospace;
+    /* flow-root: the route's bottom margin (below) stays on the paper. */
+    display: flow-root;
+    width: 100%;
+    background: var(--tt-paper);
+    color: var(--tt-ink);
+    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+}
+/* On a desktop the page scrolls inside .site-scroll, whose clearance under
+   the nav would otherwise show white above the paper. */
+.site-scroll:has(> .tt) {
+    background: #f2efe7;
+}
+
+/* ---- The pitch ---- */
+.tt-hero {
+    display: block;
+    padding: clamp(40px, 5vw, 64px) 24px 0;
+    text-align: center;
+}
+.tt-hero__inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 1180px;
+    margin: 0 auto;
+}
+.tt-badge {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 6px;
+    background: var(--tt-teal-text);
+    color: #ffffff;
+    font-size: 13.5px;
+    font-weight: 600;
+    line-height: 1.3;
+}
+.tt-badge--closed {
+    background: transparent;
+    box-shadow: inset 0 0 0 1px #cfcabe;
+    color: var(--tt-muted);
+}
+.tt-kicker {
+    margin: 24px 0 0;
+    font-family: var(--tt-mono);
+    font-size: 15px;
+    letter-spacing: 0.02em;
+    color: var(--tt-teal-text);
+}
+.tt-hero__title {
+    margin: 12px 0 0;
+    font-family: var(--tt-display);
+    font-weight: 700;
+    font-size: clamp(48px, 9.2vw, 132px);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+    color: var(--tt-ink);
+    /* On a phone: "Munich / Tech Tour", not "Munich Tech / Tour". */
+    text-wrap: balance;
+}
+.tt-hero__lead {
+    max-width: 44em;
+    margin: 24px 0 0;
+    font-size: clamp(17px, 1.55vw, 21px);
+    line-height: 1.5;
+    color: var(--tt-text);
+}
+.tt-hero__cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px 22px;
+    margin-top: 30px;
+}
+.tt-hero__note {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--tt-muted);
+}
+.tt-hero__closed {
+    max-width: 52ch;
+    margin: 28px 0 0;
+    font-size: 17px;
+    line-height: 1.6;
+    color: var(--tt-text);
+}
+.tt-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 15px 26px;
+    border-radius: 7px;
+    background: var(--tt-ink);
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    transition: background 0.18s ease, transform 0.18s ease;
+}
+.tt-btn:hover {
+    background: #2b2a27;
+    transform: translateY(-1px);
+}
+.tt-btn:focus-visible {
+    outline: 2px solid var(--tt-teal);
+    outline-offset: 3px;
+}
+
+/* ---- The hosts' logos ---- */
+.tt-hosts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 20px clamp(32px, 5vw, 64px);
+    max-width: 1180px;
+    margin: 44px auto 0;
+    padding: 0;
+    list-style: none;
+}
+.tt-hosts__item {
+    display: flex;
+    align-items: center;
+}
+.tt-hosts__logo {
+    --tt-logo-h: 38px;
+}
+/* A wordmark sits at one height and takes the width it needs. */
+.tt-logo {
+    display: block;
+    height: var(--tt-logo-h);
+    width: auto;
+    max-width: 100%;
+}
+/* No wordmark yet: the square icon, with the name set beside it. */
+.tt-logo--set {
+    display: inline-flex;
+    align-items: center;
+    gap: calc(var(--tt-logo-h) * 0.28);
+    width: auto;
+}
+.tt-logo__icon {
+    display: block;
+    height: 100%;
+    aspect-ratio: 1;
+    border-radius: 22%;
+    object-fit: cover;
+}
+.tt-logo__name {
+    font-family: var(--tt-display);
+    font-weight: 700;
+    font-size: calc(var(--tt-logo-h) * 0.52);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+}
+
+/* ---- The route: a line through the skyline, one stop per evening ---- */
+.tt-route {
+    position: relative;
+    display: block;
+    margin-top: clamp(56px, 6.5vw, 84px);
+}
+.tt-route__line {
+    position: absolute;
+    /* From the middle of the start badge to the middle of the end station. */
+    top: 21px;
+    bottom: 16px;
+    left: 50%;
+    /* Over the skyline, under the stops: a stop that is fading in is its own
+       stacking context, and its station has to sit on top of the line. */
+    z-index: 1;
+    width: var(--tt-rail);
+    margin-left: calc(var(--tt-rail) / -2);
+    border-radius: var(--tt-rail);
+    background: var(--tt-teal);
+    /* A ring of paper round the line cuts the skyline's ground line where
+       the line crosses it, as in a drawing where one stroke passes over
+       another. */
+    box-shadow: 0 0 0 6px var(--tt-paper);
+}
+/* Applications closed: no ask follows the route, so it keeps its distance
+   from the footer itself. */
+.tt-route:last-child {
+    margin-bottom: clamp(72px, 9vw, 120px);
+}
+.tt-route__start {
+    position: relative;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 68px;
+    height: 42px;
+    margin: 0 auto;
+    border-radius: 10px;
+    background: var(--tt-teal);
+    color: #ffffff;
+    font-family: var(--tt-mono);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+.tt-route__end {
+    position: relative;
+    z-index: 3;
+    display: block;
+    width: 32px;
+    height: 32px;
+    margin: 30px auto 0;
+    box-sizing: border-box;
+    border: 9px solid var(--tt-teal);
+    border-radius: 50%;
+    background: #ffffff;
+}
+
+/* The skyline (TechTourSkyline.tsx). It starts level with the top of the
+   start badge, so the tallest mast stands beside it rather than below. */
+.tt-sky {
+    position: relative;
+    z-index: 0;
+    display: block;
+    margin-top: -36px;
+    overflow: hidden;
+}
+.tt-sky__svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    /* The ground line runs on past the drawing to the edges of the screen;
+       .tt-sky clips it there. */
+    overflow: visible;
+}
+.tt-sky__svg--wide {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+.tt-sky__svg--narrow {
+    display: none;
+}
+.tt-sky__paper {
+    fill: var(--tt-paper);
+}
+/* The ASCII inside the outlines (TILES in TechTourSkyline.tsx). Sizes are in
+   the drawing's own units, so the letters scale with it. */
+.tt-sky__chars {
+    font-family: var(--tt-mono);
+    font-size: 6.5px;
+    font-weight: 500;
+    stroke: none;
+}
+.tt-sky__chars--ink,
+.tt-sky__chars--fine {
+    fill: #2a2925;
+}
+.tt-sky__chars--light {
+    fill: #8d897f;
+}
+.tt-sky__chars--town {
+    fill: #b8b3a7;
+}
+.tt-sky__ink {
+    stroke: #1d1c19;
+    stroke-width: 1.1;
+    stroke-linejoin: round;
+}
+.tt-sky__town {
+    stroke: #c8c3b7;
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
+/* Strokes keep their weight however far the drawing is scaled. */
+.tt-sky__ink *,
+.tt-sky__town * {
+    vector-effect: non-scaling-stroke;
+}
+.tt-sky__glint {
+    stroke: none;
+}
+.tt-sky__detail,
+.tt-sky__cable {
+    fill: none;
+    stroke-width: 0.9;
+}
+.tt-sky__detail {
+    opacity: 0.6;
+}
+.tt-sky__ground {
+    fill: none;
+    stroke: var(--tt-ink);
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+}
+
+/* The stops, either side of the line: odd ones on the left, set flush right
+   against it, even ones on the right. They follow each other down the page
+   and tuck in under the last line of the one before – they are on opposite
+   sides, so they never meet. */
+.tt-stops {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    max-width: 1080px;
+    margin: clamp(64px, 7.5vw, 104px) auto 0;
+    padding: 0 24px;
+    list-style: none;
+}
+.tt-stop {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    box-sizing: border-box;
+}
+.tt-stop:nth-child(odd) {
+    align-self: flex-start;
+    align-items: flex-end;
+    padding-right: var(--tt-gutter);
+    text-align: right;
+}
+.tt-stop:nth-child(even) {
+    align-self: flex-end;
+    align-items: flex-start;
+    padding-left: var(--tt-gutter);
+}
+.tt-stop + .tt-stop {
+    margin-top: -36px;
+}
+.tt-stop__label {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--tt-teal-text);
+}
+.tt-stop__flag {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(214, 150, 60, 0.16);
+    color: #7f5212;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: 2px;
+}
+.tt-stop__date {
+    position: relative;
+    margin: 6px 0 0;
+    font-family: var(--tt-display);
+    font-weight: 700;
+    font-size: clamp(40px, 4.4vw, 60px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    white-space: nowrap;
+}
+/* The station on the line, level with the date, and the tick that ties the
+   stop to it. */
+.tt-stop__node {
+    position: absolute;
+    top: 50%;
+    width: var(--tt-node);
+    height: var(--tt-node);
+    margin-top: calc(var(--tt-node) / -2);
+    box-sizing: border-box;
+    border: 4px solid var(--tt-ink);
+    border-radius: 50%;
+    background: #ffffff;
+}
+.tt-stop__node::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: calc(var(--tt-gutter) - var(--tt-node) / 2 - 10px);
+    height: 2px;
+    margin-top: -1px;
+    background: var(--tt-teal);
+}
+.tt-stop:nth-child(odd) .tt-stop__node {
+    right: calc(-1 * var(--tt-gutter) - var(--tt-node) / 2);
+}
+.tt-stop:nth-child(odd) .tt-stop__node::before {
+    /* The containing block is inside the 4px border. */
+    right: calc(100% + 4px);
+}
+.tt-stop:nth-child(even) .tt-stop__node {
+    left: calc(-1 * var(--tt-gutter) - var(--tt-node) / 2);
+}
+.tt-stop:nth-child(even) .tt-stop__node::before {
+    left: calc(100% + 4px);
+}
+.tt-stop > .tt-logo,
+.tt-stop__site {
+    margin-top: 20px;
+}
+.tt-stop__logo {
+    --tt-logo-h: 46px;
+}
+.tt-stop__site {
+    display: inline-flex;
+    max-width: 100%;
+    border-radius: 4px;
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.18s ease;
+}
+.tt-stop__site:hover {
+    opacity: 0.72;
+}
+.tt-stop__site:focus-visible {
+    outline: 2px solid var(--tt-teal);
+    outline-offset: 4px;
+}
+/* A slot whose host is not fixed yet, in the logo's place. */
+.tt-stop__tba {
+    margin: 20px 0 0;
+    font-family: var(--tt-mono);
+    font-size: 14px;
+    color: var(--tt-muted);
+}
+.tt-stop__title {
+    max-width: 18em;
+    margin: 20px 0 0;
+    /* Two even lines rather than a long one and a straggler. */
+    text-wrap: balance;
+    font-family: var(--tt-display);
+    font-weight: 700;
+    font-size: clamp(20px, 1.9vw, 26px);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+}
+.tt-stop__meta {
+    margin: 12px 0 0;
+    font-family: var(--tt-mono);
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--tt-muted);
+}
+.tt-stop__apply {
+    margin-top: 16px;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--tt-teal-text);
+    text-decoration: none;
+}
+.tt-stop__apply:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.tt-stop__note {
+    margin: 4px 0 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: var(--tt-muted);
+}
+
+/* ---- The ask, once more ---- */
+.tt-end {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: clamp(44px, 5.5vw, 72px) 24px clamp(88px, 10vw, 128px);
+    text-align: center;
+}
+.tt-end__kicker {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--tt-teal-text);
+}
+.tt-end__title {
+    margin: 10px 0 0;
+    font-family: var(--tt-display);
+    font-weight: 700;
+    font-size: clamp(40px, 6.2vw, 84px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    text-wrap: balance;
+}
+.tt-end__text {
+    max-width: 40em;
+    margin: 20px 0 0;
+    font-size: clamp(16px, 1.45vw, 19px);
+    line-height: 1.55;
+    color: var(--tt-text);
+}
+.tt-end .tt-btn {
+    margin-top: 30px;
+}
+
+/* ---- Phone and narrow window: the line runs down the left edge ---- */
+@media (max-width: 859px) {
+    .tt {
+        --tt-node: 24px;
+        --tt-gutter: 34px;
+        /* Where the line runs, measured from the left edge. */
+        --tt-rail-x: 28px;
+    }
+    .tt-hero {
+        padding: 36px 20px 0;
+        text-align: left;
+    }
+    .tt-hero__inner {
+        align-items: flex-start;
+    }
+    .tt-badge {
+        font-size: 13px;
+    }
+    .tt-kicker {
+        margin-top: 18px;
+        font-size: 13px;
+    }
+    /* Too long for one line next to the dates. */
+    .tt-kicker__city {
+        display: none;
+    }
+    .tt-hero__title {
+        margin-top: 8px;
+        font-size: clamp(44px, 15.4vw, 76px);
+        line-height: 0.95;
+    }
+    .tt-hero__lead {
+        margin-top: 18px;
+        font-size: 17px;
+    }
+    .tt-hero__cta {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+        gap: 12px;
+        margin-top: 24px;
+    }
+    .tt-hero__note {
+        font-size: 13px;
+    }
+    /* Two by two on a phone, one row once there is room for it. */
+    .tt-hosts {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        justify-items: start;
+        gap: 26px 20px;
+        margin-top: 34px;
+    }
+    .tt-hosts__logo {
+        --tt-logo-h: 30px;
+    }
+    .tt-route {
+        margin-top: 52px;
+    }
+    .tt-route__line {
+        top: 15px;
+        bottom: 13px;
+        left: var(--tt-rail-x);
+    }
+    .tt-route__start {
+        width: 46px;
+        height: 30px;
+        margin: 0 0 0 calc(var(--tt-rail-x) - 23px);
+        border-radius: 8px;
+        font-size: 14px;
+    }
+    .tt-route__end {
+        width: 26px;
+        height: 26px;
+        margin: 40px 0 0 calc(var(--tt-rail-x) - 13px);
+        border-width: 7px;
+    }
+    .tt-sky {
+        margin-top: -22px;
+    }
+    .tt-sky__svg--wide {
+        display: none;
+    }
+    /* As tall as a phone makes it (230 units at 375px wide), and no taller:
+       on a wider screen the drawing stays that size and the city carries on
+       to the right instead of being blown up. */
+    .tt-sky__svg--narrow {
+        display: block;
+        height: min(61.4vw, 290px);
+    }
+    /* Every stop hangs off the right of the line. */
+    .tt-stops {
+        margin-top: 56px;
+        padding: 0 20px 0 0;
+    }
+    .tt-stop:nth-child(odd),
+    .tt-stop:nth-child(even) {
+        align-self: stretch;
+        align-items: flex-start;
+        width: auto;
+        padding: 0 0 0 calc(var(--tt-rail-x) + var(--tt-gutter));
+        text-align: left;
+    }
+    .tt-stop + .tt-stop {
+        margin-top: 48px;
+    }
+    .tt-stop:nth-child(odd) .tt-stop__node {
+        right: auto;
+        left: calc(-1 * var(--tt-gutter) - var(--tt-node) / 2);
+    }
+    .tt-stop:nth-child(odd) .tt-stop__node::before {
+        right: auto;
+        left: calc(100% + 4px);
+    }
+    .tt-stop__label {
+        font-size: 13.5px;
+    }
+    .tt-stop__date {
+        font-size: clamp(38px, 12vw, 52px);
+    }
+    .tt-stop > .tt-logo,
+    .tt-stop__site {
+        margin-top: 16px;
+    }
+    .tt-stop__logo {
+        --tt-logo-h: 34px;
+    }
+    .tt-stop__title {
+        margin-top: 16px;
+        font-size: 20px;
+    }
+    .tt-stop__meta {
+        margin-top: 10px;
+        font-size: 13px;
+    }
+    .tt-stop__apply {
+        margin-top: 14px;
+    }
+    .tt-end {
+        align-items: flex-start;
+        padding: 52px 20px 88px;
+        text-align: left;
+    }
+    .tt-end__kicker {
+        font-size: 14px;
+    }
+    .tt-end__title {
+        font-size: clamp(40px, 12.6vw, 64px);
+    }
+    .tt-end__text {
+        font-size: 16px;
+    }
+    .tt-end .tt-btn {
+        width: 100%;
+        margin-top: 26px;
+    }
+}

@@ -1,20 +1,14 @@
 'use client';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { animate, motion, useMotionValue, useReducedMotion } from 'framer-motion';
-import { useCmsGlobal } from '../../api';
-import type { CmsTechTour } from '../../api';
+import { MotionConfig, motion } from 'framer-motion';
+import { mediaUrl, useCmsGlobal } from '../../api';
+import type { CmsTechTour, CmsTechTourEvent } from '../../api';
 import { useLanguage } from '../../contexts/LanguageContext';
-import TechTourLineup from './TechTourLineup';
-import TechTourExplore, { eventAnchor } from './TechTourExplore';
-import useDarkNav from '../../hooks/useDarkNav';
-import {
-    formatDateRangeSplit,
-    formatDateSplit,
-    techTourRegistrationOpen,
-} from '../../lib/techTour';
-import type { SplitDate } from '../../lib/techTour';
-import './landing.css';
+import { usePageTone } from '../../hooks/useDarkNav';
+import { formatDateRange, techTourRegistrationOpen } from '../../lib/techTour';
+import TechTourSkyline from './TechTourSkyline';
+import './techtour.css';
 
 export interface TechTourProps {
     techTour?: CmsTechTour | null;
@@ -22,49 +16,68 @@ export interface TechTourProps {
     serverNow?: number;
 }
 
-/** Stroke icons for the three facts. 24×24, inheriting colour and stroke. */
-const IconFormat = () => (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M3 21h18M5 21V8l7-5 7 5v13" />
-        <path d="M9.5 21v-5h5v5" />
-        <path d="M9 11h1.5M13.5 11H15" />
-    </svg>
-);
-const IconDates = () => (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <rect x="3" y="5" width="18" height="16" rx="2.5" />
-        <path d="M3 10h18M8 3v4M16 3v4" />
-    </svg>
-);
-const IconDeadline = () => (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <circle cx="12" cy="13" r="8" />
-        <path d="M12 9v4.5l3 2M9 2h6" />
-    </svg>
-);
+/**
+ * Dates in Munich time, wherever the visitor is. The tour happens there, and a
+ * deadline at 23:59 is already the next day further east – which would also
+ * make the server's HTML disagree with the browser's.
+ */
+const TZ = 'Europe/Berlin';
 
 /**
- * The Munich TechTour page: a week of evening visits to Munich tech companies,
- * open to every student.
+ * What editors type while a time or place is not fixed yet ("TBD", "TBA", a
+ * dash) counts as not known: the page says so in its own words instead of
+ * printing the placeholder.
+ */
+const known = (value?: string | null): string => {
+    const v = value?.trim() ?? '';
+    return /^(tb[acd]|n\/?a|[-–—?]+)$/i.test(v) ? '' : v;
+};
+
+/**
+ * The host's logo as the page sets it: the wordmark when there is one, and
+ * otherwise the square icon with the company's name beside it, so a host
+ * without a wordmark still reads as deliberate.
+ */
+const HostLogo: React.FC<{ ev: CmsTechTourEvent; className: string }> = ({ ev, className }) => {
+    const wordmark = mediaUrl(ev.wordmark);
+    if (wordmark) {
+        return <img className={`${className} tt-logo`} src={wordmark} alt={ev.company} />;
+    }
+    const icon = mediaUrl(ev.logo);
+    return (
+        <span className={`${className} tt-logo tt-logo--set`}>
+            {icon && <img className="tt-logo__icon" src={icon} alt="" />}
+            <span className="tt-logo__name">{ev.company}</span>
+        </span>
+    );
+};
+
+/**
+ * The Munich Tech Tour: four evenings at four tech companies, each one its own
+ * event, open to every student.
  *
- * A poster, not an article. On a desktop viewport it is exactly one screen —
- * title, three facts, the line-up, one button — and the shell's scrolling is
- * switched off underneath it (see `.lp--tt-poster` in landing.css). Everything
- * that does not belong on a poster (times, locations, what you get, the
- * attendance commitment) lives on /techtour/apply behind the button, together
- * with the registration form: a form at the foot of a long read is a comment
- * box under a newspaper article. A narrow screen cannot hold a poster, so
- * there it becomes an ordinary scrolling page of the same parts.
+ * The page is the route. Up top the pitch – what it is, when, one button – and
+ * the hosts' logos; then a teal line drops out of a `>_` prompt, runs down
+ * through a drawing of the Munich skyline and stops once per evening, the
+ * stops alternating either side of it (on a phone the line moves to the left
+ * edge and every stop hangs off its right). It ends in a station, and below
+ * that the ask comes once more with the deadline as the headline.
+ *
+ * Everything on it comes from the TechTour global in the CMS – the evenings,
+ * their order and dates, the deadline and whether applications are open –
+ * and the wording around it from the translation table (`techtour`). The form
+ * itself is on /techtour/apply, where every "Apply" here leads.
  */
 const TechTour: React.FC<TechTourProps> = (props) => {
     const { t, locale } = useLanguage();
+    const tc = t.techtour;
     const { data: tt } = useCmsGlobal<CmsTechTour>('tech-tour', props.techTour);
+    usePageTone('paper');
 
     const [now, setNow] = useState(() => props.serverNow ?? Date.now());
     useEffect(() => {
         setNow(Date.now());
     }, []);
-
     const open = techTourRegistrationOpen(tt, now);
     const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB';
 
@@ -76,184 +89,197 @@ const TechTour: React.FC<TechTourProps> = (props) => {
         [tt]
     );
 
-    // The poster's headline is the event's name; the CMS `title` is a
-    // strapline, far too long to set at poster size.
-    const title = t.techtour.posterTitle;
+    // "Four evenings at four companies": the count spelled out while it is
+    // small enough to read as a word, in figures beyond that.
+    const count = events.length;
+    const countWord =
+        count >= 2 && count < tc.numbers.length ? tc.numbers[count] : String(count);
+    const withCount = (text: string) => text.split('{count}').join(countWord);
+    const sentence = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 
-    // The stage is dark from top to bottom, so the nav is told to use its
-    // light ink and go transparent over it.
-    useDarkNav();
-
-    // The line-up tiles and the "Learn more" button both scroll down into the
-    // Explore section. On desktop the site scrolls inside `.site-scroll`, on
-    // mobile the window does — scrollIntoView finds the right one either way,
-    // and the targets carry a scroll-margin so the fixed nav does not land on
-    // them.
-    const scrollTo = useCallback((id: string) => {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, []);
-    // The scroll hint flashes once, when the line has finished drawing.
-    const [drawn, setDrawn] = useState(false);
-    const onDone = useCallback(() => setDrawn(true), []);
-
-    // Every time the line reaches an icon the poster takes a knock. The shake
-    // rides on the content column rather than on the black behind it: moving
-    // the background too would show a sliver of whatever is underneath at the
-    // edge of the screen.
-    const reduced = useReducedMotion();
-    const shakeX = useMotionValue(0);
-    const shakeY = useMotionValue(0);
-    const onHit = useCallback(() => {
-        if (reduced) return;
-        animate(shakeX, [0, -2.8, 2, -1.2, 0.5, 0], { duration: 0.42, ease: 'easeOut' });
-        animate(shakeY, [0, 1.6, -2, 1, -0.4, 0], { duration: 0.42, ease: 'easeOut' });
-    }, [reduced, shakeX, shakeY]);
-
-    // The three facts: what it is, when it runs, by when to sign up. All of it
-    // comes from the events and the deadline already in the CMS, so there is
-    // nothing extra to keep in step.
-    // Each value carries its year separately so the narrow layout can drop it
-    // (`.lp-tt-fact__year` in landing.css): on a phone the row is three dates
-    // wide and the same year twice over is the first thing that can go.
-    const facts = useMemo(() => {
-        const out: { icon: React.ReactNode; label: string; value: SplitDate }[] = [];
-        if (events.length > 0) {
-            out.push({
-                icon: <IconFormat />,
-                label: t.techtour.factFormatLabel,
-                value: {
-                    text: t.techtour.factEvenings.replace('{count}', String(events.length)),
-                    year: '',
-                },
-            });
-        }
+    const range = useMemo(() => {
         const dates = events
             .map((ev) => new Date(ev.date))
             .filter((d) => !Number.isNaN(d.getTime()));
-        if (dates.length > 0) {
-            out.push({
-                icon: <IconDates />,
-                label: t.techtour.factDatesLabel,
-                value: formatDateRangeSplit(dates[0], dates[dates.length - 1], dateLocale),
-            });
-        }
-        const deadline = tt?.registrationDeadline ? new Date(tt.registrationDeadline) : null;
-        if (deadline && !Number.isNaN(deadline.getTime())) {
-            out.push({
-                icon: <IconDeadline />,
-                label: t.techtour.factDeadlineLabel,
-                value: formatDateSplit(deadline, dateLocale),
-            });
-        }
-        return out;
-    }, [events, dateLocale, tt, t]);
+        if (dates.length === 0) return '';
+        return formatDateRange(dates[0], dates[dates.length - 1], dateLocale, {
+            month: 'short',
+            timeZone: TZ,
+        });
+    }, [events, dateLocale]);
+
+    const deadlineDate = tt?.registrationDeadline ? new Date(tt.registrationDeadline) : null;
+    const deadline =
+        deadlineDate && !Number.isNaN(deadlineDate.getTime())
+            ? deadlineDate.toLocaleDateString(dateLocale, {
+                  day: 'numeric',
+                  month: 'long',
+                  timeZone: TZ,
+              })
+            : '';
+
+    const hosts = events.filter((ev) => ev.status !== 'tba');
+    const closedText = tt?.closedMessage || tc.closedFallback;
+
+    // Fades in on arrival. Under reduced motion only the fade is left: the
+    // MotionConfig below drops the movement, and the server's HTML stays the
+    // same either way (branching on the setting here would not hydrate).
+    const rise = (delay = 0) => ({
+        initial: { opacity: 0, y: 14 },
+        animate: { opacity: 1, y: 0 },
+        transition: { duration: 0.5, delay },
+    });
+    const reveal = {
+        initial: { opacity: 0, y: 24 },
+        whileInView: { opacity: 1, y: 0 },
+        viewport: { once: true, amount: 0.3 },
+        transition: { duration: 0.5 },
+    };
 
     return (
-        <div className="lp lp--techtour">
-            <section className="lp-tt-poster">
-            <motion.div className="lp-tt-poster__inner" style={{ x: shakeX, y: shakeY }}>
-                <div className="lp-tt-poster__head">
-                <motion.h1
-                    className="lp-tt-poster__title"
-                    initial={{ opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.55 }}
-                >
-                    {title}
-                </motion.h1>
-
-                {facts.length > 0 && (
-                    <motion.ul
-                        className="lp-tt-facts"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.12 }}
-                    >
-                        {facts.map((fact) => (
-                            <li className="lp-tt-fact" key={fact.label}>
-                                <span className="lp-tt-fact__icon">{fact.icon}</span>
-                                <span className="lp-tt-fact__body">
-                                    <span className="lp-tt-fact__label">{fact.label}</span>
-                                    <span className="lp-tt-fact__value">
-                                    {fact.value.text}
-                                    {fact.value.year && (
-                                        <span className="lp-tt-fact__year">
-                                            {fact.value.year}
-                                        </span>
-                                    )}
-                                </span>
-                                </span>
-                            </li>
-                        ))}
-                    </motion.ul>
-                )}
-                </div>
-
-                {events.length > 0 && (
-                    <TechTourLineup
-                        events={events}
-                        tbaLabel={t.techtour.tbaCompany}
-                        hint={t.techtour.tileHint}
-                        onHit={onHit}
-                        onDone={onDone}
-                        onPick={(i) => scrollTo(eventAnchor(i))}
-                    />
-                )}
-
-                <motion.div
-                    className="lp-tt-poster__cta"
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: 0.3 }}
-                >
-                    {open ? (
-                        <span className="lp-tt-poster__btns">
-                            {events.length > 0 && (
-                                <button
-                                    type="button"
-                                    className="lp-btn lp-btn--wire"
-                                    onClick={() => scrollTo('tt-explore')}
-                                >
-                                    {t.techtour.learnMoreCta} ↓
-                                </button>
-                            )}
-                            <Link className="lp-btn lp-btn--glow" href="/techtour/apply">
-                                {t.techtour.applyCta} →
-                            </Link>
+        <MotionConfig reducedMotion="user">
+            <div className="tt">
+                <header className="tt-hero">
+                    <motion.div className="tt-hero__inner" {...rise()}>
+                        <span className={`tt-badge${open ? '' : ' tt-badge--closed'}`}>
+                            {open ? tc.badgeOpen : tc.badgeClosed}
                         </span>
-                    ) : (
-                        <>
-                            <p className="lp-tt-poster__closed">
-                                {tt?.closedMessage || t.techtour.closedFallback}
-                            </p>
-                            <Link className="lp-btn lp-btn--wire" href="/techtour/apply">
-                                {t.techtour.detailsCta} →
-                            </Link>
-                        </>
+                        <p className="tt-kicker">
+                            {tc.kicker}
+                            {range && <> · {range}</>}
+                            <span className="tt-kicker__city"> · {tc.city}</span>
+                        </p>
+                        <h1 className="tt-hero__title">{tc.title}</h1>
+                        {count > 0 && (
+                            <p className="tt-hero__lead">{sentence(withCount(tc.lead))}</p>
+                        )}
+                        {open ? (
+                            <div className="tt-hero__cta">
+                                <Link className="tt-btn" href="/techtour/apply">
+                                    {tc.applyCta}
+                                </Link>
+                                <span className="tt-hero__note">
+                                    {withCount(tc.applyNote)}
+                                    {deadline && <> · {tc.until.replace('{date}', deadline)}</>}
+                                </span>
+                            </div>
+                        ) : (
+                            <p className="tt-hero__closed">{closedText}</p>
+                        )}
+                    </motion.div>
+                    {hosts.length > 0 && (
+                        <motion.ul className="tt-hosts" aria-label={tc.hostsLabel} {...rise(0.15)}>
+                            {hosts.map((ev, i) => (
+                                <li className="tt-hosts__item" key={ev.id ?? i}>
+                                    <HostLogo ev={ev} className="tt-hosts__logo" />
+                                </li>
+                            ))}
+                        </motion.ul>
                     )}
-                </motion.div>
+                </header>
 
-            </motion.div>
+                {count > 0 && (
+                    <section className="tt-route" aria-label={tc.routeLabel}>
+                        <span className="tt-route__line" aria-hidden="true" />
+                        <span className="tt-route__start" aria-hidden="true">
+                            &gt;_
+                        </span>
+                        <TechTourSkyline />
+                        <ol className="tt-stops">
+                            {events.map((ev, i) => {
+                                const tba = ev.status === 'tba';
+                                const company = tba ? tc.tbaCompany : ev.company;
+                                const date = new Date(ev.date);
+                                const time = known(ev.time);
+                                const place = known(ev.location);
+                                // What is known comes first; whatever is still
+                                // open trails behind it.
+                                const meta =
+                                    time && place
+                                        ? [time, place]
+                                        : time
+                                          ? [time, tc.placeTba]
+                                          : place
+                                            ? [place, tc.timeTba]
+                                            : [tc.timeTba, tc.placeTba];
+                                // A slot without a host has no logo; if it already
+                                // has a headline, the logo's place says who is
+                                // still missing (without one, the headline does).
+                                const logo = tba ? null : (
+                                    <HostLogo ev={ev} className="tt-stop__logo" />
+                                );
+                                return (
+                                    <motion.li className="tt-stop" key={ev.id ?? i} {...reveal}>
+                                        <p className="tt-stop__label">
+                                            {tc.stop.replace('{n}', String(i + 1))} ·{' '}
+                                            {date.toLocaleDateString(dateLocale, {
+                                                weekday: 'long',
+                                                timeZone: TZ,
+                                            })}
+                                            {ev.status === 'tentative' && (
+                                                <span className="tt-stop__flag">{tc.tentative}</span>
+                                            )}
+                                        </p>
+                                        <p className="tt-stop__date">
+                                            {date.toLocaleDateString(dateLocale, {
+                                                day: 'numeric',
+                                                month: 'short',
+                                                timeZone: TZ,
+                                            })}
+                                            <span className="tt-stop__node" aria-hidden="true" />
+                                        </p>
+                                        {logo &&
+                                            (ev.website ? (
+                                                <a
+                                                    className="tt-stop__site"
+                                                    href={ev.website}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    aria-label={tc.websiteLabel.replace(
+                                                        '{company}',
+                                                        ev.company
+                                                    )}
+                                                >
+                                                    {logo}
+                                                </a>
+                                            ) : (
+                                                logo
+                                            ))}
+                                        {tba && ev.title && (
+                                            <p className="tt-stop__tba">{company}</p>
+                                        )}
+                                        <h2 className="tt-stop__title">{ev.title || company}</h2>
+                                        <p className="tt-stop__meta">{meta.join(' · ')}</p>
+                                        {open && (
+                                            <Link className="tt-stop__apply" href="/techtour/apply">
+                                                {tc.stopApply} →
+                                            </Link>
+                                        )}
+                                        <p className="tt-stop__note">{tc.stopNote}</p>
+                                    </motion.li>
+                                );
+                            })}
+                        </ol>
+                        <span className="tt-route__end" aria-hidden="true" />
+                    </section>
+                )}
 
-            {events.length > 0 && (
-                <button
-                    type="button"
-                    /* Quiet by default; it catches the eye once, the moment the
-                       line has finished drawing and there is nothing else left
-                       to watch. */
-                    className={`lp-tt-scroll-hint${drawn ? ' is-flashing' : ''}`}
-                    onClick={() => scrollTo('tt-explore')}
-                >
-                    {t.techtour.scrollHint}
-                    <span className="lp-tt-scroll-hint__arrow" aria-hidden="true">
-                        ↓
-                    </span>
-                </button>
-            )}
-            </section>
-
-            {events.length > 0 && <TechTourExplore events={events} open={open} />}
-        </div>
+                {/* Closed, the hero has already said so; there is nothing to ask
+                    for down here. */}
+                {open && (
+                    <motion.section className="tt-end" {...reveal}>
+                        <p className="tt-end__kicker">{tc.endKicker}</p>
+                        <h2 className="tt-end__title">
+                            {deadline ? tc.endTitle.replace('{date}', deadline) : tc.applyCta}
+                        </h2>
+                        {count > 0 && <p className="tt-end__text">{withCount(tc.endText)}</p>}
+                        <Link className="tt-btn" href="/techtour/apply">
+                            {tc.applyCta}
+                        </Link>
+                    </motion.section>
+                )}
+            </div>
+        </MotionConfig>
     );
 };
 

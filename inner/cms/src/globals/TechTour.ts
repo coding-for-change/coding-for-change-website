@@ -6,8 +6,8 @@ import { GlobalConfig } from 'payload';
  * the registration settings. The registration form itself is the form-builder
  * form titled "techtour", so questions are added in the admin.
  *
- * Every field here is rendered by the site. The page's own wording — the poster
- * headline, the fact labels, the "Explore the week" heading and its lead — is
+ * Every field here is rendered by the site. The page's own wording – the
+ * headline, the "Apply for one stop or all four" lines, the stop labels – is
  * not content but part of the layout, and lives in the site's translation table
  * (`inner/src/i18n/translations.ts`, key `techtour`); a field for it here would
  * be a knob that changes nothing. Anything added below has to be rendered by
@@ -85,7 +85,7 @@ export const TechTour: GlobalConfig = {
       admin: {
         initCollapsed: true,
         description:
-          'One entry per visit, in date order. The page counts them, takes its date range from the first and last, and gives each one a panel in the "Explore" section and a row in the registration form. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown — the page says so instead of showing a blank.',
+          'One entry per visit, in date order. The page counts them ("four evenings at four tech companies"), takes its date range from the first and last, and gives each one a stop on the route and a row in the registration form. Use "To be announced" for a slot whose company is not fixed yet, and leave time/location empty while unknown – the page says "time TBA" instead of showing a blank.',
       },
       fields: [
         {
@@ -137,29 +137,37 @@ export const TechTour: GlobalConfig = {
           localized: true,
           admin: {
             description:
-              'What happens at this visit and why a student should come. The "Explore" panel shows it in full; the registration form shows its first sentence next to the tick box, so make that sentence the one that identifies the visit.',
+              'What happens at this visit. The registration form shows its first sentence next to the tick box when the visit has no headline, so make that sentence the one that identifies the visit.',
           },
         },
         {
           type: 'row',
           fields: [
             {
+              name: 'wordmark',
+              type: 'upload',
+              relationTo: 'media',
+              admin: {
+                width: '50%',
+                description:
+                  'Logo with the company name, in dark ink on transparent (SVG, or PNG at least 100 px tall), landscape. Shown on the tour page. Without one the page shows the icon with the name beside it.',
+              },
+            },
+            {
               name: 'logo',
               type: 'upload',
               relationTo: 'media',
-              admin: { width: '50%', description: 'Company logo (SVG or PNG on transparent).' },
+              admin: {
+                width: '50%',
+                description: 'Square icon (SVG or PNG): the evening\'s row in the registration form.',
+              },
             },
-            { name: 'website', type: 'text', admin: { width: '50%' } },
           ],
         },
         {
-          name: 'image',
-          type: 'upload',
-          relationTo: 'media',
-          admin: {
-            description:
-              'Photo for this visit in the "Explore" section further down the page — the office, the team, the space. Landscape works best. Without one the section falls back to the logo on a plain panel.',
-          },
+          name: 'website',
+          type: 'text',
+          admin: { description: 'Opens from the logo on the tour page.' },
         },
         {
           name: 'status',
