@@ -1,13 +1,21 @@
 import type { Payload, PayloadRequest } from 'payload';
 import { pickedKeys } from '../choiceKeys';
+import { consentedToSharing } from '../sharingConsent';
 import { eveningOf, eveningsFieldOf, type Evening } from './evening';
 
 /**
  * What a host company sees through its share link, and nothing more: the
- * registrations for its evening, each with the name, the CV and the other
- * answers to the form's own questions (e.g. university). Never the email
- * address, the other evenings a person picked, their ticks, our review, or
- * anything about a membership application (Datenschutz section 5).
+ * registrations for its evening whose sender agreed to it, each with the name,
+ * the CV and the other answers to the form's own questions (e.g. university).
+ * Never the email address, the other evenings a person picked, their ticks,
+ * our review, or anything about a membership application (Datenschutz
+ * section 5a).
+ *
+ * "Agreed to it" means the ticked `hostSharing` box in the registration's own
+ * record (lib/sharingConsent.ts) – the consent to pass the registration on to
+ * the host companies of the evenings picked. A registration without it (sent
+ * before the box existed, or posted around the form) is not shown, cannot be
+ * decided on, and its CV cannot be opened through the link.
  *
  * Also records the host's decision on a registration, under the evening's key
  * in the submission's `hostDecisions` – so it is deleted together with the
@@ -51,6 +59,7 @@ type SubmissionDoc = {
   submissionData?: { field: string; value: string }[] | null;
   files?: (number | { id: number })[] | null;
   choiceKeys?: Record<string, string[]> | null;
+  agreedTo?: { field: string }[] | null;
   hostDecisions?: HostDecisions | null;
 };
 
@@ -75,9 +84,12 @@ async function scopeOf(payload: Payload, link: ShareLinkDoc, req?: PayloadReques
   if (formId == null) return null;
   const evening = await eveningOf(payload, formId, link.option, req);
   if (!evening) return null;
+  // Not with `req`: a local-API call with a `locale` writes it onto the
+  // request, so two of them in parallel on one `req` both read the language
+  // set last – the host's (English) page came out with the German labels.
   const [en, de] = await Promise.all(
     (['en', 'de'] as const).map((locale) =>
-      payload.findByID({ collection: 'forms', id: formId, depth: 0, locale, req }).catch(() => null),
+      payload.findByID({ collection: 'forms', id: formId, depth: 0, locale }).catch(() => null),
     ),
   );
   const fields = (en?.fields ?? []) as Block[];
@@ -92,6 +104,7 @@ async function scopeOf(payload: Payload, link: ShareLinkDoc, req?: PayloadReques
 }
 
 const inScope = (scope: Scope, s: SubmissionDoc): boolean => {
+  if (!consentedToSharing(s)) return false;
   const recorded = s.choiceKeys?.[scope.evening.field];
   if (Array.isArray(recorded)) return recorded.includes(scope.evening.option);
   const answer = (s.submissionData ?? []).find((kv) => kv.field === scope.evening.field)?.value ?? '';

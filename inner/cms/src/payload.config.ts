@@ -36,6 +36,8 @@ import {
   submissionFilesField,
 } from './lib/formBlocks';
 import { purgeOrphanApplicantFiles } from './lib/purgeApplicantFiles';
+import { deleteSubmissionFiles, purgeTechTourRegistrations } from './lib/retention';
+import { rejectHoneypot } from './lib/honeypot';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
 import { analyticsSummary } from './endpoints/analyticsSummary';
 import { waitlistEmailEndpoints } from './endpoints/waitlistEmail';
@@ -192,7 +194,9 @@ export default buildConfig({
       // boxes, the keys of the picked options – fields/submissionRecord.ts),
       // and the campaign / traffic-source attribution (same shared field as
       // WaitlistSignups) so conversions can be attributed to the poster or
-      // link a visitor came from.
+      // link a visitor came from. A submission whose hidden spam-trap box is
+      // filled is refused (lib/honeypot.ts); a deleted one takes its CV with
+      // it (lib/retention.ts).
       formSubmissionOverrides: {
         fields: ({ defaultFields }) => [
           ...reviewFields,
@@ -203,7 +207,9 @@ export default buildConfig({
           attributionField,
         ],
         hooks: {
+          beforeOperation: [rejectHoneypot],
           beforeChange: [recordSubmission],
+          afterDelete: [deleteSubmissionFiles],
         },
         // The plugin forbids updates; admins need them for the review fields.
         access: {
@@ -211,6 +217,8 @@ export default buildConfig({
         },
         admin: {
           defaultColumns: ['form', 'reviewStatus', 'reviewScore', 'createdAt'],
+          description:
+            'Someone withdrew their consent or asked to be deleted? Delete their submission – its CV is deleted with it. TechTour registrations are also deleted automatically on the day set under TechTour Page → "Delete registrations on".',
           components: {
             // "Download as Excel" — one .xlsx per form (see endpoints/submissionsExport.ts).
             beforeListTable: ['/components/submissions/ExportSubmissions#ExportSubmissions'],
@@ -295,13 +303,17 @@ export default buildConfig({
   },
   // Enforce the analytics retention window (GDPR storage limitation): purge
   // old behavioural events once at startup, then daily while the server runs.
-  // The same schedule removes applicant uploads that never made it onto a
-  // submission. Failures are logged, never fatal; the interval is unref'd so
-  // it never holds a build/CLI process open.
+  // The same schedule deletes the TechTour registrations once their deletion
+  // day has come (lib/retention.ts) and removes applicant uploads that never
+  // made it onto a submission. Failures are logged, never fatal; the interval
+  // is unref'd so it never holds a build/CLI process open.
   onInit: async (payload) => {
     const run = async () => {
       await purgeAnalyticsEvents(payload).catch((err) =>
         payload.logger.error(err, '[analytics] retention purge failed'),
+      );
+      await purgeTechTourRegistrations(payload).catch((err) =>
+        payload.logger.error(err, '[retention] TechTour purge failed'),
       );
       await purgeOrphanApplicantFiles(payload).catch((err) =>
         payload.logger.error(err, '[applicant-files] orphan purge failed'),

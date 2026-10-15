@@ -1,14 +1,14 @@
-import type { CollectionConfig, CollectionBeforeValidateHook, CollectionAfterDeleteHook } from 'payload';
+import type { CollectionConfig, CollectionBeforeValidateHook, CollectionBeforeDeleteHook } from 'payload';
 import { APIError } from 'payload';
 import { randomBytes } from 'node:crypto';
 import { endOfEventWeek, eveningOf } from '../lib/share/evening';
 
 /**
  * A private link for the host company of one TechTour evening (Datenschutz
- * section 5): the company's contacts sign in with a code sent to their own
- * address, see the registrations for their evening – name, CV and the other
- * answers, never the email address – and admit or decline each person. The
- * page and its endpoints are in endpoints/share.ts.
+ * section 5a): the company's contacts sign in with a code sent to their own
+ * address, see the registrations for their evening whose senders agreed to it
+ * – name, CV and the other answers, never the email address – and admit or
+ * decline each person. The page and its endpoints are in endpoints/share.ts.
  *
  * The link stops working at `expiresAt` (filled in as the end of the event
  * week when left empty, which is what the Datenschutz promises at the
@@ -59,7 +59,11 @@ const fillDefaults: CollectionBeforeValidateHook = async ({ data, operation, ori
   return data;
 };
 
-const deleteActivity: CollectionAfterDeleteHook = async ({ id, req }) => {
+// Before, not after: the log's `link` column is set to null by the database
+// the moment the link row goes (ON DELETE SET NULL), so afterwards there is
+// nothing left to find it by – the activity would stay behind, with the
+// contacts' addresses in it.
+const deleteActivity: CollectionBeforeDeleteHook = async ({ id, req }) => {
   await req.payload.delete({
     collection: 'share-access-log',
     where: { link: { equals: id } },
@@ -76,7 +80,7 @@ export const ShareLinks: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'expiresAt', 'blocked', 'updatedAt'],
     description:
-      'One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".',
+      'One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".',
   },
   access: {
     read: isUser,
@@ -86,7 +90,7 @@ export const ShareLinks: CollectionConfig = {
   },
   hooks: {
     beforeValidate: [fillDefaults],
-    afterDelete: [deleteActivity],
+    beforeDelete: [deleteActivity],
   },
   fields: [
     {

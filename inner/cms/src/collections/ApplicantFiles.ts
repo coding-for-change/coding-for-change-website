@@ -17,10 +17,11 @@ export const APPLICANT_FILE_MAX_BYTES = 5 * 1024 * 1024;
  * form) are removed by `purgeOrphanApplicantFiles` after 24 hours.
  *
  * Retention of the files that *are* attached follows the submission they hang
- * off, and the two differ: an application's CV goes when the round is decided
- * (six months at the latest), a TechTour registration's within three months of
- * the event week. Both are stated in the Datenschutz — see
- * `scripts/lib/privacyEdits.mjs`, section 5.
+ * off: deleting a submission deletes its files (lib/retention.ts), and the two
+ * kinds differ – an application's CV goes when the round is decided (six
+ * months at the latest), a TechTour registration's on the TechTour's deletion
+ * day, automatically. Both are stated in the Datenschutz – see
+ * `scripts/lib/privacyEdits.mjs`, sections 5 and 5a.
  */
 export const ApplicantFiles: CollectionConfig = {
   slug: 'applicant-files',
@@ -32,7 +33,7 @@ export const ApplicantFiles: CollectionConfig = {
     group: 'Forms',
     defaultColumns: ['filename', 'kind', 'filesize', 'createdAt'],
     description:
-      'CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file not attached to any submission within 24 hours is deleted automatically.',
+      'CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.',
   },
   access: {
     // Applicants are anonymous, so anyone may upload…

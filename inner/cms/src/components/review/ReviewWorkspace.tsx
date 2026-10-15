@@ -13,6 +13,7 @@ import {
   ViewDescription,
 } from '@payloadcms/ui';
 import { REVIEW_SCORE_MAX, REVIEW_SCORE_MIN, REVIEW_STATUSES } from '../../fields/review';
+import { consentedToSharing } from '../../lib/sharingConsent';
 import {
   answerRows,
   byEmail,
@@ -681,13 +682,18 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                     {choiceKeysOf(form, selected, choiceField.name).map((key) => {
                       const d = selected.hostDecisions?.[key];
                       const label = choiceField.options?.find((o) => o.value === key)?.label ?? key;
+                      // The host share links leave out anyone who did not agree
+                      // to it (lib/sharingConsent.ts) – say so rather than wait.
+                      const shared = consentedToSharing(selected);
                       return (
                         <li key={key} className="rv-hosts__row">
                           <span>{label}</span>
                           <span className={`rv-badge${d ? ` rv-badge--${d.decision}` : ''}`}>
                             {d
                               ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
-                              : 'Waiting for the host'}
+                              : shared
+                                ? 'Waiting for the host'
+                                : 'Not shared – no consent to pass it on'}
                           </span>
                         </li>
                       );
