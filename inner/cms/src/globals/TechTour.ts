@@ -24,6 +24,7 @@ const lastEvening = (data: unknown): Date | null => {
     .filter(Number.isFinite);
   return times.length ? new Date(Math.max(...times)) : null;
 };
+
 export const TechTour: GlobalConfig = {
   slug: 'tech-tour',
   label: 'TechTour Page',
