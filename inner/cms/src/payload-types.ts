@@ -2631,11 +2631,7 @@ export interface TechTour {
          */
         description?: string | null;
         /**
-         * Logo with the company name, in dark ink on transparent (SVG, or PNG at least 100 px tall), landscape. Shown on the tour page. Without one the page shows the icon with the name beside it.
-         */
-        wordmark?: (number | null) | Media;
-        /**
-         * Square icon (SVG or PNG): the evening's row in the registration form.
+         * The full logo with the company name in it – dark ink on transparent, landscape (SVG, or PNG at least 100 px tall). Shown on the tour page, in white in the registration form, and in the partner band on /join.
          */
         logo?: (number | null) | Media;
         /**
@@ -2848,7 +2844,6 @@ export interface TechTourSelect<T extends boolean = true> {
         time?: T;
         location?: T;
         description?: T;
-        wordmark?: T;
         logo?: T;
         website?: T;
         status?: T;

@@ -344,11 +344,6 @@
 .jn-logo--named {
     justify-content: flex-start;
 }
-.jn-logo--named img {
-    flex: none;
-    max-width: 40px;
-    max-height: 40px;
-}
 .jn-logo__name {
     min-width: 0;
     font-family: var(--jn-display);
