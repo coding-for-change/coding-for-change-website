@@ -242,6 +242,8 @@ export interface CmsSiteConfig {
     /** Club headcount for the Team page — typed in, not counted off `team`. */
     memberCount?: string | null;
     stats?: { value: string; label: string; id?: string }[];
+    /** Who the homepage speaks to (see `lib/homepageMode.ts`). Absent means partners. */
+    homepageMode?: 'partners' | 'students' | null;
 }
 
 /** A node in a Payload lexical rich-text tree. */
@@ -359,6 +361,15 @@ export interface CmsHomepage {
     qaSubtitle?: string | null;
     qaTitle?: string | null;
     qaIntro?: string | null;
+    /** Student-mode copy (homepage audience = students); each falls back to i18n. */
+    studentHeroTitle?: string | null;
+    studentHeroLead?: string | null;
+    studentHeroCtaPrimary?: string | null;
+    studentHeroCtaSecondary?: string | null;
+    studentWhyHeading?: string | null;
+    studentWhyIntro?: string | null;
+    studentProjectsTitle?: string | null;
+    studentProjectsIntro?: string | null;
     threedKicker?: string | null;
     threedTitle?: string | null;
     threedText?: string | null;

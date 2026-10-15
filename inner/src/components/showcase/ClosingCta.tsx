@@ -3,7 +3,9 @@ import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { usePathname } from 'next/navigation';
-import { useCmsGlobal } from '../../api';
+import { useCmsGlobal, useHomepageMode } from '../../api';
+import useNow from '../../hooks/useNow';
+import { applicationStatus } from '../../lib/applicationPhase';
 import { CmsHomepage } from '../../api/types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import './landing.css';
@@ -24,15 +26,25 @@ export interface ClosingCtaProps {
  * (falls back to i18n). Context-aware: on /ngos the partner button scrolls to
  * the booking tool; everywhere else the buttons link to /join and /ngos. /join
  * has its own closing band, tied to the application round.
+ *
+ * While the homepage is in student mode (Site Configuration → Homepage
+ * audience), this band borrows that one: the round's closing copy by its
+ * status, and a button straight to /join/apply.
  */
 const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
     const { t } = useLanguage();
     const { data: hp } = useCmsGlobal<CmsHomepage>('homepage', props.homepage);
     const pathname = usePathname() ?? '';
 
-    const heading = hp?.ctaHeading || t.cta.heading;
-    const text = hp?.ctaText || t.cta.text;
-    const joinLabel = hp?.ctaJoin || t.cta.join;
+    const students = useHomepageMode() === 'students';
+    const status = applicationStatus(useNow());
+
+    const heading = students ? t.join.closing.heading : hp?.ctaHeading || t.cta.heading;
+    const text = students ? t.join.closing.text[status] : hp?.ctaText || t.cta.text;
+    const joinLabel = students
+        ? (status === 'open' && hp?.studentHeroCtaPrimary) || t.join.cta[status]
+        : hp?.ctaJoin || t.cta.join;
+    const joinHref = students ? '/join/apply' : '/join';
     const partnerLabel = hp?.ctaContact || t.cta.contact;
 
     const onPartner = pathname.startsWith('/ngos');
@@ -52,7 +64,7 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
                     <h2 className="lp-cta__heading">{heading}</h2>
                     <p className="lp-cta__text">{text}</p>
                     <div className="lp-cta__btns">
-                        <Link className="lp-btn lp-btn--light" href="/join">
+                        <Link className="lp-btn lp-btn--light" href={joinHref}>
                             {joinLabel}
                         </Link>
                         {onPartner ? (

@@ -9,9 +9,18 @@ import React, { createContext, useContext } from 'react';
 export interface SiteFlags {
     /** The TechTour page is linked from the navigation and footer. */
     techTourListed: boolean;
+    /**
+     * Request time (epoch ms) captured by the root layout. Anything that
+     * depends on the application round's dates reads it through `useNow`,
+     * so the server HTML and the first client render agree.
+     */
+    serverNow: number;
 }
 
-const SiteFlagsContext = createContext<SiteFlags>({ techTourListed: false });
+const SiteFlagsContext = createContext<SiteFlags>({
+    techTourListed: false,
+    serverNow: Date.now(),
+});
 
 export const useSiteFlags = (): SiteFlags => useContext(SiteFlagsContext);
 

@@ -1,15 +1,16 @@
 'use client';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCmsCollection, useCmsGlobal, useSiteConfig } from '../../api';
+import { useCmsCollection, useCmsGlobal, useSiteConfig, useHomepageMode } from '../../api';
 import {
     CmsEvent,
     CmsProject,
     CmsSponsor,
     CmsFaqItem,
     CmsHomepage,
+    CmsTeamMember,
 } from '../../api/types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import BookingEmbed from '../general/BookingEmbed';
@@ -18,8 +19,15 @@ import ProjectShowcase from './ProjectShowcase';
 import ScrollRevealText from './ScrollRevealText';
 import SponsorTiers from './SponsorTiers';
 import ClosingCta from './ClosingCta';
+import RoundStatus from './RoundStatus';
+import JoinExpect from './JoinExpect';
+import JoinWays from './JoinWays';
+import JoinProcess from './JoinProcess';
 import useSectionBackgrounds from '../../hooks/useSectionBackgrounds';
+import useNow from '../../hooks/useNow';
+import { applicationStatus } from '../../lib/applicationPhase';
 import './landing.css';
+import './join.css';
 
 // Shared scroll-reveal animation. Sections fade/slide in once on first view.
 const reveal = {
@@ -34,6 +42,8 @@ export interface LandingProps {
     sponsors?: CmsSponsor[] | null;
     faq?: CmsFaqItem[] | null;
     homepage?: CmsHomepage | null;
+    /** The members named on the student-mode "ways in" cards. */
+    team?: CmsTeamMember[] | null;
 }
 
 const Landing: React.FC<LandingProps> = (props) => {
@@ -77,6 +87,16 @@ const Landing: React.FC<LandingProps> = (props) => {
         useCmsCollection<CmsFaqItem>('faq', undefined, props.faq);
     const { data: hp } = useCmsGlobal<CmsHomepage>('homepage', props.homepage);
 
+    // Which audience the page speaks to — the "Homepage audience" switch in
+    // the CMS (lib/homepageMode.ts). Student mode is the application round's
+    // landing page: it borrows the Join page's sections (what to expect, the
+    // ways in, the three steps beside a project members built), swaps the
+    // NGO process and the booking tool for them, and sends every button to
+    // /join/apply.
+    const students = useHomepageMode() === 'students';
+    const now = useNow();
+    const status = applicationStatus(now);
+
     // Homepage copy: CMS value if set, else the built-in i18n string.
     const c = {
         heroCtaPrimary: hp?.heroCtaPrimary || t.home.ctaPrimary,
@@ -112,6 +132,29 @@ const Landing: React.FC<LandingProps> = (props) => {
     // Process timeline: CMS steps override the built-in ones; a CMS step's
     // button defaults to this page's booking section.
     const processSteps = buildProcessSteps(hp?.steps, t.process.steps, '#book');
+
+    // Student-mode copy: CMS value if set, else the built-in string. The
+    // apply button's wording follows the round ("Get notified" / "Apply now"
+    // / "Notify me for the next round"); the CMS can reword the open one.
+    const s = {
+        heroTitle: hp?.studentHeroTitle || t.studentHome.heroTitle,
+        heroLead: hp?.studentHeroLead || t.studentHome.heroLead,
+        apply: (status === 'open' && hp?.studentHeroCtaPrimary) || t.join.cta[status],
+        howItWorks: hp?.studentHeroCtaSecondary || t.join.howItWorks,
+        projectsTitle: hp?.studentProjectsTitle || t.studentHome.projectsTitle,
+        projectsIntro: hp?.studentProjectsIntro || t.studentHome.projectsIntro,
+    };
+    const applyHref = '/join/apply';
+    // Student mode leads with the membership questions (plus the general
+    // ones); a FAQ without categories shows in full, as before.
+    const faqItems = useMemo(() => {
+        const all = faq ?? [];
+        if (!students) return all;
+        const forStudents = all.filter(
+            (item) => item.category === 'membership' || item.category === 'general'
+        );
+        return forStudents.length > 0 ? forStudents : all;
+    }, [faq, students]);
 
     const [openFaq, setOpenFaq] = useState<number | null>(null);
 
@@ -180,9 +223,9 @@ const Landing: React.FC<LandingProps> = (props) => {
     );
 
     return (
-        <div className="lp lp--landing" ref={bgRef}>
+        <div className={'lp lp--landing' + (students ? ' jn' : '')} ref={bgRef}>
             {/* ---- Hero: copy left, photo collage over a navy panel right ---- */}
-            <section id="home" className="lp-hero">
+            <section id="home" className={'lp-hero' + (students ? ' lp-hero--students' : '')}>
                 <div className="lp-hero__inner">
                     <motion.div
                         className="lp-hero__copy"
@@ -190,25 +233,55 @@ const Landing: React.FC<LandingProps> = (props) => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.55, ease: 'easeOut' }}
                     >
-                        <p className="lp-hero__kicker">{t.home.heroLineOne}</p>
-                        <h1 className="lp-hero__title">{t.home.heroLineTwo}</h1>
+                        {/* Student mode: the round's status pill stands where the
+                            kicker goes — the first thing an applicant reads. */}
+                        {students ? (
+                            <div className="lp-hero__status">
+                                <RoundStatus now={now} />
+                            </div>
+                        ) : (
+                            <p className="lp-hero__kicker">{t.home.heroLineOne}</p>
+                        )}
+                        <h1 className="lp-hero__title">
+                            {students ? s.heroTitle : t.home.heroLineTwo}
+                        </h1>
                         <p className="lp-hero__lead">
-                            {siteConfig.tagline || t.about.oneLiner}
+                            {students ? s.heroLead : siteConfig.tagline || t.about.oneLiner}
                         </p>
                         <div className="lp-hero__ctas">
-                            <Link className="lp-btn lp-btn--primary" href="/join">
-                                {c.heroCtaPrimary}
-                            </Link>
-                            <a
-                                className="lp-btn lp-btn--ghost"
-                                href="#projects"
-                                onClick={(e) => {
-                                    e.preventDefault();
-                                    router.push('/#projects');
-                                }}
-                            >
-                                {c.heroCtaSecondary}
-                            </a>
+                            {students ? (
+                                <>
+                                    <Link className="lp-btn lp-btn--primary" href={applyHref}>
+                                        {s.apply} →
+                                    </Link>
+                                    <a
+                                        className="lp-btn lp-btn--ghost"
+                                        href="#process"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            router.push('/#process');
+                                        }}
+                                    >
+                                        {s.howItWorks} ↓
+                                    </a>
+                                </>
+                            ) : (
+                                <>
+                                    <Link className="lp-btn lp-btn--primary" href="/join">
+                                        {c.heroCtaPrimary}
+                                    </Link>
+                                    <a
+                                        className="lp-btn lp-btn--ghost"
+                                        href="#projects"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            router.push('/#projects');
+                                        }}
+                                    >
+                                        {c.heroCtaSecondary}
+                                    </a>
+                                </>
+                            )}
                         </div>
                     </motion.div>
                     <div className="lp-hero__visual">
@@ -287,7 +360,26 @@ const Landing: React.FC<LandingProps> = (props) => {
                 </div>
             </section>
 
-            {/* ---- Process: how we work with NGOs ---- */}
+            {/* ---- Student mode: the Join page's three sections — what to
+                 expect, the ways in, the three steps beside a project members
+                 built — in place of the NGO process ---- */}
+            {students && (
+                <>
+                    <section data-bg="#ffffff" className="lp-section jn-expect">
+                        <JoinExpect heading={hp?.studentWhyHeading} lead={hp?.studentWhyIntro} />
+                    </section>
+                    <section data-bg="#f1f6f6" className="lp-section lp-section--alt jn-ways">
+                        <JoinWays team={props.team} />
+                    </section>
+                    <section id="process" data-bg="#ffffff" className="lp-section jn-process">
+                        <JoinProcess now={now} projects={projects} />
+                    </section>
+                </>
+            )}
+
+            {/* ---- Process: how we work with NGOs (partner mode; /ngos
+                 carries it in student mode) ---- */}
+            {!students && (
             <section
                 id="process"
                 data-bg="#0f2040"
@@ -306,6 +398,7 @@ const Landing: React.FC<LandingProps> = (props) => {
                     <ProcessTimeline steps={processSteps} />
                 </div>
             </section>
+            )}
 
             {/* ---- Projects ---- */}
             <section id="projects" data-bg="#ffffff" className="lp-section">
@@ -315,9 +408,11 @@ const Landing: React.FC<LandingProps> = (props) => {
                         {...reveal}
                         transition={{ duration: 0.5 }}
                     >
-                        <p className="lp-kicker">{c.projectsSubtitle}</p>
-                        <h2 className="lp-h2">{c.projectsTitle}</h2>
-                        <p className="lp-lead">{c.projectsIntro}</p>
+                        <p className="lp-kicker">
+                            {students ? t.studentHome.projectsSubtitle : c.projectsSubtitle}
+                        </p>
+                        <h2 className="lp-h2">{students ? s.projectsTitle : c.projectsTitle}</h2>
+                        <p className="lp-lead">{students ? s.projectsIntro : c.projectsIntro}</p>
                     </motion.div>
                     {projectsLoading ? (
                         <p className="lp-loading">Loading…</p>
@@ -443,7 +538,7 @@ const Landing: React.FC<LandingProps> = (props) => {
                         <p className="lp-loading">Loading…</p>
                     ) : (
                         <div className="lp-faq">
-                            {(faq ?? []).map((item) => {
+                            {faqItems.map((item) => {
                                 const isOpen = openFaq === item.id;
                                 return (
                                     <div key={item.id} className="lp-faq__item">
@@ -493,7 +588,9 @@ const Landing: React.FC<LandingProps> = (props) => {
                 </div>
             </section>
 
-            {/* ---- Talk to us: dual-audience (NGO → book · student → join) ---- */}
+            {/* ---- Talk to us: dual-audience (NGO → book · student → join).
+                 Student mode puts the student first and offers NGOs the
+                 NGO page instead of the booking tool. ---- */}
             <section id="book" className="lp-section lp-section--book">
                 <div className="lp-inner">
                     <motion.div
@@ -501,6 +598,35 @@ const Landing: React.FC<LandingProps> = (props) => {
                         {...reveal}
                         transition={{ duration: 0.5 }}
                     >
+                        {students ? (
+                        <div className="lp-talk">
+                            <div className="lp-talk__panel">
+                                <p className="lp-kicker">{t.talk.studentKicker}</p>
+                                <h2 className="lp-h2">{t.talk.studentHeading}</h2>
+                                <p className="lp-lead">{t.talk.studentText}</p>
+                                <Link
+                                    className="lp-btn lp-btn--primary"
+                                    href={applyHref}
+                                    style={{ marginTop: 20 }}
+                                >
+                                    {s.apply} →
+                                </Link>
+                            </div>
+                            <div className="lp-talk__panel">
+                                <p className="lp-kicker">{t.talk.ngoKicker}</p>
+                                <h2 className="lp-h2">{t.talk.ngoHeading}</h2>
+                                <p className="lp-lead">{t.studentHome.ngoText}</p>
+                                <Link
+                                    className="lp-btn lp-btn--ghost"
+                                    href="/ngos"
+                                    style={{ marginTop: 20 }}
+                                >
+                                    {t.studentHome.ngoCta} →
+                                </Link>
+                            </div>
+                        </div>
+                        ) : (
+                        <>
                         <div className="lp-talk">
                             <div className="lp-talk__panel">
                                 <p className="lp-kicker">{t.talk.ngoKicker}</p>
@@ -523,6 +649,8 @@ const Landing: React.FC<LandingProps> = (props) => {
                         <div style={{ marginTop: 32, width: '100%' }}>
                             <BookingEmbed />
                         </div>
+                        </>
+                        )}
                     </motion.div>
                 </div>
             </section>

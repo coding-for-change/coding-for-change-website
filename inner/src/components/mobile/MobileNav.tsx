@@ -4,6 +4,9 @@ import { usePathname } from 'next/navigation';
 import RouterLink from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useSiteFlags } from '@/api/SiteFlagsContext';
+import { useHomepageMode } from '@/api/SiteConfigContext';
+import useNow from '../../hooks/useNow';
+import { applicationStatus } from '../../lib/applicationPhase';
 import './mobile.css';
 
 const NAVY = '#0f2040';
@@ -52,6 +55,10 @@ const MobileNav: React.FC = () => {
     }, [langOpen]);
 
     const { techTourListed } = useSiteFlags();
+    // Student mode (application round): the button says "Apply now" and
+    // lands straight on the form — same as the desktop nav.
+    const students = useHomepageMode() === 'students';
+    const status = applicationStatus(useNow());
     const navLinks = [
         { to: '/projects', label: t.nav.projects },
         { to: '/ngos', label: t.nav.ngos },
@@ -144,14 +151,14 @@ const MobileNav: React.FC = () => {
                     </nav>
 
                     <RouterLink
-                        href="/join"
+                        href={students ? '/join/apply' : '/join'}
                         className="mobile-menu-item"
                         style={Object.assign({}, styles.ctaButton, {
                             animationDelay: `${navLinks.length * 0.05}s`,
                         })}
                         onClick={() => setOpen(false)}
                     >
-                        {t.nav.join}
+                        {students ? t.join.cta[status] : t.nav.join}
                     </RouterLink>
 
                     <div
