@@ -181,30 +181,21 @@ export const TechTour: GlobalConfig = {
           type: 'row',
           fields: [
             {
-              name: 'wordmark',
-              type: 'upload',
-              relationTo: 'media',
-              admin: {
-                width: '50%',
-                description:
-                  'Logo with the company name, in dark ink on transparent (SVG, or PNG at least 100 px tall), landscape. Shown on the tour page. Without one the page shows the icon with the name beside it.',
-              },
-            },
-            {
               name: 'logo',
               type: 'upload',
               relationTo: 'media',
               admin: {
                 width: '50%',
-                description: 'Square icon (SVG or PNG): the evening\'s row in the registration form.',
+                description:
+                  'The full logo with the company name in it – dark ink on transparent, landscape (SVG, or PNG at least 100 px tall). Shown on the tour page, in white in the registration form, and in the partner band on /join.',
               },
             },
+            {
+              name: 'website',
+              type: 'text',
+              admin: { width: '50%', description: 'Opens from the logo on the tour page.' },
+            },
           ],
-        },
-        {
-          name: 'website',
-          type: 'text',
-          admin: { description: 'Opens from the logo on the tour page.' },
         },
         {
           name: 'status',

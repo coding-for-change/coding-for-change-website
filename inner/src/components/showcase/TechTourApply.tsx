@@ -185,20 +185,14 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
             const date = new Date(ev.date);
             return (
                 <span className="tta-ev">
-                    <span
-                        className={`tta-ev__logo${tba ? ' tta-ev__logo--tba' : ''}`}
-                        aria-hidden="true"
-                    >
-                        {logo ? (
-                            <img src={logo} alt="" loading="lazy" />
-                        ) : (
-                            <span className="tta-ev__mark">
-                                {tba ? '?' : company.trim().charAt(0)}
-                            </span>
-                        )}
-                    </span>
                     <span className="tta-ev__body">
-                        <span className="tta-ev__company">{company}</span>
+                        {/* The logo carries the company's name, so it takes
+                            the name's place rather than standing beside it. */}
+                        {logo ? (
+                            <img className="tta-ev__logo" src={logo} alt={company} loading="lazy" />
+                        ) : (
+                            <span className="tta-ev__company">{company}</span>
+                        )}
                         {line && <span className="tta-ev__line">{line}</span>}
                     </span>
                     <span className="tta-ev__when">

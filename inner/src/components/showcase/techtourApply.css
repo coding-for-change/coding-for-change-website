@@ -374,46 +374,18 @@
     gap: 6px 14px;
     min-width: 0;
 }
-/* The evenings' square icons (the CMS `logo`), at row size: 24% corner,
-   artwork filling the tile edge to edge. Padding plus `contain` left a white
-   frame around every logo, which read as a border nobody had drawn on
-   purpose. The white ground stays as the backing for logos that arrive with
-   transparency. */
+/* The company's logo (the CMS `logo`, with its name in it) where the name
+   would be: one height, its own width, inked white for the dark stage. */
 .tta-ev__logo {
-    display: flex;
-    flex: none;
-    align-items: center;
-    justify-content: center;
-    width: 46px;
-    height: 46px;
-    /* The TBA variant adds a 2px dashed border; without this it would measure
-       50px and sit a shade larger than every other tile in the column. */
-    box-sizing: border-box;
-    border-radius: 24%;
-    overflow: hidden;
-    background: #ffffff;
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
-}
-.tta-ev__logo img {
     display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-.tta-ev__mark {
-    display: block;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
-    font-size: 18px;
-    color: #2f8f90;
-}
-/* An evening still being confirmed: an outline where an icon will be. */
-.tta-ev__logo--tba {
-    background: #0c181d;
-    border: 2px dashed rgba(127, 227, 228, 0.5);
-    box-shadow: none;
-}
-.tta-ev__logo--tba .tta-ev__mark {
-    color: var(--tta-accent);
+    align-self: flex-start;
+    width: auto;
+    max-width: 180px;
+    height: 24px;
+    margin: 2px 0 4px;
+    object-fit: contain;
+    object-position: left center;
+    filter: brightness(0) invert(1);
 }
 /* Basis 0, not auto: the row wraps (the date drops to its own line on a
    phone), and a long one-liner must not be what triggers that wrap. */
@@ -609,9 +581,6 @@
         flex-wrap: wrap;
         align-items: baseline;
         gap: 8px;
-        /* Lines up under the body, past the logo tile (46px + the 14px gap). */
-        padding-left: 60px;
-        box-sizing: border-box;
         text-align: left;
     }
     .lp--techtour.tta .tta-form .lp-actions {

@@ -476,10 +476,11 @@ export interface CmsTechTourEvent {
     time?: string | null;
     location?: string | null;
     description?: string | null;
-    /** Square icon: the evening's row in the /techtour/apply form. */
+    /**
+     * The company's full logo, with its name in it: the stop on /techtour,
+     * the evening's row in the /techtour/apply form, the band on /join.
+     */
     logo?: CmsMedia | null;
-    /** Logo with the name: the stop on /techtour. Falls back to icon + name. */
-    wordmark?: CmsMedia | null;
     website?: string | null;
     status?: 'confirmed' | 'tentative' | 'tba' | null;
 }
