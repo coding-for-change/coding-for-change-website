@@ -474,10 +474,11 @@ export interface CmsTechTourEvent {
     time?: string | null;
     location?: string | null;
     description?: string | null;
+    /** Square icon: the evening's row in the /techtour/apply form. */
     logo?: CmsMedia | null;
+    /** Logo with the name: the stop on /techtour. Falls back to icon + name. */
+    wordmark?: CmsMedia | null;
     website?: string | null;
-    /** Photo for the Explore section; falls back to the logo on a plain panel. */
-    image?: CmsMedia | null;
     status?: 'confirmed' | 'tentative' | 'tba' | null;
 }
 
