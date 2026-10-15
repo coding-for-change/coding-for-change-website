@@ -37,7 +37,7 @@ import * as migration_20261011_095039_add_project_screens from './20261011_09503
 import * as migration_20261014_233556_techtour_event_wordmark from './20261014_233556_techtour_event_wordmark';
 import * as migration_20261015_103530_drop_techtour_event_wordmark from './20261015_103530_drop_techtour_event_wordmark';
 import * as migration_20261015_105856_add_submission_record from './20261015_105856_add_submission_record';
-import * as migration_20261015_095300_add_review_score from './20261015_095300_add_review_score';
+import * as migration_20261015_105913_add_review_score from './20261015_105913_add_review_score';
 
 export const migrations = [
   {
@@ -236,8 +236,8 @@ export const migrations = [
     name: '20261015_105856_add_submission_record',
   },
   {
-    up: migration_20261015_095300_add_review_score.up,
-    down: migration_20261015_095300_add_review_score.down,
-    name: '20261015_095300_add_review_score'
+    up: migration_20261015_105913_add_review_score.up,
+    down: migration_20261015_105913_add_review_score.down,
+    name: '20261015_105913_add_review_score'
   },
 ];
