@@ -182,8 +182,9 @@ node scripts/techtour-host-sharing.mjs --apply   # schreibt DE und EN, liest zur
 Das Skript (aus #79) fügt das Kästchen direkt vor dem Datenschutz-Kästchen ein
 und lässt alle anderen Fragen, wie sie im Admin stehen. Außerdem gleicht es die
 Firmennamen in den Abend-Optionen an die TechTour-Seite an (im Live-Formular
-sind Mittwoch und Donnerstag vertauscht) und ersetzt den ursprünglichen
-Bestätigungstext. Der Probelauf zeigt alles vorher an.
+sind Mittwoch und Donnerstag vertauscht), ersetzt den ursprünglichen
+Bestätigungstext und benennt den Button „Register“/„Anmelden“ in
+„Apply“/„Bewerben“ um. Der Probelauf braucht kein Login und zeigt alles vorher an.
 
 **Weg B, von Hand:** Admin → Forms → Forms → „techtour“ → vor dem
 Datenschutz-Kästchen einen Block **Checkbox** einfügen:
@@ -191,8 +192,8 @@ Datenschutz-Kästchen einen Block **Checkbox** einfügen:
 - **Name:** `hostSharing` – genau so geschrieben. Die Partner-Links zeigen nur Anmeldungen, in denen dieses Kästchen angehakt ist.
 - **Required:** an. **Default Value:** leer lassen.
 - **Label** zuerst mit Sprache English, speichern, dann Deutsch, speichern:
-  - DE: `Ich willige ein, dass Coding for Change e.V. meine Angaben und meinen Lebenslauf an die Partnerunternehmen der von mir ausgewählten Events (Project A, Lio, QuantCo, QuantumBlack/McKinsey) zur Auswahl der Teilnehmenden weitergibt und diese mich zur Registrierung kontaktieren dürfen. Die Einwilligung kann ich jederzeit per Mail an info@codingforchange.com widerrufen.`
-  - EN: `I consent to Coding for Change e.V. passing on my details and my CV to the partner companies of the events I selected (Project A, Lio, QuantCo, QuantumBlack/McKinsey) so that they can select the participants, and to these companies contacting me to register. I can withdraw this consent at any time by emailing info@codingforchange.com.`
+  - DE: `Ich bin einverstanden, dass Coding for Change e.V. meine Bewerbung und meinen Lebenslauf an die Partnerunternehmen der von mir ausgewählten Abende weitergibt, damit sie die Teilnehmenden auswählen und mich kontaktieren können.`
+  - EN: `I agree that Coding for Change e.V. shares my application and CV with the partner companies of the evenings I selected, so they can select participants and contact me.`
 
 Nichts anderes am Formular ändern.
 

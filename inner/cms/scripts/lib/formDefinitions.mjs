@@ -50,13 +50,13 @@ const L = {
     'fri-tba': 'Fri 13 Nov · To be announced',
     attendCommit: 'I commit to attending the evenings I selected. Spots are limited and the companies plan for us.',
     hostSharing:
-      'I consent to Coding for Change e.V. passing on my details and my CV to the partner companies of the events I selected (Project A, Lio, QuantCo, QuantumBlack/McKinsey) so that they can select the participants, and to these companies contacting me to register. I can withdraw this consent at any time by emailing info@codingforchange.com.',
+      'I agree that Coding for Change e.V. shares my application and CV with the partner companies of the evenings I selected, so they can select participants and contact me.',
     alsoApply: 'I also want to apply to become a Coding for Change member.',
     alsoApplyLink: 'About membership',
     applicationSubmit: 'Send application',
     applicationConfirm:
       'Thanks! Your application is in. Within two days of the deadline you will hear from us with an invitation to pick an interview slot.',
-    techtourSubmit: 'Register',
+    techtourSubmit: 'Apply',
     techtourConfirm:
       'You are registered! The host companies decide who joins their evening – we will email you as soon as they have, with the time and place.',
   },
@@ -85,13 +85,13 @@ const L = {
     'fri-tba': 'Fr 13. Nov · Wird noch bekannt gegeben',
     attendCommit: 'Ich verpflichte mich, an den ausgewählten Abenden dabei zu sein. Die Plätze sind begrenzt und die Unternehmen planen mit uns.',
     hostSharing:
-      'Ich willige ein, dass Coding for Change e.V. meine Angaben und meinen Lebenslauf an die Partnerunternehmen der von mir ausgewählten Events (Project A, Lio, QuantCo, QuantumBlack/McKinsey) zur Auswahl der Teilnehmenden weitergibt und diese mich zur Registrierung kontaktieren dürfen. Die Einwilligung kann ich jederzeit per Mail an info@codingforchange.com widerrufen.',
+      'Ich bin einverstanden, dass Coding for Change e.V. meine Bewerbung und meinen Lebenslauf an die Partnerunternehmen der von mir ausgewählten Abende weitergibt, damit sie die Teilnehmenden auswählen und mich kontaktieren können.',
     alsoApply: 'Ich möchte mich auch als Mitglied bei Coding for Change bewerben.',
     alsoApplyLink: 'Mehr zur Mitgliedschaft',
     applicationSubmit: 'Bewerbung absenden',
     applicationConfirm:
       'Danke! Deine Bewerbung ist eingegangen. Innerhalb von zwei Tagen nach der Frist hörst du von uns und wählst einen Interviewtermin.',
-    techtourSubmit: 'Anmelden',
+    techtourSubmit: 'Bewerben',
     techtourConfirm:
       'Du bist angemeldet! Die gastgebenden Unternehmen entscheiden, wer an ihrem Abend dabei ist – sobald sie das getan haben, schreiben wir dir per E-Mail, mit Uhrzeit und Ort.',
   },

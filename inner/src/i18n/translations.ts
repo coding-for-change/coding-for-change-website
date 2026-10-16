@@ -696,7 +696,7 @@ const en: Translations = {
         stepJoinTitle: 'Come along',
         stepJoinText: '{range}',
         sectionDetailsTitle: 'About you',
-        attendAsk: 'Please only tick the evenings you will actually be there.',
+        attendAsk: 'Please only tick the evenings you’ll actually attend.',
     },
     aboutPage: {
         valuesTitle: 'What we care about',

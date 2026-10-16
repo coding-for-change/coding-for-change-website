@@ -5,12 +5,13 @@
  * from everyone who consented – and decides who attends (Datenschutz section
  * 5a – apply it with upsert-content.mjs in the same sitting).
  *
+ *   CMS_URL=https://codingforchange.com node scripts/techtour-host-sharing.mjs
+ *       # dry run: shows the changes, writes nothing (forms are public, no login needed)
  *   CMS_URL=https://codingforchange.com CMS_EMAIL=… CMS_PASSWORD=… \
- *     node scripts/techtour-host-sharing.mjs            # dry run: shows the changes, writes nothing
  *     node scripts/techtour-host-sharing.mjs --apply    # writes English and German, reads back to verify
  *
  * Unlike upsert-forms.mjs, which replaces every question with the definitions
- * in lib/formDefinitions.mjs, this changes three things and nothing else:
+ * in lib/formDefinitions.mjs, this changes four things and nothing else:
  *
  *   1. adds the required consent box for passing the registration on to the
  *      partner companies (`hostSharing`) right before the privacy box, in both
@@ -24,7 +25,10 @@
  *      row they see – but the answer stores the option's label, and that label
  *      is what the team and the host companies go by. When the page and the
  *      option disagree (two companies swapped days), the stored answer names
- *      the wrong company. The option keys (`value`) never change.
+ *      the wrong company. The option keys (`value`) never change;
+ *   4. renames the submit button if it is still the original "Register" /
+ *      "Anmelden" – the host companies select, so it is an application (any
+ *      other wording is left alone).
  *
  * Every other question is sent back exactly as it was read, per language, so
  * whatever was edited in the admin stays. Safe to re-run.
@@ -43,32 +47,42 @@ const ORIGINAL_CONFIRMATION = {
   de: 'Du bist angemeldet! Sobald Uhrzeiten und Orte feststehen, schicken wir dir die Details zu jedem Abend per E-Mail.',
 };
 
-if (!EMAIL || !PASSWORD) {
-  console.error('Set CMS_EMAIL and CMS_PASSWORD (an admin user of the CMS).');
-  process.exit(1);
-}
+/** The submit button the form was set up with (formDefinitions.mjs before October 2026). */
+const ORIGINAL_SUBMIT = { en: 'Register', de: 'Anmelden' };
 
-const login = await fetch(`${BASE}/api/users/login`, {
-  method: 'POST',
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
-});
-if (!login.ok) {
-  console.error(`Login failed: ${login.status} ${await login.text()}`);
-  process.exit(1);
-}
-const cookie = (login.headers.getSetCookie?.() || [])
-  .find((c) => c.startsWith('payload-token='))
-  ?.split(';')[0];
-if (!cookie) {
-  console.error('Login succeeded but no payload-token cookie was returned.');
-  process.exit(1);
+// Forms and the TechTour page are publicly readable, so the dry run works
+// without an account; only writing needs one.
+let cookie;
+if (APPLY) {
+  if (!EMAIL || !PASSWORD) {
+    console.error('Set CMS_EMAIL and CMS_PASSWORD (an admin user of the CMS).');
+    process.exit(1);
+  }
+  const login = await fetch(`${BASE}/api/users/login`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ email: EMAIL, password: PASSWORD }),
+  });
+  if (!login.ok) {
+    console.error(`Login failed: ${login.status} ${await login.text()}`);
+    process.exit(1);
+  }
+  cookie = (login.headers.getSetCookie?.() || [])
+    .find((c) => c.startsWith('payload-token='))
+    ?.split(';')[0];
+  if (!cookie) {
+    console.error('Login succeeded but no payload-token cookie was returned.');
+    process.exit(1);
+  }
 }
 
 const req = async (method, path, body) => {
   const res = await fetch(`${BASE}${path}`, {
     method,
-    headers: { cookie, ...(body ? { 'content-type': 'application/json' } : {}) },
+    headers: {
+      ...(cookie ? { cookie } : {}),
+      ...(body ? { 'content-type': 'application/json' } : {}),
+    },
     body: body ? JSON.stringify(body) : undefined,
   });
   if (!res.ok) throw new Error(`${method} ${path} → ${res.status} ${(await res.text()).slice(0, 400)}`);
@@ -196,7 +210,20 @@ const plan = (en, de, newBlockId) => {
       changes.push(`= [${locale}] confirmation message was edited in the admin, left alone. Suggested: "${next}"`);
     }
   }
-  return { enFields, deFields, confirmation, changes };
+
+  // 4. The submit button.
+  const submit = {};
+  for (const [locale, doc] of [['en', en], ['de', de]]) {
+    const label = (doc.submitButtonLabel ?? '').trim();
+    const next = wanted[locale].submitButtonLabel;
+    if (label === ORIGINAL_SUBMIT[locale]) {
+      submit[locale] = next;
+      changes.push(`[${locale}] submit button "${label}" → "${next}"`);
+    } else if (label !== next) {
+      changes.push(`= [${locale}] submit button was edited in the admin ("${label}"), left alone. Suggested: "${next}"`);
+    }
+  }
+  return { enFields, deFields, confirmation, submit, changes };
 };
 
 const [en, de] = [await read(id, 'en'), await read(id, 'de')];
@@ -218,6 +245,7 @@ const savedEn = (
   await req('PATCH', `/api/forms/${id}?locale=en`, {
     fields: first.enFields,
     ...(first.confirmation.en ? { confirmationMessage: first.confirmation.en } : {}),
+    ...(first.submit.en ? { submitButtonLabel: first.submit.en } : {}),
   })
 ).doc;
 const newBlockId = savedEn.fields.find((f) => f.name === 'hostSharing')?.id;
@@ -225,6 +253,7 @@ const deFields = first.deFields.map((f) => (f.name === 'hostSharing' && !f.id ? 
 await req('PATCH', `/api/forms/${id}?locale=de`, {
   fields: deFields,
   ...(first.confirmation.de ? { confirmationMessage: first.confirmation.de } : {}),
+  ...(first.submit.de ? { submitButtonLabel: first.submit.de } : {}),
 });
 
 // Read back: a second plan must find nothing left to do, and every block that
