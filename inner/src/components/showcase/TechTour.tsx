@@ -6,7 +6,7 @@ import { mediaUrl, useCmsGlobal } from '../../api';
 import type { CmsTechTour, CmsTechTourEvent } from '../../api';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { usePageTone } from '../../hooks/useDarkNav';
-import { formatDateRange, techTourRegistrationOpen } from '../../lib/techTour';
+import { formatDateRange, known, techTourRegistrationOpen } from '../../lib/techTour';
 import TechTourSkyline from './TechTourSkyline';
 import './techtour.css';
 
@@ -22,16 +22,6 @@ export interface TechTourProps {
  * make the server's HTML disagree with the browser's.
  */
 const TZ = 'Europe/Berlin';
-
-/**
- * What editors type while a time or place is not fixed yet ("TBD", "TBA", a
- * dash) counts as not known: the page says so in its own words instead of
- * printing the placeholder.
- */
-const known = (value?: string | null): string => {
-    const v = value?.trim() ?? '';
-    return /^(tb[acd]|n\/?a|[-–—?]+)$/i.test(v) ? '' : v;
-};
 
 /**
  * The host's logo – the full one, with the company's name in it – at one

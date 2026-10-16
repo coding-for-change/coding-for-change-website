@@ -8,7 +8,7 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import CmsForm from '../forms/CmsForm';
 import useDarkNav from '../../hooks/useDarkNav';
 import { applicationsOpen } from '../../lib/applicationPhase';
-import { formatDateRange, techTourRegistrationOpen } from '../../lib/techTour';
+import { formatDateRange, known, techTourRegistrationOpen } from '../../lib/techTour';
 import './landing.css';
 import './techtourApply.css';
 
@@ -129,8 +129,15 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
     );
 
     const dateLocale = locale === 'de' ? 'de-DE' : 'en-GB';
+    // In Munich time, as on /techtour: a 23:59 deadline is the next day further
+    // east, and the server (UTC) would disagree with the browser.
     const fmtDeadline = (d: Date) =>
-        d.toLocaleDateString(dateLocale, { day: 'numeric', month: 'short', year: 'numeric' });
+        d.toLocaleDateString(dateLocale, {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'Europe/Berlin',
+        });
 
     /**
      * How this goes, in three steps — the whole of the old lead paragraph's
@@ -176,6 +183,7 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
                 ? null
                 : ev.title || (ev.description ? firstSentence(ev.description) : null);
             const date = new Date(ev.date);
+            const time = known(ev.time);
             return (
                 <span className="tta-ev">
                     <span className="tta-ev__body">
@@ -198,7 +206,7 @@ const TechTourApply: React.FC<TechTourApplyProps> = (props) => {
                                 month: 'short',
                             })}
                         </span>
-                        {ev.time && <span className="tta-ev__time">{ev.time}</span>}
+                        {time && <span className="tta-ev__time">{time}</span>}
                         {ev.status === 'tentative' && (
                             <span className="tta-ev__badge">{t.techtour.tentative}</span>
                         )}

@@ -33,6 +33,16 @@ export const techTourRegistrationOpen = (
 };
 
 /**
+ * What editors type while a time or place is not fixed yet ("TBD", "TBA", a
+ * dash) counts as not known: the pages say so in their own words (or leave it
+ * out) instead of printing the placeholder.
+ */
+export const known = (value?: string | null): string => {
+    const v = value?.trim() ?? '';
+    return /^(tb[acd]|n\/?a|[-–—?]+)$/i.test(v) ? '' : v;
+};
+
+/**
  * "9.–13. November 2026" / "9–13 November 2026" – the span the tour runs.
  * `month: 'short'` gives "9–13 Nov 2026" / "9.–13. Nov. 2026".
  *

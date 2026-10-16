@@ -150,9 +150,9 @@ export default async function RootLayout({
                 <noscript>
                     <h1>Coding for Change — Munich&apos;s Student Initiative for Social Tech</h1>
                     <p>
-                        Coding for Change is a Club and Technical University of Munich (TUM)
-                        student initiative based in Munich. We build software for NGOs, host
-                        hackathons, and bring students together to use code for social good.
+                        Coding for Change is a student initiative from TUM and LMU based in
+                        Munich. We build software for NGOs, host hackathons, and bring students
+                        together to use code for social good.
                     </p>
                     <nav>
                         <a href="/ngos">For NGOs</a> · <a href="/team">Team</a> ·{' '}
