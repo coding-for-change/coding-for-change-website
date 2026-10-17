@@ -1,0 +1,118 @@
+/*
+ * "Registrations per evening" on the TechTour page (EveningDistribution.tsx).
+ * Laid out like the array field below it – an h3 heading, Payload's field
+ * description – with one row per evening: label, bar, count and share. The
+ * bar blue is the analytics dashboard's series colour, so the two read alike.
+ */
+
+.tt-evenings {
+  --tt-bar: #2a78d6;
+}
+
+html[data-theme='dark'] .tt-evenings {
+  --tt-bar: #3987e5;
+}
+
+.render-fields > .field-type.tt-evenings {
+  margin-top: calc(var(--spacing-field) * 2);
+  margin-bottom: calc(var(--spacing-field) * 2);
+}
+
+.tt-evenings__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(var(--base) / 4) var(--base);
+  margin-bottom: calc(var(--base) * 0.75);
+}
+
+.tt-evenings__title {
+  margin: 0;
+}
+
+.tt-evenings__total {
+  color: var(--theme-elevation-500);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One grid for all rows, so the bars start and end at the same x. */
+.tt-evenings__rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(6rem, 1fr) max-content;
+  column-gap: var(--base);
+}
+
+.tt-evenings__row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: calc(var(--base) * 0.4) calc(var(--base) * 0.5);
+  border-radius: var(--style-radius-s);
+}
+
+.tt-evenings__row:nth-child(odd) {
+  background: var(--theme-elevation-50);
+}
+
+.tt-evenings__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tt-evenings__track {
+  display: block;
+  height: 12px;
+  border-left: 1px solid var(--theme-elevation-200);
+}
+
+.tt-evenings__bar {
+  display: block;
+  height: 100%;
+  background: var(--tt-bar);
+  border-radius: 0 4px 4px 0; /* rounded data-end, square at the baseline */
+}
+
+.tt-evenings__value {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(var(--base) / 2);
+  font-variant-numeric: tabular-nums;
+}
+
+.tt-evenings__count {
+  min-width: 2ch;
+  text-align: right;
+  font-weight: 600;
+}
+
+.tt-evenings__share {
+  min-width: 4ch;
+  text-align: right;
+  color: var(--theme-elevation-500);
+}
+
+.tt-evenings__empty {
+  margin: 0;
+  color: var(--theme-elevation-500);
+}
+
+/* Narrow: the label on its own line above the bar. */
+@media (max-width: 600px) {
+  .tt-evenings__rows {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .tt-evenings__row {
+    row-gap: calc(var(--base) / 4);
+  }
+
+  .tt-evenings__label {
+    grid-column: 1 / -1;
+  }
+}
