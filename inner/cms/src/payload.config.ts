@@ -158,8 +158,9 @@ export default buildConfig({
         date: false,
         payment: false,
       },
-      // The applicant's confirmation for the membership application gets the
-      // branded template (lib/applicationEmail.ts); all other mails pass through.
+      // The applicant's confirmation for the membership application and the
+      // TechTour gets a branded template (lib/applicationEmail.ts); all other
+      // mails pass through.
       beforeEmail: brandApplicationEmails,
       // Fallback recipient when a form doesn't define its own emails.
       defaultToEmail:

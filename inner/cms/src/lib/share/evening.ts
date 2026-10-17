@@ -17,6 +17,8 @@ export type Evening = {
   field: string;
   date: Date | null;
   company: string | null;
+  /** The page's headline for the evening, e.g. "Inside Lio: …". */
+  title: string | null;
   time: string | null;
   location: string | null;
 };
@@ -31,6 +33,7 @@ type TechTourEvent = {
   date?: string | null;
   company?: string | null;
   status?: string | null;
+  title?: string | null;
   time?: string | null;
   location?: string | null;
 };
@@ -61,11 +64,16 @@ export const labelDay = (label?: string | null): { day: number; month: number } 
 export const eveningsFieldOf = (fields: Block[] | null | undefined): Block | undefined =>
   (fields ?? []).find((b) => b.blockType === 'checkboxGroup' && b.name && (b.options?.length ?? 0) > 0);
 
+/**
+ * `locale` is the language of the page's wording (headline, time, place). The
+ * option is always matched in English: its label's date is read as "Wed 11 Nov".
+ */
 export async function eveningOf(
   payload: Payload,
   formId: number | string | { id: number },
   option: string,
   req?: PayloadRequest,
+  locale: 'en' | 'de' = 'en',
 ): Promise<Evening | null> {
   const id = typeof formId === 'object' ? formId.id : formId;
   const form = await payload
@@ -78,7 +86,7 @@ export async function eveningOf(
   const label = opt.label ?? option;
   const day = labelDay(label);
   const page = (await payload
-    .findGlobal({ slug: 'tech-tour', depth: 0, locale: 'en', req })
+    .findGlobal({ slug: 'tech-tour', depth: 0, locale, req })
     .catch(() => null)) as { events?: TechTourEvent[] | null } | null;
   const event = day
     ? (page?.events ?? []).find((ev) => {
@@ -95,6 +103,7 @@ export async function eveningOf(
     field: field.name,
     date: event?.date ? new Date(event.date) : null,
     company: event && !tba ? event.company!.trim() : null,
+    title: event?.title?.trim() || null,
     time: event?.time?.trim() || null,
     location: event?.location?.trim() || null,
   };
