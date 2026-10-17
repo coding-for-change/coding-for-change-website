@@ -7,7 +7,8 @@ import { GlobalConfig } from 'payload';
  * form titled "techtour", so questions are added in the admin.
  *
  * Every field here is rendered by the site, or – like the deletion date – acted
- * on by the CMS itself. The page's own wording – the headline, the "Apply for
+ * on by the CMS itself; the one exception is "Registrations per evening", a
+ * count shown in the admin that stores nothing. The page's own wording – the headline, the "Apply for
  * one stop or all four" lines, the stop labels – is not content but part of
  * the layout, and lives in the site's translation table
  * (`inner/src/i18n/translations.ts`, key `techtour`); a field for it here would
@@ -115,6 +116,17 @@ export const TechTour: GlobalConfig = {
           },
         },
       ],
+    },
+    {
+      // Admin only, nothing stored: how many registrations picked each
+      // evening, most first (components/techtour/EveningDistribution.tsx).
+      name: 'registrationsPerEvening',
+      type: 'ui',
+      admin: {
+        components: {
+          Field: '/components/techtour/EveningDistribution#EveningDistribution',
+        },
+      },
     },
     {
       name: 'events',
