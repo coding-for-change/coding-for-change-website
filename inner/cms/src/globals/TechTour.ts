@@ -175,7 +175,7 @@ export const TechTour: GlobalConfig = {
           localized: true,
           admin: {
             description:
-              'What happens at this visit. The registration form shows its first sentence next to the tick box when the visit has no headline, so make that sentence the one that identifies the visit.',
+              'What happens at this visit – shown in full under the stop on the tour page. The registration form shows its first sentence next to the tick box when the visit has no headline, so make that sentence the one that identifies the visit.',
           },
         },
         {

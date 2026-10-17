@@ -177,6 +177,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                                 const date = new Date(ev.date);
                                 const time = known(ev.time);
                                 const place = known(ev.location);
+                                const about = known(ev.description);
                                 // What is known comes first; whatever is still
                                 // open trails behind it.
                                 const meta =
@@ -235,6 +236,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                                         )}
                                         <h2 className="tt-stop__title">{ev.title || company}</h2>
                                         <p className="tt-stop__meta">{meta.join(' · ')}</p>
+                                        {about && <p className="tt-stop__about">{about}</p>}
                                         {open && (
                                             <Link className="tt-stop__apply" href="/techtour/apply">
                                                 {tc.stopApply} →

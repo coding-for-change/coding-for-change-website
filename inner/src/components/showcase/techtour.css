@@ -455,6 +455,18 @@
     line-height: 1.4;
     color: var(--tt-muted);
 }
+/* What happens that evening, in the host's words. About as wide as the
+   headline above it, and set to the same side of the line. */
+.tt-stop__about {
+    max-width: 30em;
+    margin: 14px 0 0;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--tt-text);
+    text-wrap: pretty;
+    /* Paragraph breaks typed in the CMS. */
+    white-space: pre-line;
+}
 .tt-stop__apply {
     margin-top: 16px;
     font-size: 15px;
@@ -644,6 +656,10 @@
     .tt-stop__meta {
         margin-top: 10px;
         font-size: 13px;
+    }
+    .tt-stop__about {
+        margin-top: 12px;
+        font-size: 15px;
     }
     .tt-stop__apply {
         margin-top: 14px;
