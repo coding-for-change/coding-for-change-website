@@ -146,6 +146,8 @@ const page: Endpoint = {
           `script-src 'nonce-${nonce}'`,
           `style-src 'nonce-${nonce}'`,
           "img-src 'self'",
+          // the CV next to the list, from this link's own CV route
+          "frame-src 'self'",
           "connect-src 'self'",
           "base-uri 'none'",
           "form-action 'self'",

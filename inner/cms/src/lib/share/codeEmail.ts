@@ -13,7 +13,7 @@ export function buildShareCodeEmail(input: {
   contactEmail: string;
 }): { subject: string; html: string; text: string } {
   const { code, title, siteOrigin, contactEmail } = input;
-  const subject = `${code} is your code for the TechTour registrations`;
+  const subject = `${code} is your code for the Tech Tour registrations`;
   const text = [
     `Your code: ${code}`,
     `It signs you in to the registrations for "${title}" and works for 10 minutes.`,

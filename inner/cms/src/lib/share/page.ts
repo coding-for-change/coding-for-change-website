@@ -1,5 +1,6 @@
 import { escapeHtml as esc } from '../waitlistEmailTemplate';
 import type { Evening } from './evening';
+import { LOGO_SVG } from './logo';
 import type { HostRow } from './registrations';
 
 /**
@@ -8,6 +9,10 @@ import type { HostRow } from './registrations';
  * small script under a per-response nonce, no fonts, images or scripts from
  * anywhere, nothing stored but the sign-in cookie. Works for the three states
  * the link can be in: not valid (any more), not signed in, signed in.
+ *
+ * Signed in, wide screens get the list on the left and the picked person's CV
+ * on the right, in a frame of the link's own CV route; narrow screens keep
+ * one column and open a CV in a new tab.
  *
  * English only: the hosts are international teams; the registrations show
  * whatever language each person wrote in.
@@ -39,17 +44,17 @@ const fmtWhen = new Intl.DateTimeFormat('en-GB', {
 });
 
 const STYLE = `
-:root { --paper:#f5f5f3; --card:#fff; --ink:#171717; --muted:#6b6b6b; --line:#e4e4e1; --soft:#f0f0ee;
+:root { --paper:#f5f5f3; --card:#fff; --ink:#171717; --muted:#6b6b6b; --line:#e4e4e1; --soft:#f0f0ee; --sel:#e6e6e2;
   --yes:#1a7f37; --yes-tint:#e3f5e8; --no:#b42318; --no-tint:#fdecea; --focus:#2a78d6; color-scheme: light dark; }
 @media (prefers-color-scheme: dark) { :root { --paper:#0f0f0f; --card:#171717; --ink:#f2f2f2; --muted:#a3a3a3;
-  --line:#2c2c2c; --soft:#1f1f1f; --yes:#4ac26b; --yes-tint:#14301d; --no:#f47067; --no-tint:#3a1714; } }
+  --line:#2c2c2c; --soft:#1f1f1f; --sel:#292929; --yes:#4ac26b; --yes-tint:#14301d; --no:#f47067; --no-tint:#3a1714; } }
 * { box-sizing: border-box; }
 body { margin:0; background:var(--paper); color:var(--ink); font:16px/1.55 'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif; }
 .mono { font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace; }
 a { color:inherit; }
 :focus-visible { outline:2px solid var(--focus); outline-offset:2px; }
-.top { display:flex; justify-content:space-between; align-items:center; gap:12px; max-width:920px; margin:0 auto; padding:22px 20px 0; font-size:14px; }
-.top .brand { font-weight:600; }
+.top { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; max-width:920px; margin:0 auto; padding:22px 20px 0; font-size:14px; }
+.top .logo { display:block; height:20px; width:auto; }
 .top .muted { color:var(--muted); }
 main { max-width:920px; margin:0 auto; padding:28px 20px 48px; }
 .kicker { margin:0 0 6px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
@@ -85,16 +90,16 @@ ol.people { list-style:none; margin:0; padding:0; }
 .person[data-decision="admitted"] { box-shadow:inset 3px 0 0 var(--yes); }
 .person[data-decision="declined"] { box-shadow:inset 3px 0 0 var(--no); }
 .person .n { color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
-.person .who strong { display:block; font-size:16px; }
-.person .who small { display:block; color:var(--muted); font-size:13px; }
-.person .who .details { margin:4px 0 0; font-size:14px; color:var(--ink); }
-.person .who .details span { color:var(--muted); }
+.pick { display:block; border:0; border-radius:0; background:none; color:var(--ink); padding:0; font-size:16px; font-weight:600; text-align:left; }
+.who small, .v-who small { display:block; color:var(--muted); font-size:13px; }
+.details { margin:4px 0 0; font-size:14px; color:var(--ink); }
+.details span { color:var(--muted); }
 .act { display:flex; align-items:center; gap:16px; }
 .cv { font-size:14px; white-space:nowrap; padding:6px 12px; border:1px solid var(--line); border-radius:4px; text-decoration:none; min-width:64px; text-align:center; }
 .cv:hover { background:var(--soft); }
 .cv.none { border-style:dashed; color:var(--muted); }
 .decide { display:inline-flex; gap:6px; }
-.decide button { background:transparent; color:var(--ink); border:1px solid var(--line); padding:6px 12px; font-size:14px; min-width:80px; }
+.decide button { background:var(--card); color:var(--ink); border:1px solid var(--line); padding:6px 12px; font-size:14px; min-width:80px; }
 .decide button[data-d="admitted"][aria-pressed="true"] { background:var(--yes-tint); border-color:var(--yes); color:var(--yes); }
 .decide button[data-d="declined"][aria-pressed="true"] { background:var(--no-tint); border-color:var(--no); color:var(--no); }
 .who-am-i { font-size:14px; color:var(--muted); }
@@ -102,8 +107,29 @@ ol.people { list-style:none; margin:0; padding:0; }
 .notice { margin-top:20px; padding:16px 20px; border:1px solid var(--line); border-radius:6px; background:var(--card); font-size:14px; color:var(--muted); }
 .notice strong { color:var(--ink); }
 footer { max-width:920px; margin:0 auto; padding:0 20px 40px; font-size:13px; color:var(--muted); }
+.wide .top, .wide main, .wide footer { max-width:1320px; }
+.viewer { display:none; }
+.v-head { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px 16px; padding:14px 20px; border-bottom:1px solid var(--line); }
+.v-who strong { display:block; font-size:18px; line-height:1.3; }
+.v-act { display:flex; align-items:center; gap:16px; }
+.v-body { position:relative; flex:1; min-height:0; overflow:hidden; border-bottom-right-radius:5px; }
+.v-body iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
+.v-empty { margin:0; padding:28px 20px; color:var(--muted); }
+.nocv { display:none; }
 .hidden { display:none !important; }
+@media (min-width:960px) {
+  .split { display:grid; grid-template-columns:minmax(340px,440px) minmax(0,1fr); align-items:start; }
+  .split .list { border-right:1px solid var(--line); }
+  .viewer { display:flex; flex-direction:column; position:sticky; top:12px; height:calc(100vh - 24px); margin-left:-1px; border-left:1px solid var(--line); }
+  .split .person { cursor:pointer; }
+  .split .person:hover { background:var(--soft); }
+  .split .person[data-selected] { background:var(--sel); }
+  .split .person .cv { display:none; }
+  .split .nocv { display:inline; }
+  .list .decide button { min-width:0; padding:5px 10px; }
+}
 @media (max-width:640px) {
+  .top .logo { height:16px; }
   h1 { font-size:24px; }
   .person { grid-template-columns:28px minmax(0,1fr); }
   .person .act { grid-column:2; gap:8px; flex-wrap:wrap; }
@@ -170,23 +196,83 @@ const SCRIPT = `
   };
   let filter = 'all';
   $$('.seg button').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.filter; show(filter); }));
+
+  // ---- the picked person's CV next to the list (wide screens only – narrow
+  // ones open it in a new tab through the row's CV link)
+  const viewer = $('#viewer');
+  const wide = matchMedia('(min-width: 960px)');
+  const side = () => !!viewer && wide.matches;
+  const cvLink = (row) => { const a = $('a.cv', row); return a ? a.href : ''; };
+  let current = null, shown = null;
+  const sync = () => {
+    if (current) $$('#v-decide button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.d === current.dataset.decision)));
+  };
+  const load = () => {
+    if (!current || !side() || shown === current) return;
+    shown = current;
+    const box = $('#v-body'), href = cvLink(current);
+    const note = document.createElement('p'); note.className = 'v-empty';
+    note.textContent = href ? 'Loading the CV…' : 'No CV came with this registration.';
+    box.replaceChildren(note);
+    if (!href) return;
+    // A new frame each time, so the CVs don't pile up in the back button's history.
+    const frame = document.createElement('iframe');
+    frame.title = 'CV of ' + $('.pick', current).textContent;
+    // Chrome: no page thumbnails, fit to the frame's width (other viewers ignore it).
+    frame.src = href + '#navpanes=0&view=FitH';
+    frame.addEventListener('load', () => {
+      // The route answers JSON when it cannot serve the CV – say so instead of showing that.
+      try { if (frame.contentDocument && frame.contentDocument.contentType === 'application/json') { frame.remove(); note.textContent = 'The CV could not be opened.'; } } catch (err) {}
+    });
+    box.append(frame);
+  };
+  const select = (row) => {
+    if (!side()) { const href = cvLink(row); if (href) window.open(href, '_blank', 'noopener'); return; }
+    if (row === current) return;
+    if (current) { delete current.dataset.selected; $('.pick', current).removeAttribute('aria-current'); }
+    current = row; row.dataset.selected = 'true';
+    const pick = $('.pick', row); pick.setAttribute('aria-current', 'true');
+    $('#v-name').textContent = pick.textContent;
+    $('#v-meta').replaceChildren(...$$('small, .details', $('.who', row)).map((el) => el.cloneNode(true)));
+    $('#v-decide').setAttribute('aria-label', 'Decision for ' + pick.textContent);
+    const href = cvLink(row), open = $('#v-open');
+    open.classList.toggle('hidden', !href); if (href) open.href = href;
+    $('#v-head').classList.remove('hidden');
+    sync(); load();
+  };
+  wide.addEventListener('change', () => { if (side()) current ? load() : $('.person') && select($('.person')); });
+
   const apply = (decisions) => {
     Object.entries(decisions).forEach(([id, d]) => {
       const row = $('.person[data-id="' + id + '"]'); if (!row) return;
       row.dataset.decision = d || '';
       $$('.decide button', row).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.d === d)));
     });
-    counts(); show(filter);
+    counts(); show(filter); sync();
   };
-  list.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.decide button'); if (!btn) return;
-    const row = btn.closest('.person');
-    const next = row.dataset.decision === btn.dataset.d ? null : btn.dataset.d;
-    $$('.decide button', row).forEach((b) => (b.disabled = true));
+  const decideOn = async (row, d) => {
+    const next = row.dataset.decision === d ? null : d;
+    const buttons = $$('.decide button', row).concat(row === current ? $$('#v-decide button') : []);
+    buttons.forEach((b) => (b.disabled = true));
     try { apply((await post('/decision', { submissions: [Number(row.dataset.id)], decision: next })).decisions); say($('#list-msg'), ''); }
     catch (err) { say($('#list-msg'), err.message, true); }
-    $$('.decide button', row).forEach((b) => (b.disabled = false));
+    buttons.forEach((b) => (b.disabled = false));
+  };
+  list.addEventListener('click', (e) => {
+    const row = e.target.closest('.person'); if (!row) return;
+    const btn = e.target.closest('.decide button');
+    if (btn) decideOn(row, btn.dataset.d);
+    else if (e.target.closest('.pick') || (side() && !e.target.closest('a'))) select(row);
   });
+  list.addEventListener('keydown', (e) => {
+    if ((e.key !== 'ArrowDown' && e.key !== 'ArrowUp') || !e.target.classList.contains('pick')) return;
+    const rows = $$('.person').filter((r) => !r.classList.contains('hidden'));
+    const to = rows[rows.indexOf(e.target.closest('.person')) + (e.key === 'ArrowDown' ? 1 : -1)];
+    if (!to) return;
+    e.preventDefault(); $('.pick', to).focus();
+    if (side()) select(to);
+  });
+  if (viewer) $('#v-decide').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b && current) decideOn(current, b.dataset.d); });
   const bulk = $('#admit-open');
   bulk.addEventListener('click', async () => {
     const open = $$('.person').filter((r) => r.dataset.decision === '').map((r) => Number(r.dataset.id));
@@ -198,6 +284,7 @@ const SCRIPT = `
   });
   $('#sign-out').addEventListener('click', async () => { await post('/sign-out').catch(() => {}); location.reload(); });
   counts(); show(filter);
+  if (side() && $('.person')) select($('.person'));
 })();
 `;
 
@@ -206,7 +293,21 @@ const eveningLine = (e: Evening | null) =>
     ? [e.label.split(' · ')[0], e.time, e.location].filter(Boolean).map((x) => esc(String(x))).join(' · ')
     : '';
 
-const frame = (input: PageInput, title: string, body: string, base = '') => `<!DOCTYPE html>
+const VIEWER = `<section class="viewer" id="viewer" aria-label="CV">
+    <div class="v-head hidden" id="v-head">
+      <div class="v-who"><strong id="v-name"></strong><div id="v-meta"></div></div>
+      <div class="v-act">
+        <a class="cv" id="v-open" target="_blank" rel="noopener" title="Open the CV in a new tab">New tab ↗</a>
+        <div class="decide" id="v-decide" role="group" aria-label="Decision">
+          <button type="button" data-d="admitted" aria-pressed="false">Admit</button>
+          <button type="button" data-d="declined" aria-pressed="false">Decline</button>
+        </div>
+      </div>
+    </div>
+    <div class="v-body" id="v-body"><p class="v-empty">Pick someone on the left to see their CV.</p></div>
+  </section>`;
+
+const frame = (input: PageInput, title: string, body: string, base = '', wide = false) => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -215,8 +316,8 @@ const frame = (input: PageInput, title: string, body: string, base = '') => `<!D
 <title>${esc(title)} – Coding for Change</title>
 <style nonce="${input.nonce}">${STYLE}</style>
 </head>
-<body data-base="${esc(base)}">
-<div class="top"><span class="brand mono">&gt;_&#9825; Coding for Change</span><span class="muted mono">Munich TechTour</span></div>
+<body data-base="${esc(base)}"${wide ? ' class="wide"' : ''}>
+<div class="top">${LOGO_SVG}<span class="muted mono">Munich Tech Tour</span></div>
 <main>${body}</main>
 <footer>Coding for Change e.V. · <a href="${esc(input.siteOrigin)}/privacy">Privacy policy</a> · <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a></footer>
 <script nonce="${input.nonce}">${SCRIPT}</script>
@@ -275,8 +376,8 @@ export function sharePage(input: PageInput): string {
       (r, i) => `<li class="person" data-id="${r.id}" data-decision="${r.decision ?? ''}">
   <span class="n">${i + 1}</span>
   <div class="who">
-    <strong>${esc(r.name)}</strong>
-    <small>registered ${esc(fmtDay.format(new Date(r.registeredAt)))}</small>
+    <button type="button" class="pick" aria-controls="viewer">${esc(r.name)}</button>
+    <small>registered ${esc(fmtDay.format(new Date(r.registeredAt)))}${r.hasCv ? '' : '<span class="nocv"> · no CV</span>'}</small>
     ${r.details.length ? `<p class="details">${r.details.map((d) => `<span>${esc(d.label)}:</span> ${esc(d.value)}`).join(' · ')}</p>` : ''}
   </div>
   <div class="act">
@@ -289,6 +390,8 @@ export function sharePage(input: PageInput): string {
 </li>`,
     )
     .join('\n');
+  const list = `<ol class="people">${rows}</ol>
+  <p class="empty${input.rows.length ? ' hidden' : ''}" id="none">${input.rows.length ? 'Nobody in this view.' : 'Nobody has registered for this evening yet.'}</p>`;
 
   return frame(
     input,
@@ -314,10 +417,13 @@ export function sharePage(input: PageInput): string {
     <span class="who-am-i">Signed in as ${esc(input.email)} · <button type="button" class="linkish" id="sign-out">Sign out</button></span>
   </div>
   <p class="msg list-msg" id="list-msg" role="status"></p>
-  <ol class="people">${rows}</ol>
-  <p class="empty${input.rows.length ? ' hidden' : ''}" id="none">${input.rows.length ? 'Nobody in this view.' : 'Nobody has registered for this evening yet.'}</p>
+  ${input.rows.length ? `<div class="split">
+  <div class="list">${list}</div>
+  ${VIEWER}
+  </div>` : list}
 </section>
 <aside class="notice"><strong>Please use these registrations only to decide who joins your evening and to prepare it</strong> (for example access to your building), and delete any CVs you downloaded once the evening is over. Your decisions reach us right away – we let everyone know. Questions: <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a></aside>`,
     base,
+    true,
   );
 }
