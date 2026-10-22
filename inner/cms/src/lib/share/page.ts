@@ -11,8 +11,9 @@ import type { HostRow } from './registrations';
  * the link can be in: not valid (any more), not signed in, signed in.
  *
  * Signed in, wide screens get the list on the left and the picked person's CV
- * on the right, in a frame of the link's own CV route; narrow screens keep
- * one column and open a CV in a new tab.
+ * on the right, in a frame of the link's own CV route – and if the window is
+ * tall enough, the page itself stands still and only the list and the CV
+ * scroll. Narrow screens keep one column and open a CV in a new tab.
  *
  * English only: the hosts are international teams; the registrations show
  * whatever language each person wrote in.
@@ -104,7 +105,7 @@ ol.people { list-style:none; margin:0; padding:0; }
 .decide button[data-d="declined"][aria-pressed="true"] { background:var(--no-tint); border-color:var(--no); color:var(--no); }
 .who-am-i { font-size:14px; color:var(--muted); }
 .empty { padding:28px 20px; color:var(--muted); margin:0; }
-.notice { margin-top:20px; padding:16px 20px; border:1px solid var(--line); border-radius:6px; background:var(--card); font-size:14px; color:var(--muted); }
+.notice { margin:0; padding:16px 20px; border-top:1px solid var(--line); font-size:13px; color:var(--muted); }
 .notice strong { color:var(--ink); }
 footer { max-width:920px; margin:0 auto; padding:0 20px 40px; font-size:13px; color:var(--muted); }
 .wide .top, .wide main, .wide footer { max-width:1320px; }
@@ -118,7 +119,7 @@ footer { max-width:920px; margin:0 auto; padding:0 20px 40px; font-size:13px; co
 .nocv { display:none; }
 .hidden { display:none !important; }
 @media (min-width:960px) {
-  .split { display:grid; grid-template-columns:minmax(340px,440px) minmax(0,1fr); align-items:start; }
+  .split { display:grid; grid-template-columns:minmax(340px,1fr) minmax(0,680px); align-items:start; }
   .split .list { border-right:1px solid var(--line); }
   .viewer { display:flex; flex-direction:column; position:sticky; top:12px; height:calc(100vh - 24px); margin-left:-1px; border-left:1px solid var(--line); }
   .split .person { cursor:pointer; }
@@ -127,6 +128,18 @@ footer { max-width:920px; margin:0 auto; padding:0 20px 40px; font-size:13px; co
   .split .person .cv { display:none; }
   .split .nocv { display:inline; }
   .list .decide button { min-width:0; padding:5px 10px; }
+}
+/* Wide and tall enough: the page itself stands still, so the header and the
+   counts stay in view – only the list and the CV scroll, each on its own. */
+@media (min-width:960px) and (min-height:640px) {
+  body.wide { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
+  .wide .top, .wide main, .wide footer { width:100%; }
+  .wide main { flex:1; min-height:0; display:flex; flex-direction:column; padding-bottom:0; }
+  .wide .card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
+  .wide .split { flex:1; min-height:0; grid-template-rows:minmax(0,1fr); align-items:stretch; }
+  .wide .split .list { overflow-y:auto; overscroll-behavior:contain; }
+  .wide .viewer { position:static; height:auto; }
+  .wide footer { padding:12px 20px 14px; }
 }
 @media (max-width:640px) {
   .top .logo { height:16px; }
@@ -390,8 +403,10 @@ export function sharePage(input: PageInput): string {
 </li>`,
     )
     .join('\n');
+  // The notice ends the list, so it scrolls with it when the header stands still.
   const list = `<ol class="people">${rows}</ol>
-  <p class="empty${input.rows.length ? ' hidden' : ''}" id="none">${input.rows.length ? 'Nobody in this view.' : 'Nobody has registered for this evening yet.'}</p>`;
+  <p class="empty${input.rows.length ? ' hidden' : ''}" id="none">${input.rows.length ? 'Nobody in this view.' : 'Nobody has registered for this evening yet.'}</p>
+  <aside class="notice"><strong>Please use these registrations only to decide who joins your evening and to prepare it</strong> (for example access to your building), and delete any CVs you downloaded once the evening is over. Your decisions reach us right away – we let everyone know. Questions: <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a></aside>`;
 
   return frame(
     input,
@@ -421,8 +436,7 @@ export function sharePage(input: PageInput): string {
   <div class="list">${list}</div>
   ${VIEWER}
   </div>` : list}
-</section>
-<aside class="notice"><strong>Please use these registrations only to decide who joins your evening and to prepare it</strong> (for example access to your building), and delete any CVs you downloaded once the evening is over. Your decisions reach us right away – we let everyone know. Questions: <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a></aside>`,
+</section>`,
     base,
     true,
   );
