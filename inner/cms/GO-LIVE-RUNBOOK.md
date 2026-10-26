@@ -264,13 +264,15 @@ filled in.
 Save, then **Write to the contacts** (sidebar) opens a prepared email with the
 link in your own mail program. The host sees name, CV and the other answers
 (never the email address), admits or declines each person, and can admit
-everyone still open in one go. If a company wants to contact the people it
+everyone still open in one go. **Download CVs** gives it the CVs of everyone
+the list shows (all, open, admitted or declined) as one ZIP, numbered as on
+the page. If a company wants to contact the people it
 admitted to register them, the consent allows sending it their addresses –
 from the Excel export, for its evening only. Their decisions
 show up right away in the review workspace (✓ / ✕ in the list, "Host
 decisions" on each person) and in the Excel export – that is where to send the
 confirmations from. Every sign-in, CV opened and decision is under **Host link
-activity**. Tick **Blocked** to stop a link at once; deleting a link deletes
+activity** (a ZIP counts as opening each CV in it). Tick **Blocked** to stop a link at once; deleting a link deletes
 its activity.
 
 ## 7½. Keep the TechTour page out of search results until it is ready
