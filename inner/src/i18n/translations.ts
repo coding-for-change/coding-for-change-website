@@ -146,6 +146,26 @@ export interface Translations {
             /** Under the form: answers are kept automatically, in this browser only. */
             draftNote: string;
         };
+        /**
+         * /join/speedrun, the short application, and the link to it beside
+         * "Apply now" on /join. `{round}` is the round label, `{firstName}`
+         * what the applicant typed.
+         */
+        speedrun: {
+            link: string; title: string;
+            /** One line under the title while the form is open; " · " separates its parts. */
+            meta: string;
+            lead: string; success: string;
+            /** The questions this page adds to the ones taken from the application form. */
+            questions: {
+                degree: string;
+                degreeOptions: Record<'bachelor' | 'master' | 'other', string>;
+                semester: string;
+                hours: string;
+                hoursOptions: Record<'under3' | 'from3to5' | 'from5to7' | 'over7', string>;
+                profileUrl: string;
+            };
+        };
         loadingForm: string; formUnavailable: string;
         waitlistTitle: string; waitlistLead: string;
         /** Heading + lead over the waitlist before the round opens (in place of waitlistTitle / waitlistLead). */
@@ -558,6 +578,26 @@ const en: Translations = {
             sectionApplication: 'Your application',
             draftNote:
                 'Your answers are saved automatically in this browser, so you can come back and finish later – we receive nothing until you send the form.',
+        },
+        speedrun: {
+            link: 'Short on time? Speedrun your application →',
+            title: 'Speedrun your application',
+            meta: '{round} · any% in 2 minutes · closes Sat, 31 Oct, 23:59',
+            lead: 'You skip the screening – no CV, no essays. Instead, we’ll get to know each other in a relaxed, personal call.',
+            success: 'Thanks, {firstName}! We’ll get back to you by Sunday, Nov 1.',
+            questions: {
+                degree: 'Degree',
+                degreeOptions: { bachelor: 'Bachelor', master: 'Master', other: 'Other' },
+                semester: 'Current semester',
+                hours: 'How much time can you realistically invest per week?',
+                hoursOptions: {
+                    under3: 'less than 3h',
+                    from3to5: '3–5h',
+                    from5to7: '5–7h',
+                    over7: '7h+',
+                },
+                profileUrl: 'LinkedIn or GitHub URL',
+            },
         },
         loadingForm: 'Loading form…',
         formUnavailable:
@@ -1015,6 +1055,26 @@ const de: Translations = {
             sectionApplication: 'Deine Bewerbung',
             draftNote:
                 'Deine Antworten werden automatisch in diesem Browser gespeichert, du kannst also später weitermachen – bei uns kommt nichts an, bevor du das Formular abschickst.',
+        },
+        speedrun: {
+            link: 'Wenig Zeit? Speedrun deine Bewerbung →',
+            title: 'Speedrun deine Bewerbung',
+            meta: '{round} · any% in 2 Minuten · endet Sa, 31. Okt, 23:59',
+            lead: 'Du skippst das Screening – kein Lebenslauf, keine langen Texte. Stattdessen lernen wir uns in einem entspannten, persönlichen Gespräch kennen.',
+            success: 'Danke, {firstName}! Wir melden uns bis Sonntag, 1. November.',
+            questions: {
+                degree: 'Abschluss',
+                degreeOptions: { bachelor: 'Bachelor', master: 'Master', other: 'Andere' },
+                semester: 'Aktuelles Semester',
+                hours: 'Wie viel Zeit kannst du realistisch pro Woche investieren?',
+                hoursOptions: {
+                    under3: 'weniger als 3h',
+                    from3to5: '3–5h',
+                    from5to7: '5–7h',
+                    over7: '7h+',
+                },
+                profileUrl: 'LinkedIn- oder GitHub-URL',
+            },
         },
         loadingForm: 'Formular wird geladen…',
         formUnavailable:

@@ -1183,6 +1183,10 @@ export interface FormSubmission {
     | boolean
     | null;
   /**
+   * Empty = the full form. "Speedrun" = the short application at /join/speedrun: no CV, only some of the questions.
+   */
+  source?: 'speedrun' | null;
+  /**
    * What each evening’s host company decided through its share link: admitted or declined, by whom, when.
    */
   hostDecisions?:
@@ -2310,6 +2314,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
   language?: T;
   agreedTo?: T;
   choiceKeys?: T;
+  source?: T;
   hostDecisions?: T;
   attribution?:
     | T

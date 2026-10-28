@@ -266,6 +266,16 @@ export interface CmsFormProps {
      * cookieless ping is the gate (see lib/googleAds.ts).
      */
     adsOnlyWithConsent?: boolean;
+    /**
+     * Sent with the submission (not with linked forms') to say which version
+     * of the form it came through – /join/speedrun sends 'speedrun'.
+     */
+    source?: string;
+    /**
+     * What to show once it is sent, in place of the form's confirmation
+     * message from the CMS. Gets the answers as typed, by field name.
+     */
+    confirmation?: (answers: Record<string, string>) => React.ReactNode;
     className?: string;
     onSubmitted?: () => void;
 }
@@ -282,6 +292,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
     draft,
     textLimits,
     adsOnlyWithConsent,
+    source,
+    confirmation,
     className,
     onSubmitted,
 }) => {
@@ -602,8 +614,8 @@ const CmsForm: React.FC<CmsFormProps> = ({
         setSubmitting(true);
         const attribution = getAttribution();
         // Parent first, then each ticked linked form.
-        const jobs: { id: number; label: string; list: CmsFormField[] }[] = [
-            { id: form.id, label, list: fields },
+        const jobs: { id: number; label: string; list: CmsFormField[]; source?: string }[] = [
+            { id: form.id, label, list: fields, source },
             ...activeSubforms.map((f) => {
                 const sub = linkedForm(f)!;
                 return {
@@ -628,7 +640,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
             if (doneRef.current.has(job.id)) continue;
             try {
                 const { data, files } = serialise(job.list);
-                await submitForm(job.id, data, attribution, files, locale, honeypot);
+                await submitForm(job.id, data, attribution, files, locale, honeypot, job.source);
                 doneRef.current.add(job.id);
                 trackConversion(job.label);
                 if (
@@ -1057,7 +1069,13 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     </h3>
                 )}
                 <div className="lp-field">
-                    {form.confirmationMessage ? (
+                    {confirmation ? (
+                        confirmation(
+                            Object.fromEntries(
+                                Object.entries(values).map(([name, v]) => [name, String(v)])
+                            )
+                        )
+                    ) : form.confirmationMessage ? (
                         <RichText content={form.confirmationMessage} />
                     ) : (
                         <p>{t.forms.successFallback}</p>

@@ -55,7 +55,9 @@ export async function submitForm(
     files?: number[],
     /** The site language; the CMS answers the applicant's confirmation mail in it. */
     locale?: string,
-    honeypot?: string
+    honeypot?: string,
+    /** Which version of the form was sent, e.g. 'speedrun' (CMS fields/submissionSource.ts). */
+    source?: string
 ): Promise<void> {
     const query = locale ? `?locale=${encodeURIComponent(locale)}` : '';
     const res = await fetch(`${API_BASE}/form-submissions${query}`, {
@@ -66,6 +68,7 @@ export async function submitForm(
             submissionData,
             ...(files?.length ? { files } : {}),
             ...(attribution ? { attribution } : {}),
+            ...(source ? { source } : {}),
             hp: honeypot ?? '',
         }),
     });
