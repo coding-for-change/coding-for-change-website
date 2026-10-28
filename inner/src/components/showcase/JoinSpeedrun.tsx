@@ -21,23 +21,20 @@ const FORM_TITLE = 'application';
  */
 const SHARED = ['firstName', 'lastName', 'email', 'university', 'track', 'expectations', 'privacy'];
 
-/** Every question on this page, in order: the shared ones plus the four defined below. */
+/** Every question on this page, in order: the shared ones plus the one defined below. */
 const ORDER = [
     'firstName',
     'lastName',
     'email',
     'university',
-    'degree',
-    'semester',
     'track',
     'hoursPerWeek',
     'expectations',
-    'profileUrl',
     'privacy',
 ];
 
-/** The team choice, and the short answers drawn as one row of buttons each. */
-const BUTTON_SELECTS = ['track', 'degree', 'semester', 'hoursPerWeek'];
+/** The team choice, and the hours a week as one row of buttons. */
+const BUTTON_SELECTS = ['track', 'hoursPerWeek'];
 
 /** The same guide to length as on /join/apply. */
 const TEXT_LIMITS = { expectations: 600 };
@@ -52,18 +49,18 @@ export interface JoinSpeedrunProps {
 
 /**
  * /join/speedrun – the short application, for anyone who would not get round
- * to the full one before the deadline: who you are, what you study, which
+ * to the full one before the deadline: who you are, where you study, which
  * team, how much time, one question, no CV.
  *
  * Laid out like /join/apply (head, then the form across the column) minus the
  * steps strip, whose first step asks for a CV. It is the same form, too: the
  * questions it shares with the application come from the CMS "application"
- * form, the four it adds (degree, semester, hours a week, a profile link) are
- * defined here, and it is sent to that form marked `source: 'speedrun'`, so
- * these applicants are reviewed in the same list with a badge saying why
- * their CV is missing. Nothing is kept in the browser – it is short enough
- * not to need a draft. It closes a day after the full form (SPEEDRUN_DEADLINE);
- * outside its dates the card holds the "notify me" signup, as on /join/apply.
+ * form, the one it adds (hours a week) is defined here, and it is sent to
+ * that form marked `source: 'speedrun'`, so these applicants are reviewed in
+ * the same list with a badge saying why their CV is missing. Nothing is kept
+ * in the browser – it is short enough not to need a draft. It closes a day
+ * after the full form (SPEEDRUN_DEADLINE); outside its dates the card holds
+ * the "notify me" signup, as on /join/apply.
  */
 const JoinSpeedrun: React.FC<JoinSpeedrunProps> = (props) => {
     const { t, locale } = useLanguage();
@@ -96,29 +93,10 @@ const JoinSpeedrun: React.FC<JoinSpeedrunProps> = (props) => {
         });
         if (SHARED.some((name) => !byName.has(name))) return null;
 
-        // Answers are stored in English whatever the page language, so the
-        // review reads the same for everyone. "Other" is capitalised on
-        // purpose: an option valued `other` would ask for free text.
+        // The answer is stored in English whatever the page language, so the
+        // review reads the same for everyone.
         const q = s.questions;
         const own: Record<string, CmsFormField> = {
-            degree: {
-                blockType: 'select',
-                name: 'degree',
-                label: q.degree,
-                required: true,
-                options: [
-                    { value: 'Bachelor', label: q.degreeOptions.bachelor },
-                    { value: 'Master', label: q.degreeOptions.master },
-                    { value: 'Other', label: q.degreeOptions.other },
-                ],
-            },
-            semester: {
-                blockType: 'select',
-                name: 'semester',
-                label: q.semester,
-                required: true,
-                options: ['1', '2', '3', '4', '5', '6', '7+'].map((n) => ({ value: n, label: n })),
-            },
             hoursPerWeek: {
                 blockType: 'select',
                 name: 'hoursPerWeek',
@@ -131,7 +109,6 @@ const JoinSpeedrun: React.FC<JoinSpeedrunProps> = (props) => {
                     { value: '7h+', label: q.hoursOptions.over7 },
                 ],
             },
-            profileUrl: { blockType: 'text', name: 'profileUrl', label: q.profileUrl, required: false },
         };
         return {
             ...application,

@@ -1039,9 +1039,9 @@
 .jn-speedrun__part {
     white-space: nowrap;
 }
-/* Short answers (degree, semester, hours a week) as one row of equal
-   buttons, so each is a single tap, on a phone too. Options with a line
-   under their title – the team choice – keep the cards. */
+/* Short answers (hours a week) as one row of equal buttons, so each is a
+   single tap, on a phone too. Options with a line under their title – the
+   team choice – keep the cards. */
 .jn-speedrun .lp-choice__options:not(:has(.lp-choice__sub)) {
     display: flex;
     gap: 8px;
