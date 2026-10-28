@@ -133,12 +133,11 @@ const rowOf = (scope: Scope, s: SubmissionDoc): HostRow => {
   };
 };
 
-/** Everyone registered for the link's evening, first come first. */
-export async function hostView(
+async function registrationsOf(
   payload: Payload,
   link: ShareLinkDoc,
   req?: PayloadRequest,
-): Promise<{ evening: Evening; rows: HostRow[] } | null> {
+): Promise<{ scope: Scope; docs: SubmissionDoc[] } | null> {
   const scope = await scopeOf(payload, link, req);
   if (!scope) return null;
   const { docs } = await payload.find({
@@ -150,8 +149,33 @@ export async function hostView(
     overrideAccess: true,
     req,
   });
-  const rows = (docs as unknown as SubmissionDoc[]).filter((s) => inScope(scope, s)).map((s) => rowOf(scope, s));
-  return { evening: scope.evening, rows };
+  return { scope, docs: (docs as unknown as SubmissionDoc[]).filter((s) => inScope(scope, s)) };
+}
+
+/** Everyone registered for the link's evening, first come first. */
+export async function hostView(
+  payload: Payload,
+  link: ShareLinkDoc,
+  req?: PayloadRequest,
+): Promise<{ evening: Evening; rows: HostRow[] } | null> {
+  const found = await registrationsOf(payload, link, req);
+  return found && { evening: found.scope.evening, rows: found.docs.map((s) => rowOf(found.scope, s)) };
+}
+
+/** Every CV on the link's list at once (the page's "Download CVs"), numbered as on the page. */
+export async function hostCvs(
+  payload: Payload,
+  link: ShareLinkDoc,
+  req?: PayloadRequest,
+): Promise<{ n: number; row: HostRow; file: number }[] | null> {
+  const found = await registrationsOf(payload, link, req);
+  return (
+    found &&
+    found.docs.flatMap((s, i) => {
+      const file = cvOf(s);
+      return file == null ? [] : [{ n: i + 1, row: rowOf(found.scope, s), file }];
+    })
+  );
 }
 
 /** A registration the link may act on, or null when it is not one of its evening's. */

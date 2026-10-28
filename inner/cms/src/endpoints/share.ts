@@ -1,6 +1,6 @@
 import type { Endpoint, PayloadRequest } from 'payload';
 import { randomBytes } from 'node:crypto';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import type { ShareAction } from '../collections/ShareAccessLog';
 import { buildShareCodeEmail } from '../lib/share/codeEmail';
@@ -9,6 +9,7 @@ import { sharePage, type PageInput } from '../lib/share/page';
 import {
   cvOf,
   decide,
+  hostCvs,
   hostView,
   isRecipient,
   registrationInScope,
@@ -24,6 +25,7 @@ import {
   readCookie,
   sessionCookie,
 } from '../lib/share/session';
+import { zipSize, zipStream, type ZipEntry } from '../lib/share/zip';
 
 /**
  * The host share links (collections/ShareLinks.ts), as the host's contact
@@ -35,6 +37,7 @@ import {
  *   POST /api/share/:token/verify             { email, code } → sign-in cookie
  *   POST /api/share/:token/decision           { submissions: [id…], decision: 'admitted' | 'declined' | null }
  *   GET  /api/share/:token/cv/:submission     the registration's CV (PDF)
+ *   GET  /api/share/:token/cvs?show=…         every CV in that view of the list, as one ZIP
  *   POST /api/share/:token/sign-out
  *
  * The site redirects /share/:token here (inner/next.config.ts), which is the
@@ -269,6 +272,72 @@ const cv: Endpoint = {
   },
 };
 
+/** Who the page's filter shows – the same views as its All / Open / Admitted / Declined. */
+const VIEWS = new Set(['all', 'open', 'admitted', 'declined']);
+/** What a file name in the ZIP (or the ZIP's own) may not contain on any system. */
+const fileSafe = (s: string) => s.replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
+
+const cvs: Endpoint = {
+  path: '/share/:token/cvs',
+  method: 'get',
+  handler: async (req) => {
+    const ctx = await contextOf(req);
+    // A download is a plain click on a link: whatever stands in its way, go
+    // back to the page, which says why or asks to sign in again.
+    const back = () =>
+      new Response(null, { status: 303, headers: { ...PRIVATE, Location: `/api/share/${encodeURIComponent(ctx.token)}` } });
+    if (ctx.state !== 'ok' || !ctx.email) return back();
+    const view = req.searchParams.get('show') ?? 'all';
+    if (!VIEWS.has(view)) return back();
+    const all = (await hostCvs(req.payload, ctx.link, req)) ?? [];
+    const picked = all.filter(({ row }) => view === 'all' || (row.decision ?? 'open') === view);
+    const { docs: files } = picked.length
+      ? await req.payload.find({
+          collection: 'applicant-files',
+          where: { id: { in: picked.map((p) => p.file) } },
+          depth: 0,
+          pagination: false,
+          overrideAccess: true,
+          req,
+        })
+      : { docs: [] };
+    const fileName = new Map(files.map((f) => [f.id, f.filename]));
+    const dir = req.payload.collections['applicant-files'].config.upload.staticDir as string;
+    const digits = String(all.at(-1)?.n ?? 0).length;
+    const email = ctx.email;
+    const entries = (
+      await Promise.all(
+        picked.map(async ({ n, row, file }): Promise<ZipEntry | null> => {
+          const name = fileName.get(file);
+          const at = name ? path.resolve(dir, path.basename(name)) : null;
+          const info = at ? await stat(at).catch(() => null) : null;
+          if (!at || !info?.isFile()) return null;
+          return {
+            // Numbered as on the page, so the files sort first come first.
+            name: `${String(n).padStart(digits, '0')} ${fileSafe(row.name) || `Registration ${row.id}`}.pdf`,
+            size: info.size,
+            modified: info.mtime,
+            read: async () => {
+              await log(req, ctx.link, email, 'cv', row.id);
+              return readFile(at);
+            },
+          };
+        }),
+      )
+    ).filter((e): e is ZipEntry => e !== null);
+    if (!entries.length) return back();
+    const zipName = `CVs ${fileSafe(ctx.link.title)}${view === 'all' ? '' : ` – ${view}`}.zip`;
+    return new Response(zipStream(entries), {
+      headers: {
+        ...PRIVATE,
+        'Content-Type': 'application/zip',
+        'Content-Length': String(zipSize(entries)),
+        'Content-Disposition': `attachment; filename="${zipName.replace(/[^\x20-\x7e]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(zipName)}`,
+      },
+    });
+  },
+};
+
 const signOut: Endpoint = {
   path: '/share/:token/sign-out',
   method: 'post',
@@ -281,4 +350,4 @@ const signOut: Endpoint = {
   },
 };
 
-export const shareEndpoints: Endpoint[] = [page, requestCode, verify, decision, cv, signOut];
+export const shareEndpoints: Endpoint[] = [page, requestCode, verify, decision, cv, cvs, signOut];

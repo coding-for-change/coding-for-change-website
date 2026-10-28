@@ -11,9 +11,11 @@ import type { HostRow } from './registrations';
  * the link can be in: not valid (any more), not signed in, signed in.
  *
  * Signed in, wide screens get the list on the left and the picked person's CV
- * on the right, in a frame of the link's own CV route – and if the window is
- * tall enough, the page itself stands still and only the list and the CV
- * scroll. Narrow screens keep one column and open a CV in a new tab.
+ * on the right, in a frame of the link's own CV route that takes the window's
+ * full height – and if the window is tall enough, the page itself stands
+ * still and only the list and the CV scroll. Narrow screens keep one column
+ * and open a CV in a new tab. "Download CVs" fetches the CVs of whoever the
+ * list shows as one ZIP.
  *
  * English only: the hosts are international teams; the registrations show
  * whatever language each person wrote in.
@@ -103,42 +105,47 @@ ol.people { list-style:none; margin:0; padding:0; }
 .decide button { background:var(--card); color:var(--ink); border:1px solid var(--line); padding:6px 12px; font-size:14px; min-width:80px; }
 .decide button[data-d="admitted"][aria-pressed="true"] { background:var(--yes-tint); border-color:var(--yes); color:var(--yes); }
 .decide button[data-d="declined"][aria-pressed="true"] { background:var(--no-tint); border-color:var(--no); color:var(--no); }
+.view { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .who-am-i { font-size:14px; color:var(--muted); }
 .empty { padding:28px 20px; color:var(--muted); margin:0; }
 .notice { margin:0; padding:16px 20px; border-top:1px solid var(--line); font-size:13px; color:var(--muted); }
 .notice strong { color:var(--ink); }
 footer { max-width:920px; margin:0 auto; padding:0 20px 40px; font-size:13px; color:var(--muted); }
-.wide .top, .wide main, .wide footer { max-width:1320px; }
 .viewer { display:none; }
-.v-head { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px 16px; padding:14px 20px; border-bottom:1px solid var(--line); }
+/* One line of name, one of details, the buttons beside them – every pixel
+   the head doesn't take goes to the CV. */
+.v-head { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:12px 20px; border-bottom:1px solid var(--line); }
+.v-who { flex:1; min-width:0; }
 .v-who strong { display:block; font-size:18px; line-height:1.3; }
-.v-act { display:flex; align-items:center; gap:16px; }
-.v-body { position:relative; flex:1; min-height:0; overflow:hidden; border-bottom-right-radius:5px; }
+.v-who strong, #v-meta { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#v-meta small, #v-meta .details { display:inline; margin:0; font-size:13px; }
+#v-meta .details::before { content:' · '; color:var(--muted); }
+.v-act { display:flex; align-items:center; gap:16px; flex:none; }
+.v-body { position:relative; flex:1; min-height:0; overflow:hidden; }
 .v-body iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
 .v-empty { margin:0; padding:28px 20px; color:var(--muted); }
 .nocv { display:none; }
 .hidden { display:none !important; }
+/* Wide: the CV is a column of its own along the window's right edge, the
+   window's full height, next to everything else. */
 @media (min-width:960px) {
-  .split { display:grid; grid-template-columns:minmax(340px,1fr) minmax(0,680px); align-items:start; }
-  .split .list { border-right:1px solid var(--line); }
-  .viewer { display:flex; flex-direction:column; position:sticky; top:12px; height:calc(100vh - 24px); margin-left:-1px; border-left:1px solid var(--line); }
-  .split .person { cursor:pointer; }
-  .split .person:hover { background:var(--soft); }
-  .split .person[data-selected] { background:var(--sel); }
-  .split .person .cv { display:none; }
-  .split .nocv { display:inline; }
+  body.wide { display:grid; grid-template-columns:minmax(0,1fr) min(56vw,900px); }
+  .wide .top, .wide main, .wide footer { max-width:none; margin:0; }
+  .viewer { display:flex; flex-direction:column; position:sticky; top:0; align-self:start; height:100vh; background:var(--card); border-left:1px solid var(--line); }
+  .wide .person { cursor:pointer; }
+  .wide .person:hover { background:var(--soft); }
+  .wide .person[data-selected] { background:var(--sel); }
+  .wide .person .cv { display:none; }
+  .wide .nocv { display:inline; }
   .list .decide button { min-width:0; padding:5px 10px; }
 }
 /* Wide and tall enough: the page itself stands still, so the header and the
    counts stay in view – only the list and the CV scroll, each on its own. */
 @media (min-width:960px) and (min-height:640px) {
-  body.wide { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
-  .wide .top, .wide main, .wide footer { width:100%; }
+  .wide .page { display:flex; flex-direction:column; height:100vh; overflow:hidden; }
   .wide main { flex:1; min-height:0; display:flex; flex-direction:column; padding-bottom:0; }
   .wide .card { flex:1; min-height:0; display:flex; flex-direction:column; overflow:hidden; }
-  .wide .split { flex:1; min-height:0; grid-template-rows:minmax(0,1fr); align-items:stretch; }
-  .wide .split .list { overflow-y:auto; overscroll-behavior:contain; }
-  .wide .viewer { position:static; height:auto; }
+  .wide .list { flex:1; min-height:0; overflow-y:auto; overscroll-behavior:contain; }
   .wide footer { padding:12px 20px 14px; }
 }
 @media (max-width:640px) {
@@ -203,9 +210,14 @@ const SCRIPT = `
   };
   const show = (filter) => {
     $$('.seg button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filter === filter)));
-    let shown = 0;
-    $$('.person').forEach((r) => { const on = filter === 'all' || r.dataset.decision === (filter === 'open' ? '' : filter); r.classList.toggle('hidden', !on); if (on) shown++; });
+    let shown = 0, cvs = 0;
+    $$('.person').forEach((r) => { const on = filter === 'all' || r.dataset.decision === (filter === 'open' ? '' : filter); r.classList.toggle('hidden', !on); if (on) { shown++; if ($('a.cv', r)) cvs++; } });
     $('#none').classList.toggle('hidden', shown > 0);
+    // "Download CVs" fetches whoever the list shows.
+    const dl = $('#cv-all');
+    dl.classList.toggle('none', !cvs);
+    dl.textContent = cvs ? 'Download ' + cvs + (cvs === 1 ? ' CV' : ' CVs') + ' ↓' : 'No CVs to download';
+    if (cvs) dl.href = base + '/cvs?show=' + filter; else dl.removeAttribute('href');
   };
   let filter = 'all';
   $$('.seg button').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.filter; show(filter); }));
@@ -245,8 +257,10 @@ const SCRIPT = `
     if (current) { delete current.dataset.selected; $('.pick', current).removeAttribute('aria-current'); }
     current = row; row.dataset.selected = 'true';
     const pick = $('.pick', row); pick.setAttribute('aria-current', 'true');
-    $('#v-name').textContent = pick.textContent;
-    $('#v-meta').replaceChildren(...$$('small, .details', $('.who', row)).map((el) => el.cloneNode(true)));
+    $('#v-name').textContent = $('#v-name').title = pick.textContent;
+    const meta = $$('small, .details', $('.who', row));
+    $('#v-meta').replaceChildren(...meta.map((el) => el.cloneNode(true)));
+    $('#v-meta').title = meta.map((el) => el.textContent.trim()).join(' · ');
     $('#v-decide').setAttribute('aria-label', 'Decision for ' + pick.textContent);
     const href = cvLink(row), open = $('#v-open');
     open.classList.toggle('hidden', !href); if (href) open.href = href;
@@ -320,7 +334,7 @@ const VIEWER = `<section class="viewer" id="viewer" aria-label="CV">
     <div class="v-body" id="v-body"><p class="v-empty">Pick someone on the left to see their CV.</p></div>
   </section>`;
 
-const frame = (input: PageInput, title: string, body: string, base = '', wide = false) => `<!DOCTYPE html>
+const frame = (input: PageInput, title: string, body: string, base = '', viewer = '') => `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -329,10 +343,13 @@ const frame = (input: PageInput, title: string, body: string, base = '', wide = 
 <title>${esc(title)} – Coding for Change</title>
 <style nonce="${input.nonce}">${STYLE}</style>
 </head>
-<body data-base="${esc(base)}"${wide ? ' class="wide"' : ''}>
+<body data-base="${esc(base)}"${viewer ? ' class="wide"' : ''}>
+<div class="page">
 <div class="top">${LOGO_SVG}<span class="muted mono">Munich Tech Tour</span></div>
 <main>${body}</main>
 <footer>Coding for Change e.V. · <a href="${esc(input.siteOrigin)}/privacy">Privacy policy</a> · <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a></footer>
+</div>
+${viewer}
 <script nonce="${input.nonce}">${SCRIPT}</script>
 </body>
 </html>`;
@@ -423,21 +440,21 @@ export function sharePage(input: PageInput): string {
     <button type="button" id="admit-open">Admit everyone still open</button>
   </div>
   <div class="tools">
-    <div class="seg" role="group" aria-label="Show">
-      <button type="button" data-filter="all" aria-pressed="true">All</button>
-      <button type="button" data-filter="open" aria-pressed="false">Open</button>
-      <button type="button" data-filter="admitted" aria-pressed="false">Admitted</button>
-      <button type="button" data-filter="declined" aria-pressed="false">Declined</button>
+    <div class="view">
+      <div class="seg" role="group" aria-label="Show">
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-filter="open" aria-pressed="false">Open</button>
+        <button type="button" data-filter="admitted" aria-pressed="false">Admitted</button>
+        <button type="button" data-filter="declined" aria-pressed="false">Declined</button>
+      </div>
+      <a class="cv none" id="cv-all" title="One ZIP file with the CVs of everyone shown">No CVs to download</a>
     </div>
     <span class="who-am-i">Signed in as ${esc(input.email)} · <button type="button" class="linkish" id="sign-out">Sign out</button></span>
   </div>
   <p class="msg list-msg" id="list-msg" role="status"></p>
-  ${input.rows.length ? `<div class="split">
   <div class="list">${list}</div>
-  ${VIEWER}
-  </div>` : list}
 </section>`,
     base,
-    true,
+    input.rows.length ? VIEWER : '',
   );
 }
