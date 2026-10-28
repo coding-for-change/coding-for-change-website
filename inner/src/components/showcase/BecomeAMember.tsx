@@ -16,6 +16,7 @@ import {
     applicationStatus,
     daysUntilDeadline,
     daysUntilOpening,
+    speedrunStatus,
 } from '../../lib/applicationPhase';
 import JoinHeroSlides from './JoinHeroSlides';
 import JoinExpect from './JoinExpect';
@@ -80,7 +81,9 @@ export interface BecomeAMemberProps {
  * members built, and a closing band. The three middle sections are shared
  * with the homepage's student mode (JoinExpect, JoinWays, JoinProcess).
  * Every button leads to /join/apply, which shows the form while the round is
- * open and the "notify me" signup around it.
+ * open and the "notify me" signup around it; while the short application at
+ * /join/speedrun is open (a day longer), a line under the head's buttons
+ * offers it.
  */
 const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
     const { t, locale } = useLanguage();
@@ -149,6 +152,13 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
                                 {t.join.howItWorks} ↓
                             </a>
                         </div>
+                        {/* The short application, while it takes submissions – which
+                            is a day longer than the full form (SPEEDRUN_DEADLINE). */}
+                        {speedrunStatus(now) === 'open' && (
+                            <p className="jn-hero__speedrun">
+                                <Link href="/join/speedrun">{t.join.speedrun.link}</Link>
+                            </p>
+                        )}
                     </motion.div>
 
                     <motion.div

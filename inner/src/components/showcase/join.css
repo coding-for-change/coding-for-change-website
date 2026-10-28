@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/* /join and /join/apply. Builds on the .lp tokens in landing.css.      */
+/* /join, /join/apply, /join/speedrun. Builds on landing.css's tokens.  */
 /* NOTE: App.css sets a global `div { display: flex }`, so every div    */
 /* below sets its own `display`. Rules on an element that also carries  */
 /* an .lp-* class are scoped under .jn: this file can load before       */
@@ -60,6 +60,21 @@
     flex-wrap: wrap;
     gap: 14px;
     margin-top: 34px;
+}
+/* The short application: a quiet line under "Apply now", not a third button. */
+.jn-hero__speedrun {
+    margin: 16px 0 0;
+    font-size: 15px;
+    line-height: 1.5;
+}
+.jn-hero__speedrun a {
+    color: var(--teal-dark);
+    text-decoration: underline;
+    text-decoration-color: rgba(36, 107, 108, 0.35);
+    text-underline-offset: 3px;
+}
+.jn-hero__speedrun a:hover {
+    text-decoration-color: currentColor;
 }
 .jn-hero__visual {
     position: relative;
@@ -997,6 +1012,54 @@
     .jn-apply__main .lp-draft__save {
         flex: 1 1 100%;
     }
+}
+
+/* ---- /join/speedrun: /join/apply's page, without the steps strip ---- */
+/* The rule the strip would have drawn between the head and the form. */
+.jn-speedrun .jn-apply__head {
+    margin-bottom: 36px;
+    padding-bottom: 32px;
+    border-bottom: 1px solid var(--line);
+}
+/* The pill holds three parts here. As a flex row a phone squeezes each into
+   a column of its own; as text it wraps between parts and never inside one. */
+.jn-speedrun .lp-round-status {
+    display: inline-block;
+    max-width: 100%;
+    line-height: 1.7;
+    text-align: center;
+}
+.jn-speedrun .lp-round-status__dot {
+    margin-right: 8px;
+    vertical-align: 1px;
+}
+.jn-speedrun .lp-round-status__sep {
+    margin: 0 4px;
+}
+.jn-speedrun__part {
+    white-space: nowrap;
+}
+/* Short answers (degree, semester, hours a week) as one row of equal
+   buttons, so each is a single tap, on a phone too. Options with a line
+   under their title – the team choice – keep the cards. */
+.jn-speedrun .lp-choice__options:not(:has(.lp-choice__sub)) {
+    display: flex;
+    gap: 8px;
+}
+.jn-speedrun .lp-choice__options:not(:has(.lp-choice__sub)) .lp-choice__option {
+    flex: 1 1 0;
+    min-width: 0;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 6px;
+    text-align: center;
+}
+.jn-speedrun__done {
+    margin: 0;
+    font-family: var(--jn-display);
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--navy);
 }
 
 /* ---- Notify me ---- */

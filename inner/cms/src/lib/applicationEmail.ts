@@ -17,7 +17,8 @@ const SITE_ORIGIN = () =>
  * applicant ("to" is their own address, i.e. the form's `{{email}}` entry) is
  * replaced by a branded confirmation, in the language the form was sent in
  * (the site posts with `?locale=`) – applicationEmailTemplate.ts for the
- * membership application, techtourEmailTemplate.ts (with the evenings they
+ * membership application (with the speedrun's own timeline when it came
+ * through /join/speedrun), techtourEmailTemplate.ts (with the evenings they
  * picked) for the TechTour. Both tell the person to just reply, so a reply
  * goes to the team when the admin's entry names no reply-to address.
  *
@@ -52,7 +53,7 @@ export const brandApplicationEmails: BeforeEmail = async (emails, { data, req })
   const built =
     kind === TECHTOUR_FORM_TITLE
       ? buildTechTourEmail({ ...common, evenings: await pickedEvenings(req, formId, data?.choiceKeys, lang) })
-      : buildApplicationEmail(common);
+      : buildApplicationEmail({ ...common, speedrun: data?.source === 'speedrun' });
 
   return emails.map((email) =>
     email.to.trim().toLowerCase() === applicant

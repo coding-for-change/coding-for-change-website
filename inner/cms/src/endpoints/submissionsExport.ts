@@ -13,7 +13,8 @@ import type { ApplicantFile, Form, FormSubmission } from '../payload-types';
  * One row per submission: submitted-at, the answers (one column per question,
  * in the form's current order, labelled with the question labels), links to
  * uploaded files (CV), the review status, score and notes from the CMS, the
- * language the form was sent in, the boxes the person ticked with the version
+ * language the form was sent in, whether it came through the short
+ * application at /join/speedrun, the boxes the person ticked with the version
  * of each wording (the consent log – fields/submissionRecord.ts; a TechTour
  * registration without `hostSharing` there is not shown to the hosts), the
  * TechTour hosts' decisions (one line per evening), and the campaign
@@ -117,6 +118,7 @@ export const submissionsExport: Endpoint = {
       { header: 'Score', key: 'reviewScore', width: 8 },
       { header: 'Notes', key: 'reviewNotes', width: 48 },
       { header: 'Language', key: 'language', width: 10 },
+      { header: 'Submitted via', key: 'submittedVia', width: 14 },
       { header: 'Agreed to (wording version)', key: 'agreedTo', width: 36 },
       { header: 'Host decisions', key: 'hostDecisions', width: 40 },
       { header: 'Source', key: 'source', width: 16 },
@@ -143,6 +145,7 @@ export const submissionsExport: Endpoint = {
         reviewScore: s.reviewScore ?? null,
         reviewNotes: s.reviewNotes ?? '',
         language: s.language ?? '',
+        submittedVia: s.source ?? '',
         agreedTo: (Array.isArray(s.agreedTo) ? (s.agreedTo as { field?: string; version?: string }[]) : [])
           .map((e) => (e?.version ? `${e.field} (${e.version})` : (e?.field ?? '')))
           .filter(Boolean)

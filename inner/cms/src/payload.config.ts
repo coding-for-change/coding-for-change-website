@@ -27,6 +27,7 @@ import { ShareAccessLog } from './collections/ShareAccessLog';
 import { attributionField } from './fields/attribution';
 import { reviewFields } from './fields/review';
 import { recordSubmission, submissionRecordFields } from './fields/submissionRecord';
+import { submissionSourceField } from './fields/submissionSource';
 import { hostDecisionsField } from './fields/hostDecisions';
 import { submissionsExport } from './endpoints/submissionsExport';
 import { shareEndpoints } from './endpoints/share';
@@ -197,6 +198,8 @@ export default buildConfig({
       // documents (CV) uploaded to `applicant-files`, what the submission
       // records about itself on arrival (language, the wording of the ticked
       // boxes, the keys of the picked options – fields/submissionRecord.ts),
+      // which version of the form it came through (the /join/speedrun short
+      // application – fields/submissionSource.ts),
       // and the campaign / traffic-source attribution (same shared field as
       // WaitlistSignups) so conversions can be attributed to the poster or
       // link a visitor came from. A submission whose hidden spam-trap box is
@@ -208,6 +211,7 @@ export default buildConfig({
           ...defaultFields.map(readOnlyInAdmin),
           submissionFilesField,
           ...submissionRecordFields,
+          submissionSourceField,
           hostDecisionsField,
           attributionField,
         ],

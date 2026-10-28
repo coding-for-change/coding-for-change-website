@@ -10,8 +10,14 @@
  * added is a short "what happens next" timeline – dated rows, the date in
  * mono like the site's step badges – so the mail reads at a glance.
  *
- * The dates mirror inner/src/lib/applicationPhase.ts (the CMS cannot import
- * from the inner app). Update both when the next round is planned.
+ * The short application at /join/speedrun (submission `source: 'speedrun'`)
+ * gets the same mail with its own timeline: our reply by the date that page
+ * promises, then the get-to-know call – no interview booking and no Intro
+ * Event, which that form never asked anyone to commit to.
+ *
+ * The dates mirror inner/src/lib/applicationPhase.ts and, for the speedrun,
+ * `join.speedrun.success` in the inner app's translations (the CMS cannot
+ * import from the inner app). Update both when the next round is planned.
  *
  * Dependency-free: render it standalone to preview the design.
  */
@@ -31,6 +37,8 @@ export type ApplicationEmailInput = {
   /** Absolute https origin serving the logo + links (no trailing slash). */
   siteOrigin: string;
   contactEmail: string;
+  /** Sent through /join/speedrun: the timeline is `speedrunSteps`. */
+  speedrun?: boolean;
 };
 
 export type BuiltApplicationEmail = { subject: string; html: string; text: string };
@@ -48,9 +56,9 @@ const COPY = {
     nextLabel: 'What happens next',
     steps: [
       {
-        when: 'By 31 Oct',
+        when: 'By Sun 1 Nov',
         title: 'Interview invitation',
-        text: 'By the evening of 31 October you will get an email from us to book your interview slot.',
+        text: 'By Sunday, 1 November you will get an email from us to book your interview slot.',
       },
       {
         when: '2–8 Nov',
@@ -61,6 +69,18 @@ const COPY = {
         when: 'Sat 14 Nov',
         title: 'Intro Event',
         text: 'Save the date – keep the evening free.',
+      },
+    ] as Step[],
+    speedrunSteps: [
+      {
+        when: 'By Sun 1 Nov',
+        title: 'Our reply',
+        text: 'By Sunday, 1 November you will hear from us.',
+      },
+      {
+        when: 'After that',
+        title: 'Get-to-know call',
+        text: 'A relaxed, personal call to get to know each other.',
       },
     ] as Step[],
     cta: 'See what we build',
@@ -80,9 +100,9 @@ const COPY = {
     nextLabel: 'So geht es weiter',
     steps: [
       {
-        when: 'Bis 31. Okt.',
+        when: 'Bis So. 1. Nov.',
         title: 'Einladung zum Interview',
-        text: 'Bis zum Abend des 31. Oktober bekommst du eine E-Mail von uns, in der du deinen Interviewtermin buchst.',
+        text: 'Bis Sonntag, 1. November bekommst du eine E-Mail von uns, in der du deinen Interviewtermin buchst.',
       },
       {
         when: '2.–8. Nov.',
@@ -93,6 +113,18 @@ const COPY = {
         when: 'Sa. 14. Nov.',
         title: 'Intro Event',
         text: 'Halte dir den Abend schon mal frei.',
+      },
+    ] as Step[],
+    speedrunSteps: [
+      {
+        when: 'Bis So. 1. Nov.',
+        title: 'Unsere Antwort',
+        text: 'Bis Sonntag, 1. November hörst du von uns.',
+      },
+      {
+        when: 'Danach',
+        title: 'Kennenlerngespräch',
+        text: 'Ein entspanntes, persönliches Gespräch, in dem wir uns kennenlernen.',
       },
     ] as Step[],
     cta: 'Sieh dir unsere Projekte an',
@@ -107,6 +139,7 @@ const COPY = {
 export function buildApplicationEmail(input: ApplicationEmailInput): BuiltApplicationEmail {
   const { lang, siteOrigin, contactEmail } = input;
   const c = COPY[lang];
+  const steps = input.speedrun ? c.speedrunSteps : c.steps;
   const name = (input.firstName ?? '').trim();
   const logoUrl = `${siteOrigin}/images/email-logo-wordmark.png`;
   const ctaUrl = `${siteOrigin}/projects`;
@@ -117,7 +150,7 @@ export function buildApplicationEmail(input: ApplicationEmailInput): BuiltApplic
     c.hi(name),
     c.intro,
     `${c.nextLabel}:`,
-    ...c.steps.map((s) => `– ${s.when}: ${s.title}. ${s.text}`),
+    ...steps.map((s) => `– ${s.when}: ${s.title}. ${s.text}`),
     `${c.cta}: ${ctaUrl}`,
     c.questions,
     `${c.signoff}\n${c.team}`,
@@ -126,11 +159,11 @@ export function buildApplicationEmail(input: ApplicationEmailInput): BuiltApplic
   ].join('\n\n');
 
   // One row per step: the date in a fixed mono column, a rule between rows.
-  const stepRows = c.steps
+  const stepRows = steps
     .map(
       (s, i) => `<tr>
-        <td valign="top" width="112" style="width:112px;padding:${i === 0 ? '0' : '16px'} 16px 16px 0;${i < c.steps.length - 1 ? `border-bottom:1px solid ${LINE};` : ''}font-family:${FONT_MONO};font-size:12px;font-weight:600;letter-spacing:0.5px;line-height:1.5;color:${INK};white-space:nowrap;">${escapeHtml(s.when)}</td>
-        <td valign="top" style="padding:${i === 0 ? '0' : '16px'} 0 16px;${i < c.steps.length - 1 ? `border-bottom:1px solid ${LINE};` : ''}font-family:${FONT_BODY};font-size:15px;line-height:1.55;color:${INK};">
+        <td valign="top" width="112" style="width:112px;padding:${i === 0 ? '0' : '16px'} 16px 16px 0;${i < steps.length - 1 ? `border-bottom:1px solid ${LINE};` : ''}font-family:${FONT_MONO};font-size:12px;font-weight:600;letter-spacing:0.5px;line-height:1.5;color:${INK};white-space:nowrap;">${escapeHtml(s.when)}</td>
+        <td valign="top" style="padding:${i === 0 ? '0' : '16px'} 0 16px;${i < steps.length - 1 ? `border-bottom:1px solid ${LINE};` : ''}font-family:${FONT_BODY};font-size:15px;line-height:1.55;color:${INK};">
           <strong style="display:block;font-weight:600;margin:0 0 2px;">${escapeHtml(s.title)}</strong>
           <span style="color:${MUTED};">${escapeHtml(s.text)}</span>
         </td>

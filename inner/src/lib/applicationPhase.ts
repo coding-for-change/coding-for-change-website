@@ -9,8 +9,9 @@
  * a round. The wording for each step lives in `i18n/translations.ts`
  * (`join.steps`), keyed by the ids below.
  *
- * To run the next round: update the dates here, `APPLICATION_ROUND`, and the
- * dates written into the copy (`join.window`, `join.status.upcoming`,
+ * To run the next round: update the dates here (the speedrun's too),
+ * `APPLICATION_ROUND`, and the dates written into the copy (`join.window`,
+ * `join.status.upcoming`, `join.speedrun.meta` and `.success`,
  * `join.steps.*.timing`, `join.closing.text`, `join.apply.lead.upcoming` and
  * `join.upcomingTitle`, `nav.applyBar`, `nav.applyBarShort`). Offsets are written out explicitly (Europe/Berlin:
  * +02:00 until the clocks change on 25 Oct 2026, +01:00 after) so the result
@@ -36,8 +37,14 @@ export const APPLICATION_OPENS = '2026-10-05T00:00:00+02:00';
 /** Applications are accepted up to and including this instant. */
 export const APPLICATION_DEADLINE = '2026-10-30T23:59:59+01:00';
 
+/**
+ * The short application at /join/speedrun stays open a day longer than the
+ * full form, for whoever ran out of time on it. It opens with the round.
+ */
+export const SPEEDRUN_DEADLINE = '2026-10-31T23:59:59+01:00';
+
 export const APPLICATION_STEPS: ApplicationStep[] = [
-    // The form is open 5–30 Oct; interview invitations go out by the evening of 31 Oct.
+    // The form is open 5–30 Oct (the speedrun until 31 Oct); interview invitations go out by 1 Nov.
     { id: 'apply', start: APPLICATION_OPENS, end: APPLICATION_DEADLINE },
     // Interview week: a talk plus a small (vibe-)coding challenge.
     { id: 'interview', start: '2026-11-02T00:00:00+01:00', end: '2026-11-08T23:59:59+01:00' },
@@ -94,6 +101,13 @@ export const applicationStatus = (now: number): ApplicationStatus => {
     if (APPLICATIONS_OVERRIDE) return APPLICATIONS_OVERRIDE;
     if (now < ms(APPLICATION_OPENS)) return 'upcoming';
     return now <= ms(APPLICATION_DEADLINE) ? 'open' : 'closed';
+};
+
+/** The same for /join/speedrun, which closes at SPEEDRUN_DEADLINE instead. */
+export const speedrunStatus = (now: number): ApplicationStatus => {
+    if (APPLICATIONS_OVERRIDE) return APPLICATIONS_OVERRIDE;
+    if (now < ms(APPLICATION_OPENS)) return 'upcoming';
+    return now <= ms(SPEEDRUN_DEADLINE) ? 'open' : 'closed';
 };
 
 /** Whether the application form (rather than the waitlist) should show. */

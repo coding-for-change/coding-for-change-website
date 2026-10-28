@@ -38,6 +38,8 @@ export type Submission = {
   reviewScore?: number | null;
   reviewNotes?: string | null;
   language?: 'en' | 'de' | null;
+  /** 'speedrun' for the short application at /join/speedrun (fields/submissionSource.ts). */
+  source?: 'speedrun' | null;
   choiceKeys?: Record<string, string[]> | null;
   /** The boxes ticked, as recorded on arrival (fields/submissionRecord.ts). */
   agreedTo?: { field: string; label?: string; version?: string; at?: string }[] | null;
@@ -104,9 +106,13 @@ export function answerRows(form: FormDoc | undefined, s: Submission): AnswerRow[
     const label = plainLabel(block.label) || block.name;
     switch (block.blockType) {
       case 'checkbox':
+        // Not asked at all (the /join/speedrun short application leaves out
+        // the commitments) is not the same as left unticked.
+        if (value === undefined) break;
         rows.push({ kind: 'confirm', name: block.name, label, checked: value === 'true' });
         break;
       case 'subform':
+        if (value === undefined) break;
         rows.push({ kind: 'linked', name: block.name, label, checked: value === 'true' });
         break;
       case 'checkboxGroup': {

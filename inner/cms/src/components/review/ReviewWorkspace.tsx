@@ -556,6 +556,11 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                     {person.email && <a href={`mailto:${person.email}`}>{person.email}</a>}
                     <span>{when.format(new Date(selected.createdAt))}</span>
                     {selected.language && <span className="rv-badge">{selected.language.toUpperCase()}</span>}
+                    {selected.source === 'speedrun' && (
+                      <span className="rv-badge" title="Sent through the short application at /join/speedrun – no CV">
+                        Speedrun
+                      </span>
+                    )}
                   </p>
                 </div>
                 <div className="rv-person__nav">
