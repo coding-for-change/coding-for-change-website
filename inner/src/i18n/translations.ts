@@ -156,14 +156,10 @@ export interface Translations {
             /** One line under the title while the form is open; " · " separates its parts. */
             meta: string;
             lead: string; success: string;
-            /** The questions this page adds to the ones taken from the application form. */
+            /** The question this page adds to the ones taken from the application form. */
             questions: {
-                degree: string;
-                degreeOptions: Record<'bachelor' | 'master' | 'other', string>;
-                semester: string;
                 hours: string;
                 hoursOptions: Record<'under3' | 'from3to5' | 'from5to7' | 'over7', string>;
-                profileUrl: string;
             };
         };
         loadingForm: string; formUnavailable: string;
@@ -582,13 +578,10 @@ const en: Translations = {
         speedrun: {
             link: 'Short on time? Speedrun your application →',
             title: 'Speedrun your application',
-            meta: '{round} · any% in 2 minutes · closes Sat, 31 Oct, 23:59',
+            meta: '{round} · closes Sat, 31 Oct, 23:59',
             lead: 'You skip the screening – no CV, no essays. Instead, we’ll get to know each other in a relaxed, personal call.',
             success: 'Thanks, {firstName}! We’ll get back to you by Sunday, Nov 1.',
             questions: {
-                degree: 'Degree',
-                degreeOptions: { bachelor: 'Bachelor', master: 'Master', other: 'Other' },
-                semester: 'Current semester',
                 hours: 'How much time can you realistically invest per week?',
                 hoursOptions: {
                     under3: 'less than 3h',
@@ -596,7 +589,6 @@ const en: Translations = {
                     from5to7: '5–7h',
                     over7: '7h+',
                 },
-                profileUrl: 'LinkedIn or GitHub URL',
             },
         },
         loadingForm: 'Loading form…',
@@ -1059,13 +1051,10 @@ const de: Translations = {
         speedrun: {
             link: 'Wenig Zeit? Speedrun deine Bewerbung →',
             title: 'Speedrun deine Bewerbung',
-            meta: '{round} · any% in 2 Minuten · endet Sa, 31. Okt, 23:59',
+            meta: '{round} · endet Sa, 31. Okt, 23:59',
             lead: 'Du skippst das Screening – kein Lebenslauf, keine langen Texte. Stattdessen lernen wir uns in einem entspannten, persönlichen Gespräch kennen.',
             success: 'Danke, {firstName}! Wir melden uns bis Sonntag, 1. November.',
             questions: {
-                degree: 'Abschluss',
-                degreeOptions: { bachelor: 'Bachelor', master: 'Master', other: 'Andere' },
-                semester: 'Aktuelles Semester',
                 hours: 'Wie viel Zeit kannst du realistisch pro Woche investieren?',
                 hoursOptions: {
                     under3: 'weniger als 3h',
@@ -1073,7 +1062,6 @@ const de: Translations = {
                     from5to7: '5–7h',
                     over7: '7h+',
                 },
-                profileUrl: 'LinkedIn- oder GitHub-URL',
             },
         },
         loadingForm: 'Formular wird geladen…',
