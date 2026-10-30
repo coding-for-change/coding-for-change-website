@@ -65,6 +65,10 @@ html[data-theme='dark'] .tt-evenings {
   white-space: nowrap;
 }
 
+.tt-evenings__withdrawn {
+  color: var(--theme-elevation-500);
+}
+
 .tt-evenings__track {
   display: block;
   height: 12px;

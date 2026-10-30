@@ -66,7 +66,7 @@ export const deleteSubmissionFiles: CollectionAfterDeleteHook = async ({ doc, re
 };
 
 /** The id of the form titled "techtour" (the site and the share links find it the same way). */
-async function techTourFormId(payload: Payload): Promise<number | null> {
+export async function techTourFormId(payload: Payload): Promise<number | null> {
   const forms = await payload.find({ collection: 'forms', limit: 100, depth: 0, overrideAccess: true });
   return forms.docs.find((f) => f.title?.trim().toLowerCase() === TECHTOUR_FORM_TITLE)?.id ?? null;
 }

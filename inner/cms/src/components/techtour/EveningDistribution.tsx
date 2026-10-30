@@ -1,6 +1,7 @@
 import type { Payload, UIFieldServerComponent } from 'payload';
 import React from 'react';
 import { pickedKeys, type OptionRow } from '../../lib/choiceKeys';
+import { withdrawalsOf } from '../../lib/manage/store';
 import { eveningsFieldOf } from '../../lib/share/evening';
 import './evening-distribution.css';
 
@@ -14,13 +15,17 @@ import './evening-distribution.css';
  * (`choiceKeys`, fields/submissionRecord.ts); one older than that is read back
  * from its answer against the labels in both languages, the way the host share
  * links do (lib/share/registrations.ts).
+ *
+ * An evening someone gave up through their own link (/techtour/manage,
+ * lib/manage/store.ts) no longer counts for it – as on the host's page – and
+ * is shown as "n withdrew" beside it instead.
  */
 
 const TECHTOUR_FORM_TITLE = 'techtour';
 
 type Block = { blockType: string; name?: string; options?: OptionRow[] | null };
 
-type Row = { key: string; label: string; count: number };
+type Row = { key: string; label: string; count: number; withdrawn: number };
 
 type Tally = { registrations: number; picks: number; withoutEvening: number; rows: Row[] };
 
@@ -46,7 +51,9 @@ async function tally(payload: Payload, user: unknown): Promise<Tally | null> {
     user: user as never,
   });
 
+  const withdrawals = await withdrawalsOf(payload, docs.map((s) => s.id as number));
   const counts = new Map<string, number>();
+  const gaveUp = new Map<string, number>();
   let picks = 0;
   let withoutEvening = 0;
   for (const s of docs) {
@@ -58,7 +65,12 @@ async function tally(payload: Payload, user: unknown): Promise<Tally | null> {
         : [...pickedKeys(answer, options), ...pickedKeys(answer, optionsDe)],
     );
     if (keys.size === 0) withoutEvening += 1;
+    const withdrawn = withdrawals.get(s.id as number);
     for (const key of keys) {
+      if (withdrawn?.has(key)) {
+        gaveUp.set(key, (gaveUp.get(key) ?? 0) + 1);
+        continue;
+      }
       counts.set(key, (counts.get(key) ?? 0) + 1);
       picks += 1;
     }
@@ -66,9 +78,16 @@ async function tally(payload: Payload, user: unknown): Promise<Tally | null> {
 
   // Every evening on the form, also one nobody picked yet; a key the form no
   // longer has still counts, under its key.
-  const rows: Row[] = options.map((o) => ({ key: o.value, label: o.label?.trim() || o.value, count: counts.get(o.value) ?? 0 }));
-  for (const [key, count] of counts) {
-    if (!options.some((o) => o.value === key)) rows.push({ key, label: `${key} (no longer on the form)`, count });
+  const rows: Row[] = options.map((o) => ({
+    key: o.value,
+    label: o.label?.trim() || o.value,
+    count: counts.get(o.value) ?? 0,
+    withdrawn: gaveUp.get(o.value) ?? 0,
+  }));
+  for (const key of new Set([...counts.keys(), ...gaveUp.keys()])) {
+    if (!options.some((o) => o.value === key)) {
+      rows.push({ key, label: `${key} (no longer on the form)`, count: counts.get(key) ?? 0, withdrawn: gaveUp.get(key) ?? 0 });
+    }
   }
   // Most first; a tie keeps the form's (date) order.
   const order = new Map(rows.map((r, i) => [r.key, i]));
@@ -114,9 +133,14 @@ export const EveningDistribution: UIFieldServerComponent = async ({ payload, use
               <li
                 key={row.key}
                 className="tt-evenings__row"
-                title={`${row.label}: ${row.count} of ${plural(n, 'registration', 'registrations')} (${share}%)`}
+                title={`${row.label}: ${row.count} of ${plural(n, 'registration', 'registrations')} (${share}%)${
+                  row.withdrawn ? `, ${row.withdrawn} withdrew` : ''
+                }`}
               >
-                <span className="tt-evenings__label">{row.label}</span>
+                <span className="tt-evenings__label">
+                  {row.label}
+                  {row.withdrawn > 0 && <span className="tt-evenings__withdrawn"> · {row.withdrawn} withdrew</span>}
+                </span>
                 <span className="tt-evenings__track" aria-hidden="true">
                   <span className="tt-evenings__bar" style={{ width: `${share}%` }} />
                 </span>
@@ -134,7 +158,7 @@ export const EveningDistribution: UIFieldServerComponent = async ({ payload, use
         <div className="field-description">
           {n === 0
             ? 'No registrations yet.'
-            : `Most registrations first. The bar is the share of all registrations that picked the evening – one registration can pick several, so the shares can add up to more than 100%. Counts every registration, whatever its review decision.${
+            : `Most registrations first. The bar is the share of all registrations that picked the evening – one registration can pick several, so the shares can add up to more than 100%. Counts every registration, whatever its review decision, but not an evening the person gave up through their own link ("withdrew") – the host's page leaves them out too.${
                 data.withoutEvening ? ` ${plural(data.withoutEvening, 'registration picked', 'registrations picked')} no evening.` : ''
               }`}
         </div>

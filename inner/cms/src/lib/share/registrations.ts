@@ -1,5 +1,6 @@
 import type { Payload, PayloadRequest } from 'payload';
 import { pickedKeys } from '../choiceKeys';
+import { withdrawnFrom } from '../manage/store';
 import { consentedToSharing } from '../sharingConsent';
 import { eveningOf, eveningsFieldOf, type Evening } from './evening';
 
@@ -16,6 +17,10 @@ import { eveningOf, eveningsFieldOf, type Evening } from './evening';
  * the host companies of the evenings picked. A registration without it (sent
  * before the box existed, or posted around the form) is not shown, cannot be
  * decided on, and its CV cannot be opened through the link.
+ *
+ * Nor is anyone who gave the evening up through their own link
+ * (/techtour/manage, lib/manage/store.ts): the registration still carries the
+ * evening, the withdrawal is a row of its own, and it is left out here.
  *
  * Also records the host's decision on a registration, under the evening's key
  * in the submission's `hostDecisions` – so it is deleted together with the
@@ -149,7 +154,9 @@ async function registrationsOf(
     overrideAccess: true,
     req,
   });
-  return { scope, docs: (docs as unknown as SubmissionDoc[]).filter((s) => inScope(scope, s)) };
+  const shown = (docs as unknown as SubmissionDoc[]).filter((s) => inScope(scope, s));
+  const withdrawn = await withdrawnFrom(payload, scope.evening.option, shown.map((s) => s.id));
+  return { scope, docs: shown.filter((s) => !withdrawn.has(s.id)) };
 }
 
 /** Everyone registered for the link's evening, first come first. */
@@ -192,7 +199,9 @@ export async function registrationInScope(
     .catch(() => null)) as SubmissionDoc | null;
   if (!doc) return null;
   const docForm = typeof doc.form === 'object' && doc.form ? doc.form.id : doc.form;
-  return docForm === formIdOf(link) && inScope(scope, doc) ? { scope, doc } : null;
+  if (docForm !== formIdOf(link) || !inScope(scope, doc)) return null;
+  const withdrawn = await withdrawnFrom(payload, scope.evening.option, [doc.id]);
+  return withdrawn.has(doc.id) ? null : { scope, doc };
 }
 
 /** Record (or with null, take back) the host's decision on one registration. */

@@ -31,6 +31,7 @@ import { submissionSourceField } from './fields/submissionSource';
 import { hostDecisionsField } from './fields/hostDecisions';
 import { submissionsExport } from './endpoints/submissionsExport';
 import { shareEndpoints } from './endpoints/share';
+import { manageEndpoints } from './endpoints/manage';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -52,6 +53,7 @@ import { About } from './globals/About';
 import { Homepage } from './globals/Homepage';
 import { TechTour } from './globals/TechTour';
 import { brandApplicationEmails } from './lib/applicationEmail';
+import { manageTables } from './lib/manage/tables';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -113,8 +115,10 @@ export default buildConfig({
   // dashboard, plus CSV exports (campaign funnel, raw events, signups) and
   // the bulk "email the waitlist" sender (individual mails via Resend).
   // The host share links (/api/share/:token…) are public, guarded by their
-  // token and an emailed sign-in code – see endpoints/share.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints],
+  // token and an emailed sign-in code – see endpoints/share.ts. So is a
+  // TechTour registrant's own link (/api/techtour/manage), guarded by its
+  // token alone – see endpoints/manage.ts.
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -270,6 +274,9 @@ export default buildConfig({
     // In production NODE_ENV is 'production' (set by next build), so this is false
     // and the Dockerfile runs `payload migrate` instead before starting.
     push: process.env.NODE_ENV !== 'production',
+    // The /techtour/manage tables – plain tables beside the collections, so
+    // that no existing table gets a column (lib/manage/tables.ts).
+    afterSchemaInit: [manageTables],
     pool: {
       connectionString:
         process.env.DATABASE_URL ||
