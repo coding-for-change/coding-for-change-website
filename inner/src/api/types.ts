@@ -536,3 +536,30 @@ export interface CmsForm {
     confirmationMessage?: LexicalRichText | null;
     redirect?: { url: string } | null;
 }
+
+/**
+ * GET/POST /api/techtour/manage – a registrant's own view of their TechTour
+ * registration (inner/cms/src/endpoints/manage.ts), behind /techtour/manage.
+ */
+export interface TechTourManageEvening {
+    /** The evening's option key, e.g. "tue-lio". */
+    option: string;
+    /** The form's label for it, in the page's language. */
+    label: string;
+    date: string | null;
+    company: string | null;
+    title: string | null;
+    time: string | null;
+    location: string | null;
+    /** When it was given up; null while still registered. */
+    withdrawnAt: string | null;
+}
+
+export interface TechTourManageView {
+    name: string;
+    /** False once the deadline has passed: the page only shows. */
+    open: boolean;
+    /** The first moment changes are no longer possible (ISO). */
+    until: string;
+    evenings: TechTourManageEvening[];
+}

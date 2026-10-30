@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { NO_TAGS_HEADER, isPrivatePath } from '@/lib/privatePages';
 
 /**
  * Honour `?lang=de` / `?lang=en` so a URL can pin the render language.
@@ -36,16 +37,25 @@ const ONE_YEAR = 60 * 60 * 24 * 365;
 
 export function middleware(request: NextRequest) {
     const requested = request.nextUrl.searchParams.get('lang');
-    if (requested !== 'de' && requested !== 'en') {
+    const lang = requested === 'de' || requested === 'en' ? requested : null;
+    // A page behind a personal link renders without the Google tag
+    // (lib/privatePages.ts).
+    const noTags = isPrivatePath(request.nextUrl.pathname);
+    if (!lang && !noTags) {
         return NextResponse.next();
     }
 
-    // Make the current render see the locale, not just the next one.
     const headers = new Headers(request.headers);
+    if (noTags) headers.set(NO_TAGS_HEADER, '1');
+    if (!lang) {
+        return NextResponse.next({ request: { headers } });
+    }
+
+    // Make the current render see the locale, not just the next one.
     const forwarded = new Map(
         request.cookies.getAll().map((c) => [c.name, c.value])
     );
-    forwarded.set(LOCALE_COOKIE, requested);
+    forwarded.set(LOCALE_COOKIE, lang);
     headers.set(
         'cookie',
         Array.from(forwarded, ([name, value]) => `${name}=${value}`).join('; ')
@@ -56,7 +66,7 @@ export function middleware(request: NextRequest) {
     // Persist it so later navigations (and the client's own reads) agree.
     response.cookies.set({
         name: LOCALE_COOKIE,
-        value: requested,
+        value: lang,
         path: '/',
         maxAge: ONE_YEAR,
         sameSite: 'lax',

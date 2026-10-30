@@ -1,5 +1,5 @@
 import 'server-only';
-import type { CmsBlogPost, CmsProject } from '@/api/types';
+import type { CmsBlogPost, CmsProject, TechTourManageView } from '@/api/types';
 
 // Server-side CMS fetching. Unlike the browser client (`@/api/client`, which
 // hits the relative `/api` proxied by the outer Express server), server
@@ -86,4 +86,16 @@ export async function fetchPostBySlug(
         })
     );
     return data?.docs?.[0] ?? null;
+}
+
+/**
+ * A registrant's own TechTour view behind their link (/techtour/manage).
+ * Null for a token that opens nothing – or when the CMS cannot be reached; the
+ * page says the same to both.
+ */
+export async function fetchTechTourManage(
+    token: string,
+    locale = 'en'
+): Promise<TechTourManageView | null> {
+    return getJson<TechTourManageView>(buildUrl('techtour/manage', { token, locale }));
 }

@@ -33,6 +33,11 @@ export type WaitlistEmailContent = {
   message: string;
   /** Unsubscribe/contact address shown in the footer. */
   contactEmail: string;
+  /**
+   * Who the mail goes to, for the footer's "why you get this": the waitlist
+   * (default) or the TechTour registrations.
+   */
+  audience?: EmailAudience;
   /** Absolute https origin serving the logo + site link (no trailing slash). */
   siteOrigin: string;
   /** <html lang>: 'de' for German-only sends, 'en' otherwise. */
@@ -49,6 +54,8 @@ export type WaitlistEmailContent = {
   ctaLabel?: string;
   ctaUrl?: string;
 };
+
+export type EmailAudience = 'waitlist' | 'techtour';
 
 export type BuiltWaitlistEmail = {
   html: string;
@@ -127,12 +134,24 @@ const paragraphsHtml = (message: string): string =>
 const preheaderFrom = (message: string): string =>
   message.replace(/\s+/g, ' ').trim().slice(0, 140);
 
-const footerParagraphs = (contactEmail: string) => {
+/** Why the recipient gets the mail, in both languages; `{contact}` is the contact address. */
+const REASONS: Record<EmailAudience, { de: string; en: string }> = {
+  waitlist: {
+    de: 'Du erhältst diese E-Mail, weil du dich auf codingforchange.com in die Warteliste eingetragen hast. Zum Abmelden genügt eine kurze Nachricht an {contact}.',
+    en: 'You are receiving this email because you joined the waitlist on codingforchange.com. To unsubscribe, just send a short message to {contact}.',
+  },
+  techtour: {
+    de: 'Du erhältst diese E-Mail, weil du dich auf codingforchange.com für die Munich Tech Tour angemeldet hast. Bei Fragen genügt eine kurze Nachricht an {contact}.',
+    en: 'You are receiving this email because you registered for the Munich Tech Tour on codingforchange.com. Questions? Just send a short message to {contact}.',
+  },
+};
+
+const footerParagraphs = (contactEmail: string, audience: EmailAudience) => {
   const mail = escapeHtml(contactEmail);
   const link = `<a href="mailto:${mail}" style="color:${MUTED};text-decoration:underline;">${mail}</a>`;
   return {
-    de: `Du erhältst diese E-Mail, weil du dich auf codingforchange.com in die Warteliste eingetragen hast. Zum Abmelden genügt eine kurze Nachricht an ${link}.`,
-    en: `You are receiving this email because you joined the waitlist on codingforchange.com. To unsubscribe, just send a short message to ${link}.`,
+    de: REASONS[audience].de.replace('{contact}', link),
+    en: REASONS[audience].en.replace('{contact}', link),
   };
 };
 
@@ -140,6 +159,7 @@ export function buildWaitlistEmail(input: WaitlistEmailContent): BuiltWaitlistEm
   const {
     message,
     contactEmail,
+    audience = 'waitlist',
     siteOrigin,
     lang = 'en',
     headerImageUrl,
@@ -159,8 +179,8 @@ export function buildWaitlistEmail(input: WaitlistEmailContent): BuiltWaitlistEm
   textParts.push(
     [
       '—',
-      `Du erhältst diese E-Mail, weil du dich auf codingforchange.com in die Warteliste eingetragen hast. Zum Abmelden genügt eine kurze Nachricht an ${contactEmail}.`,
-      `You are receiving this email because you joined the waitlist on codingforchange.com. To unsubscribe, just send a short message to ${contactEmail}.`,
+      REASONS[audience].de.replace('{contact}', contactEmail),
+      REASONS[audience].en.replace('{contact}', contactEmail),
     ].join('\n\n'),
   );
   const text = textParts.join('\n\n');
@@ -202,7 +222,7 @@ export function buildWaitlistEmail(input: WaitlistEmailContent): BuiltWaitlistEm
       </tr>`
     : '';
 
-  const footer = footerParagraphs(contactEmail);
+  const footer = footerParagraphs(contactEmail, audience);
 
   const html = `<!DOCTYPE html>
 <html lang="${lang}">

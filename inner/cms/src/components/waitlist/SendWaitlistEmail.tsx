@@ -1,5 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
+import { MANAGE_LINK_PLACEHOLDER } from '../../lib/manage/link';
 import './waitlist-email.css';
 
 /**
@@ -14,10 +15,18 @@ import './waitlist-email.css';
  * Collapsed by default so the list view stays uncluttered; "Send test" mails
  * only the logged-in admin, or a hand-picked list of preview addresses
  * (personal inboxes) when one is given.
+ *
+ * The same panel mails the TechTour registrations instead ("To"): one mail
+ * per registration, where {{manageLink}} becomes that person's own
+ * /techtour/manage link (endpoints/waitlistEmail.ts).
  */
+
+type Audience = 'waitlist' | 'techtour';
 
 type Counts = {
   total: number;
+  /** TechTour only: distinct addresses among the registrations. */
+  addresses?: number;
   byLocale: { locale: string; count: number }[];
 };
 
@@ -37,10 +46,17 @@ type MediaDoc = {
   alt?: string | null;
 };
 
-const LOCALE_LABELS: Record<string, string> = {
-  de: 'German signups (de)',
-  en: 'English signups (en)',
-  unknown: 'No language recorded',
+const LOCALE_LABELS: Record<Audience, Record<string, string>> = {
+  waitlist: {
+    de: 'German signups (de)',
+    en: 'English signups (en)',
+    unknown: 'No language recorded',
+  },
+  techtour: {
+    de: 'Registrations sent in German (de)',
+    en: 'Registrations sent in English (en)',
+    unknown: 'No language recorded',
+  },
 };
 
 // Media docs carry site-relative URLs (/api/media/file/…); mail clients need
@@ -55,7 +71,8 @@ const toAbsolute = (u: string): string => {
 
 export const SendWaitlistEmail: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [counts, setCounts] = useState<Counts | null>(null);
+  const [audience, setAudience] = useState<Audience>('waitlist');
+  const [allCounts, setAllCounts] = useState<Partial<Record<Audience, Counts>>>({});
   const [countsError, setCountsError] = useState(false);
   const [media, setMedia] = useState<MediaDoc[] | null>(null);
   const [locale, setLocale] = useState(''); // '' = all signups
@@ -71,13 +88,17 @@ export const SendWaitlistEmail: React.FC = () => {
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewError, setPreviewError] = useState<string | null>(null);
 
+  const counts = allCounts[audience] ?? null;
+  const techtour = audience === 'techtour';
+
   useEffect(() => {
-    if (!open || counts) return;
-    fetch('/api/waitlist/email-recipients')
+    if (!open || allCounts[audience]) return;
+    setCountsError(false);
+    fetch(`/api/waitlist/email-recipients?audience=${audience}`)
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((data: Counts) => setCounts(data))
+      .then((data: Counts) => setAllCounts((prev) => ({ ...prev, [audience]: data })))
       .catch(() => setCountsError(true));
-  }, [open, counts]);
+  }, [open, audience, allCounts]);
 
   // Images from the Media collection for the header-image picker. Filtered
   // client-side; a failure just leaves the picker empty (URL input still works).
@@ -109,6 +130,7 @@ export const SendWaitlistEmail: React.FC = () => {
         body: JSON.stringify({
           message: message.trim(),
           locale: locale || undefined,
+          audience,
           headerImageUrl: headerImageUrl.trim() ? toAbsolute(headerImageUrl.trim()) : undefined,
           ctaLabel: ctaLabel.trim() || undefined,
           ctaUrl: ctaUrl.trim() || undefined,
@@ -134,7 +156,7 @@ export const SendWaitlistEmail: React.FC = () => {
       ctrl.abort();
       clearTimeout(timer);
     };
-  }, [open, message, locale, headerImageUrl, ctaLabel, ctaUrl]);
+  }, [open, message, locale, audience, headerImageUrl, ctaLabel, ctaUrl]);
 
   const recipientCount = locale
     ? (counts?.byLocale.find((l) => l.locale === locale)?.count ?? 0)
@@ -151,10 +173,12 @@ export const SendWaitlistEmail: React.FC = () => {
       return;
     }
     if (!test) {
-      const noun = recipientCount === 1 ? 'address' : 'addresses';
+      const noun = techtour
+        ? `TechTour registration${recipientCount === 1 ? '' : 's'}`
+        : `unique waitlist ${recipientCount === 1 ? 'address' : 'addresses'}`;
       if (
         !window.confirm(
-          `Send “${subject.trim()}” to ${recipientCount} unique waitlist ${noun}? This cannot be undone.`,
+          `Send “${subject.trim()}” to ${recipientCount} ${noun}? This cannot be undone.`,
         )
       ) {
         return;
@@ -169,6 +193,7 @@ export const SendWaitlistEmail: React.FC = () => {
           subject: subject.trim(),
           message: message.trim(),
           locale: locale || undefined,
+          audience,
           headerImageUrl: headerImageUrl.trim() ? toAbsolute(headerImageUrl.trim()) : undefined,
           ctaLabel: ctaLabel.trim() || undefined,
           ctaUrl: ctaUrl.trim() || undefined,
@@ -199,7 +224,7 @@ export const SendWaitlistEmail: React.FC = () => {
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        ✉ Email all waitlist signups {open ? '▴' : '▾'}
+        ✉ Email all waitlist signups or TechTour registrations {open ? '▴' : '▾'}
       </button>
       {open && (
         <div className="wl-email__panel">
@@ -210,23 +235,71 @@ export const SendWaitlistEmail: React.FC = () => {
             an image at the top and a button below the message — the preview underneath shows
             exactly what will be sent.
           </p>
-          <label className="wl-email__field">
-            Recipients
-            <select
-              value={locale}
-              onChange={(e) => setLocale(e.target.value)}
-              disabled={busy || !counts}
-            >
-              <option value="">
-                {counts ? `All signups (${counts.total} unique)` : 'Loading…'}
-              </option>
-              {counts?.byLocale.map((l) => (
-                <option key={l.locale} value={l.locale}>
-                  {LOCALE_LABELS[l.locale] ?? `Signups in “${l.locale}”`} ({l.count})
+          <div className="wl-email__row">
+            <label className="wl-email__field">
+              To
+              <select
+                value={audience}
+                onChange={(e) => {
+                  setAudience(e.target.value as Audience);
+                  setLocale('');
+                }}
+                disabled={busy}
+              >
+                <option value="waitlist">Waitlist signups</option>
+                <option value="techtour">TechTour registrations</option>
+              </select>
+            </label>
+            <label className="wl-email__field">
+              Recipients
+              <select
+                value={locale}
+                onChange={(e) => setLocale(e.target.value)}
+                disabled={busy || !counts}
+              >
+                <option value="">
+                  {!counts
+                    ? 'Loading…'
+                    : techtour
+                      ? `All registrations (${counts.total}, ${counts.addresses ?? counts.total} addresses)`
+                      : `All signups (${counts.total} unique)`}
                 </option>
-              ))}
-            </select>
-          </label>
+                {counts?.byLocale.map((l) => (
+                  <option key={l.locale} value={l.locale}>
+                    {LOCALE_LABELS[audience][l.locale] ?? `Language “${l.locale}”`} ({l.count})
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {techtour && (
+            <div className="wl-email__notice wl-email__notice--info">
+              <p className="wl-email__info-text">
+                One mail per registration. Write <code>{MANAGE_LINK_PLACEHOLDER}</code> in the
+                message or as the button link: each person gets their own link to /techtour/manage,
+                where they can give up evenings until Sun 1 Nov, 23:59. Test mails and the preview
+                carry a sample link that opens no registration.
+              </p>
+              <div className="wl-email__info-actions">
+                <button
+                  type="button"
+                  className="wl-email__btn wl-email__btn--secondary"
+                  onClick={() => setMessage((m) => `${m}${m && !m.endsWith('\n') ? '\n\n' : ''}${MANAGE_LINK_PLACEHOLDER}`)}
+                  disabled={busy}
+                >
+                  Add the link to the message
+                </button>
+                <button
+                  type="button"
+                  className="wl-email__btn wl-email__btn--secondary"
+                  onClick={() => setCtaUrl(MANAGE_LINK_PLACEHOLDER)}
+                  disabled={busy}
+                >
+                  Use it as the button link
+                </button>
+              </div>
+            </div>
+          )}
           {countsError && (
             <div className="wl-email__notice wl-email__notice--error">
               Could not load recipient counts — are you still logged in?

@@ -269,6 +269,19 @@ export interface Translations {
          */
         attendAsk: string;
     };
+    /**
+     * /techtour/manage – a registrant's own link from our mail, to give up
+     * evenings (never add one) until the deadline. {date} is the deadline's
+     * day, {email} our contact address, {list} the evenings being given up.
+     */
+    techtourManage: {
+        title: string; intro: string; named: string; legend: string;
+        until: string; onlyRemove: string; closed: string;
+        withdrawnOn: string; save: string; saving: string;
+        confirm: string; confirmYes: string; cancel: string;
+        saved: string; allGone: string;
+        invalid: string; sample: string; error: string;
+    };
     aboutPage: {
         valuesTitle: string;
         values: { title: string; text: string }[];
@@ -729,6 +742,26 @@ const en: Translations = {
         stepJoinText: '{range}',
         sectionDetailsTitle: 'About you',
         attendAsk: 'Please only tick the evenings you’ll actually attend.',
+    },
+    techtourManage: {
+        title: 'Your Tech Tour evenings',
+        intro: 'These are the evenings you registered for. Can’t make one? Untick it, so someone else can take your place.',
+        named: 'Registered as {name}',
+        legend: 'Your evenings',
+        until: 'You can give up evenings until {date}, 23:59.',
+        onlyRemove: 'You can only give up evenings here, not add new ones.',
+        closed: 'Changes were possible until {date}, 23:59. If something has come up since, write to us at {email}.',
+        withdrawnOn: 'Given up on {date}',
+        save: 'Save changes',
+        saving: 'Saving…',
+        confirm: 'Give up {list}? This can’t be undone here.',
+        confirmYes: 'Yes, give up',
+        cancel: 'Cancel',
+        saved: 'Saved – you are no longer registered for the evenings you unticked.',
+        allGone: 'You have given up all your evenings. Thanks for letting us know!',
+        invalid: 'This link doesn’t work. Please use the link from our email, or write to us at {email}.',
+        sample: 'This is the sample link from a test mail – each recipient sees their own registration here.',
+        error: 'That didn’t work. Please try again, or write to us at {email}.',
     },
     aboutPage: {
         valuesTitle: 'What we care about',
@@ -1202,6 +1235,26 @@ const de: Translations = {
         stepJoinText: '{range}',
         sectionDetailsTitle: 'Über dich',
         attendAsk: 'Bitte kreuz nur die Abende an, an denen du wirklich dabei bist.',
+    },
+    techtourManage: {
+        title: 'Deine Tech-Tour-Abende',
+        intro: 'Für diese Abende hast du dich angemeldet. Du kannst an einem nicht? Nimm den Haken raus, dann kann jemand anderes nachrücken.',
+        named: 'Angemeldet als {name}',
+        legend: 'Deine Abende',
+        until: 'Abmelden kannst du dich bis {date}, 23:59 Uhr.',
+        onlyRemove: 'Hier kannst du dich nur von Abenden abmelden, keine neuen hinzufügen.',
+        closed: 'Änderungen waren bis {date}, 23:59 Uhr möglich. Hat sich seitdem etwas geändert, schreib uns an {email}.',
+        withdrawnOn: 'Abgemeldet am {date}',
+        save: 'Änderungen speichern',
+        saving: 'Wird gespeichert …',
+        confirm: 'Von {list} abmelden? Das lässt sich hier nicht rückgängig machen.',
+        confirmYes: 'Ja, abmelden',
+        cancel: 'Abbrechen',
+        saved: 'Gespeichert – für die abgewählten Abende bist du nicht mehr angemeldet.',
+        allGone: 'Du hast dich von allen Abenden abgemeldet. Danke, dass du Bescheid gibst!',
+        invalid: 'Dieser Link funktioniert nicht. Nutz bitte den Link aus unserer E-Mail oder schreib uns an {email}.',
+        sample: 'Das ist der Beispiel-Link aus einer Test-Mail – alle Empfänger:innen sehen hier ihre eigene Anmeldung.',
+        error: 'Das hat nicht geklappt. Versuch es bitte noch einmal oder schreib uns an {email}.',
     },
     aboutPage: {
         valuesTitle: 'Worauf es uns ankommt',

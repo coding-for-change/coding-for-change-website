@@ -34,8 +34,12 @@
  * an update that races ahead of gtag.js queues instead of vanishing.
  *
  * Renders nothing at all when unconfigured, so local dev and CI never post
- * phantom conversions to the live Ad Grants account.
+ * phantom conversions to the live Ad Grants account – nor on a page behind a
+ * personal link (`/techtour/manage?token=…`, lib/privatePages.ts), whose
+ * address must not reach Google.
  */
+import { headers } from 'next/headers';
+import { NO_TAGS_HEADER } from '@/lib/privatePages';
 
 const ADS_ID = process.env.GOOGLE_ADS_CONVERSION_ID?.trim();
 const GA4_ID = process.env.GA4_MEASUREMENT_ID?.trim();
@@ -49,8 +53,9 @@ const ADS_LABELS = {
     booking: process.env.GOOGLE_ADS_LABEL_BOOKING?.trim(),
 };
 
-export default function GoogleTag() {
+export default async function GoogleTag() {
     if (!ADS_ID && !GA4_ID) return null;
+    if ((await headers()).get(NO_TAGS_HEADER)) return null;
 
     const labels = Object.fromEntries(
         Object.entries(ADS_LABELS).filter(([, v]) => Boolean(v))
