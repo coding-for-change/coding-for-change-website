@@ -147,12 +147,12 @@ export interface Translations {
             draftNote: string;
         };
         /**
-         * /join/speedrun, the short application, and the link to it beside
-         * "Apply now" on /join. `{round}` is the round label, `{firstName}`
-         * what the applicant typed.
+         * /join/speedrun, the short application – reached by direct link
+         * only. `{round}` is the round label, `{firstName}` what the
+         * applicant typed.
          */
         speedrun: {
-            link: string; title: string;
+            title: string;
             /** One line under the title while the form is open; " · " separates its parts. */
             meta: string;
             lead: string; success: string;
@@ -576,7 +576,6 @@ const en: Translations = {
                 'Your answers are saved automatically in this browser, so you can come back and finish later – we receive nothing until you send the form.',
         },
         speedrun: {
-            link: 'Short on time? Speedrun your application →',
             title: 'Speedrun your application',
             meta: '{round} · closes Sat, 31 Oct, 23:59',
             lead: 'You skip the screening – no CV, no essays. Instead, we’ll get to know each other in a relaxed, personal call.',
@@ -1049,7 +1048,6 @@ const de: Translations = {
                 'Deine Antworten werden automatisch in diesem Browser gespeichert, du kannst also später weitermachen – bei uns kommt nichts an, bevor du das Formular abschickst.',
         },
         speedrun: {
-            link: 'Wenig Zeit? Speedrun deine Bewerbung →',
             title: 'Speedrun deine Bewerbung',
             meta: '{round} · endet Sa, 31. Okt, 23:59',
             lead: 'Du skippst das Screening – kein Lebenslauf, keine langen Texte. Stattdessen lernen wir uns in einem entspannten, persönlichen Gespräch kennen.',
