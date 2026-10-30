@@ -5,10 +5,12 @@ import type { CmsForm, CmsMembership } from '@/api/types';
 
 export const dynamic = 'force-dynamic';
 
+/** For people we invite by direct link: linked from nowhere, kept out of search. */
 export const metadata = {
     title: 'Speedrun your application – Join Coding for Change',
     description:
         'The short application to Coding for Change: a few questions, no CV, about two minutes. Build software for non-profits with a student team.',
+    robots: { index: false, follow: false },
 };
 
 export default async function JoinSpeedrunPage() {

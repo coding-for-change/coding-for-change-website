@@ -61,21 +61,6 @@
     gap: 14px;
     margin-top: 34px;
 }
-/* The short application: a quiet line under "Apply now", not a third button. */
-.jn-hero__speedrun {
-    margin: 16px 0 0;
-    font-size: 15px;
-    line-height: 1.5;
-}
-.jn-hero__speedrun a {
-    color: var(--teal-dark);
-    text-decoration: underline;
-    text-decoration-color: rgba(36, 107, 108, 0.35);
-    text-underline-offset: 3px;
-}
-.jn-hero__speedrun a:hover {
-    text-decoration-color: currentColor;
-}
 .jn-hero__visual {
     position: relative;
     display: block;
