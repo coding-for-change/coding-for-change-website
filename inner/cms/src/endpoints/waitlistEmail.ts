@@ -4,6 +4,7 @@ import { buildWaitlistEmail, type EmailAudience } from '../lib/waitlistEmailTemp
 import { extractHeroAccent } from '../lib/heroAccent';
 import { MANAGE_LINK_PLACEHOLDER, SAMPLE_TOKEN, manageUrl, withManageLink } from '../lib/manage/link';
 import { tokensFor } from '../lib/manage/store';
+import { membersAmong } from '../lib/members';
 import { techTourFormId } from '../lib/retention';
 
 /**
@@ -11,10 +12,11 @@ import { techTourFormId } from '../lib/retention';
  * with `audience: 'techtour'`, to every TechTour registration.
  *
  *   GET  /api/waitlist/email-recipients   unique-address counts, total + per locale
- *                                         (?audience=techtour: registrations instead)
+ *                                         (?audience=techtour: registrations instead;
+ *                                          &members=1: only those marked as members)
  *   POST /api/waitlist/email-preview      body { message, locale?, audience?, headerImageUrl?,
  *                                                ctaLabel?, ctaUrl? } → { html }
- *   POST /api/waitlist/send-email         body { subject, message, locale?, audience?,
+ *   POST /api/waitlist/send-email         body { subject, message, locale?, audience?, members?,
  *                                                headerImageUrl?, ctaLabel?, ctaUrl?,
  *                                                test?, testRecipients? }
  *
@@ -23,7 +25,8 @@ import { techTourFormId } from '../lib/retention';
  * /techtour/manage link (lib/manage/), whose token is made on the first send
  * and kept for every later one. Test mails and the preview get a sample link
  * that opens no registration. The language filter reads the language the
- * registration was sent in.
+ * registration was sent in; `members` narrows it to the registrations marked
+ * as Coding for Change members (lib/members.ts).
  *
  * Mails are rendered through the branded template in lib/waitlistEmailTemplate.ts
  * (logo header, optional full-width image, optional CTA button, bilingual
@@ -149,13 +152,14 @@ type Registrant = { id: number; email: string; locale: string };
 
 /**
  * Every TechTour registration with a usable address, oldest first, optionally
- * in one language. Read-only: the answers' `email` row and the language the
- * registration was sent in.
+ * in one language and only members'. Read-only: the answers' `email` row, the
+ * language the registration was sent in, and the member mark.
  */
 async function techTourRegistrants(
   req: PayloadRequest,
   pool: PgPool,
   locale?: string,
+  membersOnly = false,
 ): Promise<Registrant[]> {
   const formId = await techTourFormId(req.payload);
   if (formId == null) return [];
@@ -168,9 +172,12 @@ async function techTourRegistrants(
      ORDER BY s.id`,
     [formId],
   );
-  return rows
+  const registrants = rows
     .map((r) => ({ id: Number(r.id), email: String(r.email), locale: String(r.locale) }))
     .filter((r) => EMAIL_RE.test(r.email) && (!locale || r.locale === locale));
+  if (!membersOnly) return registrants;
+  const members = await membersAmong(req.payload, registrants.map((r) => r.id));
+  return registrants.filter((r) => members.has(r.id));
 }
 
 type BatchItem = {
@@ -248,7 +255,7 @@ const emailRecipients: Endpoint = {
     if (audienceOf(req.searchParams.get('audience')) === 'techtour') {
       // One mail per registration (each has its own link), so registrations
       // are counted, not addresses.
-      const all = await techTourRegistrants(req, pool);
+      const all = await techTourRegistrants(req, pool, undefined, req.searchParams.get('members') === '1');
       const perLocale = new Map<string, number>();
       for (const r of all) perLocale.set(r.locale, (perLocale.get(r.locale) ?? 0) + 1);
       return Response.json({
@@ -291,6 +298,7 @@ const sendEmail: Endpoint = {
       message?: unknown;
       locale?: unknown;
       audience?: unknown;
+      members?: unknown;
       test?: unknown;
       testRecipients?: unknown;
       headerImageUrl?: unknown;
@@ -306,6 +314,7 @@ const sendEmail: Endpoint = {
     const message = typeof body.message === 'string' ? body.message.trim() : '';
     const locale = typeof body.locale === 'string' ? body.locale.trim() : '';
     const audience = audienceOf(body.audience);
+    const membersOnly = audience === 'techtour' && body.members === true;
     const test = body.test === true;
     if (!subject || subject.length > 200) {
       return Response.json({ error: 'Subject is required (max 200 characters).' }, { status: 400 });
@@ -350,7 +359,7 @@ const sendEmail: Endpoint = {
     } else if (audience === 'techtour') {
       const pool = getPool(req);
       if (!pool) return new Response('Database unavailable', { status: 500 });
-      const registrants = await techTourRegistrants(req, pool, locale || undefined);
+      const registrants = await techTourRegistrants(req, pool, locale || undefined, membersOnly);
       const tokens = await tokensFor(req.payload, registrants.map((r) => r.id));
       // One per registration, not per address: someone registered twice
       // gets a mail for each, with that registration's link.
@@ -415,7 +424,7 @@ const sendEmail: Endpoint = {
       const { sent, failed, errors } = await sendViaResend(apiKey, items);
       // Counts only — recipient addresses stay out of the server logs.
       req.payload.logger.info(
-        `[waitlist-email] resend (${audience}): ${sent} sent, ${failed} failed of ${recipients.length}${test ? ' (test)' : ''}`,
+        `[waitlist-email] resend (${audience}${membersOnly ? ', members only' : ''}): ${sent} sent, ${failed} failed of ${recipients.length}${test ? ' (test)' : ''}`,
       );
       return Response.json({
         transport: 'resend',

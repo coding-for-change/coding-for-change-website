@@ -44,6 +44,7 @@ import * as migration_20261015_143428_student_homepage_mode from './20261015_143
 import * as migration_20261015_213816_media_webp_renditions from './20261015_213816_media_webp_renditions';
 import * as migration_20261028_224350_submission_source from './20261028_224350_submission_source';
 import * as migration_20261030_091835_techtour_manage_tables from './20261030_091835_techtour_manage_tables';
+import * as migration_20261031_200855_techtour_members from './20261031_200855_techtour_members';
 
 export const migrations = [
   {
@@ -274,6 +275,11 @@ export const migrations = [
   {
     up: migration_20261030_091835_techtour_manage_tables.up,
     down: migration_20261030_091835_techtour_manage_tables.down,
-    name: '20261030_091835_techtour_manage_tables'
+    name: '20261030_091835_techtour_manage_tables',
+  },
+  {
+    up: migration_20261031_200855_techtour_members.up,
+    down: migration_20261031_200855_techtour_members.down,
+    name: '20261031_200855_techtour_members'
   },
 ];

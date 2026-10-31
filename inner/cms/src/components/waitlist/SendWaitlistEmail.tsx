@@ -18,10 +18,14 @@ import './waitlist-email.css';
  *
  * The same panel mails the TechTour registrations instead ("To"): one mail
  * per registration, where {{manageLink}} becomes that person's own
- * /techtour/manage link (endpoints/waitlistEmail.ts).
+ * /techtour/manage link (endpoints/waitlistEmail.ts) – or only the
+ * registrations marked as Coding for Change members in the review workspace
+ * (lib/members.ts).
  */
 
 type Audience = 'waitlist' | 'techtour';
+/** What "To" offers: the waitlist, the TechTour registrations, or members' registrations only. */
+type To = Audience | 'members';
 
 type Counts = {
   total: number;
@@ -71,8 +75,8 @@ const toAbsolute = (u: string): string => {
 
 export const SendWaitlistEmail: React.FC = () => {
   const [open, setOpen] = useState(false);
-  const [audience, setAudience] = useState<Audience>('waitlist');
-  const [allCounts, setAllCounts] = useState<Partial<Record<Audience, Counts>>>({});
+  const [to, setTo] = useState<To>('waitlist');
+  const [allCounts, setAllCounts] = useState<Partial<Record<To, Counts>>>({});
   const [countsError, setCountsError] = useState(false);
   const [media, setMedia] = useState<MediaDoc[] | null>(null);
   const [locale, setLocale] = useState(''); // '' = all signups
@@ -88,17 +92,19 @@ export const SendWaitlistEmail: React.FC = () => {
   const [previewHtml, setPreviewHtml] = useState('');
   const [previewError, setPreviewError] = useState<string | null>(null);
 
-  const counts = allCounts[audience] ?? null;
+  const counts = allCounts[to] ?? null;
+  const audience: Audience = to === 'waitlist' ? 'waitlist' : 'techtour';
   const techtour = audience === 'techtour';
+  const membersOnly = to === 'members';
 
   useEffect(() => {
-    if (!open || allCounts[audience]) return;
+    if (!open || allCounts[to]) return;
     setCountsError(false);
-    fetch(`/api/waitlist/email-recipients?audience=${audience}`)
+    fetch(`/api/waitlist/email-recipients?audience=${audience}${membersOnly ? '&members=1' : ''}`)
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then((data: Counts) => setAllCounts((prev) => ({ ...prev, [audience]: data })))
+      .then((data: Counts) => setAllCounts((prev) => ({ ...prev, [to]: data })))
       .catch(() => setCountsError(true));
-  }, [open, audience, allCounts]);
+  }, [open, to, audience, membersOnly, allCounts]);
 
   // Images from the Media collection for the header-image picker. Filtered
   // client-side; a failure just leaves the picker empty (URL input still works).
@@ -174,7 +180,7 @@ export const SendWaitlistEmail: React.FC = () => {
     }
     if (!test) {
       const noun = techtour
-        ? `TechTour registration${recipientCount === 1 ? '' : 's'}`
+        ? `TechTour registration${recipientCount === 1 ? '' : 's'}${membersOnly ? ' of Coding for Change members' : ''}`
         : `unique waitlist ${recipientCount === 1 ? 'address' : 'addresses'}`;
       if (
         !window.confirm(
@@ -194,6 +200,7 @@ export const SendWaitlistEmail: React.FC = () => {
           message: message.trim(),
           locale: locale || undefined,
           audience,
+          members: membersOnly || undefined,
           headerImageUrl: headerImageUrl.trim() ? toAbsolute(headerImageUrl.trim()) : undefined,
           ctaLabel: ctaLabel.trim() || undefined,
           ctaUrl: ctaUrl.trim() || undefined,
@@ -239,15 +246,16 @@ export const SendWaitlistEmail: React.FC = () => {
             <label className="wl-email__field">
               To
               <select
-                value={audience}
+                value={to}
                 onChange={(e) => {
-                  setAudience(e.target.value as Audience);
+                  setTo(e.target.value as To);
                   setLocale('');
                 }}
                 disabled={busy}
               >
                 <option value="waitlist">Waitlist signups</option>
                 <option value="techtour">TechTour registrations</option>
+                <option value="members">TechTour registrations – members only</option>
               </select>
             </label>
             <label className="wl-email__field">
@@ -261,7 +269,7 @@ export const SendWaitlistEmail: React.FC = () => {
                   {!counts
                     ? 'Loading…'
                     : techtour
-                      ? `All registrations (${counts.total}, ${counts.addresses ?? counts.total} addresses)`
+                      ? `All ${membersOnly ? 'members’ ' : ''}registrations (${counts.total}, ${counts.addresses ?? counts.total} addresses)`
                       : `All signups (${counts.total} unique)`}
                 </option>
                 {counts?.byLocale.map((l) => (
@@ -279,6 +287,8 @@ export const SendWaitlistEmail: React.FC = () => {
                 message or as the button link: each person gets their own link to /techtour/manage,
                 where they can give up evenings until Sun 1 Nov, 23:59. Test mails and the preview
                 carry a sample link that opens no registration.
+                {membersOnly &&
+                  ' Members only: the registrations marked “Coding for Change member” under Review applications → TechTour.'}
               </p>
               <div className="wl-email__info-actions">
                 <button
