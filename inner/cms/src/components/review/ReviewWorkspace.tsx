@@ -47,9 +47,20 @@ import './review.css';
  * the host page shows it as a badge and the mass mail can go to members only.
  * The mark is not a field of the submission but a row in its own table
  * (lib/members.ts), set through /api/techtour/members.
+ *
+ * An evening someone gave up through their own link (/techtour/manage) shows
+ * as "Withdrew" – under the host decisions, struck through in the answer, and
+ * with an evening picked, in the list and outside the counts, as on the host's
+ * page. "Add back" there puts it back (and "Undo" takes that back). The
+ * registration itself is never changed: each withdrawal and each add-back is a
+ * row of its own (lib/manage/store.ts), through /api/techtour/withdrawals.
  */
 
 type Props = { apiRoute: string; adminRoute: string };
+
+/** Per registration id, each evening given up or added back since: its newest state. */
+type EveningState = { withdrawn: boolean; at: string; by: string };
+type Evenings = Record<number, Record<string, EveningState>>;
 
 /** These two first, in this order; any other form after them, by title. */
 const FORM_ORDER = ['application', 'techtour'];
@@ -103,6 +114,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const [subs, setSubs] = useState<Submission[]>([]);
   const [files, setFiles] = useState<Map<number, FileDoc>>(new Map());
   const [members, setMembers] = useState<Set<number>>(new Set());
+  const [evenings, setEvenings] = useState<Evenings>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -127,7 +139,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     setError(null);
     (async () => {
       try {
-        const [formDocs, subDocs, fileDocs, memberIds] = await Promise.all([
+        const [formDocs, subDocs, fileDocs, memberIds, withdrawn] = await Promise.all([
           fetchAll<FormDoc>(`${apiRoute}/forms?depth=0&locale=en`),
           fetchAll<Submission>(`${apiRoute}/form-submissions?depth=0&sort=-createdAt`),
           fetchAll<FileDoc>(`${apiRoute}/applicant-files?depth=0`),
@@ -135,12 +147,17 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
             if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
             return ((await res.json()) as { ids: number[] }).ids;
           }),
+          fetch(`${apiRoute}/techtour/withdrawals`, { credentials: 'include' }).then(async (res) => {
+            if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+            return ((await res.json()) as { evenings: Evenings }).evenings;
+          }),
         ]);
         if (cancelled) return;
         setForms(formDocs);
         setSubs(subDocs);
         setFiles(new Map(fileDocs.map((f) => [f.id, f])));
         setMembers(new Set(memberIds));
+        setEvenings(withdrawn);
       } catch (err) {
         if (!cancelled) setError(`Could not load the submissions (${(err as Error).message}).`);
       } finally {
@@ -183,6 +200,11 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   }, [loading, formId, tabs, subs]);
 
   const form = useMemo(() => forms.find((f) => f.id === formId), [forms, formId]);
+  /** When the person gave this evening up, if it is given up now. */
+  const gaveUpAt = useCallback(
+    (id: number, key: string) => (evenings[id]?.[key]?.withdrawn ? evenings[id][key].at : undefined),
+    [evenings],
+  );
   const techTour = form?.title.trim().toLowerCase() === 'techtour';
   const choiceField = useMemo(() => choiceFieldOf(form), [form]);
   const people = useMemo(() => byEmail(subs), [subs]);
@@ -198,13 +220,21 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   }, [inForm]);
   const scored = useMemo(() => inForm.filter((s) => s.reviewScore != null).length, [inForm]);
 
-  // With one evening picked: where its host stands.
+  // With one evening picked: where its host stands. Whoever gave it up is no
+  // longer on it, as on the host's page – counted apart.
   const hostCounts = useMemo(() => {
     if (!choiceField?.name || choiceFilter === 'all') return null;
-    const on = inForm.filter((s) => choiceKeysOf(form, s, choiceField.name!).includes(choiceFilter));
+    const picked = inForm.filter((s) => choiceKeysOf(form, s, choiceField.name!).includes(choiceFilter));
+    const on = picked.filter((s) => !gaveUpAt(s.id, choiceFilter));
     const n = (d: string | null) => on.filter((s) => hostDecisionOf(s, choiceFilter) === d).length;
-    return { total: on.length, admitted: n('admitted'), declined: n('declined'), waiting: n(null) };
-  }, [inForm, form, choiceField, choiceFilter]);
+    return {
+      total: on.length,
+      admitted: n('admitted'),
+      declined: n('declined'),
+      waiting: n(null),
+      withdrew: picked.length - on.length,
+    };
+  }, [inForm, form, choiceField, choiceFilter, gaveUpAt]);
 
   const matches = useCallback(
     (s: Submission) => {
@@ -399,6 +429,41 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     queues.current.set(id, next);
   }, [selected, techTour, members, apiRoute]);
 
+  // Add an evening the person gave up back (or undo that), in the same queue.
+  const setWithdrawn = useCallback(
+    (id: number, option: string, withdrawn: boolean) => {
+      const before = evenings[id]?.[option];
+      const put = (state: EveningState | undefined) =>
+        setEvenings((prev) => {
+          const mine = { ...(prev[id] ?? {}) };
+          if (state) mine[option] = state;
+          else delete mine[option];
+          return { ...prev, [id]: mine };
+        });
+      put({ withdrawn, at: new Date().toISOString(), by: 'you' });
+      setSaveState('saving');
+      const run = async () => {
+        const res = await fetch(`${apiRoute}/techtour/withdrawals`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submission: id, option, withdrawn }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        put(((await res.json()) as { state: EveningState }).state);
+      };
+      const next = (queues.current.get(id) ?? Promise.resolve()).then(run).then(
+        () => setSaveState('saved'),
+        () => {
+          put(before);
+          setSaveState('error');
+        },
+      );
+      queues.current.set(id, next);
+    },
+    [evenings, apiRoute],
+  );
+
   // ---- keyboard ----------------------------------------------------------------
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -460,7 +525,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const exportHref = form ? `${apiRoute}/submissions-export.xlsx?form=${encodeURIComponent(form.title)}` : undefined;
 
   const summary = hostCounts
-    ? `${hostCounts.total} registered for this evening · the host admitted ${hostCounts.admitted}, declined ${hostCounts.declined}, ${hostCounts.waiting} still open`
+    ? `${hostCounts.total} registered for this evening · the host admitted ${hostCounts.admitted}, declined ${hostCounts.declined}, ${hostCounts.waiting} still open${hostCounts.withdrew ? ` · ${hostCounts.withdrew} withdrew` : ''}`
     : `${scored} of ${inForm.length} scored · ${statusCounts.accepted ?? 0} accepted · ${statusCounts.unsure ?? 0} unsure · ${statusCounts.rejected ?? 0} rejected`;
 
   const statusOptions = (['all', 'unreviewed', ...DECISIONS.map((d) => d.value)] as StatusFilter[]).map((key) => ({
@@ -555,7 +620,8 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
           {list.map((s) => {
             const p = personOf(s);
             const also = (people.get(p.email.toLowerCase()) ?? []).filter((o) => o.id !== s.id);
-            const host = choiceFilter !== 'all' ? hostDecisionOf(s, choiceFilter) : null;
+            const gaveUp = choiceFilter !== 'all' ? gaveUpAt(s.id, choiceFilter) : undefined;
+            const host = choiceFilter !== 'all' && !gaveUp ? hostDecisionOf(s, choiceFilter) : null;
             return (
               <button
                 key={s.id}
@@ -575,6 +641,11 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                   </span>
                 </span>
                 <span className="rv-row__side">
+                  {gaveUp && (
+                    <span className="rv-badge rv-badge--withdrawn" title={`Gave this evening up through their link on ${day.format(new Date(gaveUp))} – the host no longer sees them`}>
+                      Withdrew
+                    </span>
+                  )}
                   {host && (
                     <span className={`rv-badge rv-badge--${host}`} title={`The host ${host} this person`}>
                       {host === 'admitted' ? 'Admitted' : 'Declined'}
@@ -757,15 +828,50 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                       // The host share links leave out anyone who did not agree
                       // to it (lib/sharingConsent.ts) – say so rather than wait.
                       const shared = consentedToSharing(selected);
+                      // Nor do they show an evening given up – whatever the host had decided.
+                      const state = evenings[selected.id]?.[key];
+                      const gaveUp = state?.withdrawn ? state.at : undefined;
+                      const addedBack = state && !state.withdrawn ? state : undefined;
                       return (
-                        <li key={key} className="rv-hosts__row">
-                          <span>{label}</span>
-                          <span className={`rv-badge${d ? ` rv-badge--${d.decision}` : ''}`}>
-                            {d
-                              ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
-                              : shared
-                                ? 'Waiting for the host'
-                                : 'Not shared – no consent to pass it on'}
+                        <li key={key} className={`rv-hosts__row${gaveUp ? ' is-withdrawn' : ''}`}>
+                          <span className="rv-hosts__evening">{label}</span>
+                          <span className="rv-hosts__side">
+                            {addedBack && (
+                              <span className="rv-hosts__note">
+                                added back{addedBack.by === 'you' ? '' : ` by ${addedBack.by}`} · {day.format(new Date(addedBack.at))}
+                              </span>
+                            )}
+                            <span
+                              className={`rv-badge${gaveUp ? ' rv-badge--withdrawn' : d ? ` rv-badge--${d.decision}` : ''}`}
+                              title={
+                                gaveUp
+                                  ? `${state?.by === 'link' ? 'Through their own link' : `Withdrawn again by ${state?.by}`} – the host no longer sees them${d ? ` (had ${d.decision} them)` : ''}`
+                                  : undefined
+                              }
+                            >
+                              {gaveUp
+                                ? `Withdrew · ${day.format(new Date(gaveUp))}`
+                                : d
+                                  ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
+                                  : shared
+                                    ? 'Waiting for the host'
+                                    : 'Not shared – no consent to pass it on'}
+                            </span>
+                            {/* A title, not Payload's tooltip: that one sticks out past the right edge. */}
+                            {(gaveUp || addedBack) && (
+                              <span
+                                title={gaveUp ? 'Back on this evening – the host sees them again' : 'Withdrawn again, as the person had chosen'}
+                              >
+                                <Button
+                                  buttonStyle="pill"
+                                  size="small"
+                                  margin={false}
+                                  onClick={() => setWithdrawn(selected.id, key, !gaveUp)}
+                                >
+                                  {gaveUp ? 'Add back' : 'Undo'}
+                                </Button>
+                              </span>
+                            )}
                           </span>
                         </li>
                       );
@@ -801,7 +907,21 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                       <div key={r.name} className="rv-qa">
                         <span className="field-label">{r.label}</span>
                         <div className="rv-picks">
-                          {r.values.length ? r.values.map((v) => <Pill key={v} size="small">{v}</Pill>) : '–'}
+                          {r.values.length
+                            ? r.values.map((v, i) => {
+                                const gaveUp = r.keys[i] ? gaveUpAt(selected.id, r.keys[i]) : undefined;
+                                return (
+                                  <Pill
+                                    key={v}
+                                    size="small"
+                                    className={gaveUp ? 'rv-pick--withdrawn' : undefined}
+                                    aria-label={gaveUp ? `${v} – withdrew` : undefined}
+                                  >
+                                    {v}
+                                  </Pill>
+                                );
+                              })
+                            : '–'}
                         </div>
                       </div>
                     );

@@ -2,17 +2,19 @@ import { randomBytes } from 'node:crypto';
 import type { Payload } from 'payload';
 import { poolOf } from '../../endpoints/util';
 import { pickedKeys, type OptionRow } from '../choiceKeys';
-import { TOKENS_TABLE, WITHDRAWALS_TABLE } from './tables';
+import { CHANGES_TABLE, TOKENS_TABLE, WITHDRAWALS_TABLE } from './tables';
 
 /**
  * Reading and writing the /techtour/manage tables (lib/manage/tables.ts).
  *
- * Only ever INSERT and SELECT, and only on those two tables: a registration
+ * Only ever INSERT and SELECT, and only on those tables: a registration
  * (`form_submissions`) is read through Payload as before and never written
  * here. A withdrawal is not a change to the registration – it is a row of its
  * own, and whoever shows a registration's evenings leaves the withdrawn ones
  * out (the host page, lib/share/registrations.ts; the admin count,
- * components/techtour/EveningDistribution.tsx).
+ * components/techtour/EveningDistribution.tsx) or marks them as given up (the
+ * review workspace, through endpoints/withdrawals.ts – where we can also add
+ * one back: a row in the changes table, and the newest row decides).
  */
 
 /**
@@ -61,40 +63,86 @@ export async function registrationOfToken(payload: Payload, token: string): Prom
   return rows[0] ? Number(rows[0].submission_id) : null;
 }
 
-/** Per registration, the evenings withdrawn from and when (ISO). */
-export async function withdrawalsOf(payload: Payload, ids: number[]): Promise<Map<number, Map<string, string>>> {
-  const out = new Map<number, Map<string, string>>();
-  if (ids.length === 0) return out;
+/** Where an evening of a registration stands, by its newest row. */
+export type EveningState = { withdrawn: boolean; at: string; by: string };
+
+/**
+ * Per registration (of `ids`, or every one), each evening with a withdrawal
+ * or a change behind it, by the newest row: the first withdrawal
+ * (`techtour_withdrawals`, through the link) or a later change
+ * (`techtour_evening_changes`). An evening without a row is as registered.
+ */
+export async function eveningStates(payload: Payload, ids?: number[]): Promise<Map<number, Map<string, EveningState>>> {
+  const out = new Map<number, Map<string, EveningState>>();
+  if (ids && ids.length === 0) return out;
   const { rows } = await poolOf(payload).query(
-    `SELECT submission_id, option, created_at FROM ${WITHDRAWALS_TABLE} WHERE submission_id = ANY($1::int[])`,
-    [ids],
+    `SELECT DISTINCT ON (submission_id, option) submission_id, option, withdrawn, changed_by, created_at
+     FROM (
+       SELECT submission_id, option, true AS withdrawn, 'link' AS changed_by, created_at, 0 AS src, id FROM ${WITHDRAWALS_TABLE}
+       UNION ALL
+       SELECT submission_id, option, withdrawn, changed_by, created_at, 1 AS src, id FROM ${CHANGES_TABLE}
+     ) e
+     ${ids ? 'WHERE submission_id = ANY($1::int[])' : ''}
+     ORDER BY submission_id, option, created_at DESC, src DESC, id DESC`,
+    ids ? [ids] : [],
   );
   for (const r of rows) {
     const id = Number(r.submission_id);
     if (!out.has(id)) out.set(id, new Map());
-    out.get(id)!.set(String(r.option), new Date(r.created_at as string).toISOString());
+    out.get(id)!.set(String(r.option), {
+      withdrawn: r.withdrawn === true,
+      at: new Date(r.created_at as string).toISOString(),
+      by: String(r.changed_by),
+    });
   }
   return out;
 }
 
-/** The registrations among `ids` that withdrew from the evening `option`. */
-export async function withdrawnFrom(payload: Payload, option: string, ids: number[]): Promise<Set<number>> {
-  if (ids.length === 0) return new Set();
-  const { rows } = await poolOf(payload).query(
-    `SELECT submission_id FROM ${WITHDRAWALS_TABLE} WHERE option = $1 AND submission_id = ANY($2::int[])`,
-    [option, ids],
-  );
-  return new Set(rows.map((r) => Number(r.submission_id)));
+/** Per registration (of `ids`, or every one), the evenings withdrawn from now and since when (ISO). */
+export async function withdrawalsOf(payload: Payload, ids?: number[]): Promise<Map<number, Map<string, string>>> {
+  const out = new Map<number, Map<string, string>>();
+  for (const [id, evenings] of await eveningStates(payload, ids)) {
+    const gaveUp = [...evenings].filter(([, e]) => e.withdrawn).map(([option, e]) => [option, e.at] as const);
+    if (gaveUp.length) out.set(id, new Map(gaveUp));
+  }
+  return out;
 }
 
-/** Record withdrawals. One already recorded keeps its first time. */
+/** The registrations among `ids` that are withdrawn from the evening `option` now. */
+export async function withdrawnFrom(payload: Payload, option: string, ids: number[]): Promise<Set<number>> {
+  const all = await withdrawalsOf(payload, ids);
+  return new Set([...all].filter(([, evenings]) => evenings.has(option)).map(([id]) => id));
+}
+
+/**
+ * Record withdrawals through the link. One already in force keeps its time.
+ * The first time an evening is given up it goes into `techtour_withdrawals`;
+ * once we added it back, giving it up again is a row in the changes table.
+ */
 export async function withdraw(payload: Payload, id: number, options: string[]): Promise<void> {
-  if (options.length === 0) return;
-  await poolOf(payload).query(
+  const current = (await withdrawalsOf(payload, [id])).get(id);
+  const wanted = [...new Set(options)].filter((o) => !current?.has(o));
+  if (wanted.length === 0) return;
+  const pool = poolOf(payload);
+  const { rows } = await pool.query(
     `INSERT INTO ${WITHDRAWALS_TABLE} (submission_id, option)
      SELECT $1, option FROM unnest($2::text[]) AS t(option)
-     ON CONFLICT (submission_id, option) DO NOTHING`,
-    [id, [...new Set(options)]],
+     ON CONFLICT (submission_id, option) DO NOTHING
+     RETURNING option`,
+    [id, wanted],
+  );
+  const first = new Set(rows.map((r) => String(r.option)));
+  const again = wanted.filter((o) => !first.has(o));
+  if (again.length) await change(payload, id, again, true, 'link');
+}
+
+/** A change after the first withdrawal: added back (false) or given up again (true), by whom. */
+export async function change(payload: Payload, id: number, options: string[], withdrawn: boolean, by: string): Promise<void> {
+  if (options.length === 0) return;
+  await poolOf(payload).query(
+    `INSERT INTO ${CHANGES_TABLE} (submission_id, option, withdrawn, changed_by)
+     SELECT $1, option, $2, $3 FROM unnest($4::text[]) AS t(option)`,
+    [id, withdrawn, by, [...new Set(options)]],
   );
 }
 

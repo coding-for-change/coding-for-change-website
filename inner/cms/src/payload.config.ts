@@ -33,6 +33,7 @@ import { submissionsExport } from './endpoints/submissionsExport';
 import { shareEndpoints } from './endpoints/share';
 import { manageEndpoints } from './endpoints/manage';
 import { memberEndpoints } from './endpoints/members';
+import { withdrawalEndpoints } from './endpoints/withdrawals';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -120,7 +121,7 @@ export default buildConfig({
   // token and an emailed sign-in code – see endpoints/share.ts. So is a
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
   // token alone – see endpoints/manage.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints],
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },

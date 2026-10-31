@@ -81,7 +81,8 @@ export const plainLabel = (label?: string | null): string =>
 export type AnswerRow =
   | { kind: 'short'; name: string; label: string; value: string }
   | { kind: 'long'; name: string; label: string; value: string }
-  | { kind: 'choices'; name: string; label: string; values: string[] }
+  /** `keys`: the option keys behind `values`, in order – none for an answer only read as text. */
+  | { kind: 'choices'; name: string; label: string; values: string[]; keys: string[] }
   | { kind: 'confirm'; name: string; label: string; checked: boolean }
   | { kind: 'linked'; name: string; label: string; checked: boolean };
 
@@ -122,7 +123,7 @@ export function answerRows(form: FormDoc | undefined, s: Submission): AnswerRow[
           : value
             ? [value]
             : [];
-        rows.push({ kind: 'choices', name: block.name, label, values });
+        rows.push({ kind: 'choices', name: block.name, label, values, keys });
         break;
       }
       case 'select': {
