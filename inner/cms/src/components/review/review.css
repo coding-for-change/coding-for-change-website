@@ -244,6 +244,13 @@ html[data-theme='dark'] .rv {
   color: var(--theme-error-750);
 }
 
+/* an evening the person gave up through their own link */
+.rv-badge--withdrawn {
+  --rv-badge-bg: transparent;
+  box-shadow: inset 0 0 0 1px var(--theme-elevation-250);
+  color: var(--theme-elevation-600);
+}
+
 .rv-dot {
   flex: none;
   display: inline-block;
@@ -454,6 +461,18 @@ html[data-theme='dark'] .rv {
   background: var(--theme-elevation-50);
 }
 
+.rv-hosts__side {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--base) * 0.4);
+}
+
+.rv-hosts__note {
+  font-size: 12px;
+  color: var(--theme-elevation-500);
+}
+
 /* answers */
 
 .rv-answers {
@@ -508,6 +527,12 @@ html[data-theme='dark'] .rv {
   display: flex;
   flex-wrap: wrap;
   gap: calc(var(--base) * 0.3);
+}
+
+.rv-hosts__row.is-withdrawn .rv-hosts__evening,
+.rv-pick--withdrawn {
+  color: var(--theme-elevation-450);
+  text-decoration: line-through;
 }
 
 .rv-confirms {

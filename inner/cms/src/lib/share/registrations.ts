@@ -20,8 +20,9 @@ import { eveningOf, eveningsFieldOf, type Evening } from './evening';
  * decided on, and its CV cannot be opened through the link.
  *
  * Nor is anyone who gave the evening up through their own link
- * (/techtour/manage, lib/manage/store.ts): the registration still carries the
- * evening, the withdrawal is a row of its own, and it is left out here.
+ * (/techtour/manage, lib/manage/store.ts) – unless we added it back in the
+ * admin: the registration still carries the evening, the withdrawal is a row
+ * of its own, and it is left out here.
  *
  * Whom we marked as a Coding for Change member (lib/members.ts) carries a
  * "Member" badge – the mark, not anything from a membership application.

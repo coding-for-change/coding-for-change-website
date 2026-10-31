@@ -1,6 +1,7 @@
 import type { Endpoint } from 'payload';
 import ExcelJS from 'exceljs';
 import { requireAdmin } from './util';
+import { withdrawalsOf } from '../lib/manage/store';
 import { REVIEW_STATUSES } from '../fields/review';
 import type { ApplicantFile, Form, FormSubmission } from '../payload-types';
 
@@ -17,8 +18,9 @@ import type { ApplicantFile, Form, FormSubmission } from '../payload-types';
  * application at /join/speedrun, the boxes the person ticked with the version
  * of each wording (the consent log – fields/submissionRecord.ts; a TechTour
  * registration without `hostSharing` there is not shown to the hosts), the
- * TechTour hosts' decisions (one line per evening), and the campaign
- * attribution. The status column carries a dropdown (accepted /
+ * TechTour hosts' decisions (one line per evening), the evenings given up
+ * through the personal link (/techtour/manage – the answer column still lists
+ * them, as the registration does), and the campaign attribution. The status column carries a dropdown (accepted /
  * unsure / rejected) so the sheet can be used for the review itself; what is
  * decided there still has to be typed back into the CMS — there is no import.
  */
@@ -121,6 +123,7 @@ export const submissionsExport: Endpoint = {
       { header: 'Submitted via', key: 'submittedVia', width: 14 },
       { header: 'Agreed to (wording version)', key: 'agreedTo', width: 36 },
       { header: 'Host decisions', key: 'hostDecisions', width: 40 },
+      { header: 'Withdrew from', key: 'withdrew', width: 36 },
       { header: 'Source', key: 'source', width: 16 },
       { header: 'Channel', key: 'channel', width: 14 },
       { header: 'Landing page', key: 'landingPath', width: 20 },
@@ -132,6 +135,7 @@ export const submissionsExport: Endpoint = {
     for (const block of (form.fields ?? []) as { blockType: string; options?: { value: string; label?: string | null }[] }[]) {
       if (block.blockType === 'checkboxGroup') for (const o of block.options ?? []) optionLabels.set(o.value, o.label || o.value);
     }
+    const withdrawals = await withdrawalsOf(req.payload, subs.map((s) => s.id));
     for (const s of subs) {
       const row: Record<string, unknown> = {
         createdAt: new Date(s.createdAt),
@@ -153,6 +157,9 @@ export const submissionsExport: Endpoint = {
         hostDecisions: Object.entries((s.hostDecisions ?? {}) as Record<string, { decision?: string; by?: string }>)
           .map(([key, d]) => `${optionLabels.get(key) ?? key}: ${d?.decision ?? ''}${d?.by ? ` (${d.by})` : ''}`)
           .join('\n'),
+        withdrew: [...(withdrawals.get(s.id) ?? [])]
+          .map(([key, at]) => `${optionLabels.get(key) ?? key} (${at.slice(0, 10)})`)
+          .join('\n'),
         source: s.attribution?.source ?? '',
         channel: s.attribution?.channel ?? '',
         landingPath: s.attribution?.landingPath ?? '',
@@ -170,7 +177,7 @@ export const submissionsExport: Endpoint = {
     ws.views = [{ state: 'frozen', ySplit: 1 }];
     ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columns.length } };
     ws.getColumn('createdAt').numFmt = 'yyyy-mm-dd hh:mm';
-    const wrapKeys = new Set(['files', 'reviewNotes', 'agreedTo', 'hostDecisions', ...questions.filter((q) => q.wide).map((q) => `q_${q.name}`)]);
+    const wrapKeys = new Set(['files', 'reviewNotes', 'agreedTo', 'hostDecisions', 'withdrew', ...questions.filter((q) => q.wide).map((q) => `q_${q.name}`)]);
     ws.columns.forEach((col) => {
       if (col.key && wrapKeys.has(col.key)) col.alignment = { wrapText: true, vertical: 'top' };
     });
