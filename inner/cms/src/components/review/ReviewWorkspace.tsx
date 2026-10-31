@@ -42,6 +42,11 @@ import './review.css';
  *
  * Keyboard: ↑/↓ (or K/J) move through the list, 1–9 and 0 (= 10) score,
  * A / U / R decide, N jumps to the notes, / to the search.
+ *
+ * TechTour registrations can also be marked "Coding for Change member" (M):
+ * the host page shows it as a badge and the mass mail can go to members only.
+ * The mark is not a field of the submission but a row in its own table
+ * (lib/members.ts), set through /api/techtour/members.
  */
 
 type Props = { apiRoute: string; adminRoute: string };
@@ -97,6 +102,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const [forms, setForms] = useState<FormDoc[]>([]);
   const [subs, setSubs] = useState<Submission[]>([]);
   const [files, setFiles] = useState<Map<number, FileDoc>>(new Map());
+  const [members, setMembers] = useState<Set<number>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -121,15 +127,20 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     setError(null);
     (async () => {
       try {
-        const [formDocs, subDocs, fileDocs] = await Promise.all([
+        const [formDocs, subDocs, fileDocs, memberIds] = await Promise.all([
           fetchAll<FormDoc>(`${apiRoute}/forms?depth=0&locale=en`),
           fetchAll<Submission>(`${apiRoute}/form-submissions?depth=0&sort=-createdAt`),
           fetchAll<FileDoc>(`${apiRoute}/applicant-files?depth=0`),
+          fetch(`${apiRoute}/techtour/members`, { credentials: 'include' }).then(async (res) => {
+            if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+            return ((await res.json()) as { ids: number[] }).ids;
+          }),
         ]);
         if (cancelled) return;
         setForms(formDocs);
         setSubs(subDocs);
         setFiles(new Map(fileDocs.map((f) => [f.id, f])));
+        setMembers(new Set(memberIds));
       } catch (err) {
         if (!cancelled) setError(`Could not load the submissions (${(err as Error).message}).`);
       } finally {
@@ -172,6 +183,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   }, [loading, formId, tabs, subs]);
 
   const form = useMemo(() => forms.find((f) => f.id === formId), [forms, formId]);
+  const techTour = form?.title.trim().toLowerCase() === 'techtour';
   const choiceField = useMemo(() => choiceFieldOf(form), [form]);
   const people = useMemo(() => byEmail(subs), [subs]);
   const formTitleById = useMemo(() => new Map(forms.map((f) => [f.id, f])), [forms]);
@@ -354,6 +366,39 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     [selected, save],
   );
 
+  // The member mark goes to its own endpoint, in the same queue as the review fields.
+  const toggleMember = useCallback(() => {
+    if (!selected || !techTour) return;
+    const id = selected.id;
+    const member = !members.has(id);
+    const mark = (on: boolean) =>
+      setMembers((prev) => {
+        const next = new Set(prev);
+        if (on) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+    mark(member);
+    setSaveState('saving');
+    const run = async () => {
+      const res = await fetch(`${apiRoute}/techtour/members`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ submission: id, member }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+    };
+    const next = (queues.current.get(id) ?? Promise.resolve()).then(run).then(
+      () => setSaveState('saved'),
+      () => {
+        mark(!member);
+        setSaveState('error');
+      },
+    );
+    queues.current.set(id, next);
+  }, [selected, techTour, members, apiRoute]);
+
   // ---- keyboard ----------------------------------------------------------------
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -363,6 +408,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
       else if (key === 'arrowup' || key === 'k') move(-1);
       else if (/^[0-9]$/.test(key)) setScore(key === '0' ? 10 : Number(key));
       else if (DECISION_KEYS[key]) setDecision(DECISION_KEYS[key]);
+      else if (key === 'm' && techTour) toggleMember();
       else if (key === 'n') notesRef.current?.querySelector('textarea')?.focus();
       else if (key === '/') searchRef.current?.focus();
       else return;
@@ -370,7 +416,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [move, setScore, setDecision]);
+  }, [move, setScore, setDecision, toggleMember, techTour]);
 
   // Leaving the page with a note still waiting to be saved.
   useEffect(() => {
@@ -534,6 +580,11 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                       {host === 'admitted' ? 'Admitted' : 'Declined'}
                     </span>
                   )}
+                  {members.has(s.id) && (
+                    <span className="rv-badge" title="Coding for Change member – the host sees it">
+                      Member
+                    </span>
+                  )}
                   {also.length > 0 && (
                     <span className="rv-badge" title={also.map((o) => formName(formTitleById.get(formIdOf(o)) ?? { id: 0, title: '?' })).join(', ')}>
                       +{also.length}
@@ -629,6 +680,22 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                     </span>
                   </div>
                 </div>
+                {techTour && (
+                  <div className="rv-review__field">
+                    <span className="field-label">Membership</span>
+                    <div className="rv-segments" role="group" aria-label="Membership">
+                      <button
+                        type="button"
+                        className={`rv-segments__btn${members.has(selected.id) ? ' is-active' : ''}`}
+                        aria-pressed={members.has(selected.id)}
+                        onClick={toggleMember}
+                        title="Key M – the host sees a “Member” badge"
+                      >
+                        Coding for Change member
+                      </button>
+                    </div>
+                  </div>
+                )}
               </section>
 
               <div
@@ -766,6 +833,11 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
 
       <p className="rv-keys">
         <kbd>↑</kbd> <kbd>↓</kbd> move · <kbd>1</kbd>–<kbd>9</kbd> <kbd>0</kbd> score · <kbd>A</kbd> <kbd>U</kbd> <kbd>R</kbd> decide ·{' '}
+        {techTour && (
+          <>
+            <kbd>M</kbd> member ·{' '}
+          </>
+        )}
         <kbd>N</kbd> notes · <kbd>/</kbd> search. Saved as you go – one shared review per person.
       </p>
     </div>

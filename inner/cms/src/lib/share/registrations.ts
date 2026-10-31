@@ -1,6 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload';
 import { pickedKeys } from '../choiceKeys';
 import { withdrawnFrom } from '../manage/store';
+import { membersAmong } from '../members';
 import { consentedToSharing } from '../sharingConsent';
 import { eveningOf, eveningsFieldOf, type Evening } from './evening';
 
@@ -21,6 +22,9 @@ import { eveningOf, eveningsFieldOf, type Evening } from './evening';
  * Nor is anyone who gave the evening up through their own link
  * (/techtour/manage, lib/manage/store.ts): the registration still carries the
  * evening, the withdrawal is a row of its own, and it is left out here.
+ *
+ * Whom we marked as a Coding for Change member (lib/members.ts) carries a
+ * "Member" badge – the mark, not anything from a membership application.
  *
  * Also records the host's decision on a registration, under the evening's key
  * in the submission's `hostDecisions` – so it is deleted together with the
@@ -48,6 +52,8 @@ export type HostRow = {
   details: { label: string; value: string }[];
   hasCv: boolean;
   decision: HostDecision | null;
+  /** Marked by us as a Coding for Change member. */
+  member: boolean;
 };
 
 type Block = {
@@ -116,7 +122,7 @@ const inScope = (scope: Scope, s: SubmissionDoc): boolean => {
   return [scope.options.en, scope.options.de].some((opts) => pickedKeys(answer, opts ?? []).includes(scope.evening.option));
 };
 
-const rowOf = (scope: Scope, s: SubmissionDoc): HostRow => {
+const rowOf = (scope: Scope, s: SubmissionDoc, member = false): HostRow => {
   const answers = new Map((s.submissionData ?? []).map((kv) => [kv.field, String(kv.value ?? '')]));
   const details: HostRow['details'] = [];
   for (const block of scope.fields) {
@@ -135,6 +141,7 @@ const rowOf = (scope: Scope, s: SubmissionDoc): HostRow => {
     details,
     hasCv: (s.files ?? []).length > 0,
     decision: s.hostDecisions?.[scope.evening.option]?.decision ?? null,
+    member,
   };
 };
 
@@ -166,7 +173,9 @@ export async function hostView(
   req?: PayloadRequest,
 ): Promise<{ evening: Evening; rows: HostRow[] } | null> {
   const found = await registrationsOf(payload, link, req);
-  return found && { evening: found.scope.evening, rows: found.docs.map((s) => rowOf(found.scope, s)) };
+  if (!found) return null;
+  const members = await membersAmong(payload, found.docs.map((s) => s.id));
+  return { evening: found.scope.evening, rows: found.docs.map((s) => rowOf(found.scope, s, members.has(s.id))) };
 }
 
 /** Every CV on the link's list at once (the page's "Download CVs"), numbered as on the page. */

@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { Payload } from 'payload';
-import type { PgPool } from '../../endpoints/util';
+import { poolOf } from '../../endpoints/util';
 import { pickedKeys, type OptionRow } from '../choiceKeys';
 import { TOKENS_TABLE, WITHDRAWALS_TABLE } from './tables';
 
@@ -28,12 +28,6 @@ export const manageOpen = (now: Date = new Date()): boolean => now.getTime() < M
 export const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
 
 const newToken = (): string => randomBytes(32).toString('base64url');
-
-function poolOf(payload: Payload): PgPool {
-  const pool = (payload.db as unknown as { pool?: PgPool }).pool;
-  if (!pool || typeof pool.query !== 'function') throw new Error('[manage] no database pool');
-  return pool;
-}
 
 /**
  * The personal link token of each registration, made the first time it is

@@ -1,6 +1,6 @@
 import { escapeHtml as esc } from '../waitlistEmailTemplate';
 import type { Evening } from './evening';
-import { LOGO_SVG } from './logo';
+import { LOGO_SVG, MARK_SVG } from './logo';
 import type { HostRow } from './registrations';
 
 /**
@@ -45,6 +45,9 @@ const fmtWhen = new Intl.DateTimeFormat('en-GB', {
   hour: '2-digit',
   minute: '2-digit',
 });
+
+/** Beside the name of someone we marked as a member (lib/members.ts). */
+const MEMBER_BADGE = `<span class="member" title="Member of Coding for Change">${MARK_SVG}Member</span>`;
 
 const STYLE = `
 :root { --paper:#f5f5f3; --card:#fff; --ink:#171717; --muted:#6b6b6b; --line:#e4e4e1; --soft:#f0f0ee; --sel:#e6e6e2;
@@ -94,6 +97,9 @@ ol.people { list-style:none; margin:0; padding:0; }
 .person[data-decision="declined"] { box-shadow:inset 3px 0 0 var(--no); }
 .person .n { color:var(--muted); font-size:13px; font-variant-numeric:tabular-nums; }
 .pick { display:block; border:0; border-radius:0; background:none; color:var(--ink); padding:0; font-size:16px; font-weight:600; text-align:left; }
+.name { display:flex; align-items:center; flex-wrap:wrap; gap:2px 8px; }
+.member { display:inline-flex; align-items:center; gap:5px; padding:0 7px; border:1px solid var(--line); border-radius:999px; background:var(--soft); color:var(--ink); font-size:12px; font-weight:500; line-height:20px; white-space:nowrap; }
+.member .mark { display:block; height:8px; width:auto; }
 .who small, .v-who small { display:block; color:var(--muted); font-size:13px; }
 .details { margin:4px 0 0; font-size:14px; color:var(--ink); }
 .details span { color:var(--muted); }
@@ -120,6 +126,7 @@ footer { max-width:920px; margin:0 auto; padding:0 20px 40px; font-size:13px; co
 .v-who strong, #v-meta { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 #v-meta small, #v-meta .details { display:inline; margin:0; font-size:13px; }
 #v-meta .details::before { content:' · '; color:var(--muted); }
+#v-meta .member { margin-right:8px; vertical-align:1px; }
 .v-act { display:flex; align-items:center; gap:16px; flex:none; }
 .v-body { position:relative; flex:1; min-height:0; overflow:hidden; }
 .v-body iframe { position:absolute; inset:0; width:100%; height:100%; border:0; }
@@ -258,7 +265,7 @@ const SCRIPT = `
     current = row; row.dataset.selected = 'true';
     const pick = $('.pick', row); pick.setAttribute('aria-current', 'true');
     $('#v-name').textContent = $('#v-name').title = pick.textContent;
-    const meta = $$('small, .details', $('.who', row));
+    const meta = $$('.member, small, .details', $('.who', row));
     $('#v-meta').replaceChildren(...meta.map((el) => el.cloneNode(true)));
     $('#v-meta').title = meta.map((el) => el.textContent.trim()).join(' · ');
     $('#v-decide').setAttribute('aria-label', 'Decision for ' + pick.textContent);
@@ -406,7 +413,7 @@ export function sharePage(input: PageInput): string {
       (r, i) => `<li class="person" data-id="${r.id}" data-decision="${r.decision ?? ''}">
   <span class="n">${i + 1}</span>
   <div class="who">
-    <button type="button" class="pick" aria-controls="viewer">${esc(r.name)}</button>
+    <div class="name"><button type="button" class="pick" aria-controls="viewer">${esc(r.name)}</button>${r.member ? MEMBER_BADGE : ''}</div>
     <small>registered ${esc(fmtDay.format(new Date(r.registeredAt)))}${r.hasCv ? '' : '<span class="nocv"> · no CV</span>'}</small>
     ${r.details.length ? `<p class="details">${r.details.map((d) => `<span>${esc(d.label)}:</span> ${esc(d.value)}`).join(' · ')}</p>` : ''}
   </div>
