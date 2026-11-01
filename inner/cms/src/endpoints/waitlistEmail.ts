@@ -6,6 +6,7 @@ import { MANAGE_LINK_PLACEHOLDER, SAMPLE_TOKEN, manageUrl, withManageLink } from
 import { tokensFor } from '../lib/manage/store';
 import { membersAmong } from '../lib/members';
 import { techTourFormId } from '../lib/retention';
+import { sendResendBatch, type BatchItem } from '../lib/resendBatch';
 
 /**
  * Admin-only bulk mail to the waitlist (`waitlist-signups` collection) – or,
@@ -60,12 +61,6 @@ const CONTACT = () => process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com'
 // itself runs elsewhere (dev, docker-internal hostname, …).
 const SITE_ORIGIN = () =>
   (process.env.PUBLIC_SITE_ORIGIN || 'https://codingforchange.com').replace(/\/+$/, '');
-
-const BATCH_URL = 'https://api.resend.com/emails/batch';
-const BATCH_SIZE = 100; // Resend's maximum per batch request
-const BATCH_INTERVAL_MS = 600; // stay under Resend's default 2 requests/second
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -180,68 +175,15 @@ async function techTourRegistrants(
   return registrants.filter((r) => members.has(r.id));
 }
 
-type BatchItem = {
-  from: string;
-  to: string[];
-  reply_to: string;
-  subject: string;
-  text: string;
-  html: string;
-  headers?: Record<string, string>;
-};
-
-/**
- * POST the prepared per-recipient emails to Resend in chunks of 100.
- * 429/5xx/network errors are retried (up to 3 attempts per chunk, honouring
- * Retry-After); other 4xx rejections mark the whole chunk failed — Resend
- * validates batches atomically, so one bad address fails its chunk.
- */
+/** Counts for the compose form; the sending itself is lib/resendBatch.ts. */
 async function sendViaResend(
   apiKey: string,
   items: BatchItem[],
 ): Promise<{ sent: number; failed: number; errors: string[] }> {
-  let sent = 0;
-  let failed = 0;
-  const errors: string[] = [];
-  for (let i = 0; i < items.length; i += BATCH_SIZE) {
-    const chunk = items.slice(i, i + BATCH_SIZE);
-    if (i > 0) await sleep(BATCH_INTERVAL_MS);
-    for (let attempt = 1; ; attempt += 1) {
-      let res: Response;
-      try {
-        res = await fetch(BATCH_URL, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(chunk),
-        });
-      } catch (err) {
-        if (attempt < 3) {
-          await sleep(1000 * attempt);
-          continue;
-        }
-        failed += chunk.length;
-        errors.push(err instanceof Error ? err.message : 'network error');
-        break;
-      }
-      if (res.ok) {
-        sent += chunk.length;
-        break;
-      }
-      if ((res.status === 429 || res.status >= 500) && attempt < 3) {
-        const after = Number(res.headers.get('retry-after'));
-        await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : 1000 * attempt);
-        continue;
-      }
-      failed += chunk.length;
-      const detail = (await res.text().catch(() => '')).slice(0, 300);
-      errors.push(`Resend ${res.status}${detail ? `: ${detail}` : ''}`);
-      break;
-    }
-  }
-  return { sent, failed, errors };
+  const results = await sendResendBatch(apiKey, items);
+  const errors = [...new Set(results.flatMap((r) => (r.error ? [r.error] : [])))];
+  const failed = results.filter((r) => r.error).length;
+  return { sent: results.length - failed, failed, errors };
 }
 
 const emailRecipients: Endpoint = {

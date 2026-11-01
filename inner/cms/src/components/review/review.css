@@ -668,3 +668,75 @@ html[data-theme='dark'] .rv {
     height: auto;
   }
 }
+
+/* ---- mails sent through /admin/mailing ------------------------------------------- */
+
+.rv-mails {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-mails__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--base) * 0.5);
+  padding: calc(var(--base) * 0.3) 0;
+}
+
+.rv-mails__side {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--base) * 0.5);
+  font-size: 12px;
+}
+
+.rv-mails__note {
+  margin: calc(var(--base) * 0.2) 0 0;
+  font-size: 12px;
+  color: var(--theme-elevation-500);
+}
+
+/* ---- "Decide by score" ------------------------------------------------------------ */
+
+/* Payload caps a popup at 200px and scrolls the rest; this one keeps its buttons in view. */
+.popup__scroll-container:has(> .rv-bulk) {
+  max-height: none;
+}
+
+.rv-bulk {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--base) * 0.5);
+  width: min(420px, 90vw);
+  padding: calc(var(--base) * 0.6);
+}
+
+.rv-bulk__lead,
+.rv-bulk__note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--theme-elevation-600);
+}
+
+.rv-bulk__plan {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rv-bulk__plan li {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--base) * 0.4);
+}
+
+.rv-bulk__actions {
+  display: flex;
+  gap: calc(var(--base) * 0.3);
+}

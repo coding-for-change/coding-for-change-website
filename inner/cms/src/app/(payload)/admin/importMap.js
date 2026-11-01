@@ -27,9 +27,11 @@ import { ShareLinkUrl as ShareLinkUrl_58d533d194b2b81771b45519e831bbb0 } from '.
 import { ExportSubmissions as ExportSubmissions_6ea02889351cc84afeb57e6c6b8e6635 } from '../../../components/submissions/ExportSubmissions'
 import { EveningDistribution as EveningDistribution_ae2905e4638c02173999e699041afdbb } from '../../../components/techtour/EveningDistribution'
 import { ReviewNavLink as ReviewNavLink_73e403c0f30261a621e36bbdfd90b1cd } from '../../../components/review/ReviewNavLink'
+import { MailingNavLink as MailingNavLink_c3a842bdc0061ccf12b4cb6ac801723f } from '../../../components/mailing/MailingNavLink'
 import { AnalyticsNavLink as AnalyticsNavLink_3f97209c7ee78461118a93ecfba89874 } from '../../../components/analytics/AnalyticsNavLink'
 import { AnalyticsDashboardView as AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93 } from '../../../components/analytics/AnalyticsDashboardView'
 import { ReviewView as ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be } from '../../../components/review/ReviewView'
+import { MailingView as MailingView_4688fc1704f49ef061705dd53f31d2ab } from '../../../components/mailing/MailingView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
@@ -62,8 +64,10 @@ export const importMap = {
   "/components/submissions/ExportSubmissions#ExportSubmissions": ExportSubmissions_6ea02889351cc84afeb57e6c6b8e6635,
   "/components/techtour/EveningDistribution#EveningDistribution": EveningDistribution_ae2905e4638c02173999e699041afdbb,
   "/components/review/ReviewNavLink#ReviewNavLink": ReviewNavLink_73e403c0f30261a621e36bbdfd90b1cd,
+  "/components/mailing/MailingNavLink#MailingNavLink": MailingNavLink_c3a842bdc0061ccf12b4cb6ac801723f,
   "/components/analytics/AnalyticsNavLink#AnalyticsNavLink": AnalyticsNavLink_3f97209c7ee78461118a93ecfba89874,
   "/components/analytics/AnalyticsDashboardView#AnalyticsDashboardView": AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93,
   "/components/review/ReviewView#ReviewView": ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be,
+  "/components/mailing/MailingView#MailingView": MailingView_4688fc1704f49ef061705dd53f31d2ab,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }
