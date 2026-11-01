@@ -470,8 +470,38 @@ button.ml-table__row:hover {
 
 .ml-people li {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--base) * 0.5);
   padding: 4px calc(var(--base) * 0.5) 4px calc(var(--base) * 1.2);
+  border-radius: var(--style-radius-s);
+}
+
+.ml-people li:hover {
+  background: var(--theme-elevation-50);
+}
+
+.ml-people__who {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* The row's action shows where it is needed – on the row under the pointer or in focus. */
+.ml-people__action {
+  flex-shrink: 0;
+  opacity: 0;
+}
+
+.ml-people li:hover .ml-people__action,
+.ml-people li:focus-within .ml-people__action {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .ml-people__action {
+    opacity: 1;
+  }
 }
 
 .ml-people__name {
@@ -536,6 +566,10 @@ button.ml-table__row:hover {
   background: var(--theme-elevation-0);
   color: var(--theme-text);
   font: inherit;
+}
+
+.ml-search--wide {
+  width: 100%;
 }
 
 .ml-confirm ul {
