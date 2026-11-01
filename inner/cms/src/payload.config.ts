@@ -34,6 +34,7 @@ import { shareEndpoints } from './endpoints/share';
 import { manageEndpoints } from './endpoints/manage';
 import { memberEndpoints } from './endpoints/members';
 import { withdrawalEndpoints } from './endpoints/withdrawals';
+import { mailingEndpoints } from './endpoints/mailing';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -57,6 +58,7 @@ import { TechTour } from './globals/TechTour';
 import { brandApplicationEmails } from './lib/applicationEmail';
 import { manageTables } from './lib/manage/tables';
 import { memberTables } from './lib/members';
+import { mailingTables } from './lib/mailing/tables';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -121,7 +123,7 @@ export default buildConfig({
   // token and an emailed sign-in code – see endpoints/share.ts. So is a
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
   // token alone – see endpoints/manage.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints],
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...mailingEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -277,10 +279,10 @@ export default buildConfig({
     // In production NODE_ENV is 'production' (set by next build), so this is false
     // and the Dockerfile runs `payload migrate` instead before starting.
     push: process.env.NODE_ENV !== 'production',
-    // The /techtour/manage tables and the member mark – plain tables beside
-    // the collections, so that no existing table gets a column
-    // (lib/manage/tables.ts, lib/members.ts).
-    afterSchemaInit: [manageTables, memberTables],
+    // The /techtour/manage tables, the member mark and the mailing tool –
+    // plain tables beside the collections, so that no existing table gets a
+    // column (lib/manage/tables.ts, lib/members.ts, lib/mailing/tables.ts).
+    afterSchemaInit: [manageTables, memberTables, mailingTables],
     pool: {
       connectionString:
         process.env.DATABASE_URL ||
@@ -314,9 +316,17 @@ export default buildConfig({
           path: '/review',
           exact: true,
         },
+        // Writing to the people in the CMS – applications first – in groups,
+        // with history (components/mailing/, lib/mailing/). Guards auth itself.
+        mailing: {
+          Component: '/components/mailing/MailingView#MailingView',
+          path: '/mailing',
+          exact: true,
+        },
       },
       afterNavLinks: [
         '/components/review/ReviewNavLink#ReviewNavLink',
+        '/components/mailing/MailingNavLink#MailingNavLink',
         '/components/analytics/AnalyticsNavLink#AnalyticsNavLink',
       ],
     },

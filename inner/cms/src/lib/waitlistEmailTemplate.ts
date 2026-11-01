@@ -35,7 +35,8 @@ export type WaitlistEmailContent = {
   contactEmail: string;
   /**
    * Who the mail goes to, for the footer's "why you get this": the waitlist
-   * (default) or the TechTour registrations.
+   * (default), the TechTour registrations or the membership applicants (the
+   * mailing tool, lib/mailing/).
    */
   audience?: EmailAudience;
   /** Absolute https origin serving the logo + site link (no trailing slash). */
@@ -55,7 +56,7 @@ export type WaitlistEmailContent = {
   ctaUrl?: string;
 };
 
-export type EmailAudience = 'waitlist' | 'techtour';
+export type EmailAudience = 'waitlist' | 'techtour' | 'applications';
 
 export type BuiltWaitlistEmail = {
   html: string;
@@ -143,6 +144,10 @@ const REASONS: Record<EmailAudience, { de: string; en: string }> = {
   techtour: {
     de: 'Du erhältst diese E-Mail, weil du dich auf codingforchange.com für die Munich Tech Tour angemeldet hast. Bei Fragen genügt eine kurze Nachricht an {contact}.',
     en: 'You are receiving this email because you registered for the Munich Tech Tour on codingforchange.com. Questions? Just send a short message to {contact}.',
+  },
+  applications: {
+    de: 'Du erhältst diese E-Mail, weil du dich auf codingforchange.com bei Coding for Change beworben hast. Bei Fragen genügt eine kurze Antwort auf diese Mail oder eine Nachricht an {contact}.',
+    en: 'You are receiving this email because you applied to Coding for Change on codingforchange.com. Questions? Just reply to this email or write to {contact}.',
   },
 };
 

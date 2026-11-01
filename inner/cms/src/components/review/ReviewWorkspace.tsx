@@ -13,6 +13,7 @@ import {
   ViewDescription,
 } from '@payloadcms/ui';
 import { REVIEW_SCORE_MAX, REVIEW_SCORE_MIN, REVIEW_STATUSES } from '../../fields/review';
+import type { PersonMail } from '../../lib/mailing/store';
 import { consentedToSharing } from '../../lib/sharingConsent';
 import {
   answerRows,
@@ -32,6 +33,7 @@ import {
   type SortKey,
   type Submission,
 } from './model';
+import { PageHeader } from '../shared/PageHeader';
 import './review.css';
 
 /**
@@ -54,6 +56,12 @@ import './review.css';
  * page. "Add back" there puts it back (and "Undo" takes that back). The
  * registration itself is never changed: each withdrawal and each add-back is a
  * row of its own (lib/manage/store.ts), through /api/techtour/withdrawals.
+ *
+ * Mails a person got through the mailing tool (/admin/mailing) are listed
+ * under them, and marked in the list. For the applications, "Decide by score"
+ * accepts everyone still unreviewed from a score up and rejects the rest of
+ * them in one go – the speedrun applications and anyone without a score are
+ * left alone – and can be undone right after.
  */
 
 type Props = { apiRoute: string; adminRoute: string };
@@ -115,6 +123,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const [files, setFiles] = useState<Map<number, FileDoc>>(new Map());
   const [members, setMembers] = useState<Set<number>>(new Set());
   const [evenings, setEvenings] = useState<Evenings>({});
+  const [mails, setMails] = useState<PersonMail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -139,7 +148,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     setError(null);
     (async () => {
       try {
-        const [formDocs, subDocs, fileDocs, memberIds, withdrawn] = await Promise.all([
+        const [formDocs, subDocs, fileDocs, memberIds, withdrawn, sentMails] = await Promise.all([
           fetchAll<FormDoc>(`${apiRoute}/forms?depth=0&locale=en`),
           fetchAll<Submission>(`${apiRoute}/form-submissions?depth=0&sort=-createdAt`),
           fetchAll<FileDoc>(`${apiRoute}/applicant-files?depth=0`),
@@ -151,6 +160,10 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
             if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
             return ((await res.json()) as { evenings: Evenings }).evenings;
           }),
+          // The mails sent – nice to have, so a failure here leaves the review usable.
+          fetch(`${apiRoute}/mailing/people`, { credentials: 'include' })
+            .then(async (res) => (res.ok ? ((await res.json()) as { mails: PersonMail[] }).mails : []))
+            .catch(() => [] as PersonMail[]),
         ]);
         if (cancelled) return;
         setForms(formDocs);
@@ -158,6 +171,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
         setFiles(new Map(fileDocs.map((f) => [f.id, f])));
         setMembers(new Set(memberIds));
         setEvenings(withdrawn);
+        setMails(sentMails);
       } catch (err) {
         if (!cancelled) setError(`Could not load the submissions (${(err as Error).message}).`);
       } finally {
@@ -206,6 +220,13 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     [evenings],
   );
   const techTour = form?.title.trim().toLowerCase() === 'techtour';
+  const applications = form?.title.trim().toLowerCase() === 'application';
+  /** Mails sent through the mailing tool, per lower-cased address, newest first. */
+  const mailsByEmail = useMemo(() => {
+    const map = new Map<string, PersonMail[]>();
+    for (const m of mails) map.set(m.email, [...(map.get(m.email) ?? []), m]);
+    return map;
+  }, [mails]);
   const choiceField = useMemo(() => choiceFieldOf(form), [form]);
   const people = useMemo(() => byEmail(subs), [subs]);
   const formTitleById = useMemo(() => new Map(forms.map((f) => [f.id, f])), [forms]);
@@ -396,6 +417,30 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     [selected, save],
   );
 
+  // "Decide by score": everyone still unreviewed in the applications, except
+  // the speedrun ones (they skip the screening) and those without a score.
+  const [threshold, setThreshold] = useState(7);
+  const [lastBulk, setLastBulk] = useState<{ accepted: number[]; rejected: number[] } | null>(null);
+  const bulkPlan = useMemo(() => {
+    const open = inForm.filter((s) => statusOf(s) === 'unreviewed' && s.source !== 'speedrun');
+    const scoredOpen = open.filter((s) => s.reviewScore != null);
+    return {
+      accept: scoredOpen.filter((s) => (s.reviewScore as number) >= threshold).map((s) => s.id),
+      reject: scoredOpen.filter((s) => (s.reviewScore as number) < threshold).map((s) => s.id),
+      unscored: open.length - scoredOpen.length,
+    };
+  }, [inForm, threshold]);
+  const applyBulk = useCallback(() => {
+    for (const id of bulkPlan.accept) save(id, { reviewStatus: 'accepted' });
+    for (const id of bulkPlan.reject) save(id, { reviewStatus: 'rejected' });
+    setLastBulk({ accepted: bulkPlan.accept, rejected: bulkPlan.reject });
+  }, [bulkPlan, save]);
+  const undoBulk = useCallback(() => {
+    if (!lastBulk) return;
+    for (const id of [...lastBulk.accepted, ...lastBulk.rejected]) save(id, { reviewStatus: 'unreviewed' });
+    setLastBulk(null);
+  }, [lastBulk, save]);
+
   // The member mark goes to its own endpoint, in the same queue as the review fields.
   const toggleMember = useCallback(() => {
     if (!selected || !techTour) return;
@@ -540,15 +585,79 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
       <SetStepNav nav={[{ label: heading }]} />
       <PageHeader
         title={heading}
-        titleActions={
-          exportHref
+        titleActions={[
+          ...(exportHref
             ? [
                 <Button key="export" buttonStyle="pill" size="small" margin={false} el="anchor" url={exportHref}>
                   Download as Excel
                 </Button>,
               ]
-            : []
-        }
+            : []),
+          ...(applications
+            ? [
+                <Popup
+                  key="bulk"
+                  buttonType="custom"
+                  noBackground
+                  horizontalAlign="left"
+                  button={
+                    <Pill icon={<ChevronIcon />} alignIcon="right">
+                      Decide by score
+                    </Pill>
+                  }
+                  render={() => (
+                    <div className="rv-bulk">
+                      <p className="rv-bulk__lead">For everyone still unreviewed – not the speedrun applications, not anyone without a score:</p>
+                      <span className="field-label">Accept from score</span>
+                      <div className="rv-segments" role="group" aria-label="Accept from score">
+                        {SCORES.map((n) => (
+                          <button
+                            key={n}
+                            type="button"
+                            className={`rv-segments__btn rv-segments__btn--num${threshold === n ? ' is-active' : ''}`}
+                            aria-pressed={threshold === n}
+                            onClick={() => setThreshold(n)}
+                          >
+                            {n}
+                          </button>
+                        ))}
+                      </div>
+                      <ul className="rv-bulk__plan">
+                        <li>
+                          <span className="rv-dot rv-dot--accepted" /> {bulkPlan.accept.length} → Accepted (score {threshold} or more)
+                        </li>
+                        <li>
+                          <span className="rv-dot rv-dot--rejected" /> {bulkPlan.reject.length} → Rejected (below {threshold})
+                        </li>
+                        {bulkPlan.unscored > 0 && (
+                          <li>
+                            <span className="rv-dot rv-dot--unreviewed" /> {bulkPlan.unscored} without a score stay unreviewed
+                          </li>
+                        )}
+                      </ul>
+                      <div className="rv-bulk__actions">
+                        <Button
+                          buttonStyle="primary"
+                          size="small"
+                          margin={false}
+                          disabled={bulkPlan.accept.length + bulkPlan.reject.length === 0}
+                          onClick={applyBulk}
+                        >
+                          Decide {bulkPlan.accept.length + bulkPlan.reject.length}
+                        </Button>
+                        {lastBulk && (
+                          <Button buttonStyle="secondary" size="small" margin={false} onClick={undoBulk}>
+                            Undo ({lastBulk.accepted.length + lastBulk.rejected.length})
+                          </Button>
+                        )}
+                      </div>
+                      <p className="rv-bulk__note">Decisions you set yourself are never changed. Nothing is sent – mails go out from Mailing.</p>
+                    </div>
+                  )}
+                />,
+              ]
+            : []),
+        ]}
         actions={[
           <div key="forms" className="rv-tabs" role="group" aria-label="Forms">
             {tabs.map((f) => (
@@ -654,6 +763,17 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                   {members.has(s.id) && (
                     <span className="rv-badge" title="Coding for Change member – the host sees it">
                       Member
+                    </span>
+                  )}
+                  {mailsByEmail.has(p.email.toLowerCase()) && (
+                    <span
+                      className="rv-badge"
+                      title={mailsByEmail
+                        .get(p.email.toLowerCase())!
+                        .map((m) => `${m.mailingTitle}: ${m.groupLabel} (${day.format(new Date(m.at))})`)
+                        .join('\n')}
+                    >
+                      Mailed
                     </span>
                   )}
                   {also.length > 0 && (
@@ -784,6 +904,30 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                   onChange={(e) => onNotesChange(e.target.value)}
                 />
               </div>
+
+              {person.email && mailsByEmail.has(person.email.toLowerCase()) && (
+                <section className="rv-section" aria-label="Mails">
+                  <span className="field-label">Mails</span>
+                  <ul className="rv-mails">
+                    {mailsByEmail.get(person.email.toLowerCase())!.map((m) => (
+                      <li key={m.id} className="rv-mails__row">
+                        <span>
+                          <a href={`${adminRoute}/mailing?id=${m.mailingId}`}>{m.mailingTitle}</a> · {m.groupLabel}
+                        </span>
+                        <span className="rv-mails__side">
+                          <span className={`rv-badge${m.status === 'failed' ? ' rv-badge--declined' : ''}`}>
+                            {m.status === 'sent' ? 'Sent' : m.status === 'failed' ? 'Failed' : 'Unclear'} · {when.format(new Date(m.at))}
+                          </span>
+                          <a href={`${apiRoute}/mailing/recipients/${m.id}`} target="_blank" rel="noreferrer">
+                            View
+                          </a>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="rv-mails__note">A new decision sends nothing by itself.</p>
+                </section>
+              )}
 
               {others.length > 0 && (
                 <div className="rv-others">
@@ -961,37 +1105,6 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
         <kbd>N</kbd> notes · <kbd>/</kbd> search. Saved as you go – one shared review per person.
       </p>
     </div>
-  );
-}
-
-/**
- * The header of Payload's collection lists – title, small actions beside it,
- * actions on the right, a description below – in its own markup and classes,
- * so it looks the same. (`ListHeader` from @payloadcms/ui is the collection
- * version and needs a collection.)
- */
-function PageHeader({
-  title,
-  titleActions = [],
-  actions = [],
-  after,
-}: {
-  title: string;
-  titleActions?: React.ReactNode[];
-  actions?: React.ReactNode[];
-  after?: React.ReactNode;
-}) {
-  return (
-    <header className="list-header">
-      <div className="list-header__content">
-        <div className="list-header__title-and-actions">
-          <h1 className="list-header__title">{title}</h1>
-          {titleActions.length > 0 && <div className="list-header__title-actions">{titleActions}</div>}
-        </div>
-        {actions.length > 0 && <div className="list-header__actions">{actions}</div>}
-      </div>
-      {after && <div className="list-header__after-header-content">{after}</div>}
-    </header>
   );
 }
 
