@@ -1,8 +1,11 @@
 import type { Endpoint, PayloadRequest } from 'payload';
-import { cleanConfig, isSourceKey, type MailLang } from '../lib/mailing/model';
-import { renderMail, type MailSite } from '../lib/mailing/render';
+import { extractHeroAccent } from '../lib/heroAccent';
+import { manageUrl, SAMPLE_TOKEN } from '../lib/manage/link';
+import { tokensFor } from '../lib/manage/store';
+import { cleanConfig, isSourceKey, SOURCES, type MailingConfig, type MailLang, type SourceKey } from '../lib/mailing/model';
+import { renderMail, type MailLook, type MailSite } from '../lib/mailing/render';
 import { countsOf, resolveMailing } from '../lib/mailing/resolve';
-import { loadSource } from '../lib/mailing/sources';
+import { filtersOf, loadSource } from '../lib/mailing/sources';
 import {
   allPersonMails,
   createMailing,
@@ -38,6 +41,8 @@ import { requireAdmin } from './util';
  *   POST   /api/mailing/mailings/:id/send          { expected: { [group id]: count } }
  *   GET    /api/mailing/recipients/:id             the stored mail as it was sent (text/html)
  *   GET    /api/mailing/people                     every mail sent, per address, for the review workspace
+ *   GET    /api/mailing/sources                    each source's filters, with the options from the data
+ *   POST   /api/mailing/accent                     { url } → the band colour for a header image (preview)
  *
  * A send works only from the saved mailing and checks it again on the server:
  * it takes the mailing's lock, sorts the people into the groups once more and
@@ -47,6 +52,12 @@ import { requireAdmin } from './util';
  * mail is stored as `pending` before it is handed to Resend and marked sent or
  * failed after, so a mailing set to reach everyone once never mails anyone
  * twice, even after a crash halfway.
+ *
+ * A TechTour mail that uses `{{manageLink}}` gets each registration's own
+ * /techtour/manage link (lib/manage/), whose token is made on the first send
+ * and kept for every later one; tests and the preview get a sample link that
+ * opens nothing. Mails to the waitlist and the TechTour carry a
+ * List-Unsubscribe header, as before; replies to an application do not.
  *
  * Every recipient gets their own mail (no addresses shared). Without
  * RESEND_API_KEY a local dev server logs the mails to the console instead;
@@ -89,12 +100,15 @@ const bad = (error: string, status = 400) => Response.json({ error }, { status }
 /** Hand mails to Resend – or, on a dev server without a key, to the console. */
 async function deliver(
   req: PayloadRequest,
+  source: SourceKey,
   mails: { to: string; subject: string; html: string; text: string }[],
   idempotencyKey?: string,
 ): Promise<{ id?: string; error?: string }[]> {
   const contact = mailSite().contactEmail;
   const apiKey = process.env.RESEND_API_KEY;
   if (apiKey) {
+    // Lets Gmail & co. show their own "Unsubscribe" – the same short mail the footer asks for.
+    const headers = SOURCES[source].unsubscribe ? { 'List-Unsubscribe': `<mailto:${contact}?subject=Unsubscribe>` } : undefined;
     const items: BatchItem[] = mails.map((m) => ({
       from: FROM(),
       to: [m.to],
@@ -102,6 +116,7 @@ async function deliver(
       subject: m.subject,
       html: m.html,
       text: m.text,
+      ...(headers ? { headers } : {}),
     }));
     return sendResendBatch(apiKey, items, idempotencyKey);
   }
@@ -116,6 +131,18 @@ async function deliver(
   }
   return out;
 }
+
+/** The header image and the band colour behind it (never blocks a mail: no colour → neutral band). */
+const lookOf = async (config: MailingConfig): Promise<MailLook> =>
+  config.headerImageUrl
+    ? { headerImageUrl: config.headerImageUrl, heroAccent: await extractHeroAccent(config.headerImageUrl).catch(() => null) }
+    : {};
+
+/** Whether any group's text, subject or button asks for the personal TechTour link. */
+const usesManageLink = (config: MailingConfig): boolean =>
+  config.groups.some((g) =>
+    [g.ctaUrl, g.mail.en.subject, g.mail.en.message, g.mail.de.subject, g.mail.de.message].some((t) => /\{\{\s*manageLink\s*\}\}/.test(t)),
+  );
 
 const noTransport = () =>
   !process.env.RESEND_API_KEY && process.env.NODE_ENV === 'production'
@@ -211,7 +238,7 @@ const resolve: Endpoint = {
     const mailingId = Number(b.mailing);
     const [candidates, previous] = await Promise.all([
       loadSource(req.payload, b.source),
-      Number.isInteger(mailingId) && mailingId > 0 ? previousMails(req.payload, mailingId) : new Map(),
+      Number.isInteger(mailingId) && mailingId > 0 ? previousMails(req.payload, mailingId, SOURCES[b.source].perEntry) : new Map(),
     ]);
     return Response.json(resolveMailing(b.source, config, candidates, previous));
   },
@@ -255,10 +282,12 @@ const test: Endpoint = {
     if (wrong) return bad(`Invalid address: “${wrong}”.`);
     if (to.length > MAX_TEST_RECIPIENTS) return bad(`At most ${MAX_TEST_RECIPIENTS} test addresses.`);
     const firstName = typeof b.sampleName === 'string' && b.sampleName.trim() ? b.sampleName.trim().slice(0, 100) : 'Alex';
-    const mail = renderMail(b.source, group, { firstName, lang }, mailSite());
+    const site = mailSite();
+    const mail = renderMail(b.source, group, { firstName, lang, manageLink: manageUrl(site.siteOrigin, SAMPLE_TOKEN) }, site, await lookOf(config));
     if (!mail) return bad('This group has no subject and text yet.');
     const results = await deliver(
       req,
+      b.source,
       to.map((addr) => ({ to: addr, subject: `[Test] ${mail.subject}`, html: mail.html, text: mail.text })),
     );
     const errors = [...new Set(results.flatMap((r) => (r.error ? [r.error] : [])))];
@@ -288,7 +317,10 @@ const send: Endpoint = {
       const mailing = await getMailing(req.payload, id);
       if (!mailing) return bad('No such mailing.', 404);
       const { source, config } = mailing;
-      const [candidates, previous] = await Promise.all([loadSource(req.payload, source), previousMails(req.payload, id)]);
+      const [candidates, previous] = await Promise.all([
+        loadSource(req.payload, source),
+        previousMails(req.payload, id, SOURCES[source].perEntry),
+      ]);
       const resolution = resolveMailing(source, config, candidates, previous);
       if (resolution.problems.length) {
         return Response.json({ error: resolution.problems[0], resolution }, { status: 400 });
@@ -305,11 +337,20 @@ const send: Endpoint = {
       }
 
       const site = mailSite();
+      const look = await lookOf(config);
+      // Personal links only where a text asks for one; the tokens are made now and kept.
+      const people = resolution.groups.flatMap((g) => g.people);
+      const tokens =
+        SOURCES[source].placeholders.includes('manageLink') && usesManageLink(config)
+          ? await tokensFor(req.payload, people.flatMap((p) => (p.submission != null ? [p.submission] : [])))
+          : new Map<number, string>();
       const pending: PendingMail[] = [];
       for (const g of resolution.groups) {
         const group = config.groups.find((x) => x.id === g.id)!;
         for (const p of g.people) {
-          const mail = renderMail(source, group, { firstName: p.firstName, lang: p.lang }, site);
+          const token = p.submission != null ? tokens.get(p.submission) : undefined;
+          const manageLink = token ? manageUrl(site.siteOrigin, token) : undefined;
+          const mail = renderMail(source, group, { firstName: p.firstName, lang: p.lang, manageLink }, site, look);
           if (!mail) continue; // ruled out by problemsOf; never send an empty mail
           pending.push({
             submission: p.submission,
@@ -331,6 +372,7 @@ const send: Endpoint = {
       const ids = await storePending(req.payload, id, sendId, pending);
       const results = await deliver(
         req,
+        source,
         pending.map((m) => ({ to: m.email, subject: m.subject, html: m.html, text: m.text })),
         `mailing-${id}-send-${sendId}`,
       );
@@ -391,4 +433,29 @@ const people: Endpoint = {
   handler: async (req) => requireAdmin(req) ?? Response.json({ mails: await allPersonMails(req.payload) }),
 };
 
-export const mailingEndpoints: Endpoint[] = [list, create, read, update, remove, resolve, test, send, viewMail, people];
+const sources: Endpoint = {
+  path: '/mailing/sources',
+  method: 'get',
+  handler: async (req) => {
+    const denied = requireAdmin(req);
+    if (denied) return denied;
+    const keys = Object.keys(SOURCES) as SourceKey[];
+    const filters = Object.fromEntries(await Promise.all(keys.map(async (k) => [k, await filtersOf(req.payload, k)] as const)));
+    return Response.json({ filters });
+  },
+};
+
+const accent: Endpoint = {
+  path: '/mailing/accent',
+  method: 'post',
+  handler: async (req) => {
+    const denied = requireAdmin(req);
+    if (denied) return denied;
+    const b = await body<{ url?: unknown }>(req);
+    const url = typeof b?.url === 'string' ? b.url.trim() : '';
+    if (!/^https?:\/\/\S+$/i.test(url) || url.length > 1000) return bad('An absolute image address is needed.');
+    return Response.json({ accent: await extractHeroAccent(url).catch(() => null) });
+  },
+};
+
+export const mailingEndpoints: Endpoint[] = [list, create, read, update, remove, resolve, test, send, viewMail, people, sources, accent];

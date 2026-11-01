@@ -1,8 +1,7 @@
 /**
  * Mass mail through Resend's batch API: one request per 100 mails instead of
- * one per mail, so a full-list send finishes in seconds. Shared by the
- * waitlist/TechTour mail (endpoints/waitlistEmail.ts) and the mailing tool
- * (endpoints/mailing.ts), which also keeps each mail's id.
+ * one per mail, so a full-list send finishes in seconds. Used by the mailing
+ * tool (endpoints/mailing.ts), which keeps each mail's id.
  *
  * 429/5xx/network errors are retried (up to 3 attempts per chunk, honouring
  * Retry-After); other 4xx rejections fail the whole chunk – Resend validates

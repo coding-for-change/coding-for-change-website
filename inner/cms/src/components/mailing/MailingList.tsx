@@ -10,8 +10,8 @@ import './mailing.css';
 
 /**
  * /admin/mailing – every mailing, newest edit first: drafts and sent ones,
- * with how many mails each sent. "Create new" starts blank or from a preset
- * (lib/mailing/model.ts `PRESETS`).
+ * with how many mails each sent. "Create new" starts blank for a source or
+ * from a preset (lib/mailing/model.ts `PRESETS`).
  */
 
 type Props = { apiRoute: string; adminRoute: string };
@@ -89,7 +89,7 @@ export function MailingList({ apiRoute, adminRoute }: Props) {
           />,
         ]}
         after={
-          <ViewDescription description="Write to applicants in groups: each person gets the mail of the first group they fit, and every mail sent is kept here." />
+          <ViewDescription description="Write to the applicants, the waitlist or the TechTour registrations in groups: each person gets the mail of the first group they fit, and every mail sent is kept here." />
         }
       />
 

@@ -18,9 +18,9 @@ export const WaitlistSignups: CollectionConfig = {
     description:
       'People who asked to be notified when membership applications reopen.',
     components: {
-      // "Email all waitlist signups" form — sends one individual mail per
-      // address through /api/waitlist/send-email (see endpoints/waitlistEmail.ts).
-      beforeListTable: ['/components/waitlist/SendWaitlistEmail#SendWaitlistEmail'],
+      // Mails to the list go out from the mailing tool (/admin/mailing,
+      // lib/mailing/); this points there.
+      beforeListTable: ['/components/waitlist/MailingLink#MailingLink'],
     },
   },
   access: {

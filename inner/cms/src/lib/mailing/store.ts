@@ -1,7 +1,7 @@
 import type { Payload } from 'payload';
 import { poolOf } from '../../endpoints/util';
 import { cleanConfig, isSourceKey, type MailingConfig, type SourceKey } from './model';
-import type { PreviousMail } from './resolve';
+import { recipientKey, type PreviousMail } from './resolve';
 import { MAILINGS_TABLE, RECIPIENTS_TABLE, SENDS_TABLE } from './tables';
 
 /**
@@ -202,19 +202,29 @@ export async function storedMail(
 }
 
 /**
- * The addresses a mailing has already reached, with the group and time of that
- * mail. A mail still `pending` counts: it may well have gone out, and sending
+ * The addresses (for a `perEntry` source: the entries) a mailing has already
+ * reached, with the group and time of that mail. A mail still `pending` counts: it may well have gone out, and sending
  * it again is worse than a gap the history shows. Failed ones do not count.
  */
-export async function previousMails(payload: Payload, mailingId: number): Promise<Map<string, PreviousMail>> {
+export async function previousMails(
+  payload: Payload,
+  mailingId: number,
+  perEntry: boolean,
+): Promise<Map<string, PreviousMail>> {
   const { rows } = await poolOf(payload).query(
-    `SELECT DISTINCT ON (email) email, group_label, created_at
+    `SELECT email, submission_id, group_label, created_at
      FROM ${RECIPIENTS_TABLE}
      WHERE mailing_id = $1 AND status IN ('sent', 'pending')
-     ORDER BY email, id`,
+     ORDER BY id DESC`,
     [mailingId],
   );
-  return new Map(rows.map((r) => [String(r.email), { groupLabel: String(r.group_label), at: iso(r.created_at) }]));
+  // Oldest last, so the first mail is the one that stays per key.
+  return new Map(
+    rows.map((r) => [
+      recipientKey(perEntry, { email: String(r.email), submission: r.submission_id == null ? null : Number(r.submission_id) }),
+      { groupLabel: String(r.group_label), at: iso(r.created_at) },
+    ]),
+  );
 }
 
 /** Every mail of every mailing, newest first, for the people in the review workspace. */

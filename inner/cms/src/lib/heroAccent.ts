@@ -1,9 +1,9 @@
 import sharp from 'sharp';
 
 /**
- * Dominant-accent extraction for the waitlist email's header image
+ * Dominant-accent extraction for a mail's header image
  * (lib/waitlistEmailTemplate.ts renders the image as a card on a tinted
- * band; endpoints/waitlistEmail.ts calls this so the tint adapts to the
+ * band; endpoints/mailing.ts calls this so the tint adapts to the
  * artwork, the way chat apps tint their link previews).
  *
  * The naive dominant color of event artwork is useless — posters are mostly

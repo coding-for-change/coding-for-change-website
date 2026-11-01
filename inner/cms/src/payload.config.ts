@@ -46,7 +46,6 @@ import { deleteSubmissionFiles, purgeTechTourRegistrations } from './lib/retenti
 import { rejectHoneypot } from './lib/honeypot';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
 import { analyticsSummary } from './endpoints/analyticsSummary';
-import { waitlistEmailEndpoints } from './endpoints/waitlistEmail';
 import { purgeAnalyticsEvents } from './lib/purgeAnalytics';
 import { SiteConfig } from './globals/SiteConfig';
 import { Membership } from './globals/Membership';
@@ -123,7 +122,7 @@ export default buildConfig({
   // token and an emailed sign-in code – see endpoints/share.ts. So is a
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
   // token alone – see endpoints/manage.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...mailingEndpoints],
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...mailingEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
