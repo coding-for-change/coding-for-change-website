@@ -1,4 +1,5 @@
 import {
+  entryKey,
   matches,
   mailFor,
   problemsOf,
@@ -18,6 +19,9 @@ import {
  * through the full form and the speedrun) is one person and gets one mail –
  * from the first group any of their entries fits. A source with `perEntry`
  * (the TechTour: a personal link per registration) counts entries instead.
+ *
+ * Someone left out by hand (`config.excluded`) gets nothing, whichever group
+ * they fit, and does not count as "in no group" either.
  */
 
 /** One entry of a source as read from the database (sources.ts). */
@@ -40,6 +44,8 @@ export type ResolvedPerson = {
   waitlistSignup?: number;
   /** How many entries this address has in the source. */
   entries: number;
+  /** Every one of those entries (`entryKey`) – what leaving the person out stores. */
+  keys: string[];
   /** "Accepted · score 8 · Speedrun" – what the source knows, in short. */
   detail: string;
 };
@@ -64,6 +70,8 @@ export type Resolution = {
   unassigned: ResolvedPerson[];
   /** Fit a group, but this mailing already reached them (`onlyOnce`). */
   alreadySent: (ResolvedPerson & { group: string; previous: PreviousMail })[];
+  /** Left out by hand – get nothing; `group` is the one they would have got, if any. */
+  excluded: (ResolvedPerson & { group: string | null })[];
   /** Entries without a usable address. */
   invalid: number;
   /** Mails a send would deliver now. */
@@ -100,6 +108,8 @@ export function resolveMailing(
   const groups: ResolvedGroup[] = config.groups.map((g) => ({ id: g.id, label: g.label, people: [], fallback: 0 }));
   const unassigned: ResolvedPerson[] = [];
   const alreadySent: Resolution['alreadySent'] = [];
+  const excluded: Resolution['excluded'] = [];
+  const leftOut = new Set(config.excluded);
 
   for (const [key, entries] of byEmail) {
     let hit: { index: number; entry: Candidate } | null = null;
@@ -116,8 +126,14 @@ export function resolveMailing(
       submission: entry.submission,
       waitlistSignup: entry.waitlistSignup,
       entries: entries.length,
+      keys: entries.map(entryKey),
       detail: def.describe(entry.props),
     };
+    // Any of their entries left out leaves the person out – one mail per address, one decision.
+    if (person.keys.some((k) => leftOut.has(k))) {
+      excluded.push({ ...person, group: hit ? config.groups[hit.index].label : null });
+      continue;
+    }
     if (!hit) {
       unassigned.push(person);
       continue;
@@ -135,6 +151,7 @@ export function resolveMailing(
   for (const g of groups) g.people.sort(byName);
   unassigned.sort(byName);
   alreadySent.sort(byName);
+  excluded.sort(byName);
 
   const langsInUse = Object.fromEntries(
     groups.map((g) => [g.id, [...new Set(g.people.map((p) => p.lang))]]),
@@ -147,7 +164,7 @@ export function resolveMailing(
   }
   if (!toSend) problems.push(alreadySent.length ? 'Everyone in the groups has had this mailing already.' : 'Nobody is in any group.');
 
-  return { groups, unassigned, alreadySent, invalid, toSend, problems };
+  return { groups, unassigned, alreadySent, excluded, invalid, toSend, problems };
 }
 
 /** Group id → number of mails, the way the send endpoint checks that nothing moved since the check. */

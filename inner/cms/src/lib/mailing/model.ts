@@ -191,7 +191,17 @@ export type MailingConfig = {
   requireAll: boolean;
   /** Optional image under the logo, for every group (absolute http(s) URL, e.g. from Media). */
   headerImageUrl: string;
+  /**
+   * People left out by hand (`entryKey`s): they get nothing from this mailing,
+   * whichever group they fit – e.g. someone the team already spoke to.
+   * Entries, not addresses, so the mailing keeps no address of its own.
+   */
+  excluded: string[];
 };
+
+/** An entry of a source as `excluded` names it: "s:12" (a form submission) or "w:3" (a waitlist signup). */
+export const entryKey = (e: { submission?: number | null; waitlistSignup?: number | null }): string =>
+  e.submission != null ? `s:${e.submission}` : `w:${e.waitlistSignup}`;
 
 /** What a person looks like to the filters. A list (the evenings) matches a choice when one value is in common. */
 export type PersonProps = Record<string, string | number | boolean | string[] | null>;
@@ -256,6 +266,7 @@ export const emptyConfig = (): MailingConfig => ({
   onlyOnce: true,
   requireAll: false,
   headerImageUrl: '',
+  excluded: [],
 });
 
 /**
@@ -326,6 +337,7 @@ export const PRESETS: Preset[] = [
       onlyOnce: true,
       requireAll: true,
       headerImageUrl: '',
+      excluded: [],
       groups: [
         {
           ...emptyGroup('Speedrun'),
@@ -446,5 +458,6 @@ export function cleanConfig(raw: unknown, source: SourceKey): MailingConfig {
     onlyOnce: r.onlyOnce !== false,
     requireAll: r.requireAll === true,
     headerImageUrl: str(r.headerImageUrl, 1000).trim(),
+    excluded: [...new Set((Array.isArray(r.excluded) ? r.excluded : []).map(String).filter((k) => /^[sw]:\d{1,12}$/.test(k)))].slice(0, 5000),
   };
 }

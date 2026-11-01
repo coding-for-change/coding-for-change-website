@@ -40,8 +40,11 @@ import './mailing.css';
 /**
  * One mailing (/admin/mailing?id=…): its groups – who is in each and what
  * they get – on the left; on the right the check (who gets which mail right
- * now, who fits no group, who had it already), the preview, a test send and
- * the send itself; below, every mail it sent.
+ * now, who fits no group, who had it already, who was left out by hand), the
+ * preview, a test send and the send itself; below, every mail it sent.
+ *
+ * Anyone in the check can be left out of this mailing (and put back): the
+ * filters pick the many, this catches the few the team already spoke to.
  *
  * Mailing-wide: an optional header image (from Media or any https address),
  * shown under the logo in every group's mail.
@@ -101,6 +104,7 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendResult, setSendResult] = useState<SendResult | null>(null);
   const [historyQuery, setHistoryQuery] = useState('');
+  const [peopleQuery, setPeopleQuery] = useState('');
   const [liveFilters, setLiveFilters] = useState<Record<string, FilterDef[]> | null>(null);
   const [media, setMedia] = useState<MediaDoc[] | null>(null);
   const [accent, setAccent] = useState<{ url: string; accent: { hue: number; sat: number } | null } | null>(null);
@@ -236,6 +240,10 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
     });
   const setMail = (gid: string, lang: MailLang, field: 'subject' | 'message' | 'ctaLabel', value: string) =>
     updateGroup(gid, (g) => ({ ...g, mail: { ...g.mail, [lang]: { ...g.mail[lang], [field]: value } } }));
+  const leaveOut = (p: ResolvedPerson) =>
+    setConfig((c) => (c ? { ...c, excluded: [...new Set([...c.excluded, ...p.keys])] } : c));
+  const putBack = (p: ResolvedPerson) =>
+    setConfig((c) => (c ? { ...c, excluded: c.excluded.filter((k) => !p.keys.includes(k)) } : c));
   const move = (gid: string, by: -1 | 1) =>
     setGroups((groups) => {
       const i = groups.findIndex((g) => g.id === gid);
@@ -553,26 +561,61 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
             {checkError && <Banner type="error">{checkError}</Banner>}
             {resolution && (
               <>
+                <input
+                  className="ml-search ml-search--wide"
+                  type="search"
+                  placeholder="Find someone by name or address"
+                  aria-label="Find someone in the check"
+                  value={peopleQuery}
+                  onChange={(e) => setPeopleQuery(e.target.value)}
+                />
                 {resolution.groups.map((rg) => (
-                  <PeopleList key={rg.id} title={rg.label || 'Group'} people={rg.people} note={rg.fallback ? `${rg.fallback} get the other language` : undefined} />
+                  <PeopleList
+                    key={rg.id}
+                    title={rg.label || 'Group'}
+                    people={rg.people}
+                    query={peopleQuery}
+                    note={rg.fallback ? `${rg.fallback} get the other language` : undefined}
+                    action={{ label: 'Leave out', onClick: leaveOut }}
+                  />
                 ))}
                 {resolution.unassigned.length > 0 && (
                   <PeopleList
                     title="In no group – get nothing"
                     people={resolution.unassigned}
+                    query={peopleQuery}
                     tone={config.requireAll ? 'error' : 'muted'}
+                    action={{ label: 'Leave out', onClick: leaveOut }}
+                  />
+                )}
+                {resolution.excluded.length > 0 && (
+                  <PeopleList
+                    title="Left out by hand – get nothing"
+                    people={resolution.excluded}
+                    query={peopleQuery}
+                    tone="muted"
+                    defaultOpen
+                    extra={(p) => {
+                      const group = (p as ResolvedPerson & { group?: string | null }).group;
+                      return group ? `would get “${group}”` : 'in no group';
+                    }}
+                    action={{ label: 'Put back', onClick: putBack }}
                   />
                 )}
                 {resolution.alreadySent.length > 0 && (
                   <PeopleList
                     title="Had this mailing already – skipped"
                     people={resolution.alreadySent}
+                    query={peopleQuery}
                     tone="muted"
                     extra={(p) => {
                       const prev = (p as ResolvedPerson & { previous?: PreviousMail }).previous;
                       return prev ? `${prev.groupLabel}, ${when.format(new Date(prev.at))}` : '';
                     }}
                   />
+                )}
+                {resolution.excluded.length === 0 && (
+                  <p className="ml-hint">To keep someone from getting this mailing – say, you already spoke to them – open their group and use “Leave out”.</p>
                 )}
                 {resolution.invalid > 0 && <p className="ml-hint">{plural(resolution.invalid, 'entry has', 'entries have')} no usable address.</p>}
                 {resolution.problems.length > 0 && (
@@ -754,6 +797,15 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
                   ))}
               </ul>
               {resolution.unassigned.length > 0 && <p>{plural(resolution.unassigned.length, 'person gets', 'people get')} nothing (in no group).</p>}
+              {resolution.excluded.length > 0 && (
+                <p>
+                  Left out by hand, so they get nothing:{' '}
+                  {resolution.excluded.length <= 8
+                    ? resolution.excluded.map((p) => p.name).join(', ')
+                    : plural(resolution.excluded.length, 'person', 'people')}
+                  .
+                </p>
+              )}
               <p>Every mail goes out at once and cannot be called back.</p>
             </div>
           )
@@ -858,39 +910,58 @@ function FilterControl({
   );
 }
 
-/** A group's people in the check, folded: the count first, the names on demand. */
+/**
+ * A group's people in the check, folded: the count first, the names on demand.
+ * While `query` is set only the matches show, unfolded, and lists without one hide.
+ */
 function PeopleList({
   title,
   people,
+  query = '',
   note,
   tone,
+  defaultOpen,
   extra,
+  action,
 }: {
   title: string;
   people: ResolvedPerson[];
+  query?: string;
   note?: string;
   tone?: 'error' | 'muted';
+  defaultOpen?: boolean;
   extra?: (p: ResolvedPerson) => string;
+  action?: { label: string; onClick: (p: ResolvedPerson) => void };
 }) {
+  const q = query.trim().toLowerCase();
+  const shown = q ? people.filter((p) => p.name.toLowerCase().includes(q) || p.email.includes(q)) : people;
+  if (q && !shown.length) return null;
   return (
-    <details className={`ml-people${tone ? ` ml-people--${tone}` : ''}`}>
+    <details className={`ml-people${tone ? ` ml-people--${tone}` : ''}`} open={q || defaultOpen ? true : undefined}>
       <summary>
         <span className="ml-people__title">{title}</span>
-        <span className="ml-badge">{people.length}</span>
+        <span className="ml-badge">{q ? `${shown.length} of ${people.length}` : people.length}</span>
         {note && <span className="ml-hint">{note}</span>}
       </summary>
-      {people.length === 0 ? (
+      {shown.length === 0 ? (
         <p className="ml-hint">Nobody.</p>
       ) : (
         <ul>
-          {people.map((p, i) => (
+          {shown.map((p, i) => (
             <li key={`${p.email}-${p.submission ?? p.waitlistSignup ?? i}`}>
-              <span className="ml-people__name">{p.name}</span>
-              <span className="ml-hint">
-                {p.email} · {p.lang.toUpperCase()} · {p.detail}
-                {p.entries > 1 ? ` · ${p.entries} entries` : ''}
-                {extra ? ` · ${extra(p)}` : ''}
+              <span className="ml-people__who">
+                <span className="ml-people__name">{p.name}</span>
+                <span className="ml-hint">
+                  {p.email} · {p.lang.toUpperCase()} · {p.detail}
+                  {p.entries > 1 ? ` · ${p.entries} entries` : ''}
+                  {extra ? ` · ${extra(p)}` : ''}
+                </span>
               </span>
+              {action && (
+                <Button buttonStyle="pill" size="xsmall" margin={false} className="ml-people__action" onClick={() => action.onClick(p)}>
+                  {action.label}
+                </Button>
+              )}
             </li>
           ))}
         </ul>
