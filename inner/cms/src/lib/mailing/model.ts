@@ -4,8 +4,8 @@
  * registrations – instead of a mail button per collection.
  *
  * A mailing goes to one source and splits it into groups. Each group says who
- * is in it (filters on what the source knows about a person: decision, score,
- * speedrun, language …) and what they get (subject, text and an optional
+ * is in it (filters on what the source knows about a person: decision, track,
+ * score, speedrun, language …) and what they get (subject, text and an optional
  * button, in German and English). The groups are checked in order and a person
  * gets the mail of the first group they fit, so "Speedrun → Accepted →
  * Rejected" sends each applicant exactly one of the three.
@@ -89,6 +89,18 @@ const STATUS_LABELS: Record<string, string> = {
   unreviewed: 'Unreviewed',
 };
 
+/**
+ * Where an applicant wants to work – the values of the application form's
+ * `track` select (also asked on /join/speedrun). The form is edited in the
+ * admin, so an option added there needs adding here. "none": applications
+ * from before the question existed.
+ */
+const TRACK_OPTIONS = [
+  { value: 'projects', label: 'Projects' },
+  { value: 'task-force', label: 'Task Force' },
+  { value: 'none', label: 'Not given' },
+];
+
 export const SOURCES: Record<SourceKey, SourceDef> = {
   applications: {
     key: 'applications',
@@ -101,6 +113,7 @@ export const SOURCES: Record<SourceKey, SourceDef> = {
     describe: (p) =>
       [
         STATUS_LABELS[String(p.status)] ?? 'Unreviewed',
+        p.track === 'none' ? '' : (TRACK_OPTIONS.find((o) => o.value === p.track)?.label ?? String(p.track ?? '')),
         typeof p.score === 'number' ? `score ${p.score}` : 'no score',
         p.speedrun === true ? 'Speedrun' : '',
       ]
@@ -118,6 +131,7 @@ export const SOURCES: Record<SourceKey, SourceDef> = {
           { value: 'unreviewed', label: 'Unreviewed' },
         ],
       },
+      { key: 'track', label: 'Track', kind: 'choice', options: TRACK_OPTIONS },
       { key: 'score', label: 'Score', kind: 'range', min: 1, max: 10 },
       { key: 'speedrun', label: 'Speedrun', kind: 'flag' },
       LANGUAGE_FILTER,
@@ -249,6 +263,9 @@ export function describeFilter(filters: FilterDef[], filter: Record<string, Filt
   return parts.join(' · ') || 'Everyone';
 }
 
+/** A mailing keeps at most this many groups (cleanConfig drops the rest). */
+export const MAX_GROUPS = 20;
+
 export const emptyMail = (): GroupMail => ({ subject: '', message: '', ctaLabel: '' });
 
 export const newGroupId = (): string => Math.random().toString(36).slice(2, 10);
@@ -315,6 +332,22 @@ export function problemsOf(source: SourceKey, config: MailingConfig, langsInUse:
   return [...new Set(out)];
 }
 
+/** The interview invitation of the 'decisions' preset – one text, a booking link per track. */
+const INTERVIEW_MAIL = (): Record<MailLang, GroupMail> => ({
+  en: {
+    subject: 'Your interview with Coding for Change',
+    message:
+      'Hi {{firstName}},\n\nthanks again for your application – we enjoyed reading it, and we’d like to invite you to an interview!\n\nThe interviews take place from 2 to 8 November: a conversation and a small hands-on challenge. Book your slot with the button below.\n\nIf none of the slots work for you, just reply to this email and we’ll find a time.\n\nSee you soon!\nThe Coding for Change team',
+    ctaLabel: 'Book your interview',
+  },
+  de: {
+    subject: 'Dein Interview bei Coding for Change',
+    message:
+      'Hallo {{firstName}},\n\nnoch einmal danke für deine Bewerbung – wir haben sie gern gelesen und möchten dich zum Interview einladen!\n\nDie Interviews finden vom 2. bis 8. November statt: ein Gespräch und eine kleine praktische Challenge. Buch dir über den Button unten deinen Termin.\n\nWenn keiner der Termine passt, antworte einfach auf diese Mail, dann finden wir einen.\n\nBis bald!\nDein Coding for Change Team',
+    ctaLabel: 'Interviewtermin buchen',
+  },
+});
+
 /** Ready-made starting points for a new mailing. */
 export type Preset = { key: string; label: string; description: string; source: SourceKey; title: string; config: () => MailingConfig };
 
@@ -330,7 +363,7 @@ export const PRESETS: Preset[] = [
   {
     key: 'decisions',
     label: 'Application decisions',
-    description: 'Speedrun → interview invitation → rejection. Unsure and unreviewed applicants block the send.',
+    description: 'Speedrun → interview invitation (Projects and Task Force, each with its own booking link) → rejection. Unsure and unreviewed applicants block the send.',
     source: 'applications',
     title: 'Interviews',
     config: (): MailingConfig => ({
@@ -358,22 +391,14 @@ export const PRESETS: Preset[] = [
           },
         },
         {
-          ...emptyGroup('Interview invitation'),
-          filter: { status: ['accepted'], speedrun: 'no' },
-          mail: {
-            en: {
-              subject: 'Your interview with Coding for Change',
-              message:
-                'Hi {{firstName}},\n\nthanks again for your application – we enjoyed reading it, and we’d like to invite you to an interview!\n\nThe interviews take place from 2 to 8 November: a conversation and a small hands-on challenge. Book your slot with the button below.\n\nIf none of the slots work for you, just reply to this email and we’ll find a time.\n\nSee you soon!\nThe Coding for Change team',
-              ctaLabel: 'Book your interview',
-            },
-            de: {
-              subject: 'Dein Interview bei Coding for Change',
-              message:
-                'Hallo {{firstName}},\n\nnoch einmal danke für deine Bewerbung – wir haben sie gern gelesen und möchten dich zum Interview einladen!\n\nDie Interviews finden vom 2. bis 8. November statt: ein Gespräch und eine kleine praktische Challenge. Buch dir über den Button unten deinen Termin.\n\nWenn keiner der Termine passt, antworte einfach auf diese Mail, dann finden wir einen.\n\nBis bald!\nDein Coding for Change Team',
-              ctaLabel: 'Interviewtermin buchen',
-            },
-          },
+          ...emptyGroup('Interview – Projects'),
+          filter: { status: ['accepted'], track: ['projects'], speedrun: 'no' },
+          mail: INTERVIEW_MAIL(),
+        },
+        {
+          ...emptyGroup('Interview – Task Force'),
+          filter: { status: ['accepted'], track: ['task-force'], speedrun: 'no' },
+          mail: INTERVIEW_MAIL(),
         },
         {
           ...emptyGroup('Rejection'),
@@ -428,7 +453,7 @@ export function cleanConfig(raw: unknown, source: SourceKey): MailingConfig {
     const x = (m ?? {}) as Partial<GroupMail>;
     return { subject: str(x.subject, 200), message: str(x.message, 20000), ctaLabel: str(x.ctaLabel, 100) };
   };
-  const groups = (Array.isArray(r.groups) ? r.groups : []).slice(0, 20).map((g): MailingGroup => {
+  const groups = (Array.isArray(r.groups) ? r.groups : []).slice(0, MAX_GROUPS).map((g): MailingGroup => {
     const filter: Record<string, FilterValue> = {};
     for (const def of filters) {
       const v = (g?.filter ?? {})[def.key];
