@@ -147,6 +147,7 @@ async function techtour(payload: Payload): Promise<Candidate[]> {
       firstName,
       lang: d.language === 'de' ? 'de' : 'en',
       props: {
+        active: evenings.length > 0,
         evening: evenings,
         admitted: decided('admitted'),
         declined: decided('declined'),

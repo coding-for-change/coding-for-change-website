@@ -430,16 +430,36 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
       unscored: open.length - scoredOpen.length,
     };
   }, [inForm, threshold]);
-  const applyBulk = useCallback(() => {
-    for (const id of bulkPlan.accept) save(id, { reviewStatus: 'accepted' });
-    for (const id of bulkPlan.reject) save(id, { reviewStatus: 'rejected' });
-    setLastBulk({ accepted: bulkPlan.accept, rejected: bulkPlan.reject });
-  }, [bulkPlan, save]);
+  // The list was loaded a while ago and others may have decided since: ask the
+  // server who is still unreviewed, and decide only those.
+  const applyBulk = useCallback(async () => {
+    const ids = [...bulkPlan.accept, ...bulkPlan.reject];
+    if (!ids.length) return;
+    let open: Set<number>;
+    try {
+      const fresh = await fetchAll<Submission>(
+        `${apiRoute}/form-submissions?depth=0&${ids.map((id, i) => `where[id][in][${i}]=${id}`).join('&')}`,
+      );
+      setSubs((all) => all.map((s) => fresh.find((f) => f.id === s.id) ?? s));
+      open = new Set(fresh.filter((f) => statusOf(f) === 'unreviewed').map((f) => f.id));
+    } catch {
+      setSaveState('error');
+      return;
+    }
+    const accepted = bulkPlan.accept.filter((id) => open.has(id));
+    const rejected = bulkPlan.reject.filter((id) => open.has(id));
+    for (const id of accepted) save(id, { reviewStatus: 'accepted' });
+    for (const id of rejected) save(id, { reviewStatus: 'rejected' });
+    setLastBulk({ accepted, rejected });
+  }, [bulkPlan, save, apiRoute]);
+  // Undo takes back only what is still as the bulk left it – not a decision changed since.
   const undoBulk = useCallback(() => {
     if (!lastBulk) return;
-    for (const id of [...lastBulk.accepted, ...lastBulk.rejected]) save(id, { reviewStatus: 'unreviewed' });
+    const still = (id: number, status: ReviewStatus) => subs.find((s) => s.id === id && statusOf(s) === status);
+    for (const id of lastBulk.accepted) if (still(id, 'accepted')) save(id, { reviewStatus: 'unreviewed' });
+    for (const id of lastBulk.rejected) if (still(id, 'rejected')) save(id, { reviewStatus: 'unreviewed' });
     setLastBulk(null);
-  }, [lastBulk, save]);
+  }, [lastBulk, save, subs]);
 
   // The member mark goes to its own endpoint, in the same queue as the review fields.
   const toggleMember = useCallback(() => {
@@ -641,7 +661,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                           size="small"
                           margin={false}
                           disabled={bulkPlan.accept.length + bulkPlan.reject.length === 0}
-                          onClick={applyBulk}
+                          onClick={() => void applyBulk()}
                         >
                           Decide {bulkPlan.accept.length + bulkPlan.reject.length}
                         </Button>

@@ -58,6 +58,7 @@ import { brandApplicationEmails } from './lib/applicationEmail';
 import { manageTables } from './lib/manage/tables';
 import { memberTables } from './lib/members';
 import { mailingTables } from './lib/mailing/tables';
+import { keepMailsOfDuplicates } from './lib/mailing/store';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -226,6 +227,8 @@ export default buildConfig({
         hooks: {
           beforeOperation: [rejectHoneypot],
           beforeChange: [recordSubmission],
+          // A mail sent to someone who applied twice stays recorded when the duplicate goes (lib/mailing/store.ts).
+          beforeDelete: [keepMailsOfDuplicates('submission')],
           afterDelete: [deleteSubmissionFiles],
         },
         // The plugin forbids updates; admins need them for the review fields.

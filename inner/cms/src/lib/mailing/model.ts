@@ -159,6 +159,7 @@ export const SOURCES: Record<SourceKey, SourceDef> = {
         .join(' · ');
     },
     filters: [
+      { key: 'active', label: 'Still on an evening', kind: 'flag' },
       { key: 'evening', label: 'Registered for', kind: 'choice', options: [], dynamic: true },
       { key: 'admitted', label: 'Host admitted them to', kind: 'choice', options: [], dynamic: true },
       { key: 'declined', label: 'Host declined them for', kind: 'choice', options: [], dynamic: true },
@@ -292,7 +293,7 @@ export function problemsOf(source: SourceKey, config: MailingConfig, langsInUse:
     for (const lang of langs) {
       const used = mailFor(g, lang);
       if (!used) continue;
-      for (const [, key] of `${used.mail.subject} ${used.mail.message}`.matchAll(/\{\{\s*(\w+)\s*\}\}/g)) {
+      for (const [, key] of `${used.mail.subject} ${used.mail.message} ${used.mail.ctaLabel} ${url}`.matchAll(/\{\{\s*(\w+)\s*\}\}/g)) {
         if (!known.has(key)) out.push(`${name}: {{${key}}} is not filled in for ${SOURCES[source].label.toLowerCase()} – remove it.`);
       }
       if (url && !used.mail.ctaLabel.trim()) out.push(`${name}: the button needs a label (${used.lang.toUpperCase()}).`);
@@ -394,10 +395,15 @@ export const PRESETS: Preset[] = [
   {
     key: 'blank-techtour',
     label: 'TechTour – blank',
-    description: 'To the TechTour registrations, one mail each – {{manageLink}} is the person’s own link.',
+    description: 'To the TechTour registrations still on an evening, one mail each – {{manageLink}} is the person’s own link.',
     source: 'techtour',
     title: 'TechTour mailing',
-    config: emptyConfig,
+    // Whoever gave up every evening has left the TechTour.
+    config: () => {
+      const c = emptyConfig();
+      c.groups[0].filter = { active: 'yes' };
+      return c;
+    },
   },
 ];
 

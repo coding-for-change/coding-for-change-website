@@ -4,10 +4,11 @@
  * tool (endpoints/mailing.ts), which keeps each mail's id.
  *
  * 429/5xx/network errors are retried (up to 3 attempts per chunk, honouring
- * Retry-After); other 4xx rejections fail the whole chunk – Resend validates
- * a batch atomically, so one bad address fails its chunk. With `idempotencyKey`
- * every chunk carries `<key>-<n>`, so a retry after a lost answer cannot send
- * the chunk twice.
+ * Retry-After). Resend validates a batch as a whole, so one address it refuses
+ * (400/422) fails its chunk: such a chunk is then sent again one mail at a
+ * time, so only the bad address fails and the others go out. With
+ * `idempotencyKey` every request carries `<key>-<n>` (`<key>-<n>-<k>` for a
+ * single mail), so a retry after a lost answer cannot send a mail twice.
  */
 
 export type BatchItem = {
@@ -37,42 +38,58 @@ export async function sendResendBatch(
   const results: BatchResult[] = [];
   for (let i = 0; i < items.length; i += BATCH_SIZE) {
     const chunk = items.slice(i, i + BATCH_SIZE);
-    const failAll = (error: string) => results.push(...chunk.map(() => ({ error })));
+    const key = idempotencyKey ? `${idempotencyKey}-${i / BATCH_SIZE}` : undefined;
     if (i > 0) await sleep(BATCH_INTERVAL_MS);
-    for (let attempt = 1; ; attempt += 1) {
-      let res: Response;
-      try {
-        res = await fetch(BATCH_URL, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            ...(idempotencyKey ? { 'Idempotency-Key': `${idempotencyKey}-${i / BATCH_SIZE}` } : {}),
-          },
-          body: JSON.stringify(chunk),
-        });
-      } catch (err) {
-        if (attempt < 3) {
-          await sleep(1000 * attempt);
-          continue;
-        }
-        failAll(err instanceof Error ? err.message : 'network error');
-        break;
+    const outcome = await postBatch(apiKey, chunk, key);
+    if (outcome.refused && chunk.length > 1) {
+      for (let k = 0; k < chunk.length; k += 1) {
+        await sleep(BATCH_INTERVAL_MS);
+        const single = await postBatch(apiKey, [chunk[k]], key ? `${key}-${k}` : undefined);
+        results.push(single.results[0]);
       }
-      if (res.ok) {
-        const body = (await res.json().catch(() => null)) as { data?: { id?: string }[] } | null;
-        results.push(...chunk.map((_, k) => ({ id: body?.data?.[k]?.id })));
-        break;
-      }
-      if ((res.status === 429 || res.status >= 500) && attempt < 3) {
-        const after = Number(res.headers.get('retry-after'));
-        await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : 1000 * attempt);
-        continue;
-      }
-      const detail = (await res.text().catch(() => '')).slice(0, 300);
-      failAll(`Resend ${res.status}${detail ? `: ${detail}` : ''}`);
-      break;
+    } else {
+      results.push(...outcome.results);
     }
   }
   return results;
+}
+
+/** One batch request with retries; `refused` when Resend turned the content down (400/422). */
+async function postBatch(
+  apiKey: string,
+  chunk: BatchItem[],
+  idempotencyKey?: string,
+): Promise<{ results: BatchResult[]; refused: boolean }> {
+  const failAll = (error: string, refused = false) => ({ results: chunk.map(() => ({ error })), refused });
+  for (let attempt = 1; ; attempt += 1) {
+    let res: Response;
+    try {
+      res = await fetch(BATCH_URL, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+        },
+        body: JSON.stringify(chunk),
+      });
+    } catch (err) {
+      if (attempt < 3) {
+        await sleep(1000 * attempt);
+        continue;
+      }
+      return failAll(err instanceof Error ? err.message : 'network error');
+    }
+    if (res.ok) {
+      const body = (await res.json().catch(() => null)) as { data?: { id?: string }[] } | null;
+      return { results: chunk.map((_, k) => ({ id: body?.data?.[k]?.id })), refused: false };
+    }
+    if ((res.status === 429 || res.status >= 500) && attempt < 3) {
+      const after = Number(res.headers.get('retry-after'));
+      await sleep(Number.isFinite(after) && after > 0 ? after * 1000 : 1000 * attempt);
+      continue;
+    }
+    const detail = (await res.text().catch(() => '')).slice(0, 300);
+    return failAll(`Resend ${res.status}${detail ? `: ${detail}` : ''}`, res.status === 400 || res.status === 422);
+  }
 }

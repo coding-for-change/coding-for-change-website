@@ -1,4 +1,4 @@
-import type { Payload } from 'payload';
+import type { CollectionBeforeDeleteHook, Payload } from 'payload';
 import { poolOf } from '../../endpoints/util';
 import { cleanConfig, isSourceKey, type MailingConfig, type SourceKey } from './model';
 import { recipientKey, type PreviousMail } from './resolve';
@@ -245,6 +245,52 @@ export async function allPersonMails(payload: Payload): Promise<PersonMail[]> {
   }));
 }
 
+/** The newest send of a mailing (0 for none) – a send refuses when another one happened after the check. */
+export async function latestSendId(payload: Payload, mailingId: number): Promise<number> {
+  const { rows } = await poolOf(payload).query(`SELECT coalesce(max(id), 0) AS id FROM ${SENDS_TABLE} WHERE mailing_id = $1`, [
+    mailingId,
+  ]);
+  return Number(rows[0]?.id ?? 0);
+}
+
+/**
+ * Before an application or a waitlist signup is deleted: a mail it holds that
+ * went to an address with another entry in the same list (someone who applied
+ * twice, a double signup) moves to that other entry. Otherwise deleting the
+ * duplicate would delete the record that the person was reached, and sending
+ * the mailing again would mail them a second time. Only per-address sources
+ * (the TechTour mails one registration each). A mail of a person with no other
+ * entry stays where it is and goes with the delete (ON DELETE CASCADE), as the
+ * Datenschutz promises. Writes only to the mailing table.
+ */
+export const keepMailsOfDuplicates =
+  (kind: 'submission' | 'waitlistSignup'): CollectionBeforeDeleteHook =>
+  async ({ id, req }) => {
+    const entry = Number(id);
+    if (!Number.isInteger(entry)) return;
+    const other =
+      kind === 'submission'
+        ? `SELECT s2.id FROM form_submissions s2
+           JOIN form_submissions_submission_data d ON d._parent_id = s2.id AND d.field = 'email'
+           WHERE s2.form_id = (SELECT form_id FROM form_submissions WHERE id = $1)
+             AND s2.id <> $1 AND lower(trim(d.value)) = r2.email
+           ORDER BY s2.id DESC LIMIT 1`
+        : `SELECT w.id FROM waitlist_signups w
+           WHERE w.id <> $1 AND lower(trim(w.email)) = r2.email
+           ORDER BY w.id DESC LIMIT 1`;
+    const column = kind === 'submission' ? 'submission_id' : 'waitlist_signup_id';
+    await poolOf(req.payload).query(
+      `UPDATE ${RECIPIENTS_TABLE} r SET ${column} = x.other
+       FROM (
+         SELECT r2.id AS rid, (${other}) AS other
+         FROM ${RECIPIENTS_TABLE} r2 JOIN ${MAILINGS_TABLE} m ON m.id = r2.mailing_id
+         WHERE r2.${column} = $1 AND m.source IN (${kind === 'submission' ? `'applications'` : `'waitlist'`})
+       ) x
+       WHERE r.id = x.rid AND x.other IS NOT NULL`,
+      [entry],
+    );
+  };
+
 // ---- sending ------------------------------------------------------------------
 
 /**
@@ -290,7 +336,14 @@ export type PendingMail = {
   text: string;
 };
 
-/** Store the mails as `pending` before they are handed over; ids in the same order. */
+/** The key a stored mail is found by again: one per entry (TechTour) or per address. */
+const mailKey = (m: { submission?: number | null; waitlistSignup?: number | null; email: string }) =>
+  `${m.submission ?? ''}|${m.waitlistSignup ?? ''}|${m.email}`;
+
+/**
+ * Store the mails as `pending` before they are handed over; their ids in the
+ * same order as `mails`, matched by person – not by the order rows come back.
+ */
 export async function storePending(
   payload: Payload,
   mailingId: number,
@@ -304,10 +357,9 @@ export async function storePending(
       `INSERT INTO ${RECIPIENTS_TABLE}
          (mailing_id, send_id, submission_id, waitlist_signup_id, email, name, group_id, group_label, lang, subject, html, text, status)
        SELECT $1, $2, x.submission_id, x.waitlist_signup_id, x.email, x.name, x.group_id, x.group_label, x.lang, x.subject, x.html, x.text, 'pending'
-       FROM unnest($3::int[], $4::int[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::text[], $12::text[], $13::int[])
-         AS x(submission_id, waitlist_signup_id, email, name, group_id, group_label, lang, subject, html, text, ord)
-       ORDER BY x.ord
-       RETURNING id`,
+       FROM unnest($3::int[], $4::int[], $5::text[], $6::text[], $7::text[], $8::text[], $9::text[], $10::text[], $11::text[], $12::text[])
+         AS x(submission_id, waitlist_signup_id, email, name, group_id, group_label, lang, subject, html, text)
+       RETURNING id, submission_id, waitlist_signup_id, email`,
       [
         mailingId,
         sendId,
@@ -321,12 +373,34 @@ export async function storePending(
         chunk.map((m) => m.subject),
         chunk.map((m) => m.html),
         chunk.map((m) => m.text),
-        chunk.map((_, k) => k),
       ],
     );
-    ids.push(...rows.map((r) => Number(r.id)).sort((a, b) => a - b));
+    const byKey = new Map(
+      rows.map((r) => [
+        mailKey({
+          submission: r.submission_id == null ? null : Number(r.submission_id),
+          waitlistSignup: r.waitlist_signup_id == null ? null : Number(r.waitlist_signup_id),
+          email: String(r.email),
+        }),
+        Number(r.id),
+      ]),
+    );
+    for (const m of chunk) {
+      const id = byKey.get(mailKey(m));
+      if (id == null) throw new Error('a stored mail could not be matched to its recipient');
+      ids.push(id);
+    }
   }
   return ids;
+}
+
+/** A send that stopped before anything went out: its stored mails count as failed, not as sent. */
+export async function failUnsent(payload: Payload, sendId: number): Promise<void> {
+  await poolOf(payload).query(
+    `UPDATE ${RECIPIENTS_TABLE} SET status = 'failed', error = 'not sent – the send stopped before handing it over'
+     WHERE send_id = $1 AND status = 'pending'`,
+    [sendId],
+  );
 }
 
 /** Record the provider's answer for each stored mail. */

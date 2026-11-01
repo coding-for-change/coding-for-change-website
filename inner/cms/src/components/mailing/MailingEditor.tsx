@@ -10,6 +10,7 @@ import {
   SetStepNav,
   TextareaInput,
   TextInput,
+  useAuth,
   useModal,
   ViewDescription,
 } from '@payloadcms/ui';
@@ -78,6 +79,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
   const router = useRouter();
   const { openModal } = useModal();
+  const { user } = useAuth();
 
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -166,32 +168,39 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
   }, [fetchMailing]);
 
   // ---- save as you go -----------------------------------------------------------
+  // One save after the other, so an older version can never land after a newer one.
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
   useEffect(() => {
     if (!dirty || !config) return;
     const json = draftJson;
-    const timer = setTimeout(async () => {
-      setSaveState('saving');
-      try {
-        const res = await fetch(`${apiRoute}/mailing/mailings/${id}`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: json,
-        });
-        if (!res.ok) throw new Error(String(res.status));
-        setSavedJson(json);
-        setSaveState('saved');
-      } catch {
-        setSaveState('error');
-      }
+    const timer = setTimeout(() => {
+      saveChain.current = saveChain.current.then(async () => {
+        setSaveState('saving');
+        try {
+          const res = await fetch(`${apiRoute}/mailing/mailings/${id}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: json,
+          });
+          if (!res.ok) throw new Error(String(res.status));
+          setSavedJson(json);
+          setSaveState('saved');
+        } catch {
+          setSaveState('error');
+        }
+      });
     }, 700);
     return () => clearTimeout(timer);
   }, [dirty, draftJson, config, apiRoute, id]);
 
   // ---- the check ------------------------------------------------------------------
+  // Only the answer for the groups as they are now counts – a slower, older one is dropped.
+  const latestCheck = useRef('');
   useEffect(() => {
     if (!config) return;
     const json = configJson;
+    latestCheck.current = json;
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`${apiRoute}/mailing/resolve`, {
@@ -201,7 +210,9 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
           body: JSON.stringify({ source, config: JSON.parse(json), mailing: id }),
         });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        setResolution((await res.json()) as Resolution);
+        const data = (await res.json()) as Resolution;
+        if (latestCheck.current !== json) return;
+        setResolution(data);
         setResolvedJson(json);
         setCheckError(null);
       } catch (err) {
@@ -248,7 +259,8 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expected: countsOf(resolution) }),
+        // The groups as checked, so the server can refuse if the saved mailing differs (another tab, a lost save).
+        body: JSON.stringify({ expected: countsOf(resolution), config, lastSend: loaded?.sends[0]?.id ?? 0 }),
       });
       const data = (await res.json().catch(() => ({}))) as Partial<SendResult> & { error?: string; resolution?: Resolution };
       if (!res.ok) {
@@ -324,7 +336,8 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
     ? renderMail(
         source,
         shownGroup,
-        { firstName: sample?.firstName || 'Alex', lang: previewLang, manageLink: manageUrl(site.siteOrigin, SAMPLE_TOKEN) },
+        // A sample person's own first name – empty, if it is – or "Alex" while nobody is in the group.
+        { firstName: sample ? sample.firstName : 'Alex', lang: previewLang, manageLink: manageUrl(site.siteOrigin, SAMPLE_TOKEN) },
         site,
         {
           headerImageUrl: config.headerImageUrl || undefined,
@@ -336,7 +349,10 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
     const u = m.sizes?.card?.url || m.url;
     return u && toAbsolute(u) === config.headerImageUrl;
   });
-  const ownDomainTest = testTo.split(/[\s,;]+/).some((a) => OWN_DOMAIN.test(a.trim()));
+  // With the field empty the test goes to the admin's own login address.
+  const ownDomainTest = testTo.trim()
+    ? testTo.split(/[\s,;]+/).some((a) => OWN_DOMAIN.test(a.trim()))
+    : OWN_DOMAIN.test(String((user as { email?: string } | null)?.email ?? ''));
   const recipients = loaded.recipients.filter((r) => {
     const q = historyQuery.trim().toLowerCase();
     return !q || r.email.includes(q) || (r.name ?? '').toLowerCase().includes(q) || r.groupLabel.toLowerCase().includes(q);
@@ -620,7 +636,7 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
                       size="small"
                       margin={false}
                       disabled={testState.kind === 'sending'}
-                      onClick={() => sendTest(shownGroup, previewLang, sample?.firstName || 'Alex')}
+                      onClick={() => sendTest(shownGroup, previewLang, sample ? sample.firstName : 'Alex')}
                     >
                       {testState.kind === 'sending' ? 'Sending…' : 'Send test'}
                     </Button>

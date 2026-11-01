@@ -10,8 +10,10 @@ import {
   allPersonMails,
   createMailing,
   deleteDraft,
+  failUnsent,
   finishSend,
   getMailing,
+  latestSendId,
   listMailings,
   lockForSending,
   previousMails,
@@ -26,7 +28,7 @@ import {
   type PendingMail,
 } from '../lib/mailing/store';
 import { sendResendBatch, type BatchItem } from '../lib/resendBatch';
-import { requireAdmin } from './util';
+import { requireAdmin as requireLogin } from './util';
 
 /**
  * The mailing tool (/admin/mailing, lib/mailing/). Admins only.
@@ -38,16 +40,19 @@ import { requireAdmin } from './util';
  *   DELETE /api/mailing/mailings/:id               only a mailing that never went out
  *   POST   /api/mailing/resolve                    { source, config, mailing? } → who gets what (Resolution)
  *   POST   /api/mailing/test                       { source, config, group, lang, to?, sampleName? }
- *   POST   /api/mailing/mailings/:id/send          { expected: { [group id]: count } }
+ *   POST   /api/mailing/mailings/:id/send          { expected: { [group id]: count }, config, lastSend }
  *   GET    /api/mailing/recipients/:id             the stored mail as it was sent (text/html)
  *   GET    /api/mailing/people                     every mail sent, per address, for the review workspace
  *   GET    /api/mailing/sources                    each source's filters, with the options from the data
  *   POST   /api/mailing/accent                     { url } → the band colour for a header image (preview)
  *
  * A send works only from the saved mailing and checks it again on the server:
- * it takes the mailing's lock, sorts the people into the groups once more and
- * refuses when the numbers differ from the ones the admin confirmed (someone
- * was re-decided in between) or anything is in the way – an unwritten text, a
+ * it takes the mailing's lock, refuses when the saved groups are not the ones
+ * the admin checked (`config`: another tab saved in between, or a save got
+ * lost), sorts the people into the groups once more and refuses when the
+ * numbers differ from the ones the admin confirmed (someone was re-decided in
+ * between), when the mailing was sent since the check (`lastSend`, the newest
+ * send the admin saw – two admins confirming at once), or anything is in the way – an unwritten text, a
  * person in no group while "Only send when everyone is in a group" is on. Each
  * mail is stored as `pending` before it is handed to Resend and marked sent or
  * failed after, so a mailing set to reach everyone once never mails anyone
@@ -75,6 +80,13 @@ export const mailSite = (): MailSite => ({
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEST_RECIPIENTS = 10;
+
+/**
+ * Admin users only: the MCP plugin's API keys log in too, but they are meant
+ * for content, not for reading applicants' addresses or mailing them.
+ */
+const requireAdmin = (req: PayloadRequest): Response | null =>
+  requireLogin(req) ?? (req.user?.collection === 'users' ? null : new Response('Forbidden', { status: 403 }));
 
 /** The admin's address, or null for an API key (the MCP plugin's keys log in too). */
 const adminEmail = (req: PayloadRequest): string | null => {
@@ -281,7 +293,8 @@ const test: Endpoint = {
     const wrong = to.find((e) => !EMAIL_RE.test(e));
     if (wrong) return bad(`Invalid address: “${wrong}”.`);
     if (to.length > MAX_TEST_RECIPIENTS) return bad(`At most ${MAX_TEST_RECIPIENTS} test addresses.`);
-    const firstName = typeof b.sampleName === 'string' && b.sampleName.trim() ? b.sampleName.trim().slice(0, 100) : 'Alex';
+    // As the preview shows it: the sample person's first name, which may be empty.
+    const firstName = typeof b.sampleName === 'string' ? b.sampleName.trim().slice(0, 100) : 'Alex';
     const site = mailSite();
     const mail = renderMail(b.source, group, { firstName, lang, manageLink: manageUrl(site.siteOrigin, SAMPLE_TOKEN) }, site, await lookOf(config));
     if (!mail) return bad('This group has no subject and text yet.');
@@ -304,9 +317,9 @@ const send: Endpoint = {
     if (denied) return denied;
     const id = idParam(req);
     if (!id) return bad('No such mailing.', 404);
-    const b = await body<{ expected?: unknown }>(req);
+    const b = await body<{ expected?: unknown; config?: unknown; lastSend?: unknown }>(req);
     const expected = b?.expected && typeof b.expected === 'object' ? (b.expected as Record<string, unknown>) : null;
-    if (!expected) return bad('Missing the confirmed numbers.');
+    if (!expected || !b?.config) return bad('Missing the confirmed numbers.');
     const transport = noTransport();
     if (transport) return transport;
 
@@ -317,6 +330,12 @@ const send: Endpoint = {
       const mailing = await getMailing(req.payload, id);
       if (!mailing) return bad('No such mailing.', 404);
       const { source, config } = mailing;
+      if (Number(b.lastSend ?? 0) !== (await latestSendId(req.payload, id))) {
+        return bad('This mailing was sent since your check (another tab or another admin). Reload it to see who got what.', 409);
+      }
+      if (JSON.stringify(cleanConfig(b.config, source)) !== JSON.stringify(config)) {
+        return bad('The saved mailing is not the one on your screen (edited in another tab, or not saved yet). Reload it, check, then send.', 409);
+      }
       const [candidates, previous] = await Promise.all([
         loadSource(req.payload, source),
         previousMails(req.payload, id, SOURCES[source].perEntry),
@@ -340,10 +359,14 @@ const send: Endpoint = {
       const look = await lookOf(config);
       // Personal links only where a text asks for one; the tokens are made now and kept.
       const people = resolution.groups.flatMap((g) => g.people);
-      const tokens =
-        SOURCES[source].placeholders.includes('manageLink') && usesManageLink(config)
-          ? await tokensFor(req.payload, people.flatMap((p) => (p.submission != null ? [p.submission] : [])))
-          : new Map<number, string>();
+      const needLinks = SOURCES[source].placeholders.includes('manageLink') && usesManageLink(config);
+      const tokens = needLinks
+        ? await tokensFor(req.payload, people.flatMap((p) => (p.submission != null ? [p.submission] : [])))
+        : new Map<number, string>();
+      // Never send a mail with "{{manageLink}}" in it: no link for someone → nothing goes out.
+      if (needLinks && people.some((p) => p.submission == null || !tokens.has(p.submission))) {
+        return bad('Could not make the personal links for everyone – nothing was sent. Try again.', 500);
+      }
       const pending: PendingMail[] = [];
       for (const g of resolution.groups) {
         const group = config.groups.find((x) => x.id === g.id)!;
@@ -369,7 +392,14 @@ const send: Endpoint = {
 
       const by = adminEmail(req);
       const sendId = await startSend(req.payload, { mailingId: id, by, requested: pending.length, config });
-      const ids = await storePending(req.payload, id, sendId, pending);
+      let ids: number[];
+      try {
+        ids = await storePending(req.payload, id, sendId, pending);
+      } catch (err) {
+        // Nothing has gone to Resend yet: what got stored is marked failed, so a new send picks it up.
+        await failUnsent(req.payload, sendId).catch(() => undefined);
+        throw err;
+      }
       const results = await deliver(
         req,
         source,
