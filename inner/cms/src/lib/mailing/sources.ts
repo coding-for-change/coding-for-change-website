@@ -24,10 +24,10 @@ async function formIdByTitle(payload: Payload, title: string): Promise<number | 
 }
 
 /**
- * Every membership application: name and address from the answers, and the
- * review (decision, score), whether it came through /join/speedrun and the
- * language it was sent in. Submissions from before the language was recorded
- * are written to in English, like their confirmation was.
+ * Every membership application: name and address from the answers, the track
+ * they chose, and the review (decision, score), whether it came through
+ * /join/speedrun and the language it was sent in. Submissions from before the
+ * language was recorded are written to in English, like their confirmation was.
  */
 async function applications(payload: Payload): Promise<Candidate[]> {
   const formId = await formIdByTitle(payload, APPLICATION_FORM_TITLE);
@@ -36,10 +36,11 @@ async function applications(payload: Payload): Promise<Candidate[]> {
     `SELECT s.id, s.review_status, s.review_score, s.source, s.language,
             max(CASE WHEN d.field = 'email' THEN d.value END) AS email,
             max(CASE WHEN d.field = 'firstName' THEN d.value END) AS first_name,
-            max(CASE WHEN d.field = 'lastName' THEN d.value END) AS last_name
+            max(CASE WHEN d.field = 'lastName' THEN d.value END) AS last_name,
+            max(CASE WHEN d.field = 'track' THEN d.value END) AS track
      FROM form_submissions s
      LEFT JOIN form_submissions_submission_data d
-       ON d._parent_id = s.id AND d.field IN ('email', 'firstName', 'lastName')
+       ON d._parent_id = s.id AND d.field IN ('email', 'firstName', 'lastName', 'track')
      WHERE s.form_id = $1
      GROUP BY s.id
      ORDER BY s.id`,
@@ -57,6 +58,7 @@ async function applications(payload: Payload): Promise<Candidate[]> {
       lang: r.language === 'de' ? 'de' : 'en',
       props: {
         status: String(r.review_status ?? 'unreviewed'),
+        track: String(r.track ?? '').trim() || 'none',
         score: Number.isFinite(score) ? score : null,
         speedrun: r.source === 'speedrun',
         language: r.language === 'de' ? 'de' : 'en',

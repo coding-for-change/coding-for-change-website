@@ -20,6 +20,8 @@ import {
   emptyGroup,
   mailFor,
   MAIL_LANGS,
+  MAX_GROUPS,
+  newGroupId,
   PLACEHOLDER_HELP,
   SOURCES,
   type FilterDef,
@@ -244,6 +246,13 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
     setConfig((c) => (c ? { ...c, excluded: [...new Set([...c.excluded, ...p.keys])] } : c));
   const putBack = (p: ResolvedPerson) =>
     setConfig((c) => (c ? { ...c, excluded: c.excluded.filter((k) => !p.keys.includes(k)) } : c));
+  // The copy goes right under its original – e.g. the same invitation with another booking link.
+  const duplicateGroup = (g: MailingGroup) =>
+    setGroups((groups) => {
+      const i = groups.findIndex((x) => x.id === g.id);
+      const copy: MailingGroup = { ...structuredClone(g), id: newGroupId(), label: `${g.label || 'Group'} (copy)` };
+      return [...groups.slice(0, i + 1), copy, ...groups.slice(i + 1)];
+    });
   const move = (gid: string, by: -1 | 1) =>
     setGroups((groups) => {
       const i = groups.findIndex((g) => g.id === gid);
@@ -450,6 +459,9 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
                     <Button buttonStyle="pill" size="small" margin={false} disabled={index === config.groups.length - 1} onClick={() => move(g.id, 1)} aria-label="Move down">
                       ↓
                     </Button>
+                    <Button buttonStyle="pill" size="small" margin={false} disabled={config.groups.length >= MAX_GROUPS} onClick={() => duplicateGroup(g)}>
+                      Duplicate
+                    </Button>
                     <Button
                       buttonStyle="pill"
                       size="small"
@@ -532,7 +544,13 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
           })}
 
           <div className="ml-groups__add">
-            <Button buttonStyle="pill" size="small" margin={false} onClick={() => setGroups((groups) => [...groups, emptyGroup()])}>
+            <Button
+              buttonStyle="pill"
+              size="small"
+              margin={false}
+              disabled={config.groups.length >= MAX_GROUPS}
+              onClick={() => setGroups((groups) => [...groups, emptyGroup()])}
+            >
               Add a group
             </Button>
           </div>
