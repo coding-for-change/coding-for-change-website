@@ -10,14 +10,17 @@ import {
   SetStepNav,
   TextareaInput,
   TextInput,
+  useAuth,
   useModal,
   ViewDescription,
 } from '@payloadcms/ui';
+import { manageUrl, SAMPLE_TOKEN } from '../../lib/manage/link';
 import {
   describeFilter,
   emptyGroup,
   mailFor,
   MAIL_LANGS,
+  PLACEHOLDER_HELP,
   SOURCES,
   type FilterDef,
   type FilterValue,
@@ -28,7 +31,7 @@ import {
   type RangeFilter,
 } from '../../lib/mailing/model';
 import { renderMail, type MailSite } from '../../lib/mailing/render';
-import { countsOf, type Resolution, type ResolvedPerson } from '../../lib/mailing/resolve';
+import { countsOf, type PreviousMail, type Resolution, type ResolvedPerson } from '../../lib/mailing/resolve';
 import type { MailingRow, RecipientRow, SendRow } from '../../lib/mailing/store';
 import { PageHeader } from '../shared/PageHeader';
 import { when } from './format';
@@ -39,6 +42,9 @@ import './mailing.css';
  * they get – on the left; on the right the check (who gets which mail right
  * now, who fits no group, who had it already), the preview, a test send and
  * the send itself; below, every mail it sent.
+ *
+ * Mailing-wide: an optional header image (from Media or any https address),
+ * shown under the logo in every group's mail.
  *
  * Edits save as you go. The check runs on the server against the real data
  * whenever the groups change (endpoints/mailing.ts `/resolve`); the send
@@ -51,6 +57,17 @@ type Props = { id: number; apiRoute: string; adminRoute: string; site: MailSite 
 type Loaded = { mailing: MailingRow; sends: SendRow[]; recipients: RecipientRow[] };
 type SaveState = 'idle' | 'saving' | 'saved' | 'error';
 type SendResult = { sent: number; failed: number; errors: string[]; transport: string };
+type MediaDoc = { id: number; url?: string | null; filename?: string | null; mimeType?: string | null; sizes?: { card?: { url?: string | null } | null } | null };
+
+// Media docs carry site-relative URLs (/api/media/file/…); mail clients need
+// absolute ones. The admin runs on the public domain, so its origin is right.
+const toAbsolute = (u: string): string => {
+  try {
+    return new URL(u, window.location.origin).href;
+  } catch {
+    return u;
+  }
+};
 
 const LANG_LABEL: Record<MailLang, string> = { en: 'English', de: 'German' };
 const SEND_MODAL = 'mailing-send';
@@ -62,6 +79,7 @@ const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one :
 export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
   const router = useRouter();
   const { openModal } = useModal();
+  const { user } = useAuth();
 
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -83,9 +101,14 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
   const [sendError, setSendError] = useState<string | null>(null);
   const [sendResult, setSendResult] = useState<SendResult | null>(null);
   const [historyQuery, setHistoryQuery] = useState('');
+  const [liveFilters, setLiveFilters] = useState<Record<string, FilterDef[]> | null>(null);
+  const [media, setMedia] = useState<MediaDoc[] | null>(null);
+  const [accent, setAccent] = useState<{ url: string; accent: { hue: number; sat: number } | null } | null>(null);
 
   const source = loaded?.mailing.source ?? 'applications';
   const def = SOURCES[source];
+  /** The source's filters with the options from the data (the TechTour evenings) once loaded. */
+  const filters = liveFilters?.[source] ?? def.filters;
   const draftJson = useMemo(() => JSON.stringify({ title, config }), [title, config]);
   const configJson = useMemo(() => JSON.stringify(config), [config]);
   const dirty = config !== null && draftJson !== savedJson;
@@ -109,6 +132,35 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
       .catch((err: Error) => setLoadError(`Could not load this mailing (${err.message}).`));
   }, [fetchMailing]);
 
+  useEffect(() => {
+    fetch(`${apiRoute}/mailing/sources`, { credentials: 'include' })
+      .then(async (res) => (res.ok ? setLiveFilters(((await res.json()) as { filters: Record<string, FilterDef[]> }).filters) : undefined))
+      .catch(() => undefined);
+    // Images from Media for the header-image picker; the card rendition (800px) suits a mail.
+    fetch(`${apiRoute}/media?limit=100&sort=-createdAt&depth=0`, { credentials: 'include' })
+      .then(async (res) => (res.ok ? ((await res.json()) as { docs?: MediaDoc[] }).docs ?? [] : []))
+      .then((docs) => setMedia(docs.filter((d) => (d.mimeType ?? '').startsWith('image/'))))
+      .catch(() => setMedia([]));
+  }, [apiRoute]);
+
+  // The band behind the header image takes the artwork's colour – asked of the server, as the send does.
+  const headerImageUrl = config?.headerImageUrl ?? '';
+  useEffect(() => {
+    if (!/^https?:\/\/\S+$/i.test(headerImageUrl) || accent?.url === headerImageUrl) return;
+    const timer = setTimeout(() => {
+      fetch(`${apiRoute}/mailing/accent`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: headerImageUrl }),
+      })
+        .then(async (res) => (res.ok ? ((await res.json()) as { accent: { hue: number; sat: number } | null }).accent : null))
+        .then((a) => setAccent({ url: headerImageUrl, accent: a }))
+        .catch(() => setAccent({ url: headerImageUrl, accent: null }));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [headerImageUrl, accent, apiRoute]);
+
   /** Sends and recipients only – the groups being edited stay as they are. */
   const reloadHistory = useCallback(async () => {
     const data = await fetchMailing();
@@ -116,32 +168,39 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
   }, [fetchMailing]);
 
   // ---- save as you go -----------------------------------------------------------
+  // One save after the other, so an older version can never land after a newer one.
+  const saveChain = useRef<Promise<void>>(Promise.resolve());
   useEffect(() => {
     if (!dirty || !config) return;
     const json = draftJson;
-    const timer = setTimeout(async () => {
-      setSaveState('saving');
-      try {
-        const res = await fetch(`${apiRoute}/mailing/mailings/${id}`, {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: json,
-        });
-        if (!res.ok) throw new Error(String(res.status));
-        setSavedJson(json);
-        setSaveState('saved');
-      } catch {
-        setSaveState('error');
-      }
+    const timer = setTimeout(() => {
+      saveChain.current = saveChain.current.then(async () => {
+        setSaveState('saving');
+        try {
+          const res = await fetch(`${apiRoute}/mailing/mailings/${id}`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: json,
+          });
+          if (!res.ok) throw new Error(String(res.status));
+          setSavedJson(json);
+          setSaveState('saved');
+        } catch {
+          setSaveState('error');
+        }
+      });
     }, 700);
     return () => clearTimeout(timer);
   }, [dirty, draftJson, config, apiRoute, id]);
 
   // ---- the check ------------------------------------------------------------------
+  // Only the answer for the groups as they are now counts – a slower, older one is dropped.
+  const latestCheck = useRef('');
   useEffect(() => {
     if (!config) return;
     const json = configJson;
+    latestCheck.current = json;
     const timer = setTimeout(async () => {
       try {
         const res = await fetch(`${apiRoute}/mailing/resolve`, {
@@ -151,7 +210,9 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
           body: JSON.stringify({ source, config: JSON.parse(json), mailing: id }),
         });
         if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-        setResolution((await res.json()) as Resolution);
+        const data = (await res.json()) as Resolution;
+        if (latestCheck.current !== json) return;
+        setResolution(data);
         setResolvedJson(json);
         setCheckError(null);
       } catch (err) {
@@ -198,7 +259,8 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expected: countsOf(resolution) }),
+        // The groups as checked, so the server can refuse if the saved mailing differs (another tab, a lost save).
+        body: JSON.stringify({ expected: countsOf(resolution), config, lastSend: loaded?.sends[0]?.id ?? 0 }),
       });
       const data = (await res.json().catch(() => ({}))) as Partial<SendResult> & { error?: string; resolution?: Resolution };
       if (!res.ok) {
@@ -271,9 +333,26 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
   const sample: ResolvedPerson | undefined =
     resolvedGroup?.people.find((p) => p.lang === previewLang) ?? resolvedGroup?.people[0];
   const preview = shownGroup
-    ? renderMail(source, shownGroup, { firstName: sample?.firstName || 'Alex', lang: previewLang }, site)
+    ? renderMail(
+        source,
+        shownGroup,
+        // A sample person's own first name – empty, if it is – or "Alex" while nobody is in the group.
+        { firstName: sample ? sample.firstName : 'Alex', lang: previewLang, manageLink: manageUrl(site.siteOrigin, SAMPLE_TOKEN) },
+        site,
+        {
+          headerImageUrl: config.headerImageUrl || undefined,
+          heroAccent: accent?.url === config.headerImageUrl ? accent.accent : null,
+        },
+      )
     : null;
-  const ownDomainTest = testTo.split(/[\s,;]+/).some((a) => OWN_DOMAIN.test(a.trim()));
+  const pickedMedia = media?.find((m) => {
+    const u = m.sizes?.card?.url || m.url;
+    return u && toAbsolute(u) === config.headerImageUrl;
+  });
+  // With the field empty the test goes to the admin's own login address.
+  const ownDomainTest = testTo.trim()
+    ? testTo.split(/[\s,;]+/).some((a) => OWN_DOMAIN.test(a.trim()))
+    : OWN_DOMAIN.test(String((user as { email?: string } | null)?.email ?? ''));
   const recipients = loaded.recipients.filter((r) => {
     const q = historyQuery.trim().toLowerCase();
     return !q || r.email.includes(q) || (r.name ?? '').toLowerCase().includes(q) || r.groupLabel.toLowerCase().includes(q);
@@ -303,7 +382,7 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
         ]}
         after={
           <ViewDescription
-            description={`To: ${def.label}. Each person gets the mail of the first group they fit – put the most specific group first.`}
+            description={`To: ${def.label}${def.perEntry ? ' (one mail per registration)' : ''}. Each person gets the mail of the first group they fit – put the most specific group first.`}
           />
         }
       />
@@ -312,6 +391,33 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
         {/* ---- groups ------------------------------------------------------------ */}
         <div className="ml-groups">
           <TextInput path="title" label="Title (only the team sees it)" value={title} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTitle(e.target.value)} />
+          <div className="ml-row">
+            <SelectInput
+              path="header-media"
+              name="header-media"
+              label="Header image (optional)"
+              placeholder={media === null ? 'Loading Media…' : 'Pick an image from Media'}
+              options={[
+                { label: 'No image', value: 'none' },
+                ...(media ?? []).map((m) => ({ label: m.filename || `Image ${m.id}`, value: String(m.id) })),
+              ]}
+              value={pickedMedia ? String(pickedMedia.id) : config.headerImageUrl ? undefined : 'none'}
+              onChange={(o) => {
+                const v = (o as { value?: string } | null)?.value;
+                const doc = media?.find((m) => String(m.id) === v);
+                const u = doc ? doc.sizes?.card?.url || doc.url : '';
+                setConfig((c) => (c ? { ...c, headerImageUrl: u ? toAbsolute(u) : '' } : c));
+              }}
+              isClearable={false}
+            />
+            <TextInput
+              path="header-url"
+              label="…or its address"
+              placeholder="https://…"
+              value={config.headerImageUrl}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfig((c) => (c ? { ...c, headerImageUrl: e.target.value.trim() } : c))}
+            />
+          </div>
 
           {config.groups.map((g, index) => {
             const lang = langTab[g.id] ?? 'de';
@@ -351,11 +457,11 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
                 <div className="ml-group__who">
                   <span className="field-label">Who</span>
                   <div className="ml-filters">
-                    {def.filters.map((f) => (
+                    {filters.map((f) => (
                       <FilterControl key={f.key} def={f} value={g.filter[f.key]} onChange={(v) => setFilter(g.id, f.key, v)} />
                     ))}
                   </div>
-                  <p className="ml-hint">In this group: {describeFilter(def.filters, g.filter)}</p>
+                  <p className="ml-hint">In this group: {describeFilter(filters, g.filter)}</p>
                 </div>
 
                 <div className="ml-group__mail">
@@ -404,8 +510,13 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
                     />
                   </div>
                   <p className="ml-hint">
-                    <code>{'{{firstName}}'}</code> becomes the person’s first name, <code>{'{{link}}'}</code> the button link. Blank lines start a new paragraph. A language left
-                    empty gets the other one.
+                    {def.placeholders.map((ph, i) => (
+                      <React.Fragment key={ph}>
+                        {i > 0 && ', '}
+                        <code>{`{{${ph}}}`}</code> {PLACEHOLDER_HELP[ph]}
+                      </React.Fragment>
+                    ))}
+                    . Blank lines start a new paragraph. A language left empty gets the other one.
                   </p>
                 </div>
               </section>
@@ -458,7 +569,7 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
                     people={resolution.alreadySent}
                     tone="muted"
                     extra={(p) => {
-                      const prev = resolution.alreadySent.find((x) => x.email === p.email)?.previous;
+                      const prev = (p as ResolvedPerson & { previous?: PreviousMail }).previous;
                       return prev ? `${prev.groupLabel}, ${when.format(new Date(prev.at))}` : '';
                     }}
                   />
@@ -525,7 +636,7 @@ export function MailingEditor({ id, apiRoute, adminRoute, site }: Props) {
                       size="small"
                       margin={false}
                       disabled={testState.kind === 'sending'}
-                      onClick={() => sendTest(shownGroup, previewLang, sample?.firstName || 'Alex')}
+                      onClick={() => sendTest(shownGroup, previewLang, sample ? sample.firstName : 'Alex')}
                     >
                       {testState.kind === 'sending' ? 'Sending…' : 'Send test'}
                     </Button>
@@ -772,8 +883,8 @@ function PeopleList({
         <p className="ml-hint">Nobody.</p>
       ) : (
         <ul>
-          {people.map((p) => (
-            <li key={p.email}>
+          {people.map((p, i) => (
+            <li key={`${p.email}-${p.submission ?? p.waitlistSignup ?? i}`}>
               <span className="ml-people__name">{p.name}</span>
               <span className="ml-hint">
                 {p.email} · {p.lang.toUpperCase()} · {p.detail}

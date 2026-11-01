@@ -1,5 +1,6 @@
 import { CollectionConfig } from 'payload';
 import { attributionField } from '../fields/attribution';
+import { keepMailsOfDuplicates } from '../lib/mailing/store';
 
 // Emails collected on /join/apply while applications are closed ("sign up to
 // know first when applications open"). The public inner site POSTs to
@@ -18,9 +19,9 @@ export const WaitlistSignups: CollectionConfig = {
     description:
       'People who asked to be notified when membership applications reopen.',
     components: {
-      // "Email all waitlist signups" form — sends one individual mail per
-      // address through /api/waitlist/send-email (see endpoints/waitlistEmail.ts).
-      beforeListTable: ['/components/waitlist/SendWaitlistEmail#SendWaitlistEmail'],
+      // Mails to the list go out from the mailing tool (/admin/mailing,
+      // lib/mailing/); this points there.
+      beforeListTable: ['/components/waitlist/MailingLink#MailingLink'],
     },
   },
   access: {
@@ -41,6 +42,8 @@ export const WaitlistSignups: CollectionConfig = {
         return data;
       },
     ],
+    // A mail sent to a double signup stays recorded when the duplicate goes (lib/mailing/store.ts).
+    beforeDelete: [keepMailsOfDuplicates('waitlistSignup')],
   },
   fields: [
     { name: 'email', type: 'email', required: true },

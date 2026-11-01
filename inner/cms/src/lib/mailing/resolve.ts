@@ -16,7 +16,8 @@ import {
  *
  * People are counted by address, not by entry: someone who applied twice (or
  * through the full form and the speedrun) is one person and gets one mail –
- * from the first group any of their entries fits.
+ * from the first group any of their entries fits. A source with `perEntry`
+ * (the TechTour: a personal link per registration) counts entries instead.
  */
 
 /** One entry of a source as read from the database (sources.ts). */
@@ -51,7 +52,10 @@ export type ResolvedGroup = {
   fallback: number;
 };
 
-/** What this mailing already sent an address (status sent or still pending). */
+/**
+ * What this mailing already sent an address (status sent or still pending),
+ * keyed by `recipientKey`.
+ */
 export type PreviousMail = { groupLabel: string; at: string };
 
 export type Resolution = {
@@ -70,6 +74,10 @@ export type Resolution = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/** Who counts as one recipient: the address, or – for a `perEntry` source – the entry. */
+export const recipientKey = (perEntry: boolean, r: { email: string; submission?: number | null }): string =>
+  perEntry && r.submission != null ? `s:${r.submission}` : r.email.trim().toLowerCase();
+
 export function resolveMailing(
   source: SourceKey,
   config: MailingConfig,
@@ -85,14 +93,15 @@ export function resolveMailing(
       invalid += 1;
       continue;
     }
-    byEmail.set(email, [...(byEmail.get(email) ?? []), { ...c, email }]);
+    const key = recipientKey(def.perEntry, { email, submission: c.submission });
+    byEmail.set(key, [...(byEmail.get(key) ?? []), { ...c, email }]);
   }
 
   const groups: ResolvedGroup[] = config.groups.map((g) => ({ id: g.id, label: g.label, people: [], fallback: 0 }));
   const unassigned: ResolvedPerson[] = [];
   const alreadySent: Resolution['alreadySent'] = [];
 
-  for (const [email, entries] of byEmail) {
+  for (const [key, entries] of byEmail) {
     let hit: { index: number; entry: Candidate } | null = null;
     for (let i = 0; i < config.groups.length && !hit; i++) {
       const entry = entries.find((c) => matches(def.filters, config.groups[i].filter, c.props));
@@ -100,8 +109,8 @@ export function resolveMailing(
     }
     const entry = hit?.entry ?? entries[entries.length - 1];
     const person: ResolvedPerson = {
-      email,
-      name: entry.name || email,
+      email: entry.email,
+      name: entry.name || entry.email,
       firstName: entry.firstName,
       lang: entry.lang,
       submission: entry.submission,
@@ -113,7 +122,7 @@ export function resolveMailing(
       unassigned.push(person);
       continue;
     }
-    const sentBefore = config.onlyOnce ? previous.get(email) : undefined;
+    const sentBefore = config.onlyOnce ? previous.get(key) : undefined;
     if (sentBefore) {
       alreadySent.push({ ...person, group: config.groups[hit.index].label, previous: sentBefore });
       continue;
@@ -131,7 +140,7 @@ export function resolveMailing(
     groups.map((g) => [g.id, [...new Set(g.people.map((p) => p.lang))]]),
   ) as Record<string, MailLang[]>;
   const toSend = groups.reduce((n, g) => n + g.people.length, 0);
-  const problems = problemsOf(config, langsInUse);
+  const problems = problemsOf(source, config, langsInUse);
   if (config.requireAll && unassigned.length) {
     const n = unassigned.length;
     problems.push(`${n} ${n === 1 ? def.noun.one : def.noun.many} fit no group – decide on them first, or turn off “Only send when everyone is in a group”.`);

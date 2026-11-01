@@ -1,7 +1,7 @@
 /**
  * The mailing tool (/admin/mailing): one place to write to the people in the
- * CMS – today the membership applications, the waitlist and the TechTour
- * registrations to follow – instead of a mail button per collection.
+ * CMS – the membership applications, the waitlist and the TechTour
+ * registrations – instead of a mail button per collection.
  *
  * A mailing goes to one source and splits it into groups. Each group says who
  * is in it (filters on what the source knows about a person: decision, score,
@@ -20,19 +20,21 @@ export type MailLang = 'de' | 'en';
 export const MAIL_LANGS: MailLang[] = ['en', 'de'];
 
 /** The sources a mailing can go to. One per kind of person the CMS keeps. */
-export type SourceKey = 'applications';
+export type SourceKey = 'applications' | 'waitlist' | 'techtour';
 
 export type ChoiceFilterDef = {
   key: string;
   label: string;
   kind: 'choice';
   options: { value: string; label: string }[];
+  /** The options come from the data (the TechTour's evenings) – filled in by the server (sources.ts). */
+  dynamic?: boolean;
 };
 export type RangeFilterDef = { key: string; label: string; kind: 'range'; min: number; max: number };
 export type FlagFilterDef = { key: string; label: string; kind: 'flag' };
 export type FilterDef = ChoiceFilterDef | RangeFilterDef | FlagFilterDef;
 
-/** A choice filter: the values allowed (none = anyone). */
+/** A choice filter: the values allowed (none = anyone). On a list (a person's evenings) one in common is enough. */
 export type ChoiceFilter = string[];
 /** A range filter: inclusive bounds; a person without a value never matches a set bound. */
 export type RangeFilter = { min?: number | null; max?: number | null };
@@ -47,9 +49,37 @@ export type SourceDef = {
   noun: { one: string; many: string };
   filters: FilterDef[];
   /** Why the recipient gets the mail – the footer line of lib/waitlistEmailTemplate.ts. */
-  audience: 'applications';
+  audience: 'applications' | 'waitlist' | 'techtour';
   /** What the source knows about a person, in short, for the lists. */
   describe: (props: PersonProps) => string;
+  /** The `{{…}}` fields this source fills in per person. */
+  placeholders: Placeholder[];
+  /**
+   * One mail per entry instead of per address: each TechTour registration has
+   * its own /techtour/manage link, so someone registered twice gets both.
+   */
+  perEntry: boolean;
+  /** Add a List-Unsubscribe header (lists people signed up to, not replies to an application). */
+  unsubscribe: boolean;
+};
+
+export type Placeholder = 'firstName' | 'link' | 'manageLink';
+
+/** What each `{{…}}` becomes, for the hint under the text. */
+export const PLACEHOLDER_HELP: Record<Placeholder, string> = {
+  firstName: 'the person’s first name',
+  link: 'the button link',
+  manageLink: 'their own /techtour/manage link (also works as the button link)',
+};
+
+const LANGUAGE_FILTER: ChoiceFilterDef = {
+  key: 'language',
+  label: 'Language',
+  kind: 'choice',
+  options: [
+    { value: 'en', label: 'English' },
+    { value: 'de', label: 'German' },
+  ],
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -65,6 +95,9 @@ export const SOURCES: Record<SourceKey, SourceDef> = {
     label: 'Membership applications',
     noun: { one: 'applicant', many: 'applicants' },
     audience: 'applications',
+    placeholders: ['firstName', 'link'],
+    perEntry: false,
+    unsubscribe: false,
     describe: (p) =>
       [
         STATUS_LABELS[String(p.status)] ?? 'Unreviewed',
@@ -87,15 +120,51 @@ export const SOURCES: Record<SourceKey, SourceDef> = {
       },
       { key: 'score', label: 'Score', kind: 'range', min: 1, max: 10 },
       { key: 'speedrun', label: 'Speedrun', kind: 'flag' },
+      LANGUAGE_FILTER,
+    ],
+  },
+  waitlist: {
+    key: 'waitlist',
+    label: 'Waitlist',
+    noun: { one: 'address', many: 'addresses' },
+    audience: 'waitlist',
+    placeholders: ['link'],
+    perEntry: false,
+    unsubscribe: true,
+    describe: (p) => (p.language === 'unknown' ? 'no language recorded' : p.language === 'de' ? 'signed up in German' : 'signed up in English'),
+    filters: [
       {
-        key: 'language',
-        label: 'Language',
-        kind: 'choice',
-        options: [
-          { value: 'en', label: 'English' },
-          { value: 'de', label: 'German' },
-        ],
+        ...LANGUAGE_FILTER,
+        options: [...LANGUAGE_FILTER.options, { value: 'unknown', label: 'Not recorded' }],
       },
+    ],
+  },
+  techtour: {
+    key: 'techtour',
+    label: 'TechTour registrations',
+    noun: { one: 'registration', many: 'registrations' },
+    audience: 'techtour',
+    placeholders: ['firstName', 'link', 'manageLink'],
+    perEntry: true,
+    unsubscribe: true,
+    describe: (p) => {
+      const list = (v: unknown) => (Array.isArray(v) ? v.length : 0);
+      return [
+        `${list(p.evening)} evening${list(p.evening) === 1 ? '' : 's'}`,
+        list(p.admitted) ? `admitted to ${list(p.admitted)}` : '',
+        list(p.declined) ? `declined for ${list(p.declined)}` : '',
+        p.member === true ? 'member' : '',
+      ]
+        .filter(Boolean)
+        .join(' · ');
+    },
+    filters: [
+      { key: 'active', label: 'Still on an evening', kind: 'flag' },
+      { key: 'evening', label: 'Registered for', kind: 'choice', options: [], dynamic: true },
+      { key: 'admitted', label: 'Host admitted them to', kind: 'choice', options: [], dynamic: true },
+      { key: 'declined', label: 'Host declined them for', kind: 'choice', options: [], dynamic: true },
+      { key: 'member', label: 'Coding for Change member', kind: 'flag' },
+      LANGUAGE_FILTER,
     ],
   },
 };
@@ -120,10 +189,12 @@ export type MailingConfig = {
   onlyOnce: boolean;
   /** Refuse to send while someone fits no group (e.g. still unreviewed). */
   requireAll: boolean;
+  /** Optional image under the logo, for every group (absolute http(s) URL, e.g. from Media). */
+  headerImageUrl: string;
 };
 
-/** What a person looks like to the filters. */
-export type PersonProps = Record<string, string | number | boolean | null>;
+/** What a person looks like to the filters. A list (the evenings) matches a choice when one value is in common. */
+export type PersonProps = Record<string, string | number | boolean | string[] | null>;
 
 export function matches(filters: FilterDef[], filter: Record<string, FilterValue>, props: PersonProps): boolean {
   for (const def of filters) {
@@ -132,7 +203,8 @@ export function matches(filters: FilterDef[], filter: Record<string, FilterValue
     if (want == null) continue;
     if (def.kind === 'choice') {
       const allowed = Array.isArray(want) ? want : [];
-      if (allowed.length && !allowed.includes(String(have ?? ''))) return false;
+      if (!allowed.length) continue;
+      if (Array.isArray(have) ? !have.some((v) => allowed.includes(v)) : !allowed.includes(String(have ?? ''))) return false;
     } else if (def.kind === 'range') {
       const { min, max } = (want as RangeFilter) ?? {};
       if (min == null && max == null) continue;
@@ -167,9 +239,6 @@ export function describeFilter(filters: FilterDef[], filter: Record<string, Filt
   return parts.join(' · ') || 'Everyone';
 }
 
-/** The fields a person's mail is filled in with: `{{firstName}}`, `{{link}}`. */
-export const PLACEHOLDERS = ['firstName', 'link'] as const;
-
 export const emptyMail = (): GroupMail => ({ subject: '', message: '', ctaLabel: '' });
 
 export const newGroupId = (): string => Math.random().toString(36).slice(2, 10);
@@ -182,7 +251,12 @@ export const emptyGroup = (label = 'New group'): MailingGroup => ({
   ctaUrl: '',
 });
 
-export const emptyConfig = (): MailingConfig => ({ groups: [emptyGroup('Everyone')], onlyOnce: true, requireAll: false });
+export const emptyConfig = (): MailingConfig => ({
+  groups: [emptyGroup('Everyone')],
+  onlyOnce: true,
+  requireAll: false,
+  headerImageUrl: '',
+});
 
 /**
  * The text a group uses for a person: their language, or the other one when
@@ -201,19 +275,27 @@ export function mailFor(group: MailingGroup, lang: MailLang): { lang: MailLang; 
  * stays off while there is anything. Recipients' languages come from the check
  * (`langsInUse`), so a group nobody fits needs no text yet.
  */
-export function problemsOf(config: MailingConfig, langsInUse: Record<string, MailLang[]>): string[] {
+export function problemsOf(source: SourceKey, config: MailingConfig, langsInUse: Record<string, MailLang[]>): string[] {
   const out: string[] = [];
+  const known = new Set<string>(SOURCES[source].placeholders);
   if (!config.groups.length) out.push('Add at least one group.');
+  if (config.headerImageUrl && !/^https?:\/\/\S+$/i.test(config.headerImageUrl)) {
+    out.push('The header image must be an absolute https:// address.');
+  }
   for (const g of config.groups) {
     const name = g.label.trim() || 'A group';
     const langs = langsInUse[g.id] ?? [];
     if (!langs.length) continue;
     if (!mailFor(g, langs[0])) out.push(`${name}: write a subject and a text (in at least one language).`);
     const url = g.ctaUrl.trim();
-    if (url && !/^https?:\/\/\S+$/i.test(url)) out.push(`${name}: the button link must start with https://.`);
+    const placeholderUrl = /^\{\{\s*manageLink\s*\}\}$/.test(url) && known.has('manageLink');
+    if (url && !placeholderUrl && !/^https?:\/\/\S+$/i.test(url)) out.push(`${name}: the button link must start with https://.`);
     for (const lang of langs) {
       const used = mailFor(g, lang);
       if (!used) continue;
+      for (const [, key] of `${used.mail.subject} ${used.mail.message} ${used.mail.ctaLabel} ${url}`.matchAll(/\{\{\s*(\w+)\s*\}\}/g)) {
+        if (!known.has(key)) out.push(`${name}: {{${key}}} is not filled in for ${SOURCES[source].label.toLowerCase()} – remove it.`);
+      }
       if (url && !used.mail.ctaLabel.trim()) out.push(`${name}: the button needs a label (${used.lang.toUpperCase()}).`);
       if (!url && used.mail.ctaLabel.trim()) out.push(`${name}: the button has a label but no link.`);
       if (!url && /\{\{\s*link\s*\}\}/.test(used.mail.message)) out.push(`${name}: the text uses {{link}}, but there is no link.`);
@@ -227,9 +309,9 @@ export type Preset = { key: string; label: string; description: string; source: 
 
 export const PRESETS: Preset[] = [
   {
-    key: 'blank',
-    label: 'Blank',
-    description: 'One group, everyone in it.',
+    key: 'blank-applications',
+    label: 'Applications – blank',
+    description: 'To the membership applicants. One group, everyone in it.',
     source: 'applications',
     title: 'New mailing',
     config: emptyConfig,
@@ -243,6 +325,7 @@ export const PRESETS: Preset[] = [
     config: (): MailingConfig => ({
       onlyOnce: true,
       requireAll: true,
+      headerImageUrl: '',
       groups: [
         {
           ...emptyGroup('Speedrun'),
@@ -301,6 +384,27 @@ export const PRESETS: Preset[] = [
       ],
     }),
   },
+  {
+    key: 'blank-waitlist',
+    label: 'Waitlist – blank',
+    description: 'To everyone on the waitlist, one mail per address.',
+    source: 'waitlist',
+    title: 'Waitlist mailing',
+    config: emptyConfig,
+  },
+  {
+    key: 'blank-techtour',
+    label: 'TechTour – blank',
+    description: 'To the TechTour registrations still on an evening, one mail each – {{manageLink}} is the person’s own link.',
+    source: 'techtour',
+    title: 'TechTour mailing',
+    // Whoever gave up every evening has left the TechTour.
+    config: () => {
+      const c = emptyConfig();
+      c.groups[0].filter = { active: 'yes' };
+      return c;
+    },
+  },
 ];
 
 /** Normalise a config read from the database or a request: drop what does not belong. */
@@ -317,7 +421,11 @@ export function cleanConfig(raw: unknown, source: SourceKey): MailingConfig {
     for (const def of filters) {
       const v = (g?.filter ?? {})[def.key];
       if (def.kind === 'choice' && Array.isArray(v)) {
-        filter[def.key] = v.map(String).filter((x) => def.options.some((o) => o.value === x));
+        // Options from the data (evening keys) are only known on the server's
+        // side of a request; keep any short key, unknown ones simply match nobody.
+        filter[def.key] = def.dynamic
+          ? v.map(String).filter((x) => x.length <= 100).slice(0, 50)
+          : v.map(String).filter((x) => def.options.some((o) => o.value === x));
       } else if (def.kind === 'range' && v && typeof v === 'object' && !Array.isArray(v)) {
         const num = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? n : null);
         filter[def.key] = { min: num((v as RangeFilter).min), max: num((v as RangeFilter).max) };
@@ -333,5 +441,10 @@ export function cleanConfig(raw: unknown, source: SourceKey): MailingConfig {
       ctaUrl: str(g?.ctaUrl, 1000).trim(),
     };
   });
-  return { groups, onlyOnce: r.onlyOnce !== false, requireAll: r.requireAll === true };
+  return {
+    groups,
+    onlyOnce: r.onlyOnce !== false,
+    requireAll: r.requireAll === true,
+    headerImageUrl: str(r.headerImageUrl, 1000).trim(),
+  };
 }

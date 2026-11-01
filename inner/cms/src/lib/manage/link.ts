@@ -1,7 +1,7 @@
 /**
- * The personal TechTour link as the mass mail (endpoints/waitlistEmail.ts)
- * puts it into a message. No server imports: the compose form in the admin
- * (components/waitlist/SendWaitlistEmail.tsx) shares the placeholder.
+ * The personal TechTour link as the mailing tool (endpoints/mailing.ts) puts
+ * it into a mail. No server imports: the admin's preview
+ * (components/mailing/MailingEditor.tsx) uses the sample link too.
  */
 
 /** Typed into the message or the button link; replaced per recipient with their own link. */

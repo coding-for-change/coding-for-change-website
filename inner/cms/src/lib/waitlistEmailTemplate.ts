@@ -1,8 +1,8 @@
 /**
- * Branded HTML template for the "email all waitlist signups" feature
- * (endpoints/waitlistEmail.ts). One function turns the admin's plain-text
- * message (+ optional header image and CTA button) into the html/text pair
- * handed to Resend.
+ * Branded HTML template for the mails of the mailing tool (lib/mailing/render.ts,
+ * endpoints/mailing.ts) – to the waitlist, the TechTour registrations and the
+ * applicants. One function turns the admin's plain-text message (+ optional
+ * header image and CTA button) into the html/text pair handed to Resend.
  *
  * Email clients are not browsers: Gmail strips <style> in the body of some
  * clients, Outlook (Windows) renders with Word. So the layout is table-based

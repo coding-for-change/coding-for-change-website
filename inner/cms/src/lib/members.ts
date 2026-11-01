@@ -8,7 +8,7 @@ import { poolOf } from '../endpoints/util';
  * review workspace (/admin/review, endpoints/members.ts) – people register with
  * whatever address they like, so it cannot be matched. The host page shows it
  * as a badge (lib/share/page.ts), and the mass mail can go to members only
- * (endpoints/waitlistEmail.ts).
+ * (the mailing tool, lib/mailing/sources.ts).
  *
  * A plain table, like the /techtour/manage ones (lib/manage/tables.ts) and for
  * the same reason: a collection would add a column to Payload's

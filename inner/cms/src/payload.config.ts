@@ -46,7 +46,6 @@ import { deleteSubmissionFiles, purgeTechTourRegistrations } from './lib/retenti
 import { rejectHoneypot } from './lib/honeypot';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
 import { analyticsSummary } from './endpoints/analyticsSummary';
-import { waitlistEmailEndpoints } from './endpoints/waitlistEmail';
 import { purgeAnalyticsEvents } from './lib/purgeAnalytics';
 import { SiteConfig } from './globals/SiteConfig';
 import { Membership } from './globals/Membership';
@@ -59,6 +58,7 @@ import { brandApplicationEmails } from './lib/applicationEmail';
 import { manageTables } from './lib/manage/tables';
 import { memberTables } from './lib/members';
 import { mailingTables } from './lib/mailing/tables';
+import { keepMailsOfDuplicates } from './lib/mailing/store';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -123,7 +123,7 @@ export default buildConfig({
   // token and an emailed sign-in code – see endpoints/share.ts. So is a
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
   // token alone – see endpoints/manage.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, ...waitlistEmailEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...mailingEndpoints],
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...mailingEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -227,6 +227,8 @@ export default buildConfig({
         hooks: {
           beforeOperation: [rejectHoneypot],
           beforeChange: [recordSubmission],
+          // A mail sent to someone who applied twice stays recorded when the duplicate goes (lib/mailing/store.ts).
+          beforeDelete: [keepMailsOfDuplicates('submission')],
           afterDelete: [deleteSubmissionFiles],
         },
         // The plugin forbids updates; admins need them for the review fields.

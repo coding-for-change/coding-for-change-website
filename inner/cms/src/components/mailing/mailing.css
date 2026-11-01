@@ -102,6 +102,11 @@ html[data-theme='dark'] .ml {
   color: var(--theme-warning-750);
 }
 
+/* Payload caps a popup at 200px; the presets list keeps all its entries in view. */
+.popup__scroll-container:has(.ml-preset) {
+  max-height: none;
+}
+
 .ml-preset {
   display: flex;
   flex-direction: column;
