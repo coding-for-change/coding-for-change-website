@@ -2,14 +2,15 @@ import type { Endpoint, Payload, PayloadRequest } from 'payload';
 import type { OptionRow } from '../lib/choiceKeys';
 import { eveningOf, eveningsFieldOf } from '../lib/share/evening';
 import {
-  MANAGE_UNTIL,
   eveningsOf,
-  manageOpen,
   registrationOfToken,
   withdraw,
+  withdrawable,
   withdrawalsOf,
 } from '../lib/manage/store';
 import { techTourFormId } from '../lib/retention';
+import { afterWithdrawal } from '../lib/share/moveUp';
+import type { HostDecisions } from '../lib/share/registrations';
 
 /**
  * The personal TechTour link (/techtour/manage?token=… on the site), as the
@@ -18,10 +19,12 @@ import { techTourFormId } from '../lib/retention';
  *   GET  /api/techtour/manage?token=…&locale=de   the name and the evenings registered for
  *   POST /api/techtour/manage                     { token, withdraw: [option…], locale } → the same, updated
  *
- * Evenings can only be given up, never added, and only until MANAGE_UNTIL
- * (lib/manage/store.ts); after that the GET still answers, with `open: false`.
- * The registration itself is only read – a withdrawal goes into its own table.
- * Everything answers `no-store` and `noindex`.
+ * Evenings can only be given up, never added, and each only until it is over
+ * (`withdrawable`, lib/manage/store.ts) – no deadline is named. The
+ * registration itself is only read – a withdrawal goes into its own table.
+ * Giving up an evening the host had admitted one to lets the next on its
+ * waitlist move up (lib/share/moveUp.ts). Everything answers `no-store` and
+ * `noindex`.
  */
 
 const PRIVATE = {
@@ -46,12 +49,14 @@ export type ManageEvening = {
   location: string | null;
   /** When it was given up through the link; null while still registered. */
   withdrawnAt: string | null;
+  /** It can still be given up (it is not over yet). */
+  open: boolean;
 };
 
 export type ManageView = {
   name: string;
+  /** Some evening can still be given up. */
   open: boolean;
-  until: string;
   evenings: ManageEvening[];
 };
 
@@ -62,6 +67,7 @@ type SubmissionDoc = {
   form: number | { id: number };
   submissionData?: { field: string; value: unknown }[] | null;
   choiceKeys?: Record<string, unknown> | null;
+  hostDecisions?: HostDecisions | null;
 };
 
 const localeOf = (raw: unknown): 'en' | 'de' => (raw === 'de' ? 'de' : 'en');
@@ -119,12 +125,12 @@ async function viewOf(
       time: ev?.time ?? null,
       location: ev?.location ?? null,
       withdrawnAt: withdrawn.get(option) ?? null,
+      open: withdrawable(ev?.date ?? null),
     });
   }
   return {
     name: [answers.get('firstName'), answers.get('lastName')].filter(Boolean).join(' '),
-    open: manageOpen(),
-    until: MANAGE_UNTIL.toISOString(),
+    open: evenings.some((e) => e.open),
     evenings,
   };
 }
@@ -152,15 +158,21 @@ const update: Endpoint = {
     }
     const found = await registrationOf(req.payload, String(body.token ?? ''));
     if (!found) return invalid();
-    if (!manageOpen()) return json({ error: 'closed' }, 403);
 
     const options = Array.isArray(body.withdraw) ? body.withdraw.map(String) : [];
     // Only evenings this registration was sent with: giving up, never adding.
     if (options.length === 0 || options.length > 20 || !options.every((o) => found.picked.includes(o))) {
       return json({ error: 'Not an evening of this registration.' }, 400);
     }
-    await withdraw(req.payload, found.doc.id, options);
-    req.payload.logger.info(`[manage] registration ${found.doc.id} withdrew from ${options.join(', ')}`);
+    const dates = await Promise.all(options.map((o) => eveningOf(req.payload, found.formId, o).then((ev) => ev?.date ?? null)));
+    if (!dates.every((d) => withdrawable(d))) return json({ error: 'closed' }, 403);
+
+    const gaveUp = await withdraw(req.payload, found.doc.id, options);
+    if (gaveUp.length) {
+      req.payload.logger.info(`[manage] registration ${found.doc.id} withdrew from ${gaveUp.join(', ')}`);
+      // As decided before the withdrawal: an admitted person's spot is free now.
+      await afterWithdrawal(req.payload, found.doc.id, gaveUp, found.doc.hostDecisions);
+    }
     return json(await viewOf(req.payload, found, localeOf(body.locale)));
   },
 };

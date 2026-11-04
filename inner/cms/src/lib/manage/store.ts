@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto';
 import type { Payload } from 'payload';
 import { poolOf } from '../../endpoints/util';
 import { pickedKeys, type OptionRow } from '../choiceKeys';
+import { startOfBerlinDay } from '../share/evening';
 import { CHANGES_TABLE, TOKENS_TABLE, WITHDRAWALS_TABLE } from './tables';
 
 /**
@@ -18,13 +19,15 @@ import { CHANGES_TABLE, TOKENS_TABLE, WITHDRAWALS_TABLE } from './tables';
  */
 
 /**
- * Evenings can be given up until Sunday 1 November 2026, 23:59 in Munich. The
- * first moment after that is 2 November 00:00 CET (UTC+1, summer time ended
- * on 25 October) – 1 November 23:00 UTC. From then on the page only shows.
+ * An evening can be given up until it is over – until midnight in Munich at
+ * the end of its day (open when the TechTour page has no date for it). No
+ * deadline is named anywhere: the sooner someone gives an evening up, the
+ * better, because the next on its waitlist can then move up
+ * (lib/share/moveUp.ts). Until 1 November 2026 there was one deadline for all
+ * evenings, before the hosts had decided.
  */
-export const MANAGE_UNTIL = new Date('2026-11-01T23:00:00.000Z');
-
-export const manageOpen = (now: Date = new Date()): boolean => now.getTime() < MANAGE_UNTIL.getTime();
+export const withdrawable = (date: Date | null, now: Date = new Date()): boolean =>
+  !date || now.getTime() < startOfBerlinDay(new Date(date.getTime() + 24 * 60 * 60 * 1000)).getTime();
 
 /** What a token looks like: 32 random bytes as base64url. Nothing else reaches a query. */
 export const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/;
@@ -118,11 +121,12 @@ export async function withdrawnFrom(payload: Payload, option: string, ids: numbe
  * Record withdrawals through the link. One already in force keeps its time.
  * The first time an evening is given up it goes into `techtour_withdrawals`;
  * once we added it back, giving it up again is a row in the changes table.
+ * Returns the evenings given up just now (not those given up before).
  */
-export async function withdraw(payload: Payload, id: number, options: string[]): Promise<void> {
+export async function withdraw(payload: Payload, id: number, options: string[]): Promise<string[]> {
   const current = (await withdrawalsOf(payload, [id])).get(id);
   const wanted = [...new Set(options)].filter((o) => !current?.has(o));
-  if (wanted.length === 0) return;
+  if (wanted.length === 0) return [];
   const pool = poolOf(payload);
   const { rows } = await pool.query(
     `INSERT INTO ${WITHDRAWALS_TABLE} (submission_id, option)
@@ -134,6 +138,7 @@ export async function withdraw(payload: Payload, id: number, options: string[]):
   const first = new Set(rows.map((r) => String(r.option)));
   const again = wanted.filter((o) => !first.has(o));
   if (again.length) await change(payload, id, again, true, 'link');
+  return wanted;
 }
 
 /** A change after the first withdrawal: added back (false) or given up again (true), by whom. */

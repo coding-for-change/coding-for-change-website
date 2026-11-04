@@ -110,14 +110,15 @@ type RegistrationDoc = {
   language?: 'en' | 'de' | null;
   submissionData?: { field: string; value: unknown }[] | null;
   choiceKeys?: Record<string, unknown> | null;
-  hostDecisions?: Record<string, { decision?: string }> | null;
+  hostDecisions?: Record<string, { decision?: string; by?: string }> | null;
 };
 
 /**
  * Every TechTour registration, one entry each (each has its own
  * /techtour/manage link): the evenings it is on now – an evening given up
  * through the link is left out, as on the host's page – what the hosts
- * decided on those, and the member mark.
+ * decided on those (admitted, waitlisted, declined, and who of the admitted
+ * moved up from the waitlist on their own), and the member mark.
  */
 async function techtour(payload: Payload): Promise<Candidate[]> {
   const form = await techTourForm(payload);
@@ -141,6 +142,8 @@ async function techtour(payload: Payload): Promise<Candidate[]> {
       : [];
     const decided = (decision: string) =>
       evenings.filter((k) => d.hostDecisions?.[k]?.decision === decision);
+    // Admitted by the waitlist on its own (lib/share/moveUp.ts) – they already got a mail saying so.
+    const movedUp = decided('admitted').filter((k) => d.hostDecisions?.[k]?.by === 'waitlist');
     const firstName = answer('firstName');
     return {
       submission: d.id,
@@ -152,7 +155,9 @@ async function techtour(payload: Payload): Promise<Candidate[]> {
         active: evenings.length > 0,
         evening: evenings,
         admitted: decided('admitted'),
+        waitlisted: decided('waitlisted'),
         declined: decided('declined'),
+        movedUp,
         member: members.has(d.id),
         language: d.language === 'de' ? 'de' : 'en',
       },

@@ -43,11 +43,17 @@ export type Submission = {
   choiceKeys?: Record<string, string[]> | null;
   /** The boxes ticked, as recorded on arrival (fields/submissionRecord.ts). */
   agreedTo?: { field: string; label?: string; version?: string; at?: string }[] | null;
-  /** Per evening key, what the host company decided through its share link. */
-  hostDecisions?: Record<string, { decision: 'admitted' | 'declined'; by: string; at: string }> | null;
+  /** Per evening key, what the host company decided through its share link (`by: 'waitlist'`: moved up on their own). */
+  hostDecisions?: Record<string, { decision: HostDecision; by: string; at: string }> | null;
 };
 
-export type HostDecision = 'admitted' | 'declined';
+export type HostDecision = 'admitted' | 'waitlisted' | 'declined';
+
+export const HOST_DECISION_LABELS: Record<HostDecision, string> = {
+  admitted: 'Admitted',
+  waitlisted: 'Waitlist',
+  declined: 'Declined',
+};
 
 /** The host's decision on this person for one evening, if any. */
 export const hostDecisionOf = (s: Submission, option: string): HostDecision | null =>

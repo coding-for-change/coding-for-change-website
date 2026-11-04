@@ -14,6 +14,13 @@ import { endOfEventWeek, eveningOf } from '../lib/share/evening';
  * week when left empty, which is what the Datenschutz promises at the
  * latest), or at once when "Blocked" is ticked. Every sign-in, CV opened and
  * decision is written to `share-access-log`; deleting a link deletes its log.
+ *
+ * Two extras, off unless ticked, so a link stays the plain admit-or-decline
+ * page the hosts know: "Waitlist" (a third choice, and the waitlist in order)
+ * and "1–10 rating". With the waitlist on, "Move up from the waitlist until"
+ * lets the first on it move up on their own, with a mail, when an admitted
+ * person gives the evening up (lib/share/moveUp.ts). They count for the
+ * evening, whichever of its links says so.
  */
 
 const TECHTOUR_FORM_TITLE = 'techtour';
@@ -80,7 +87,7 @@ export const ShareLinks: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'expiresAt', 'blocked', 'updatedAt'],
     description:
-      'One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".',
+      'One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person – with "Waitlist" ticked, also put them on a waitlist. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".',
   },
   access: {
     read: isUser,
@@ -159,6 +166,40 @@ export const ShareLinks: CollectionConfig = {
       admin: {
         position: 'sidebar',
         description: 'Stops the link at once (and anyone signed in). Untick to open it again.',
+      },
+    },
+    {
+      name: 'rating',
+      type: 'checkbox',
+      label: '1–10 rating',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Lets the contacts rate each person from 1 to 10 and sort by it (a waitlist then goes by the rating first). Only the contacts and we see it. Off: no rating on the page.',
+      },
+    },
+    {
+      name: 'waitlist',
+      type: 'checkbox',
+      label: 'Waitlist',
+      defaultValue: false,
+      admin: {
+        position: 'sidebar',
+        description:
+          'Gives the contacts a third choice beside Admit and Decline – Waitlist – and the waitlist in the order people move up, with ↑/↓ to change it. Off: the page is the plain admit-or-decline list.',
+      },
+    },
+    {
+      name: 'waitlistUntil',
+      type: 'date',
+      label: 'Move up from the waitlist until',
+      admin: {
+        position: 'sidebar',
+        condition: (data) => data?.waitlist === true,
+        date: { pickerAppearance: 'dayAndTime' },
+        description:
+          'Set it only once the first acceptance mails for this evening have gone out. Until then, whenever an admitted person gives the evening up through their own link, the first person on the waitlist is admitted at once and gets a mail with their own link. Empty or past: a freed spot stays open for the host.',
       },
     },
     {

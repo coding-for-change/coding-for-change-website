@@ -276,8 +276,8 @@ export interface Translations {
      */
     techtourManage: {
         title: string; intro: string; named: string; legend: string;
-        until: string; onlyRemove: string; closed: string;
-        withdrawnOn: string; save: string; saving: string;
+        asap: string; onlyRemove: string; closed: string;
+        withdrawnOn: string; over: string; save: string; saving: string;
         confirm: string; confirmYes: string; cancel: string;
         saved: string; allGone: string;
         invalid: string; sample: string; error: string;
@@ -747,10 +747,11 @@ const en: Translations = {
         intro: 'These are the evenings you registered for. Can’t make one? Untick it, so someone else can take your place.',
         named: 'Registered as {name}',
         legend: 'Your evenings',
-        until: 'You can give up evenings until {date}, 23:59.',
+        asap: 'Please let us know as early as possible – the sooner you give an evening up, the better the chance someone from the waitlist can still come.',
         onlyRemove: 'You can only give up evenings here, not add new ones.',
-        closed: 'Changes were possible until {date}, 23:59. If something has come up since, write to us at {email}.',
+        closed: 'Your evenings are over – there is nothing left to change here. Questions? Write to us at {email}.',
         withdrawnOn: 'Given up on {date}',
+        over: 'Already over',
         save: 'Save changes',
         saving: 'Saving…',
         confirm: 'Give up {list}? This can’t be undone here.',
@@ -1239,10 +1240,11 @@ const de: Translations = {
         intro: 'Für diese Abende hast du dich angemeldet. Du kannst an einem nicht? Nimm den Haken raus, dann kann jemand anderes nachrücken.',
         named: 'Angemeldet als {name}',
         legend: 'Deine Abende',
-        until: 'Abmelden kannst du dich bis {date}, 23:59 Uhr.',
+        asap: 'Gib bitte so früh wie möglich Bescheid – je eher du dich abmeldest, desto eher kann jemand von der Warteliste noch nachrücken.',
         onlyRemove: 'Hier kannst du dich nur von Abenden abmelden, keine neuen hinzufügen.',
-        closed: 'Änderungen waren bis {date}, 23:59 Uhr möglich. Hat sich seitdem etwas geändert, schreib uns an {email}.',
+        closed: 'Deine Abende sind vorbei – hier gibt es nichts mehr zu ändern. Fragen? Schreib uns an {email}.',
         withdrawnOn: 'Abgemeldet am {date}',
+        over: 'Schon vorbei',
         save: 'Änderungen speichern',
         saving: 'Wird gespeichert …',
         confirm: 'Von {list} abmelden? Das lässt sich hier nicht rückgängig machen.',
