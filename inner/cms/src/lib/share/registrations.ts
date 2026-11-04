@@ -4,6 +4,7 @@ import { withdrawnFrom } from '../manage/store';
 import { membersAmong } from '../members';
 import { consentedToSharing } from '../sharingConsent';
 import { eveningOf, eveningsFieldOf, type Evening } from './evening';
+import { positionsOf, scoresOf, setPositions } from './store';
 
 /**
  * What a host company sees through its share link, and nothing more: the
@@ -29,11 +30,19 @@ import { eveningOf, eveningsFieldOf, type Evening } from './evening';
  *
  * Also records the host's decision on a registration, under the evening's key
  * in the submission's `hostDecisions` – so it is deleted together with the
- * registration.
+ * registration. Besides admit and decline, a host can put someone on the
+ * waitlist: in the order of the host's 1–10 rating when the evening is rated,
+ * otherwise first waitlisted first – and within the same rating as the host
+ * moved them (lib/share/store.ts). When an admitted person gives the evening
+ * up, the first one moves up (lib/share/moveUp.ts) – recorded as admitted
+ * `by: 'waitlist'`.
  */
 
-export type HostDecision = 'admitted' | 'declined';
+export type HostDecision = 'admitted' | 'waitlisted' | 'declined';
 export type HostDecisions = Record<string, { decision: HostDecision; by: string; at: string }>;
+
+/** `by` of an admission the waitlist made on its own (lib/share/moveUp.ts). */
+export const WAITLIST_BY = 'waitlist';
 
 export type ShareLinkDoc = {
   id: number;
@@ -44,6 +53,12 @@ export type ShareLinkDoc = {
   expiresAt?: string | null;
   blocked?: boolean | null;
   token?: string | null;
+  /** The page shows the 1–10 rating. */
+  rating?: boolean | null;
+  /** The page has a waitlist. */
+  waitlist?: boolean | null;
+  /** With the waitlist on: until then, someone moves up from it on their own when a spot frees up. */
+  waitlistUntil?: string | null;
 };
 
 export type HostRow = {
@@ -55,6 +70,12 @@ export type HostRow = {
   decision: HostDecision | null;
   /** Marked by us as a Coding for Change member. */
   member: boolean;
+  /** The host's 1–10 rating for the evening. */
+  score: number | null;
+  /** Place on the evening's waitlist (1 = next to move up), while on it. */
+  waitlist: number | null;
+  /** When they moved up from the waitlist on their own, while still admitted that way. */
+  movedUpAt: string | null;
 };
 
 type Block = {
@@ -64,7 +85,7 @@ type Block = {
   options?: { label?: string | null; value: string }[] | null;
 };
 
-type SubmissionDoc = {
+export type SubmissionDoc = {
   id: number;
   form: number | { id: number };
   createdAt: string;
@@ -73,6 +94,7 @@ type SubmissionDoc = {
   choiceKeys?: Record<string, string[]> | null;
   agreedTo?: { field: string }[] | null;
   hostDecisions?: HostDecisions | null;
+  language?: 'en' | 'de' | null;
 };
 
 /** Questions whose answers a host may see: the person's own words, not their contact data. */
@@ -123,7 +145,9 @@ const inScope = (scope: Scope, s: SubmissionDoc): boolean => {
   return [scope.options.en, scope.options.de].some((opts) => pickedKeys(answer, opts ?? []).includes(scope.evening.option));
 };
 
-const rowOf = (scope: Scope, s: SubmissionDoc, member = false): HostRow => {
+type Extras = { member?: boolean; score?: number | null; waitlist?: number | null };
+
+const rowOf = (scope: Scope, s: SubmissionDoc, extras: Extras = {}): HostRow => {
   const answers = new Map((s.submissionData ?? []).map((kv) => [kv.field, String(kv.value ?? '')]));
   const details: HostRow['details'] = [];
   for (const block of scope.fields) {
@@ -135,14 +159,18 @@ const rowOf = (scope: Scope, s: SubmissionDoc, member = false): HostRow => {
     details.push({ label, value: shown });
   }
   const name = [answers.get('firstName'), answers.get('lastName')].filter((x) => x?.trim()).join(' ').trim();
+  const decided = s.hostDecisions?.[scope.evening.option];
   return {
     id: s.id,
     name: name || `Registration ${s.id}`,
     registeredAt: s.createdAt,
     details,
     hasCv: (s.files ?? []).length > 0,
-    decision: s.hostDecisions?.[scope.evening.option]?.decision ?? null,
-    member,
+    decision: decided?.decision ?? null,
+    member: extras.member ?? false,
+    score: extras.score ?? null,
+    waitlist: extras.waitlist ?? null,
+    movedUpAt: decided?.decision === 'admitted' && decided.by === WAITLIST_BY ? decided.at : null,
   };
 };
 
@@ -167,16 +195,149 @@ async function registrationsOf(
   return { scope, docs: shown.filter((s) => !withdrawn.has(s.id)) };
 }
 
+/**
+ * What the share links of one evening say together – usually there is one.
+ * `rating`: some link shows the 1–10 scale, so the waitlist goes by it.
+ * `moveUpUntil`: the latest "Move up from the waitlist until" of a link with
+ * the waitlist on (null: off). Blocked links count for nothing.
+ */
+export async function eveningSettings(
+  payload: Payload,
+  option: string,
+  req?: PayloadRequest,
+): Promise<{ links: ShareLinkDoc[]; rating: boolean; moveUpUntil: Date | null }> {
+  const { docs } = await payload.find({
+    collection: 'share-links',
+    where: { option: { equals: option } },
+    depth: 0,
+    pagination: false,
+    overrideAccess: true,
+    req,
+  });
+  const links = (docs as unknown as ShareLinkDoc[]).filter((l) => !l.blocked);
+  const until = links
+    .filter((l) => l.waitlist === true)
+    .map((l) => (l.waitlistUntil ? new Date(l.waitlistUntil).getTime() : NaN))
+    .filter(Number.isFinite);
+  return {
+    links,
+    rating: links.some((l) => l.rating === true),
+    moveUpUntil: until.length ? new Date(Math.max(...until)) : null,
+  };
+}
+
+type Waiting = { id: number; position: number };
+
+/**
+ * The evening's waitlist, next to move up first: by the host's rating when the
+ * evening is rated (unrated last), then by position – where the host moved
+ * them since they were put on it, or else the moment they were – then first
+ * registered first.
+ */
+async function waitlistIn(
+  payload: Payload,
+  option: string,
+  docs: SubmissionDoc[],
+  scores: Map<number, number>,
+  rated: boolean,
+): Promise<Waiting[]> {
+  const waiting = docs.filter((s) => s.hostDecisions?.[option]?.decision === 'waitlisted');
+  const moved = await positionsOf(payload, option, waiting.map((s) => s.id));
+  const registered = new Map(docs.map((s) => [s.id, Date.parse(s.createdAt)]));
+  const score = (id: number) => (rated ? (scores.get(id) ?? 0) : 0);
+  return waiting
+    .map((s) => {
+      const since = s.hostDecisions![option].at;
+      const m = moved.get(s.id);
+      // A move from before they were (last) put on the waitlist no longer counts.
+      return { id: s.id, position: m && m.at >= since ? m.position : Date.parse(since) || 0 };
+    })
+    .sort(
+      (a, b) =>
+        score(b.id) - score(a.id) ||
+        a.position - b.position ||
+        (registered.get(a.id) ?? 0) - (registered.get(b.id) ?? 0) ||
+        a.id - b.id,
+    );
+}
+
+/** The registrations of the link's evening, their ratings and its waitlist in order. */
+async function standingOf(payload: Payload, link: ShareLinkDoc, req?: PayloadRequest) {
+  const found = await registrationsOf(payload, link, req);
+  if (!found) return null;
+  const option = found.scope.evening.option;
+  const [settings, scores] = await Promise.all([
+    eveningSettings(payload, option, req),
+    scoresOf(payload, option, found.docs.map((s) => s.id)),
+  ]);
+  const waitlist = await waitlistIn(payload, option, found.docs, scores, settings.rating);
+  return { ...found, settings, scores, waitlist };
+}
+
 /** Everyone registered for the link's evening, first come first. */
 export async function hostView(
   payload: Payload,
   link: ShareLinkDoc,
   req?: PayloadRequest,
-): Promise<{ evening: Evening; rows: HostRow[] } | null> {
-  const found = await registrationsOf(payload, link, req);
+): Promise<{ evening: Evening; rows: HostRow[]; moveUpUntil: Date | null } | null> {
+  const found = await standingOf(payload, link, req);
   if (!found) return null;
   const members = await membersAmong(payload, found.docs.map((s) => s.id));
-  return { evening: found.scope.evening, rows: found.docs.map((s) => rowOf(found.scope, s, members.has(s.id))) };
+  const place = new Map(found.waitlist.map((w, i) => [w.id, i + 1]));
+  return {
+    evening: found.scope.evening,
+    rows: found.docs.map((s) =>
+      rowOf(found.scope, s, { member: members.has(s.id), score: found.scores.get(s.id) ?? null, waitlist: place.get(s.id) ?? null }),
+    ),
+    moveUpUntil: found.settings.moveUpUntil,
+  };
+}
+
+/** After a change on the page: each person's decision and rating, and the waitlist in order. */
+export async function hostState(
+  payload: Payload,
+  link: ShareLinkDoc,
+  req?: PayloadRequest,
+): Promise<{ rows: Pick<HostRow, 'id' | 'decision' | 'score' | 'waitlist' | 'movedUpAt'>[] } | null> {
+  const view = await hostView(payload, link, req);
+  return view && { rows: view.rows.map(({ id, decision, score, waitlist, movedUpAt }) => ({ id, decision, score, waitlist, movedUpAt })) };
+}
+
+/**
+ * Move someone one place up or down the evening's waitlist. With the evening
+ * rated, only past someone with the same rating – the rating comes first.
+ * Writes the new order as positions 1, 2, 3 … for whoever's place changed,
+ * so someone put on the waitlist later still comes after them.
+ */
+export async function moveOnWaitlist(
+  payload: Payload,
+  link: ShareLinkDoc,
+  id: number,
+  direction: 'up' | 'down',
+  by: string,
+  req?: PayloadRequest,
+): Promise<'ok' | 'not-waitlisted' | 'edge' | 'rating'> {
+  const found = await standingOf(payload, link, req);
+  if (!found) return 'not-waitlisted';
+  const order = [...found.waitlist];
+  const i = order.findIndex((w) => w.id === id);
+  if (i === -1) return 'not-waitlisted';
+  const j = direction === 'up' ? i - 1 : i + 1;
+  if (j < 0 || j >= order.length) return 'edge';
+  if (found.settings.rating && (found.scores.get(order[i].id) ?? 0) !== (found.scores.get(order[j].id) ?? 0)) {
+    return 'rating';
+  }
+  [order[i], order[j]] = [order[j], order[i]];
+  const moves = order.map((w, k) => ({ id: w.id, position: k + 1 })).filter((m, k) => order[k].position !== m.position);
+  await setPositions(payload, found.scope.evening.option, moves, by);
+  return 'ok';
+}
+
+/** The next to move up from the link's evening's waitlist, or null when it is empty. */
+export async function nextOnWaitlist(payload: Payload, link: ShareLinkDoc): Promise<SubmissionDoc | null> {
+  const found = await standingOf(payload, link);
+  const first = found?.waitlist[0];
+  return (first && found.docs.find((s) => s.id === first.id)) || null;
 }
 
 /** Every CV on the link's list at once (the page's "Download CVs"), numbered as on the page. */

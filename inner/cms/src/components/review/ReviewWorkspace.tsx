@@ -22,6 +22,7 @@ import {
   choiceKeysOf,
   filesOf,
   formIdOf,
+  HOST_DECISION_LABELS,
   hostDecisionOf,
   personOf,
   SORTS,
@@ -69,6 +70,13 @@ type Props = { apiRoute: string; adminRoute: string };
 /** Per registration id, each evening given up or added back since: its newest state. */
 type EveningState = { withdrawn: boolean; at: string; by: string };
 type Evenings = Record<number, Record<string, EveningState>>;
+
+/** Per registration id and evening: the host's 1–10 rating, and a move up from the waitlist (/api/techtour/host-marks). */
+type MoveUp = { at: string; mailStatus: 'sent' | 'failed' | 'no-address'; mailError: string | null };
+type HostMarks = {
+  scores: Record<number, Record<string, number>>;
+  moves: Record<number, Record<string, MoveUp>>;
+};
 
 /** These two first, in this order; any other form after them, by title. */
 const FORM_ORDER = ['application', 'techtour'];
@@ -123,6 +131,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const [files, setFiles] = useState<Map<number, FileDoc>>(new Map());
   const [members, setMembers] = useState<Set<number>>(new Set());
   const [evenings, setEvenings] = useState<Evenings>({});
+  const [marks, setMarks] = useState<HostMarks>({ scores: {}, moves: {} });
   const [mails, setMails] = useState<PersonMail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -148,7 +157,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     setError(null);
     (async () => {
       try {
-        const [formDocs, subDocs, fileDocs, memberIds, withdrawn, sentMails] = await Promise.all([
+        const [formDocs, subDocs, fileDocs, memberIds, withdrawn, sentMails, hostMarks] = await Promise.all([
           fetchAll<FormDoc>(`${apiRoute}/forms?depth=0&locale=en`),
           fetchAll<Submission>(`${apiRoute}/form-submissions?depth=0&sort=-createdAt`),
           fetchAll<FileDoc>(`${apiRoute}/applicant-files?depth=0`),
@@ -164,6 +173,10 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
           fetch(`${apiRoute}/mailing/people`, { credentials: 'include' })
             .then(async (res) => (res.ok ? ((await res.json()) as { mails: PersonMail[] }).mails : []))
             .catch(() => [] as PersonMail[]),
+          // The hosts' ratings and the waitlist's moves – nice to have, too.
+          fetch(`${apiRoute}/techtour/host-marks`, { credentials: 'include' })
+            .then(async (res) => (res.ok ? ((await res.json()) as HostMarks) : { scores: {}, moves: {} }))
+            .catch((): HostMarks => ({ scores: {}, moves: {} })),
         ]);
         if (cancelled) return;
         setForms(formDocs);
@@ -172,6 +185,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
         setMembers(new Set(memberIds));
         setEvenings(withdrawn);
         setMails(sentMails);
+        setMarks(hostMarks);
       } catch (err) {
         if (!cancelled) setError(`Could not load the submissions (${(err as Error).message}).`);
       } finally {
@@ -251,6 +265,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     return {
       total: on.length,
       admitted: n('admitted'),
+      waitlisted: n('waitlisted'),
       declined: n('declined'),
       waiting: n(null),
       withdrew: picked.length - on.length,
@@ -590,7 +605,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const exportHref = form ? `${apiRoute}/submissions-export.xlsx?form=${encodeURIComponent(form.title)}` : undefined;
 
   const summary = hostCounts
-    ? `${hostCounts.total} registered for this evening · the host admitted ${hostCounts.admitted}, declined ${hostCounts.declined}, ${hostCounts.waiting} still open${hostCounts.withdrew ? ` · ${hostCounts.withdrew} withdrew` : ''}`
+    ? `${hostCounts.total} registered for this evening · the host admitted ${hostCounts.admitted}, waitlisted ${hostCounts.waitlisted}, declined ${hostCounts.declined}, ${hostCounts.waiting} still open${hostCounts.withdrew ? ` · ${hostCounts.withdrew} withdrew` : ''}`
     : `${scored} of ${inForm.length} scored · ${statusCounts.accepted ?? 0} accepted · ${statusCounts.unsure ?? 0} unsure · ${statusCounts.rejected ?? 0} rejected`;
 
   const statusOptions = (['all', 'unreviewed', ...DECISIONS.map((d) => d.value)] as StatusFilter[]).map((key) => ({
@@ -776,8 +791,11 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                     </span>
                   )}
                   {host && (
-                    <span className={`rv-badge rv-badge--${host}`} title={`The host ${host} this person`}>
-                      {host === 'admitted' ? 'Admitted' : 'Declined'}
+                    <span
+                      className={`rv-badge rv-badge--${host}`}
+                      title={host === 'waitlisted' ? 'The host put this person on the waitlist' : `The host ${host} this person`}
+                    >
+                      {HOST_DECISION_LABELS[host]}
                     </span>
                   )}
                   {members.has(s.id) && (
@@ -996,6 +1014,9 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                       const state = evenings[selected.id]?.[key];
                       const gaveUp = state?.withdrawn ? state.at : undefined;
                       const addedBack = state && !state.withdrawn ? state : undefined;
+                      const score = marks.scores[selected.id]?.[key];
+                      // Moved up on their own (lib/share/moveUp.ts) – and whether the mail went out.
+                      const moved = d?.decision === 'admitted' && d.by === 'waitlist' ? marks.moves[selected.id]?.[key] : undefined;
                       return (
                         <li key={key} className={`rv-hosts__row${gaveUp ? ' is-withdrawn' : ''}`}>
                           <span className="rv-hosts__evening">{label}</span>
@@ -1003,6 +1024,16 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                             {addedBack && (
                               <span className="rv-hosts__note">
                                 added back{addedBack.by === 'you' ? '' : ` by ${addedBack.by}`} · {day.format(new Date(addedBack.at))}
+                              </span>
+                            )}
+                            {score != null && (
+                              <span className="rv-badge rv-badge--score" title="The host's rating on its share link, 1–10">
+                                Host {score}/10
+                              </span>
+                            )}
+                            {moved && moved.mailStatus !== 'sent' && (
+                              <span className="rv-hosts__note rv-hosts__note--warn" title={moved.mailError ?? undefined}>
+                                {moved.mailStatus === 'no-address' ? 'no email address – tell them yourself' : 'mail failed – tell them yourself'}
                               </span>
                             )}
                             <span
@@ -1015,11 +1046,13 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                             >
                               {gaveUp
                                 ? `Withdrew · ${day.format(new Date(gaveUp))}`
-                                : d
-                                  ? `${d.decision === 'admitted' ? 'Admitted' : 'Declined'} · ${d.by} · ${day.format(new Date(d.at))}`
-                                  : shared
-                                    ? 'Waiting for the host'
-                                    : 'Not shared – no consent to pass it on'}
+                                : d?.by === 'waitlist'
+                                  ? `Moved up from the waitlist · ${day.format(new Date(d.at))}${moved?.mailStatus === 'sent' ? ' · mailed' : ''}`
+                                  : d
+                                    ? `${HOST_DECISION_LABELS[d.decision] ?? d.decision} · ${d.by} · ${day.format(new Date(d.at))}`
+                                    : shared
+                                      ? 'Waiting for the host'
+                                      : 'Not shared – no consent to pass it on'}
                             </span>
                             {/* A title, not Payload's tooltip: that one sticks out past the right edge. */}
                             {(gaveUp || addedBack) && (

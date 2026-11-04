@@ -2,7 +2,8 @@ import type { CollectionConfig } from 'payload';
 
 /**
  * What happened on the host share links (collections/ShareLinks.ts): who
- * signed in, which CV they opened, what they decided. Written only by
+ * signed in, which CV they opened, what they decided and rated, whom they
+ * moved on the waitlist. Written only by
  * endpoints/share.ts; read-only in the admin. Deleted together with its link.
  *
  * Holds the contact's email address and the id of the registration acted on –
@@ -17,6 +18,9 @@ export const SHARE_ACTIONS = [
   { label: 'Declined', value: 'declined' },
   { label: 'Decision undone', value: 'undone' },
   { label: 'Signed out', value: 'sign-out' },
+  { label: 'Put on the waitlist', value: 'waitlisted' },
+  { label: 'Rated (1–10)', value: 'rated' },
+  { label: 'Moved on the waitlist', value: 'moved' },
 ] as const;
 
 export type ShareAction = (typeof SHARE_ACTIONS)[number]['value'];
@@ -28,7 +32,7 @@ export const ShareAccessLog: CollectionConfig = {
     group: 'Forms',
     defaultColumns: ['createdAt', 'link', 'email', 'action', 'submission'],
     description:
-      'Every sign-in, CV opened and decision on a host share link. Written by the link itself; deleted together with the link.',
+      'Every sign-in, CV opened, decision and rating on a host share link. Written by the link itself; deleted together with the link.',
   },
   access: {
     read: ({ req: { user } }) => Boolean(user),
@@ -44,7 +48,7 @@ export const ShareAccessLog: CollectionConfig = {
       name: 'submission',
       type: 'number',
       label: 'Registration',
-      admin: { description: 'Id of the registration the CV or decision was about.' },
+      admin: { description: 'Id of the registration the CV, decision or rating was about.' },
     },
   ],
 };

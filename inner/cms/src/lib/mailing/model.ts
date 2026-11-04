@@ -166,6 +166,8 @@ export const SOURCES: Record<SourceKey, SourceDef> = {
       return [
         `${list(p.evening)} evening${list(p.evening) === 1 ? '' : 's'}`,
         list(p.admitted) ? `admitted to ${list(p.admitted)}` : '',
+        list(p.movedUp) ? `${list(p.movedUp)} from the waitlist` : '',
+        list(p.waitlisted) ? `waitlisted for ${list(p.waitlisted)}` : '',
         list(p.declined) ? `declined for ${list(p.declined)}` : '',
         p.member === true ? 'member' : '',
       ]
@@ -176,7 +178,9 @@ export const SOURCES: Record<SourceKey, SourceDef> = {
       { key: 'active', label: 'Still on an evening', kind: 'flag' },
       { key: 'evening', label: 'Registered for', kind: 'choice', options: [], dynamic: true },
       { key: 'admitted', label: 'Host admitted them to', kind: 'choice', options: [], dynamic: true },
+      { key: 'waitlisted', label: 'Host put them on the waitlist for', kind: 'choice', options: [], dynamic: true },
       { key: 'declined', label: 'Host declined them for', kind: 'choice', options: [], dynamic: true },
+      { key: 'movedUp', label: 'Moved up from the waitlist for', kind: 'choice', options: [], dynamic: true },
       { key: 'member', label: 'Coding for Change member', kind: 'flag' },
       LANGUAGE_FILTER,
     ],

@@ -553,13 +553,13 @@ export interface TechTourManageEvening {
     location: string | null;
     /** When it was given up; null while still registered. */
     withdrawnAt: string | null;
+    /** It can still be given up – false once the evening is over. */
+    open: boolean;
 }
 
 export interface TechTourManageView {
     name: string;
-    /** False once the deadline has passed: the page only shows. */
+    /** False once every evening is over: the page only shows. */
     open: boolean;
-    /** The first moment changes are no longer possible (ISO). */
-    until: string;
     evenings: TechTourManageEvening[];
 }

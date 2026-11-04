@@ -26,7 +26,9 @@ export interface TechTourManageProps {
  * /techtour/manage – the link in our mail to a TechTour registrant: the
  * evenings they registered for, as ticked boxes, and the one thing they can do
  * here – untick some and save. Never tick: a new evening means a new
- * registration. Until the deadline (`until`, from the CMS); after it, the
+ * registration. Each evening until it is over (`open`, from the CMS) – no
+ * deadline is named, the sooner the better: giving up an evening one was
+ * admitted to lets the next on its waitlist move up. Once all are over, the
  * same list without the button.
  *
  * Saving asks once more, naming the evenings, because the page cannot undo it:
@@ -73,15 +75,6 @@ const TechTourManage: React.FC<TechTourManageProps> = ({ token, initialView, ini
         );
     };
 
-    // "Sun 1 Nov": the day of the last minute changes were possible, in Munich.
-    const deadline = view
-        ? new Date(Date.parse(view.until) - 60_000).toLocaleDateString(dateLocale, {
-              weekday: 'short',
-              day: 'numeric',
-              month: 'short',
-              timeZone: 'Europe/Berlin',
-          })
-        : '';
     const open = Boolean(view?.open);
     const active = view?.evenings.filter((ev) => !ev.withdrawnAt) ?? [];
     const leaving = active.filter((ev) => unticked.has(ev.option));
@@ -107,8 +100,12 @@ const TechTourManage: React.FC<TechTourManageProps> = ({ token, initialView, ini
                 body: JSON.stringify({ token, withdraw: leaving.map((ev) => ev.option), locale }),
             });
             if (res.status === 403) {
-                // The deadline passed while the page was open.
-                setView((v) => v && { ...v, open: false });
+                // An evening ended while the page was open: show where things stand now.
+                const again = await fetch(
+                    `/api/techtour/manage?token=${encodeURIComponent(token)}&locale=${locale}`,
+                    { cache: 'no-store' }
+                );
+                if (again.ok) setView((await again.json()) as TechTourManageView);
                 setUnticked(new Set());
                 return;
             }
@@ -128,16 +125,17 @@ const TechTourManage: React.FC<TechTourManageProps> = ({ token, initialView, ini
         const date = ev.date ? new Date(ev.date) : null;
         const time = known(ev.time);
         const gone = ev.withdrawnAt ? new Date(ev.withdrawnAt) : null;
+        const over = !gone && !ev.open;
         return (
             <label
                 key={ev.option}
-                className={`lp-checkbox lp-checkbox--rich${gone ? ' ttm-row--gone' : ''}`}
+                className={`lp-checkbox lp-checkbox--rich${gone || over ? ' ttm-row--gone' : ''}`}
             >
                 <input
                     type="checkbox"
                     value={ev.option}
                     checked={!gone && !unticked.has(ev.option)}
-                    disabled={Boolean(gone) || !open || saving}
+                    disabled={Boolean(gone) || over || saving}
                     onChange={(e) => toggle(ev.option, e.target.checked)}
                 />
                 <span className="tta-ev">
@@ -156,6 +154,7 @@ const TechTourManage: React.FC<TechTourManageProps> = ({ token, initialView, ini
                                 )}
                             </span>
                         )}
+                        {over && <span className="tta-ev__badge">{m.over}</span>}
                     </span>
                     {date && !Number.isNaN(date.getTime()) && (
                         <span className="tta-ev__when">
@@ -228,7 +227,7 @@ const TechTourManage: React.FC<TechTourManageProps> = ({ token, initialView, ini
                                 {open ? (
                                     <>
                                         <p className="ttm-note">
-                                            {m.until.replace('{date}', deadline)} {m.onlyRemove}
+                                            {m.asap} {m.onlyRemove}
                                         </p>
                                         {confirming && leaving.length > 0 ? (
                                             <div className="ttm-confirm" role="alertdialog" aria-live="polite">
@@ -266,9 +265,7 @@ const TechTourManage: React.FC<TechTourManageProps> = ({ token, initialView, ini
                                         )}
                                     </>
                                 ) : (
-                                    <p className="ttm-note">
-                                        {withEmail(m.closed.replace('{date}', deadline))}
-                                    </p>
+                                    <p className="ttm-note">{withEmail(m.closed)}</p>
                                 )}
 
                                 {status === 'saved' && (

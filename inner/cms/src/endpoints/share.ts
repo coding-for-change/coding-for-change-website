@@ -6,16 +6,20 @@ import type { ShareAction } from '../collections/ShareAccessLog';
 import { buildShareCodeEmail } from '../lib/share/codeEmail';
 import { eveningOf } from '../lib/share/evening';
 import { sharePage, type PageInput } from '../lib/share/page';
+import { inTurn } from '../lib/share/moveUp';
 import {
   cvOf,
   decide,
   hostCvs,
+  hostState,
   hostView,
   isRecipient,
+  moveOnWaitlist,
   registrationInScope,
   type HostDecision,
   type ShareLinkDoc,
 } from '../lib/share/registrations';
+import { isScore, setScore } from '../lib/share/store';
 import {
   SHARE_COOKIE,
   checkCode,
@@ -35,10 +39,15 @@ import { zipSize, zipStream, type ZipEntry } from '../lib/share/zip';
  *   GET  /api/share/:token                    the page (sign-in, or the registrations)
  *   POST /api/share/:token/code               { email } → a code by mail, if listed
  *   POST /api/share/:token/verify             { email, code } → sign-in cookie
- *   POST /api/share/:token/decision           { submissions: [id…], decision: 'admitted' | 'declined' | null }
+ *   POST /api/share/:token/decision           { submissions: [id…], decision: 'admitted' | 'declined' | null }   ('waitlisted' on links with "Waitlist")
+ *   POST /api/share/:token/score              { submissions: [id…], score: 1–10 | null }   (links with "1–10 rating")
+ *   POST /api/share/:token/waitlist           { submission: id, direction: 'up' | 'down' }  (links with "Waitlist")
  *   GET  /api/share/:token/cv/:submission     the registration's CV (PDF)
  *   GET  /api/share/:token/cvs?show=…         every CV in that view of the list, as one ZIP
  *   POST /api/share/:token/sign-out
+ *
+ * The three POSTs that change the list answer with every row's decision,
+ * rating and place on the waitlist, as they are now (`hostState`).
  *
  * The site redirects /share/:token here (inner/next.config.ts), which is the
  * address the admin copies. Everything answers `no-store` and `noindex`.
@@ -136,6 +145,9 @@ const page: Endpoint = {
           expiresAt: ctx.expiresAt,
           email: ctx.email,
           rows: view.rows,
+          rating: ctx.link.rating === true,
+          waitlist: ctx.link.waitlist === true,
+          movingUp: view.moveUpUntil != null && view.moveUpUntil.getTime() > Date.now(),
         };
       }
     }
@@ -209,7 +221,16 @@ const verify: Endpoint = {
   },
 };
 
-const DECISIONS = new Set<HostDecision | null>(['admitted', 'declined', null]);
+const DECISIONS = new Set<HostDecision | null>(['admitted', 'waitlisted', 'declined', null]);
+
+const reloadPlease = () => json({ error: 'That did not work – please reload the page.' }, 400);
+
+const idsOf = (data: Record<string, unknown>) =>
+  (Array.isArray(data.submissions) ? data.submissions : []).map(Number).filter(Number.isInteger);
+
+/** Every row's decision, rating and place on the waitlist, after a change. */
+const state = async (req: PayloadRequest, link: ShareLinkDoc) =>
+  json((await hostState(req.payload, link, req)) ?? { rows: [] });
 
 const decision: Endpoint = {
   path: '/share/:token/decision',
@@ -218,20 +239,66 @@ const decision: Endpoint = {
     const ctx = await contextOf(req);
     if (ctx.state !== 'ok') return notUsable();
     if (!ctx.email) return signedOut();
+    const email = ctx.email;
     const data = await body(req);
     const value = (data.decision ?? null) as HostDecision | null;
-    const ids = (Array.isArray(data.submissions) ? data.submissions : []).map(Number).filter(Number.isInteger);
-    if (!DECISIONS.has(value) || ids.length === 0 || ids.length > 500) {
-      return json({ error: 'That did not work – please reload the page.' }, 400);
-    }
-    const decisions: Record<number, HostDecision | null> = {};
-    for (const id of ids) {
-      if (await decide(req.payload, ctx.link, id, value, ctx.email, req)) {
-        decisions[id] = value;
-        await log(req, ctx.link, ctx.email, value ?? 'undone', id);
+    const ids = idsOf(data);
+    if (!DECISIONS.has(value) || ids.length === 0 || ids.length > 500) return reloadPlease();
+    if (value === 'waitlisted' && ctx.link.waitlist !== true) return reloadPlease();
+    await inTurn(async () => {
+      for (const id of ids) {
+        if (await decide(req.payload, ctx.link, id, value, email, req)) {
+          await log(req, ctx.link, email, value ?? 'undone', id);
+        }
       }
-    }
-    return json({ decisions });
+    });
+    return state(req, ctx.link);
+  },
+};
+
+const score: Endpoint = {
+  path: '/share/:token/score',
+  method: 'post',
+  handler: async (req) => {
+    const ctx = await contextOf(req);
+    if (ctx.state !== 'ok') return notUsable();
+    if (!ctx.email) return signedOut();
+    if (ctx.link.rating !== true) return reloadPlease();
+    const data = await body(req);
+    const value = data.score ?? null;
+    const ids = idsOf(data);
+    if ((value !== null && !isScore(value)) || ids.length === 0 || ids.length > 500) return reloadPlease();
+    const inScope = [];
+    for (const id of ids) if (await registrationInScope(req.payload, ctx.link, id, req)) inScope.push(id);
+    await setScore(req.payload, ctx.link.option, inScope, value, ctx.email);
+    for (const id of inScope) await log(req, ctx.link, ctx.email, 'rated', id);
+    return state(req, ctx.link);
+  },
+};
+
+const MOVE_REFUSED = {
+  'not-waitlisted': 'This person is not on the waitlist any more – please reload the page.',
+  edge: 'Already at the end of the waitlist.',
+  rating: 'A higher rating stays above a lower one – change the rating to move past.',
+} as const;
+
+const waitlist: Endpoint = {
+  path: '/share/:token/waitlist',
+  method: 'post',
+  handler: async (req) => {
+    const ctx = await contextOf(req);
+    if (ctx.state !== 'ok') return notUsable();
+    if (!ctx.email) return signedOut();
+    if (ctx.link.waitlist !== true) return reloadPlease();
+    const email = ctx.email;
+    const data = await body(req);
+    const id = Number(data.submission);
+    const direction = data.direction;
+    if (!Number.isInteger(id) || (direction !== 'up' && direction !== 'down')) return reloadPlease();
+    const outcome = await inTurn(() => moveOnWaitlist(req.payload, ctx.link, id, direction, email, req));
+    if (outcome !== 'ok') return json({ error: MOVE_REFUSED[outcome] }, 409);
+    await log(req, ctx.link, email, 'moved', id);
+    return state(req, ctx.link);
   },
 };
 
@@ -272,8 +339,8 @@ const cv: Endpoint = {
   },
 };
 
-/** Who the page's filter shows – the same views as its All / Open / Admitted / Declined. */
-const VIEWS = new Set(['all', 'open', 'admitted', 'declined']);
+/** Who the page's filter shows – the same views as its All / Open / Admitted / Waitlist / Declined. */
+const VIEWS = new Set(['all', 'open', 'admitted', 'waitlisted', 'declined']);
 /** What a file name in the ZIP (or the ZIP's own) may not contain on any system. */
 const fileSafe = (s: string) => s.replace(/[\\/:*?"<>|\x00-\x1f]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 120);
 
@@ -350,4 +417,4 @@ const signOut: Endpoint = {
   },
 };
 
-export const shareEndpoints: Endpoint[] = [page, requestCode, verify, decision, cv, cvs, signOut];
+export const shareEndpoints: Endpoint[] = [page, requestCode, verify, decision, score, waitlist, cv, cvs, signOut];

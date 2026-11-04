@@ -862,7 +862,7 @@ export interface ApplicantFile {
   focalY?: number | null;
 }
 /**
- * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
+ * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person – with "Waitlist" ticked, also put them on a waitlist. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "share-links".
@@ -893,6 +893,18 @@ export interface ShareLink {
    * Stops the link at once (and anyone signed in). Untick to open it again.
    */
   blocked?: boolean | null;
+  /**
+   * Lets the contacts rate each person from 1 to 10 and sort by it (a waitlist then goes by the rating first). Only the contacts and we see it. Off: no rating on the page.
+   */
+  rating?: boolean | null;
+  /**
+   * Gives the contacts a third choice beside Admit and Decline – Waitlist – and the waitlist in the order people move up, with ↑/↓ to change it. Off: the page is the plain admit-or-decline list.
+   */
+  waitlist?: boolean | null;
+  /**
+   * Set it only once the first acceptance mails for this evening have gone out. Until then, whenever an admitted person gives the evening up through their own link, the first person on the waitlist is admitted at once and gets a mail with their own link. Empty or past: a freed spot stays open for the host.
+   */
+  waitlistUntil?: string | null;
   /**
    * The registration form – the one titled "techtour" unless you pick another.
    */
@@ -1105,7 +1117,7 @@ export interface Form {
   createdAt: string;
 }
 /**
- * Every sign-in, CV opened and decision on a host share link. Written by the link itself; deleted together with the link.
+ * Every sign-in, CV opened, decision and rating on a host share link. Written by the link itself; deleted together with the link.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "share-access-log".
@@ -1114,9 +1126,11 @@ export interface ShareAccessLog {
   id: number;
   link?: (number | null) | ShareLink;
   email?: string | null;
-  action?: ('code' | 'sign-in' | 'cv' | 'admitted' | 'declined' | 'undone' | 'sign-out') | null;
+  action?:
+    | ('code' | 'sign-in' | 'cv' | 'admitted' | 'declined' | 'undone' | 'sign-out' | 'waitlisted' | 'rated' | 'moved')
+    | null;
   /**
-   * Id of the registration the CV or decision was about.
+   * Id of the registration the CV, decision or rating was about.
    */
   submission?: number | null;
   updatedAt: string;
@@ -2137,6 +2151,9 @@ export interface ShareLinksSelect<T extends boolean = true> {
       };
   expiresAt?: T;
   blocked?: T;
+  rating?: T;
+  waitlist?: T;
+  waitlistUntil?: T;
   form?: T;
   token?: T;
   updatedAt?: T;

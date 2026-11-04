@@ -34,6 +34,7 @@ import { shareEndpoints } from './endpoints/share';
 import { manageEndpoints } from './endpoints/manage';
 import { memberEndpoints } from './endpoints/members';
 import { withdrawalEndpoints } from './endpoints/withdrawals';
+import { hostMarkEndpoints } from './endpoints/hostMarks';
 import { mailingEndpoints } from './endpoints/mailing';
 import {
   CheckboxGroupBlock,
@@ -58,6 +59,7 @@ import { brandApplicationEmails } from './lib/applicationEmail';
 import { manageTables } from './lib/manage/tables';
 import { memberTables } from './lib/members';
 import { mailingTables } from './lib/mailing/tables';
+import { hostTables } from './lib/share/tables';
 import { keepMailsOfDuplicates } from './lib/mailing/store';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -123,7 +125,7 @@ export default buildConfig({
   // token and an emailed sign-in code – see endpoints/share.ts. So is a
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
   // token alone – see endpoints/manage.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...mailingEndpoints],
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -281,10 +283,11 @@ export default buildConfig({
     // In production NODE_ENV is 'production' (set by next build), so this is false
     // and the Dockerfile runs `payload migrate` instead before starting.
     push: process.env.NODE_ENV !== 'production',
-    // The /techtour/manage tables, the member mark and the mailing tool –
-    // plain tables beside the collections, so that no existing table gets a
-    // column (lib/manage/tables.ts, lib/members.ts, lib/mailing/tables.ts).
-    afterSchemaInit: [manageTables, memberTables, mailingTables],
+    // The /techtour/manage tables, the member mark, the mailing tool and the
+    // host ratings and waitlist – plain tables beside the collections, so
+    // that no existing table gets a column (lib/manage/tables.ts,
+    // lib/members.ts, lib/mailing/tables.ts, lib/share/tables.ts).
+    afterSchemaInit: [manageTables, memberTables, mailingTables, hostTables],
     pool: {
       connectionString:
         process.env.DATABASE_URL ||

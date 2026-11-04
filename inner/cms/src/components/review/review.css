@@ -244,6 +244,12 @@ html[data-theme='dark'] .rv {
   color: var(--theme-error-750);
 }
 
+/* on the host's waitlist for the evening */
+.rv-badge--waitlisted {
+  --rv-badge-bg: var(--theme-warning-100);
+  color: var(--theme-warning-750);
+}
+
 /* an evening the person gave up through their own link */
 .rv-badge--withdrawn {
   --rv-badge-bg: transparent;
@@ -471,6 +477,11 @@ html[data-theme='dark'] .rv {
 .rv-hosts__note {
   font-size: 12px;
   color: var(--theme-elevation-500);
+}
+
+/* moved up from the waitlist, but the mail telling them did not go out */
+.rv-hosts__note--warn {
+  color: var(--theme-error-750);
 }
 
 /* answers */
