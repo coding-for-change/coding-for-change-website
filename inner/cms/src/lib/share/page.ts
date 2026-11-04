@@ -26,6 +26,11 @@ import type { HostRow } from './registrations';
  * With either on, keys help through a long list (shown under the CV): ↑/↓
  * next person, A / W / D decide, 1–9 and 0 (= 10) rate.
  *
+ * Someone who gave the evening up through their own link stays on the list,
+ * greyed out and marked "Cancelled" with the day and what the host had
+ * decided – a late cancellation shows instead of a name that silently went.
+ * Nothing can be decided on them, and their CV is not shared any more.
+ *
  * English only: the hosts are international teams; the registrations show
  * whatever language each person wrote in.
  */
@@ -124,6 +129,9 @@ ol.people { list-style:none; margin:0; padding:0; }
 .tag { display:inline-flex; align-items:center; padding:0 7px; border:1px solid var(--line); border-radius:999px; font-size:12px; font-weight:500; line-height:20px; white-space:nowrap; }
 .tag.wl { background:var(--wait-tint); border-color:var(--wait); color:var(--wait); }
 .tag.up { background:var(--yes-tint); border-color:var(--yes); color:var(--yes); }
+.tag.gone { background:var(--no-tint); border-color:var(--no); color:var(--no); }
+.person[data-decision="withdrawn"] .pick { color:var(--muted); text-decoration:line-through; }
+.person[data-decision="withdrawn"] .details { color:var(--muted); }
 .who small, .v-who small { display:block; color:var(--muted); font-size:13px; }
 .details { margin:4px 0 0; font-size:14px; color:var(--ink); }
 .details span { color:var(--muted); }
@@ -266,6 +274,7 @@ const SCRIPT = `
     $('#c-admitted').textContent = n('admitted');
     if (waiting) $('#c-waitlisted').textContent = n('waitlisted');
     $('#c-declined').textContent = n('declined');
+    const cw = $('#c-withdrawn'); if (cw) cw.textContent = n('withdrawn');
     const open = n('');
     $('#c-open').textContent = open;
     bulk.disabled = open === 0; bulk.dataset.armed = ''; bulk.textContent = 'Admit everyone still open';
@@ -344,7 +353,9 @@ const SCRIPT = `
     shown = current;
     const box = $('#v-body'), href = cvLink(current);
     const note = document.createElement('p'); note.className = 'v-empty';
-    note.textContent = href ? 'Loading the CV…' : 'No CV came with this registration.';
+    note.textContent = current.dataset.decision === 'withdrawn'
+      ? 'They gave this evening up – their CV is not shared any more.'
+      : href ? 'Loading the CV…' : 'No CV came with this registration.';
     box.replaceChildren(note);
     if (!href) return;
     // A new frame each time, so the CVs don't pile up in the back button's history.
@@ -369,6 +380,10 @@ const SCRIPT = `
     const vs = $('#v-score'); if (vs) vs.setAttribute('aria-label', 'Rating for ' + pick.textContent);
     const href = cvLink(row), open = $('#v-open');
     open.classList.toggle('hidden', !href); if (href) open.href = href;
+    // Nothing to decide on someone who gave the evening up.
+    const gone = row.dataset.decision === 'withdrawn';
+    $('#v-decide').classList.toggle('hidden', gone);
+    if (vs) vs.classList.toggle('hidden', gone);
     $('#v-head').classList.remove('hidden');
     sync(); load();
   };
@@ -379,6 +394,12 @@ const SCRIPT = `
   const apply = (state) => {
     (state.rows || []).forEach((s) => {
       const row = $('.person[data-id="' + s.id + '"]'); if (!row) return;
+      // Gave the evening up (maybe while this page was open): nothing to show but that.
+      if (s.withdrawnAt || row.dataset.decision === 'withdrawn') {
+        row.dataset.decision = 'withdrawn';
+        $$('.decide button, select.score, .order button', row).forEach((el) => (el.disabled = true));
+        return;
+      }
       row.dataset.decision = s.decision || '';
       row.dataset.score = s.score == null ? '' : String(s.score);
       row.dataset.waitlist = s.waitlist == null ? '' : String(s.waitlist);
@@ -459,7 +480,7 @@ const SCRIPT = `
     const row = keyed && side() ? current : e.target.closest && e.target.closest('.person');
     if (!row) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); step(row, e.key === 'ArrowDown' ? 1 : -1); return; }
-    if (!keyed) return;
+    if (!keyed || row.dataset.decision === 'withdrawn') return;
     const d = (waiting ? { a: 'admitted', w: 'waitlisted', d: 'declined' } : { a: 'admitted', d: 'declined' })[e.key.toLowerCase()];
     if (d) { e.preventDefault(); if (row.dataset.decision !== d) decideTo(row, d); return; }
     if (rated && /^[0-9]$/.test(e.key)) { e.preventDefault(); rate(row, e.key === '0' ? 10 : Number(e.key)); }
@@ -506,6 +527,12 @@ const scoreMenu = (score: number | null, attrs: string) =>
   `<select class="score${score ? ' set' : ''}" ${attrs}><option value="">–</option>${Array.from({ length: 10 }, (_, i) => i + 1)
     .map((n) => `<option value="${n}"${n === score ? ' selected' : ''}>${n}</option>`)
     .join('')}</select>`;
+
+const WAS: Record<string, string> = { admitted: 'had been admitted', waitlisted: 'was on the waitlist', declined: 'had been declined' };
+
+/** "Cancelled · Thu 5 Nov" – gave the evening up through their own link. */
+const goneTag = (at: string) =>
+  `<span class="tag gone" title="Gave the evening up through their own link on ${esc(fmtDay.format(new Date(at)))}">Cancelled · ${esc(fmtDay.format(new Date(at)))}</span>`;
 
 /** "Waitlist #2", or "From the waitlist" for someone who moved up on their own. */
 const tagOf = (r: HostRow) =>
@@ -608,25 +635,32 @@ export function sharePage(input: PageInput): string {
   }
 
   const x: Extras = { rating: input.rating, waitlist: input.waitlist };
+  const active = input.rows.filter((r) => !r.withdrawnAt).length;
+  const cancelled = input.rows.length - active;
   const rows = input.rows
-    .map(
-      (r, i) => `<li class="person" data-id="${r.id}" data-n="${i + 1}" data-decision="${r.decision ?? ''}"${x.rating ? ` data-score="${r.score ?? ''}"` : ''}${x.waitlist ? ` data-waitlist="${r.waitlist ?? ''}"` : ''}>
-  <span class="n">${i + 1}</span>
-  <div class="who">
-    <div class="name"><button type="button" class="pick" aria-controls="viewer">${esc(r.name)}</button>${r.member ? MEMBER_BADGE : ''}${x.waitlist ? tagOf(r) : ''}</div>
-    <small>registered ${esc(fmtDay.format(new Date(r.registeredAt)))}${r.hasCv ? '' : '<span class="nocv"> · no CV</span>'}</small>
-    ${r.details.length ? `<p class="details">${r.details.map((d) => `<span>${esc(d.label)}:</span> ${esc(d.value)}`).join(' · ')}</p>` : ''}
-  </div>
-  <div class="act">${x.waitlist ? `\n    ${ORDER_BUTTONS}` : ''}${
-    x.rating ? `\n    ${scoreMenu(r.score, `aria-label="Rating for ${esc(r.name)}" title="Rating, 1–10"`)}` : ''
-  }
+    .map((r, i) => {
+      const was = r.withdrawnAt && r.decision ? ` · ${WAS[r.decision]}` : '';
+      const tag = r.withdrawnAt ? goneTag(r.withdrawnAt) : x.waitlist ? tagOf(r) : '';
+      const act = r.withdrawnAt
+        ? ''
+        : `${x.waitlist ? `\n    ${ORDER_BUTTONS}` : ''}${
+            x.rating ? `\n    ${scoreMenu(r.score, `aria-label="Rating for ${esc(r.name)}" title="Rating, 1–10"`)}` : ''
+          }
     ${r.hasCv ? `<a class="cv" href="${base}/cv/${r.id}" target="_blank" rel="noopener">CV ↗</a>` : '<span class="cv none">No CV</span>'}
     <div class="decide" role="group" aria-label="Decision for ${esc(r.name)}">
       ${decideButtons(r.decision, x)}
     </div>
+  `;
+      return `<li class="person" data-id="${r.id}" data-n="${i + 1}" data-decision="${r.withdrawnAt ? 'withdrawn' : (r.decision ?? '')}"${x.rating ? ` data-score="${r.score ?? ''}"` : ''}${x.waitlist ? ` data-waitlist="${r.waitlist ?? ''}"` : ''}>
+  <span class="n">${i + 1}</span>
+  <div class="who">
+    <div class="name"><button type="button" class="pick" aria-controls="viewer">${esc(r.name)}</button>${r.member ? MEMBER_BADGE : ''}${tag}</div>
+    <small>registered ${esc(fmtDay.format(new Date(r.registeredAt)))}${was}${r.hasCv || r.withdrawnAt ? '' : '<span class="nocv"> · no CV</span>'}</small>
+    ${r.details.length ? `<p class="details">${r.details.map((d) => `<span>${esc(d.label)}:</span> ${esc(d.value)}`).join(' · ')}</p>` : ''}
   </div>
-</li>`,
-    )
+  <div class="act">${act}</div>
+</li>`;
+    })
     .join('\n');
   const rules = `<strong>Please use these registrations only to decide who joins your evening and to prepare it</strong> (for example access to your building), and delete any CVs you downloaded once the evening is over. Your decisions reach us right away – we let everyone know. Questions: <a href="mailto:${esc(input.contactEmail)}">${esc(input.contactEmail)}</a>`;
   const extrasNote = [
@@ -653,11 +687,13 @@ export function sharePage(input: PageInput): string {
 <section class="card" aria-label="Registrations">
   <div class="bar">
     <div class="counts">
-      <div class="count"><b>${input.rows.length}</b><span>registered</span></div>
+      <div class="count"><b>${active}</b><span>registered</span></div>
       <div class="count"><b id="c-admitted">0</b><span>admitted</span></div>${
         x.waitlist ? '\n      <div class="count"><b id="c-waitlisted">0</b><span>waitlist</span></div>' : ''
       }
-      <div class="count"><b id="c-declined">0</b><span>declined</span></div>
+      <div class="count"><b id="c-declined">0</b><span>declined</span></div>${
+        cancelled ? '\n      <div class="count"><b id="c-withdrawn">0</b><span>cancelled</span></div>' : ''
+      }
       <div class="count"><b id="c-open">0</b><span>still open</span></div>
     </div>
     <button type="button" id="admit-open">Admit everyone still open</button>
@@ -670,7 +706,9 @@ export function sharePage(input: PageInput): string {
         <button type="button" data-filter="admitted" aria-pressed="false">Admitted</button>${
           x.waitlist ? '\n        <button type="button" data-filter="waitlisted" aria-pressed="false">Waitlist</button>' : ''
         }
-        <button type="button" data-filter="declined" aria-pressed="false">Declined</button>
+        <button type="button" data-filter="declined" aria-pressed="false">Declined</button>${
+          cancelled ? '\n        <button type="button" data-filter="withdrawn" aria-pressed="false">Cancelled</button>' : ''
+        }
       </div>${
         x.rating
           ? `

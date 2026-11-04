@@ -1,6 +1,6 @@
 import type { Payload, PayloadRequest } from 'payload';
 import { pickedKeys } from '../choiceKeys';
-import { withdrawnFrom } from '../manage/store';
+import { withdrawalsOf, withdrawnFrom } from '../manage/store';
 import { membersAmong } from '../members';
 import { consentedToSharing } from '../sharingConsent';
 import { eveningOf, eveningsFieldOf, type Evening } from './evening';
@@ -20,10 +20,13 @@ import { positionsOf, scoresOf, setPositions } from './store';
  * before the box existed, or posted around the form) is not shown, cannot be
  * decided on, and its CV cannot be opened through the link.
  *
- * Nor is anyone who gave the evening up through their own link
- * (/techtour/manage, lib/manage/store.ts) – unless we added it back in the
- * admin: the registration still carries the evening, the withdrawal is a row
- * of its own, and it is left out here.
+ * Someone who gave the evening up through their own link (/techtour/manage,
+ * lib/manage/store.ts) stays on the list, greyed out, with the day they gave
+ * it up and what the host had decided – so a host sees a late cancellation
+ * instead of a name that silently went. Only their name and answers, no CV,
+ * and nothing can be decided on them any more – unless we added the evening
+ * back in the admin. The registration still carries the evening; the
+ * withdrawal is a row of its own.
  *
  * Whom we marked as a Coding for Change member (lib/members.ts) carries a
  * "Member" badge – the mark, not anything from a membership application.
@@ -76,6 +79,8 @@ export type HostRow = {
   waitlist: number | null;
   /** When they moved up from the waitlist on their own, while still admitted that way. */
   movedUpAt: string | null;
+  /** When they gave the evening up through their own link; `decision` is then what the host had decided. */
+  withdrawnAt: string | null;
 };
 
 type Block = {
@@ -145,7 +150,7 @@ const inScope = (scope: Scope, s: SubmissionDoc): boolean => {
   return [scope.options.en, scope.options.de].some((opts) => pickedKeys(answer, opts ?? []).includes(scope.evening.option));
 };
 
-type Extras = { member?: boolean; score?: number | null; waitlist?: number | null };
+type Extras = { member?: boolean; score?: number | null; waitlist?: number | null; withdrawnAt?: string | null };
 
 const rowOf = (scope: Scope, s: SubmissionDoc, extras: Extras = {}): HostRow => {
   const answers = new Map((s.submissionData ?? []).map((kv) => [kv.field, String(kv.value ?? '')]));
@@ -171,6 +176,7 @@ const rowOf = (scope: Scope, s: SubmissionDoc, extras: Extras = {}): HostRow => 
     score: extras.score ?? null,
     waitlist: extras.waitlist ?? null,
     movedUpAt: decided?.decision === 'admitted' && decided.by === WAITLIST_BY ? decided.at : null,
+    withdrawnAt: extras.withdrawnAt ?? null,
   };
 };
 
@@ -178,7 +184,13 @@ async function registrationsOf(
   payload: Payload,
   link: ShareLinkDoc,
   req?: PayloadRequest,
-): Promise<{ scope: Scope; docs: SubmissionDoc[] } | null> {
+): Promise<{
+  scope: Scope;
+  /** Still on the evening – the ones the host can act on. */
+  docs: SubmissionDoc[];
+  /** Everyone, first registered first, with when they gave the evening up (null: still on it). */
+  all: { doc: SubmissionDoc; withdrawnAt: string | null }[];
+} | null> {
   const scope = await scopeOf(payload, link, req);
   if (!scope) return null;
   const { docs } = await payload.find({
@@ -191,8 +203,9 @@ async function registrationsOf(
     req,
   });
   const shown = (docs as unknown as SubmissionDoc[]).filter((s) => inScope(scope, s));
-  const withdrawn = await withdrawnFrom(payload, scope.evening.option, shown.map((s) => s.id));
-  return { scope, docs: shown.filter((s) => !withdrawn.has(s.id)) };
+  const gaveUp = await withdrawalsOf(payload, shown.map((s) => s.id));
+  const all = shown.map((doc) => ({ doc, withdrawnAt: gaveUp.get(doc.id)?.get(scope.evening.option) ?? null }));
+  return { scope, docs: all.filter((e) => !e.withdrawnAt).map((e) => e.doc), all };
 }
 
 /**
@@ -282,12 +295,17 @@ export async function hostView(
 ): Promise<{ evening: Evening; rows: HostRow[]; moveUpUntil: Date | null } | null> {
   const found = await standingOf(payload, link, req);
   if (!found) return null;
-  const members = await membersAmong(payload, found.docs.map((s) => s.id));
+  const members = await membersAmong(payload, found.all.map((e) => e.doc.id));
   const place = new Map(found.waitlist.map((w, i) => [w.id, i + 1]));
   return {
     evening: found.scope.evening,
-    rows: found.docs.map((s) =>
-      rowOf(found.scope, s, { member: members.has(s.id), score: found.scores.get(s.id) ?? null, waitlist: place.get(s.id) ?? null }),
+    rows: found.all.map(({ doc: s, withdrawnAt }) =>
+      rowOf(found.scope, s, {
+        member: members.has(s.id),
+        score: found.scores.get(s.id) ?? null,
+        waitlist: place.get(s.id) ?? null,
+        withdrawnAt,
+      }),
     ),
     moveUpUntil: found.settings.moveUpUntil,
   };
@@ -298,9 +316,13 @@ export async function hostState(
   payload: Payload,
   link: ShareLinkDoc,
   req?: PayloadRequest,
-): Promise<{ rows: Pick<HostRow, 'id' | 'decision' | 'score' | 'waitlist' | 'movedUpAt'>[] } | null> {
+): Promise<{ rows: Pick<HostRow, 'id' | 'decision' | 'score' | 'waitlist' | 'movedUpAt' | 'withdrawnAt'>[] } | null> {
   const view = await hostView(payload, link, req);
-  return view && { rows: view.rows.map(({ id, decision, score, waitlist, movedUpAt }) => ({ id, decision, score, waitlist, movedUpAt })) };
+  return (
+    view && {
+      rows: view.rows.map(({ id, decision, score, waitlist, movedUpAt, withdrawnAt }) => ({ id, decision, score, waitlist, movedUpAt, withdrawnAt })),
+    }
+  );
 }
 
 /**
@@ -340,7 +362,7 @@ export async function nextOnWaitlist(payload: Payload, link: ShareLinkDoc): Prom
   return (first && found.docs.find((s) => s.id === first.id)) || null;
 }
 
-/** Every CV on the link's list at once (the page's "Download CVs"), numbered as on the page. */
+/** Every CV on the link's list at once (the page's "Download CVs"), numbered as on the page – not of those who gave the evening up. */
 export async function hostCvs(
   payload: Payload,
   link: ShareLinkDoc,
@@ -349,8 +371,8 @@ export async function hostCvs(
   const found = await registrationsOf(payload, link, req);
   return (
     found &&
-    found.docs.flatMap((s, i) => {
-      const file = cvOf(s);
+    found.all.flatMap(({ doc: s, withdrawnAt }, i) => {
+      const file = withdrawnAt ? null : cvOf(s);
       return file == null ? [] : [{ n: i + 1, row: rowOf(found.scope, s), file }];
     })
   );
