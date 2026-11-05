@@ -48,6 +48,7 @@ import * as migration_20261031_200855_techtour_members from './20261031_200855_t
 import * as migration_20261031_220858_techtour_evening_changes from './20261031_220858_techtour_evening_changes';
 import * as migration_20261101_112637_mailing_tables from './20261101_112637_mailing_tables';
 import * as migration_20261104_144516_host_rating_waitlist from './20261104_144516_host_rating_waitlist';
+import * as migration_20261105_122506_techtour_todos from './20261105_122506_techtour_todos';
 
 export const migrations = [
   {
@@ -298,6 +299,11 @@ export const migrations = [
   {
     up: migration_20261104_144516_host_rating_waitlist.up,
     down: migration_20261104_144516_host_rating_waitlist.down,
-    name: '20261104_144516_host_rating_waitlist'
+    name: '20261104_144516_host_rating_waitlist',
+  },
+  {
+    up: migration_20261105_122506_techtour_todos.up,
+    down: migration_20261105_122506_techtour_todos.down,
+    name: '20261105_122506_techtour_todos',
   },
 ];

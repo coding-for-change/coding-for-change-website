@@ -1,6 +1,7 @@
 import type { Endpoint } from 'payload';
 import ExcelJS from 'exceljs';
 import { requireAdmin } from './util';
+import { confirmationsOf } from '../lib/manage/confirmations';
 import { withdrawalsOf } from '../lib/manage/store';
 import { REVIEW_STATUSES } from '../fields/review';
 import type { ApplicantFile, Form, FormSubmission } from '../payload-types';
@@ -65,6 +66,10 @@ function questionsOf(form: Form): { name: string; label: string; wide: boolean }
 
 const yesNo = (v: string) => (v === 'true' ? 'yes' : v === 'false' ? 'no' : v);
 
+/** "2026-11-05 14:03", Munich time. */
+const berlinStamp = (iso: string): string =>
+  new Date(iso).toLocaleString('sv-SE', { timeZone: 'Europe/Berlin', dateStyle: 'short', timeStyle: 'short' });
+
 export const submissionsExport: Endpoint = {
   path: '/submissions-export.xlsx',
   method: 'get',
@@ -124,6 +129,7 @@ export const submissionsExport: Endpoint = {
       { header: 'Agreed to (wording version)', key: 'agreedTo', width: 36 },
       { header: 'Host decisions', key: 'hostDecisions', width: 40 },
       { header: 'Withdrew from', key: 'withdrew', width: 36 },
+      { header: 'Confirmed', key: 'confirmed', width: 48 },
       { header: 'Source', key: 'source', width: 16 },
       { header: 'Channel', key: 'channel', width: 14 },
       { header: 'Landing page', key: 'landingPath', width: 20 },
@@ -136,6 +142,7 @@ export const submissionsExport: Endpoint = {
       if (block.blockType === 'checkboxGroup') for (const o of block.options ?? []) optionLabels.set(o.value, o.label || o.value);
     }
     const withdrawals = await withdrawalsOf(req.payload, subs.map((s) => s.id));
+    const confirmations = await confirmationsOf(req.payload, subs.map((s) => s.id));
     for (const s of subs) {
       const row: Record<string, unknown> = {
         createdAt: new Date(s.createdAt),
@@ -159,6 +166,10 @@ export const submissionsExport: Endpoint = {
           .join('\n'),
         withdrew: [...(withdrawals.get(s.id) ?? [])]
           .map(([key, at]) => `${optionLabels.get(key) ?? key} (${at.slice(0, 10)})`)
+          .join('\n'),
+        // The to-dos ticked on /techtour/manage, with the wording as confirmed.
+        confirmed: (confirmations.get(s.id) ?? [])
+          .map((c) => `${optionLabels.get(c.option) ?? c.option} (${berlinStamp(c.at)}): ${c.text}`)
           .join('\n'),
         source: s.attribution?.source ?? '',
         channel: s.attribution?.channel ?? '',

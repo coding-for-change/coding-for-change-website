@@ -270,17 +270,31 @@ export interface Translations {
         attendAsk: string;
     };
     /**
-     * /techtour/manage – a registrant's own link from our mail, to give up
-     * evenings (never add one) until the deadline. {date} is the deadline's
-     * day, {email} our contact address, {list} the evenings being given up.
+     * /techtour/manage – a registrant's own link from our mail: per evening
+     * whether they are in, the host's to-dos, and giving an evening up (never
+     * adding one) until it is over. {date} is a day, {email} our contact
+     * address, {name} the evening's company.
      */
     techtourManage: {
         title: string; intro: string; named: string; legend: string;
-        asap: string; onlyRemove: string; closed: string;
-        withdrawnOn: string; over: string; save: string; saving: string;
-        confirm: string; confirmYes: string; cancel: string;
+        asap: string; onlyRemove: string; closed: string; none: string;
+        withdrawnOn: string; over: string;
+        stateIn: string; stateInNothing: string;
+        stateWaitlist: string; stateWaitlistHint: string;
+        stateOpen: string; stateOpenHint: string;
+        todosHead: string; todosDone: string; todoDoneOn: string; openLink: string;
+        confirmTodos: string; todosSaved: string;
+        withdraw: string; confirm: string; confirmYes: string; cancel: string; saving: string;
         saved: string; allGone: string;
         invalid: string; sample: string; error: string;
+    };
+    /**
+     * /techtour/mckinsey-nda – McKinsey's confidentiality agreement for its
+     * evening, linked from the to-do on /techtour/manage. Only the page's own
+     * lines live here; the agreement itself is data/mckinseyNda.ts.
+     */
+    techtourNda: {
+        kicker: string; title: string; lead: string; versions: string; german: string; english: string;
     };
     aboutPage: {
         valuesTitle: string;
@@ -744,24 +758,45 @@ const en: Translations = {
     },
     techtourManage: {
         title: 'Your Tech Tour evenings',
-        intro: 'These are the evenings you registered for. Can’t make one? Untick it, so someone else can take your place.',
+        intro: 'For each evening you can see here whether you’re in and whether there’s anything left to do. Can’t make one? Withdraw, so someone else can take your place.',
         named: 'Registered as {name}',
         legend: 'Your evenings',
-        asap: 'Please let us know as early as possible – the sooner you give an evening up, the better the chance someone from the waitlist can still come.',
-        onlyRemove: 'You can only give up evenings here, not add new ones.',
+        asap: 'Please let us know as early as possible – the sooner you withdraw, the better the chance someone from the waitlist can still come.',
+        onlyRemove: 'You can’t add new evenings here.',
         closed: 'Your evenings are over – there is nothing left to change here. Questions? Write to us at {email}.',
-        withdrawnOn: 'Given up on {date}',
+        none: 'There’s nothing here for you at the moment. Questions? Write to us at {email}.',
+        withdrawnOn: 'Withdrawn on {date}',
         over: 'Already over',
-        save: 'Save changes',
-        saving: 'Saving…',
-        confirm: 'Give up {list}? This can’t be undone here.',
-        confirmYes: 'Yes, give up',
+        stateIn: 'You’re in',
+        stateInNothing: 'Nothing else to do – see you there!',
+        stateWaitlist: 'Waitlist',
+        stateWaitlistHint: 'We’ll email you if a spot opens up.',
+        stateOpen: 'Not decided yet',
+        stateOpenHint: 'We’ll email you as soon as it’s decided.',
+        todosHead: '{name} needs this from you before the evening:',
+        todosDone: 'All done – thank you!',
+        todoDoneOn: 'Done on {date}',
+        openLink: 'Open link',
+        confirmTodos: 'Confirm',
+        todosSaved: 'Saved – thank you!',
+        withdraw: 'Withdraw',
+        confirm: 'Withdraw from the evening at {name}? This can’t be undone here.',
+        confirmYes: 'Yes, withdraw',
         cancel: 'Cancel',
-        saved: 'Saved – you are no longer registered for the evenings you unticked.',
-        allGone: 'You have given up all your evenings. Thanks for letting us know!',
+        saving: 'Saving…',
+        saved: 'Done – you’ve withdrawn from this evening. Thanks for letting us know!',
+        allGone: 'You have withdrawn from all your evenings. Thanks for letting us know!',
         invalid: 'This link doesn’t work. Please use the link from our email, or write to us at {email}.',
         sample: 'This is the sample link from a test mail – each recipient sees their own registration here.',
         error: 'That didn’t work. Please try again, or write to us at {email}.',
+    },
+    techtourNda: {
+        kicker: 'Tech Tour · McKinsey QuantumBlack',
+        title: 'Confidentiality agreement',
+        lead: 'McKinsey asks everyone coming to its Tech Tour evening to accept this agreement. You do that with the tick box on your own Tech Tour page – the link in our email.',
+        versions: 'Read in',
+        german: 'German',
+        english: 'English (applies)',
     },
     aboutPage: {
         valuesTitle: 'What we care about',
@@ -1237,24 +1272,46 @@ const de: Translations = {
     },
     techtourManage: {
         title: 'Deine Tech-Tour-Abende',
-        intro: 'Für diese Abende hast du dich angemeldet. Du kannst an einem nicht? Nimm den Haken raus, dann kann jemand anderes nachrücken.',
+        intro: 'Hier siehst du für jeden Abend, ob du dabei bist und ob noch etwas zu tun ist. Du kannst an einem nicht? Sag ab, dann kann jemand anderes nachrücken.',
         named: 'Angemeldet als {name}',
         legend: 'Deine Abende',
-        asap: 'Gib bitte so früh wie möglich Bescheid – je eher du dich abmeldest, desto eher kann jemand von der Warteliste noch nachrücken.',
-        onlyRemove: 'Hier kannst du dich nur von Abenden abmelden, keine neuen hinzufügen.',
+        asap: 'Gib bitte so früh wie möglich Bescheid – je eher du absagst, desto eher kann jemand von der Warteliste noch nachrücken.',
+        onlyRemove: 'Neue Abende kannst du hier nicht hinzufügen.',
         closed: 'Deine Abende sind vorbei – hier gibt es nichts mehr zu ändern. Fragen? Schreib uns an {email}.',
-        withdrawnOn: 'Abgemeldet am {date}',
+        none: 'Hier steht für dich gerade nichts an. Fragen? Schreib uns an {email}.',
+        withdrawnOn: 'Abgesagt am {date}',
         over: 'Schon vorbei',
-        save: 'Änderungen speichern',
-        saving: 'Wird gespeichert …',
-        confirm: 'Von {list} abmelden? Das lässt sich hier nicht rückgängig machen.',
-        confirmYes: 'Ja, abmelden',
+        stateIn: 'Du bist dabei',
+        stateInNothing: 'Du musst nichts weiter tun – bis bald!',
+        stateWaitlist: 'Warteliste',
+        stateWaitlistHint: 'Wir schreiben dir, wenn ein Platz frei wird.',
+        stateOpen: 'Noch nicht entschieden',
+        stateOpenHint: 'Wir schreiben dir, sobald es entschieden ist.',
+        todosHead: '{name} braucht vor dem Abend noch Folgendes von dir:',
+        todosDone: 'Alles erledigt – danke!',
+        todoDoneOn: 'Erledigt am {date}',
+        openLink: 'Link öffnen',
+        confirmTodos: 'Bestätigen',
+        todosSaved: 'Gespeichert – danke!',
+        withdraw: 'Absagen',
+        confirm: 'Für den Abend bei {name} absagen? Das lässt sich hier nicht rückgängig machen.',
+        confirmYes: 'Ja, absagen',
         cancel: 'Abbrechen',
-        saved: 'Gespeichert – für die abgewählten Abende bist du nicht mehr angemeldet.',
-        allGone: 'Du hast dich von allen Abenden abgemeldet. Danke, dass du Bescheid gibst!',
+        saving: 'Wird gespeichert …',
+        saved: 'Erledigt – du hast für diesen Abend abgesagt. Danke, dass du Bescheid gibst!',
+        allGone: 'Du hast für alle deine Abende abgesagt. Danke, dass du Bescheid gibst!',
         invalid: 'Dieser Link funktioniert nicht. Nutz bitte den Link aus unserer E-Mail oder schreib uns an {email}.',
         sample: 'Das ist der Beispiel-Link aus einer Test-Mail – alle Empfänger:innen sehen hier ihre eigene Anmeldung.',
         error: 'Das hat nicht geklappt. Versuch es bitte noch einmal oder schreib uns an {email}.',
+    },
+    techtourNda: {
+        kicker: 'Tech Tour · McKinsey QuantumBlack',
+        // Soft hyphen: on a phone the word breaks at the joint, nowhere else.
+        title: 'Vertraulichkeits\u00ADerklärung',
+        lead: 'McKinsey bittet alle, die zu seinem Tech-Tour-Abend kommen, diese Erklärung zu akzeptieren. Das machst du mit dem Haken auf deiner eigenen Tech-Tour-Seite – dem Link aus unserer E-Mail.',
+        versions: 'Lesen auf',
+        german: 'Deutsch',
+        english: 'Englisch (verbindlich)',
     },
     aboutPage: {
         valuesTitle: 'Worauf es uns ankommt',

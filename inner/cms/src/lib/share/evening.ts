@@ -21,7 +21,12 @@ export type Evening = {
   title: string | null;
   time: string | null;
   location: string | null;
+  /** What the host needs from admitted people beforehand (TechTour → To-dos), in `locale`. */
+  todos: EveningTodo[];
 };
+
+/** One to-do of an evening; `id` is its row id in the TechTour global. */
+export type EveningTodo = { id: string; text: string; linkUrl: string | null; linkLabel: string | null };
 
 type Block = {
   blockType: string;
@@ -36,6 +41,13 @@ type TechTourEvent = {
   title?: string | null;
   time?: string | null;
   location?: string | null;
+  todos?: { id?: string | null; text?: string | null; linkUrl?: string | null; linkLabel?: string | null }[] | null;
+};
+
+/** A to-do's link as the page may open it: https://…, http://… or a path on our site; anything else is dropped. */
+const safeLink = (raw: string | null | undefined): string | null => {
+  const url = (raw ?? '').trim();
+  return /^(https?:\/\/|\/(?!\/))/i.test(url) ? url : null;
 };
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -106,6 +118,12 @@ export async function eveningOf(
     title: event?.title?.trim() || null,
     time: event?.time?.trim() || null,
     location: event?.location?.trim() || null,
+    // A to-do without wording is a row left half-filled in the admin: skipped.
+    todos: (event?.todos ?? []).flatMap((t) =>
+      t.id && t.text?.trim()
+        ? [{ id: t.id, text: t.text.trim(), linkUrl: safeLink(t.linkUrl), linkLabel: t.linkLabel?.trim() || null }]
+        : [],
+    ),
   };
 }
 

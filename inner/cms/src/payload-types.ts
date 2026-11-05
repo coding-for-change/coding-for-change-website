@@ -2872,6 +2872,26 @@ export interface TechTour {
          * "Tentative" marks a visit that is not certain yet; "To be announced" is a placeholder slot without a company.
          */
         status?: ('confirmed' | 'tentative' | 'tba') | null;
+        /**
+         * Optional. Things the host needs from everyone admitted to this evening before it takes place – e.g. registering in their own portal or accepting a confidentiality agreement. Each one is a tick box on the person's own page (the link in our mails), with an optional link next to it. Ticking it is recorded with the time and the exact wording, and shows in the Excel export under "Confirmed". Empty = admitted people have nothing to do. Change the wording only to fix a typo – for anything else, add a new to-do, so everyone confirms the new text.
+         */
+        todos?:
+          | {
+              /**
+               * What the person confirms by ticking, in their words – e.g. "I have read the confidentiality agreement and accept it."
+               */
+              text?: string | null;
+              /**
+               * Optional: the host's registration page or a page on our site, e.g. https://… or /techtour/mckinsey-nda. Opens in a new tab.
+               */
+              linkUrl?: string | null;
+              /**
+               * e.g. "Read the agreement (PDF)". Empty = "Open link".
+               */
+              linkLabel?: string | null;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -3087,6 +3107,14 @@ export interface TechTourSelect<T extends boolean = true> {
         logo?: T;
         website?: T;
         status?: T;
+        todos?:
+          | T
+          | {
+              text?: T;
+              linkUrl?: T;
+              linkLabel?: T;
+              id?: T;
+            };
         id?: T;
       };
   formHeading?: T;
