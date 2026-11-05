@@ -2,8 +2,9 @@ import { buildWaitlistEmail } from '../waitlistEmailTemplate';
 
 /**
  * The mail to someone who just moved up from an evening's waitlist
- * (lib/share/moveUp.ts): the spot is theirs, nothing to confirm, and if they
- * cannot come after all, their own /techtour/manage link to give it up – so
+ * (lib/share/moveUp.ts): the spot is theirs, nothing to confirm – unless the
+ * host needs something beforehand (the evening's to-dos, done on their own
+ * page) – and if they cannot come after all, their own /techtour/manage link to give it up – so
  * the next person moves up in turn. No deadline on purpose: the sooner, the
  * better. In the registration's language, in the frame of the mailing tool's
  * mails (lib/waitlistEmailTemplate.ts).
@@ -16,6 +17,8 @@ export type MoveUpEvening = {
   time: string | null;
   location: string | null;
   title: string | null;
+  /** The host needs something beforehand (TechTour → To-dos): the mail sends them to their page for it. */
+  hasTodos: boolean;
 };
 
 const COPY = {
@@ -26,6 +29,8 @@ const COPY = {
       `Good news: a spot has opened up at the Tech Tour evening at ${name} – and as you were next on the waitlist, it's yours.`,
     rest:
       "You don't need to confirm anything – we're looking forward to seeing you there. If you can't make it after all, please give up your spot as early as possible with the button below, so the next person on the waitlist can move up.",
+    restTodos: (name: string) =>
+      `${name} needs a few things from you before the evening – please open your page with the button below and tick them off there. If you can't make it after all, give up your spot on the same page as early as possible, so the next person on the waitlist can move up.`,
     bye: 'See you soon,\nCoding for Change',
     cta: 'Manage your evenings',
   },
@@ -36,6 +41,8 @@ const COPY = {
       `gute Nachrichten: Beim Tech-Tour-Abend bei ${name} ist ein Platz frei geworden – und weil du auf der Warteliste als Nächste:r dran warst, gehört er jetzt dir.`,
     rest:
       'Du musst nichts bestätigen – wir freuen uns auf dich. Falls du doch nicht kannst, gib deinen Platz bitte so früh wie möglich über den Button unten frei, damit die nächste Person nachrücken kann.',
+    restTodos: (name: string) =>
+      `${name} braucht vor dem Abend noch ein paar Dinge von dir – öffne bitte deine Seite über den Button unten und hak sie dort ab. Falls du doch nicht kannst, gib deinen Platz auf derselben Seite so früh wie möglich frei, damit die nächste Person nachrücken kann.`,
     bye: 'Bis bald\nCoding for Change',
     cta: 'Deine Abende verwalten',
   },
@@ -66,7 +73,8 @@ export function buildMoveUpEmail(input: {
     : '';
   const when = [day, known(evening.time), known(evening.location)].filter(Boolean).join(' · ');
   const about = [known(evening.title), when].filter(Boolean).join('\n');
-  const message = [c.hi(input.firstName.trim()) + '\n\n' + c.news(evening.name), about, c.rest, c.bye]
+  const rest = evening.hasTodos ? c.restTodos(evening.name) : c.rest;
+  const message = [c.hi(input.firstName.trim()) + '\n\n' + c.news(evening.name), about, rest, c.bye]
     .filter(Boolean)
     .join('\n\n');
   const { html, text } = buildWaitlistEmail({

@@ -1,5 +1,6 @@
 import type { Endpoint, Payload, PayloadRequest } from 'payload';
 import type { OptionRow } from '../lib/choiceKeys';
+import { confirm, confirmationsOf } from '../lib/manage/confirmations';
 import { eveningOf, eveningsFieldOf } from '../lib/share/evening';
 import {
   eveningsOf,
@@ -18,13 +19,21 @@ import type { HostDecisions } from '../lib/share/registrations';
  *
  *   GET  /api/techtour/manage?token=…&locale=de   the name and the evenings registered for
  *   POST /api/techtour/manage                     { token, withdraw: [option…], locale } → the same, updated
+ *   POST /api/techtour/manage                     { token, confirm: { option, todos: [id…] }, locale } → the same, updated
+ *
+ * Each evening comes with where it stands: admitted, on the waitlist or not
+ * decided yet. An evening the host declined is left out – that news comes
+ * from us by mail, not from this page. An admitted evening brings its to-dos
+ * (TechTour → Company visits → To-dos), e.g. a host's confidentiality
+ * agreement, each ticked once and kept with its wording
+ * (lib/manage/confirmations.ts).
  *
  * Evenings can only be given up, never added, and each only until it is over
  * (`withdrawable`, lib/manage/store.ts) – no deadline is named. The
- * registration itself is only read – a withdrawal goes into its own table.
- * Giving up an evening the host had admitted one to lets the next on its
- * waitlist move up (lib/share/moveUp.ts). Everything answers `no-store` and
- * `noindex`.
+ * registration itself is only read – a withdrawal or a tick goes into its own
+ * table. Giving up an evening the host had admitted one to lets the next on
+ * its waitlist move up (lib/share/moveUp.ts). Everything answers `no-store`
+ * and `noindex`.
  */
 
 const PRIVATE = {
@@ -37,6 +46,15 @@ const PRIVATE = {
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: PRIVATE });
 
 const invalid = () => json({ error: 'invalid' }, 404);
+
+export type ManageTodo = {
+  id: string;
+  text: string;
+  linkUrl: string | null;
+  linkLabel: string | null;
+  /** When it was ticked; null while still to do. */
+  doneAt: string | null;
+};
 
 export type ManageEvening = {
   option: string;
@@ -51,6 +69,10 @@ export type ManageEvening = {
   withdrawnAt: string | null;
   /** It can still be given up (it is not over yet). */
   open: boolean;
+  /** The host's decision so far; null = not decided yet. */
+  decision: 'admitted' | 'waitlisted' | null;
+  /** What the host needs beforehand – only while admitted, still on it and not over. */
+  todos: ManageTodo[];
 };
 
 export type ManageView = {
@@ -105,7 +127,12 @@ async function viewOf(
 ): Promise<ManageView> {
   const { doc, formId, options, picked } = found;
   const answers = new Map((doc.submissionData ?? []).map((kv) => [kv.field, String(kv.value ?? '').trim()]));
-  const withdrawn = (await withdrawalsOf(payload, [doc.id])).get(doc.id) ?? new Map<string, string>();
+  const [withdrawals, confirmations] = await Promise.all([
+    withdrawalsOf(payload, [doc.id]),
+    confirmationsOf(payload, [doc.id]),
+  ]);
+  const withdrawn = withdrawals.get(doc.id) ?? new Map<string, string>();
+  const done = new Map((confirmations.get(doc.id) ?? []).map((c) => [`${c.option} ${c.todo}`, c.at]));
   const labels = new Map(
     [...options.en, ...options[locale]].map((o) => [o.value, o.label?.trim() || o.value]),
   );
@@ -115,7 +142,12 @@ async function viewOf(
 
   const evenings: ManageEvening[] = [];
   for (const option of keys) {
+    const decided = doc.hostDecisions?.[option]?.decision;
+    if (decided === 'declined') continue;
+    const decision = decided === 'admitted' || decided === 'waitlisted' ? decided : null;
     const ev = await eveningOf(payload, formId, option, undefined, locale);
+    const withdrawnAt = withdrawn.get(option) ?? null;
+    const open = withdrawable(ev?.date ?? null);
     evenings.push({
       option,
       label: labels.get(option) ?? option,
@@ -124,8 +156,13 @@ async function viewOf(
       title: ev?.title ?? null,
       time: ev?.time ?? null,
       location: ev?.location ?? null,
-      withdrawnAt: withdrawn.get(option) ?? null,
-      open: withdrawable(ev?.date ?? null),
+      withdrawnAt,
+      open,
+      decision,
+      todos:
+        decision === 'admitted' && !withdrawnAt && open
+          ? (ev?.todos ?? []).map((t) => ({ ...t, doneAt: done.get(`${option} ${t.id}`) ?? null }))
+          : [],
     });
   }
   return {
@@ -150,7 +187,7 @@ const update: Endpoint = {
   path: '/techtour/manage',
   method: 'post',
   handler: async (req: PayloadRequest) => {
-    let body: { token?: unknown; withdraw?: unknown; locale?: unknown };
+    let body: { token?: unknown; withdraw?: unknown; confirm?: unknown; locale?: unknown };
     try {
       body = ((await req.json?.()) ?? {}) as typeof body;
     } catch {
@@ -158,6 +195,32 @@ const update: Endpoint = {
     }
     const found = await registrationOf(req.payload, String(body.token ?? ''));
     if (!found) return invalid();
+    const locale = localeOf(body.locale);
+
+    if (body.confirm != null) {
+      const asked = (body.confirm ?? {}) as { option?: unknown; todos?: unknown };
+      const option = String(asked.option ?? '');
+      const ids = Array.isArray(asked.todos) ? [...new Set(asked.todos.map(String))] : [];
+      if (!found.picked.includes(option) || ids.length === 0 || ids.length > 20) {
+        return json({ error: 'Not a to-do of this registration.' }, 400);
+      }
+      // Only while admitted, still on the evening and before it is over –
+      // otherwise the page is out of date: it reads the view again (403).
+      const ev = await eveningOf(req.payload, found.formId, option, undefined, locale);
+      const gaveUp = (await withdrawalsOf(req.payload, [found.doc.id])).get(found.doc.id)?.has(option);
+      const todos = (ev?.todos ?? []).filter((t) => ids.includes(t.id));
+      if (
+        found.doc.hostDecisions?.[option]?.decision !== 'admitted' ||
+        gaveUp ||
+        !withdrawable(ev?.date ?? null) ||
+        todos.length !== ids.length
+      ) {
+        return json({ error: 'closed' }, 403);
+      }
+      const now = await confirm(req.payload, found.doc.id, option, todos, locale);
+      if (now.length) req.payload.logger.info(`[manage] registration ${found.doc.id} confirmed ${option}: ${now.join(', ')}`);
+      return json(await viewOf(req.payload, found, locale));
+    }
 
     const options = Array.isArray(body.withdraw) ? body.withdraw.map(String) : [];
     // Only evenings this registration was sent with: giving up, never adding.
@@ -173,7 +236,7 @@ const update: Endpoint = {
       // As decided before the withdrawal: an admitted person's spot is free now.
       await afterWithdrawal(req.payload, found.doc.id, gaveUp, found.doc.hostDecisions);
     }
-    return json(await viewOf(req.payload, found, localeOf(body.locale)));
+    return json(await viewOf(req.payload, found, locale));
   },
 };
 

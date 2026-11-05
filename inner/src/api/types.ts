@@ -555,6 +555,21 @@ export interface TechTourManageEvening {
     withdrawnAt: string | null;
     /** It can still be given up – false once the evening is over. */
     open: boolean;
+    /** The host's decision so far; null = not decided yet. Declined evenings are not listed. */
+    decision: 'admitted' | 'waitlisted' | null;
+    /** What the host needs beforehand – only while admitted, still on it and not over. */
+    todos: TechTourManageTodo[];
+}
+
+export interface TechTourManageTodo {
+    /** The to-do's row id in the CMS. */
+    id: string;
+    /** What ticking it confirms, in the page's language. */
+    text: string;
+    linkUrl: string | null;
+    linkLabel: string | null;
+    /** When it was ticked; null while still to do. */
+    doneAt: string | null;
 }
 
 export interface TechTourManageView {

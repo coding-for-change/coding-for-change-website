@@ -1,10 +1,10 @@
 /* ---- /techtour/manage – a registrant's own evenings, on the dark stage ---- */
 /*
- * Builds on /techtour/apply (techtourApply.css): the same column, the same
- * rich checkbox rows and evening layout. Only what this page adds is here –
- * the lines around the list, a given-up evening, and the "are you sure" step.
- * Scoped like the apply page, and every div states its display (App.css sets
- * `div { display: flex }`).
+ * Builds on /techtour/apply (techtourApply.css): the same column and evening
+ * layout. Only what this page adds is here – one card per evening with where
+ * it stands (in / waitlist / not decided / withdrawn), the host's to-dos, and
+ * the "are you sure" step. Scoped like the apply page, and every div states
+ * its display (App.css sets `div { display: flex }`).
  */
 
 .lp--techtour.tta.ttm .ttm-lead {
@@ -34,18 +34,180 @@
     color: var(--tta-accent);
 }
 
-/* Given up: still listed, with its date, but out of reach. */
-.lp--techtour.tta.ttm .tta-form .ttm-row--gone {
-    opacity: 0.5;
-    cursor: default;
+.lp--techtour.tta.ttm .ttm-legend {
+    margin: 0 0 12px;
+    font-weight: 400;
+    color: var(--tta-ink);
 }
 
-.lp--techtour.tta.ttm .tta-form .ttm-row--gone .tta-ev__company {
+/* ---- One card per evening ---- */
+.lp--techtour.tta.ttm .ttm-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lp--techtour.tta.ttm .ttm-ev {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--tta-line);
+    background: var(--tta-well);
+}
+
+/* In: the same fill and left edge a picked evening has on /techtour/apply. */
+.lp--techtour.tta.ttm .ttm-ev--in {
+    border-color: rgba(127, 227, 228, 0.55);
+    background: rgba(127, 227, 228, 0.1);
+    box-shadow: inset 3px 0 0 var(--tta-accent);
+}
+
+/* Withdrawn or over: still listed, with its date, but out of reach. */
+.lp--techtour.tta.ttm .ttm-ev--gone {
+    opacity: 0.55;
+}
+
+.lp--techtour.tta.ttm .ttm-ev--gone .tta-ev__company {
     text-decoration: line-through;
 }
 
-.lp--techtour.tta.ttm .tta-form .ttm-row--gone .tta-ev__badge {
+.lp--techtour.tta.ttm .ttm-ev__state {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 12px;
+}
+
+.lp--techtour.tta.ttm .ttm-pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border: 1px solid var(--tta-line-strong);
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--tta-muted);
+}
+
+.lp--techtour.tta.ttm .ttm-pill--in {
+    border-color: var(--tta-accent);
+    background: var(--tta-accent);
+    color: #0b2526;
+    font-weight: 600;
+}
+
+.lp--techtour.tta.ttm .ttm-pill--waitlist {
+    border-color: rgba(255, 213, 138, 0.55);
+    color: #ffd58a;
+}
+
+.lp--techtour.tta.ttm .ttm-ev__hint {
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--tta-muted);
+}
+
+/* ---- The host's to-dos: amber while something is open, teal once done ---- */
+.lp--techtour.tta.ttm .ttm-todos {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 213, 138, 0.5);
+    background: rgba(255, 213, 138, 0.07);
+}
+
+.lp--techtour.tta.ttm .ttm-todos--done {
+    border-color: var(--tta-line-strong);
+    background: rgba(127, 227, 228, 0.06);
+}
+
+.lp--techtour.tta.ttm .ttm-todos__head {
+    margin: 0;
+    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--tta-ink);
+}
+
+.lp--techtour.tta.ttm .ttm-todos__list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.lp--techtour.tta.ttm .ttm-todo {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+}
+
+/* The box itself is the apply page's (techtourApply.css, "The checkboxes"):
+   22px, accent fill with a dark tick once ticked. Only its place is set here. */
+.lp--techtour.tta.ttm .ttm-todo__check {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.45;
+    color: var(--tta-ink);
+    cursor: pointer;
+}
+
+/* App.css gives every input a Win95 bevel (`box-shadow: var(--border-field)`)
+   and padding; the apply page's rows drop them through `.lp-checkbox input`. */
+.lp--techtour.tta.ttm .tta-form .ttm-todo__check input[type='checkbox'] {
+    margin-top: 0;
+    padding: 0;
+    box-shadow: none;
+}
+
+.lp--techtour.tta.ttm .ttm-todo--done .ttm-todo__check {
+    color: var(--tta-muted);
+    cursor: default;
+}
+
+.lp--techtour.tta.ttm .tta-form .ttm-todo--done input[type='checkbox'] {
+    cursor: default;
+}
+
+/* Under the text, in line with it (box width + gap). */
+.lp--techtour.tta.ttm .ttm-todo__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding-left: 34px;
+    font-size: 14px;
+}
+
+.lp--techtour.tta.ttm .ttm-todo__link {
     color: var(--tta-accent);
+}
+
+.lp--techtour.tta.ttm .ttm-todo__done {
+    color: var(--tta-accent);
+}
+
+.lp--techtour.tta.ttm .tta-form .ttm-todos__save {
+    padding: 11px 24px;
+    font-size: 15px;
+}
+
+/* Withdraw sits quietly at the end of the card: findable, never the loudest thing. */
+.lp--techtour.tta.ttm .ttm-ev__actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.lp--techtour.tta.ttm .ttm-ev .ttm-status {
+    margin: 0;
 }
 
 .lp--techtour.tta.ttm .ttm-confirm {

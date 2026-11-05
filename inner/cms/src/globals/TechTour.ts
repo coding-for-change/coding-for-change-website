@@ -224,6 +224,52 @@ export const TechTour: GlobalConfig = {
               '"Tentative" marks a visit that is not certain yet; "To be announced" is a placeholder slot without a company.',
           },
         },
+        {
+          // Rendered on /techtour/manage (components/showcase/TechTourManage.tsx)
+          // for people the host admitted; what they tick is stored with its
+          // wording (lib/manage/confirmations.ts) and shows in the Excel export.
+          name: 'todos',
+          label: 'To-dos for admitted people',
+          labels: { singular: 'To-do', plural: 'To-dos' },
+          type: 'array',
+          admin: {
+            initCollapsed: true,
+            description:
+              'Optional. Things the host needs from everyone admitted to this evening before it takes place – e.g. registering in their own portal or accepting a confidentiality agreement. Each one is a tick box on the person\'s own page (the link in our mails), with an optional link next to it. Ticking it is recorded with the time and the exact wording, and shows in the Excel export under "Confirmed". Empty = admitted people have nothing to do. Change the wording only to fix a typo – for anything else, add a new to-do, so everyone confirms the new text.',
+          },
+          fields: [
+            {
+              name: 'text',
+              type: 'textarea',
+              localized: true,
+              admin: {
+                description:
+                  'What the person confirms by ticking, in their words – e.g. "I have read the confidentiality agreement and accept it."',
+              },
+            },
+            {
+              type: 'row',
+              fields: [
+                {
+                  name: 'linkUrl',
+                  type: 'text',
+                  label: 'Link',
+                  admin: {
+                    width: '50%',
+                    description: 'Optional: the host\'s registration page or a page on our site, e.g. https://… or /techtour/mckinsey-nda. Opens in a new tab.',
+                  },
+                },
+                {
+                  name: 'linkLabel',
+                  type: 'text',
+                  label: 'Link text',
+                  localized: true,
+                  admin: { width: '50%', description: 'e.g. "Read the agreement (PDF)". Empty = "Open link".' },
+                },
+              ],
+            },
+          ],
+        },
       ],
     },
     {

@@ -14,7 +14,8 @@ import {
  * The tables behind /techtour/manage (endpoints/manage.ts): a personal link
  * per TechTour registration, the evenings a person has withdrawn from through
  * it, and every change after that – an evening we added back in the admin
- * (endpoints/withdrawals.ts), or one given up again.
+ * (endpoints/withdrawals.ts), or one given up again – and the to-dos of an
+ * evening (e.g. a host's confidentiality agreement) ticked through it.
  *
  * Plain tables, not collections, on purpose. A collection would also add a
  * column to Payload's `payload_locked_documents_rels`, and the registrations
@@ -37,6 +38,7 @@ type SchemaHook = NonNullable<PostgresAdapterArgs['afterSchemaInit']>[number];
 export const TOKENS_TABLE = 'techtour_manage_tokens';
 export const WITHDRAWALS_TABLE = 'techtour_withdrawals';
 export const CHANGES_TABLE = 'techtour_evening_changes';
+export const CONFIRMATIONS_TABLE = 'techtour_confirmations';
 
 export const manageTables: SchemaHook = ({ schema }) => {
   const submissions = schema.tables.form_submissions;
@@ -98,6 +100,31 @@ export const manageTables: SchemaHook = ({ schema }) => {
     (t) => [index(`${CHANGES_TABLE}_submission_idx`).on(t.submission)],
   );
 
+  // A to-do of an evening (TechTour → Company visits → To-dos) ticked through
+  // the link: once per person, evening and to-do, never edited or taken back.
+  // The wording and link as the person saw them are kept, so the row still
+  // says what was confirmed if the text in the CMS changes later.
+  const confirmations = pgTable(
+    CONFIRMATIONS_TABLE,
+    {
+      id: serial('id').primaryKey(),
+      submission: integer('submission_id')
+        .notNull()
+        .references(() => submissions.id, { onDelete: 'cascade' }),
+      option: varchar('option').notNull(),
+      /** The to-do's row id in the TechTour global. */
+      todo: varchar('todo_id').notNull(),
+      text: varchar('text').notNull(),
+      linkUrl: varchar('link_url'),
+      /** The page's language when it was ticked ("de" / "en"). */
+      locale: varchar('locale').notNull(),
+      createdAt: timestamp('created_at', { mode: 'string', precision: 3, withTimezone: true })
+        .defaultNow()
+        .notNull(),
+    },
+    (t) => [uniqueIndex(`${CONFIRMATIONS_TABLE}_submission_option_todo_idx`).on(t.submission, t.option, t.todo)],
+  );
+
   return {
     ...schema,
     tables: {
@@ -105,6 +132,7 @@ export const manageTables: SchemaHook = ({ schema }) => {
       [TOKENS_TABLE]: tokens,
       [WITHDRAWALS_TABLE]: withdrawals,
       [CHANGES_TABLE]: changes,
+      [CONFIRMATIONS_TABLE]: confirmations,
     },
   };
 };

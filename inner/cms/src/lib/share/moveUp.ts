@@ -119,6 +119,7 @@ async function tellMovedUp(
         time: evening.time,
         location: evening.location,
         title: evening.title,
+        hasTodos: evening.todos.length > 0,
       },
       manageLink: manageUrl(SITE_ORIGIN(), token),
       siteOrigin: SITE_ORIGIN(),
