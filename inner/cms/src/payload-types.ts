@@ -2878,7 +2878,7 @@ export interface TechTour {
         todos?:
           | {
               /**
-               * What the person confirms by ticking, in their words – e.g. "I have read the confidentiality agreement and accept it."
+               * What the person confirms by ticking, in their words – e.g. "I have read the confidentiality agreement and taken note of it."
                */
               text?: string | null;
               /**

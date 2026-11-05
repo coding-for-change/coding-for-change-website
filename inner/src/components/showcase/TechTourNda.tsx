@@ -14,7 +14,8 @@ import './techtourNda.css';
  * Tour evening, in full: the German translation and the English original, the
  * page's language first. Accepting it is the tick box on /techtour/manage (the
  * evening's to-do in the CMS links here); this page only shows the text. Same
- * dark stage as the manage page.
+ * dark stage as the manage page. McKinsey asks people to take note of it (not
+ * to sign it): the tick box says "read and taken note of".
  */
 const TechTourNda: React.FC = () => {
     const { t, locale } = useLanguage();
