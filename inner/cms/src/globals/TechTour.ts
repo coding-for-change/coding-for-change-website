@@ -244,7 +244,7 @@ export const TechTour: GlobalConfig = {
               localized: true,
               admin: {
                 description:
-                  'What the person confirms by ticking, in their words – e.g. "I have read the confidentiality agreement and accept it."',
+                  'What the person confirms by ticking, in their words – e.g. "I have read the confidentiality agreement and taken note of it."',
               },
             },
             {
