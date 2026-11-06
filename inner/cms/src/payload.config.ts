@@ -46,6 +46,7 @@ import { purgeOrphanApplicantFiles } from './lib/purgeApplicantFiles';
 import { deleteSubmissionFiles, purgeTechTourRegistrations } from './lib/retention';
 import { rejectHoneypot } from './lib/honeypot';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
+import { analyticsApplications } from './endpoints/analyticsApplications';
 import { analyticsFlow } from './endpoints/analyticsFlow';
 import { analyticsSummary } from './endpoints/analyticsSummary';
 import { purgeAnalyticsEvents } from './lib/purgeAnalytics';
@@ -126,7 +127,7 @@ export default buildConfig({
   // token and an emailed sign-in code – see endpoints/share.ts. So is a
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
   // token alone – see endpoints/manage.ts.
-  endpoints: [analyticsSummary, analyticsFlow, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints],
+  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },

@@ -48,7 +48,7 @@ export const BASE_CTE = `
 
 // Window predicates over the projected local timestamp.
 export const IN_CURRENT = `ts >= today - (days - 1) * interval '1 day' AND ts < today + interval '1 day'`;
-const IN_EITHER = `ts >= today - (2 * days - 1) * interval '1 day' AND ts < today + interval '1 day'`;
+export const IN_EITHER = `ts >= today - (2 * days - 1) * interval '1 day' AND ts < today + interval '1 day'`;
 
 /**
  * What to show as "the source": the explicit campaign tag (?src= / utm_source)
