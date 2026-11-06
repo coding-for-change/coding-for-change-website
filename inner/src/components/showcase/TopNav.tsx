@@ -140,6 +140,7 @@ const TopNav: React.FC = () => {
                     <Link
                         key={link.to}
                         href={link.to}
+                        data-cta={link.event ? 'nav-techtour' : undefined}
                         className={
                             'lp-nav__link' +
                             (link.event ? ' lp-nav__link--event' : '') +
@@ -175,6 +176,7 @@ const TopNav: React.FC = () => {
                         'lp-nav__cta' + (applicationsOpen(now) ? ' lp-nav__cta--pulse' : '')
                     }
                     href={students ? '/join/apply' : '/join'}
+                    data-cta="nav-join"
                 >
                     {students ? t.join.cta[status] : t.nav.join}
                     {students && status === 'open' && daysLeft > 0 && (

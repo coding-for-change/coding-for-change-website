@@ -1,6 +1,8 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { AnalyticsFlow } from '../../endpoints/analyticsFlow';
 import type { AnalyticsSummary } from '../../endpoints/analyticsSummary';
+import { JourneysCard, OriginsCard, PageFlowCard } from './FlowCards';
 import { SourceDonut } from './SourceDonut';
 import { TimeSeriesChart } from './TimeSeriesChart';
 
@@ -8,8 +10,11 @@ import { TimeSeriesChart } from './TimeSeriesChart';
  * The /admin/analytics dashboard body: range filter, KPI tiles, the traffic
  * time-series with a session-share donut beside it, funnel, and
  * channel/source/page/CTA breakdowns, all fed by one
- * GET /api/analytics/summary call so every panel shows the same slice.
- * Rendered inside the Payload admin (DefaultTemplate) by AnalyticsDashboardView.
+ * GET /api/analytics/summary call so every panel shows the same slice. The
+ * visitor-flow cards (page flow, journeys, application origin) come from
+ * GET /api/analytics/flow for the same range, fetched alongside so a failure
+ * there doesn't blank the rest. Rendered inside the Payload admin
+ * (DefaultTemplate) by AnalyticsDashboardView.
  */
 
 const RANGES = [
@@ -255,6 +260,9 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [flow, setFlow] = useState<AnalyticsFlow | null>(null);
+  const [flowError, setFlowError] = useState<string | null>(null);
+  const [flowPage, setFlowPage] = useState<string | null>(null);
 
   const load = useCallback(
     (signal: AbortSignal) => {
@@ -287,6 +295,25 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
     load(controller.signal);
     return () => controller.abort();
   }, [load, reloadKey]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setFlowError(null);
+    fetch(`${apiRoute}/analytics/flow?days=${days}`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`The flow endpoint returned ${res.status}.`);
+        return (await res.json()) as AnalyticsFlow;
+      })
+      .then(setFlow)
+      .catch((err: unknown) => {
+        if ((err as Error)?.name === 'AbortError') return;
+        setFlowError(err instanceof Error ? err.message : 'Failed to load the visitor flow.');
+      });
+    return () => controller.abort();
+  }, [apiRoute, days, reloadKey]);
 
   const csvQuery = data?.range.from && data?.range.to ? `?from=${data.range.from}&to=${data.range.to}` : '';
 
@@ -405,6 +432,19 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
             </div>
           </Card>
 
+          {flowError && (
+            <div className="cfc-card cfc-card--wide cfc-notice">
+              Visitor flow unavailable: {flowError}
+            </div>
+          )}
+          {flow && (
+            <>
+              <PageFlowCard pages={flow.pages} selected={flowPage} onSelect={setFlowPage} />
+              <OriginsCard origins={flow.origins} />
+              <JourneysCard journeys={flow.journeys} />
+            </>
+          )}
+
           <Card title="Funnel" caption="distinct sessions reaching each step">
             <BarList
               ariaLabel="Funnel stages"
@@ -484,10 +524,10 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
             )}
           </Card>
 
-          <Card title="CTA clicks" caption="by button">
+          <Card title="CTA clicks" caption="by button · page clicked on">
             <BarList
               ariaLabel="CTA clicks by label"
-              items={data.ctas.map((c) => ({ label: c.label, value: c.clicks }))}
+              items={data.ctas.map((c) => ({ label: `${c.label} · ${c.path}`, value: c.clicks }))}
             />
           </Card>
 

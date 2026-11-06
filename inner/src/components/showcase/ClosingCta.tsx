@@ -64,7 +64,7 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
                     <h2 className="lp-cta__heading">{heading}</h2>
                     <p className="lp-cta__text">{text}</p>
                     <div className="lp-cta__btns">
-                        <Link className="lp-btn lp-btn--light" href={joinHref}>
+                        <Link className="lp-btn lp-btn--light" href={joinHref} data-cta="closing-join">
                             {joinLabel}
                         </Link>
                         {onPartner ? (

@@ -251,7 +251,7 @@ const Landing: React.FC<LandingProps> = (props) => {
                         <div className="lp-hero__ctas">
                             {students ? (
                                 <>
-                                    <Link className="lp-btn lp-btn--primary" href={applyHref}>
+                                    <Link className="lp-btn lp-btn--primary" href={applyHref} data-cta="home-apply-hero">
                                         {s.apply} →
                                     </Link>
                                     <a
@@ -267,7 +267,7 @@ const Landing: React.FC<LandingProps> = (props) => {
                                 </>
                             ) : (
                                 <>
-                                    <Link className="lp-btn lp-btn--primary" href="/join">
+                                    <Link className="lp-btn lp-btn--primary" href="/join" data-cta="home-join-hero">
                                         {c.heroCtaPrimary}
                                     </Link>
                                     <a
@@ -640,6 +640,7 @@ const Landing: React.FC<LandingProps> = (props) => {
                                 <Link
                                     className="lp-btn lp-btn--primary"
                                     href="/join"
+                                    data-cta="home-join-talk"
                                     style={{ marginTop: 20 }}
                                 >
                                     {t.talk.studentCta} →

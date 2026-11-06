@@ -54,7 +54,7 @@ const ApplyBar: React.FC<{ variant?: 'desktop' | 'mobile' }> = ({ variant = 'des
 
     if (!shown) return null;
     return (
-        <Link ref={ref} href="/join" className={`apply-bar apply-bar--${variant}`}>
+        <Link ref={ref} href="/join" className={`apply-bar apply-bar--${variant}`} data-cta="apply-bar">
             <span className="apply-bar__dot" aria-hidden="true" />
             <span className="apply-bar__text">
                 {t.nav.applyBar.replace('{round}', APPLICATION_ROUND[locale])}

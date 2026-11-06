@@ -1,5 +1,6 @@
 import type { AdminViewServerProps } from 'payload';
 import { DefaultTemplate } from '@payloadcms/next/templates';
+import { Gutter } from '@payloadcms/ui';
 import { redirect } from 'next/navigation';
 import React from 'react';
 import { AnalyticsDashboardClient } from './AnalyticsDashboardClient';
@@ -43,7 +44,9 @@ export function AnalyticsDashboardView({
       user={user ?? undefined}
       visibleEntities={visibleEntities}
     >
-      <AnalyticsDashboardClient apiRoute={config.routes.api} />
+      <Gutter>
+        <AnalyticsDashboardClient apiRoute={config.routes.api} />
+      </Gutter>
     </DefaultTemplate>
   );
 }

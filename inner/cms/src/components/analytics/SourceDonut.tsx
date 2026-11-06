@@ -32,7 +32,7 @@ const OTHER_COLOR = 'var(--cfc-other)';
  * "google.com" (the organic referrer) don't read as a duplicate. Direct is
  * omitted — "(direct)" already says it.
  */
-const CHANNEL_TAGS: Record<string, string> = {
+export const CHANNEL_TAGS: Record<string, string> = {
   campaign: 'tagged',
   organic_search: 'search',
   social: 'social',

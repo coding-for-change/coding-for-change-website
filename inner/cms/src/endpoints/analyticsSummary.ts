@@ -17,15 +17,15 @@ import { getPool, requireAdmin } from './util';
  * longer windows stay daily.
  */
 
-const ALLOWED_DAYS = new Set([7, 30, 90, 365]);
-const TIMEZONE = process.env.ANALYTICS_TZ || 'Europe/Berlin';
+export const ALLOWED_DAYS = new Set([7, 30, 90, 365]);
+export const TIMEZONE = process.env.ANALYTICS_TZ || 'Europe/Berlin';
 
 /**
  * Shared CTE prefix. `cfg` pins "today" (local midnight) and the window length;
  * `ev` projects events with local timestamps and unprefixed attribution columns.
  * Every query takes params [$1 timezone, $2 days].
  */
-const BASE_CTE = `
+export const BASE_CTE = `
   WITH cfg AS (
     SELECT date_trunc('day', now() AT TIME ZONE $1) AS today, $2::int AS days
   ),
@@ -47,7 +47,7 @@ const BASE_CTE = `
 `;
 
 // Window predicates over the projected local timestamp.
-const IN_CURRENT = `ts >= today - (days - 1) * interval '1 day' AND ts < today + interval '1 day'`;
+export const IN_CURRENT = `ts >= today - (days - 1) * interval '1 day' AND ts < today + interval '1 day'`;
 const IN_EITHER = `ts >= today - (2 * days - 1) * interval '1 day' AND ts < today + interval '1 day'`;
 
 /**
@@ -58,13 +58,13 @@ const IN_EITHER = `ts >= today - (2 * days - 1) * interval '1 day' AND ts < toda
  * stripped so l.instagram.com and instagram.com count as one source. Traffic
  * with neither tag nor referrer is "(direct)".
  */
-const SOURCE_EXPR = `COALESCE(
+export const SOURCE_EXPR = `COALESCE(
   NULLIF(source, ''),
   NULLIF(regexp_replace(lower(referrer), '^(www|m|l|lm|out)\\.', ''), ''),
   '(direct)'
 )`;
 
-const num = (v: unknown): number => Number(v) || 0;
+export const num = (v: unknown): number => Number(v) || 0;
 
 type PeriodTotals = {
   sessions: number;
@@ -88,6 +88,22 @@ const emptyTotals = (): PeriodTotals => ({
   bookingsStarted: 0,
 });
 
+/** The `?days=` window (default 30), or a 400 response when it isn't allowed. */
+export function readDays(req: { url?: string }): number | Response {
+  let days = 30;
+  try {
+    const url = new URL(req.url ?? '', 'http://localhost');
+    const raw = url.searchParams.get('days');
+    if (raw !== null) days = Number(raw);
+  } catch {
+    /* keep default */
+  }
+  if (!ALLOWED_DAYS.has(days)) {
+    return Response.json({ error: 'days must be one of 7, 30, 90, 365' }, { status: 400 });
+  }
+  return days;
+}
+
 const convRatePct = (conversions: number, sessions: number): number =>
   sessions ? Math.round((conversions / sessions) * 1000) / 10 : 0;
 
@@ -100,20 +116,8 @@ export const analyticsSummary: Endpoint = {
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });
 
-    let days = 30;
-    try {
-      const url = new URL(req.url ?? '', 'http://localhost');
-      const raw = url.searchParams.get('days');
-      if (raw !== null) days = Number(raw);
-    } catch {
-      /* keep default */
-    }
-    if (!ALLOWED_DAYS.has(days)) {
-      return Response.json(
-        { error: 'days must be one of 7, 30, 90, 365' },
-        { status: 400 },
-      );
-    }
+    const days = readDays(req);
+    if (days instanceof Response) return days;
 
     // Short window → intraday buckets, otherwise calendar days. 7 × 4 = 28
     // points instead of 7, so the short-range chart isn't stretched thin.
@@ -233,13 +237,17 @@ export const analyticsSummary: Endpoint = {
            LIMIT 10`,
           params,
         ),
+        // CTA clicks per button *and* the page it was clicked on, so one
+        // label (e.g. nav-join) can be compared across pages.
         pool.query(
           `${BASE_CTE}
-           SELECT COALESCE(NULLIF(label, ''), '(unlabelled)') AS label, COUNT(*) AS clicks
+           SELECT COALESCE(NULLIF(label, ''), '(unlabelled)') AS label,
+                  COALESCE(NULLIF(path, ''), '(unknown)')    AS path,
+                  COUNT(*) AS clicks
            FROM ev
            WHERE ${IN_CURRENT} AND type = 'cta_click'
-           GROUP BY 1
-           ORDER BY clicks DESC
+           GROUP BY 1, 2
+           ORDER BY clicks DESC, label
            LIMIT 10`,
           params,
         ),
@@ -379,6 +387,7 @@ export const analyticsSummary: Endpoint = {
       })),
       ctas: ctasRes.rows.map((r) => ({
         label: String(r.label),
+        path: String(r.path),
         clicks: num(r.clicks),
       })),
       outbound: outboundRes.rows.map((r) => ({
@@ -417,7 +426,7 @@ export type AnalyticsSummary = {
   }>;
   sourceShare: Array<{ source: string; channel: string; sessions: number }>;
   pages: Array<{ path: string; views: number; sessions: number }>;
-  ctas: Array<{ label: string; clicks: number }>;
+  ctas: Array<{ label: string; path: string; clicks: number }>;
   outbound: Array<{ label: string; clicks: number }>;
   locales: Array<{ locale: string; sessions: number }>;
 };

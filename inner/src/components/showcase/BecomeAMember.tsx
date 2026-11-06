@@ -140,7 +140,7 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
                         <h1 className="jn-hero__title">{membership?.title || t.join.title}</h1>
                         <p className="jn-hero__lead">{membership?.description || t.join.lead}</p>
                         <div className="jn-hero__ctas">
-                            <Link className="lp-btn lp-btn--primary" href="/join/apply">
+                            <Link className="lp-btn lp-btn--primary" href="/join/apply" data-cta="join-apply-hero">
                                 {t.join.cta[status]} →
                             </Link>
                             <a
@@ -204,7 +204,7 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
                         <h2 className="lp-cta__heading">{t.join.closing.heading}</h2>
                         <p className="lp-cta__text">{t.join.closing.text[status]}</p>
                         <div className="lp-cta__btns">
-                            <Link className="lp-btn lp-btn--light" href="/join/apply">
+                            <Link className="lp-btn lp-btn--light" href="/join/apply" data-cta="join-apply-end">
                                 {t.join.cta[status]} →
                             </Link>
                         </div>

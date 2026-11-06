@@ -140,7 +140,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                         )}
                         {open ? (
                             <div className="tt-hero__cta">
-                                <Link className="tt-btn" href="/techtour/apply">
+                                <Link className="tt-btn" href="/techtour/apply" data-cta="techtour-apply-hero">
                                     {tc.applyCta}
                                 </Link>
                                 <span className="tt-hero__note">
@@ -238,7 +238,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                                         <p className="tt-stop__meta">{meta.join(' · ')}</p>
                                         {about && <p className="tt-stop__about">{about}</p>}
                                         {open && (
-                                            <Link className="tt-stop__apply" href="/techtour/apply">
+                                            <Link className="tt-stop__apply" href="/techtour/apply" data-cta="techtour-apply-stop">
                                                 {tc.stopApply} →
                                             </Link>
                                         )}
@@ -260,7 +260,7 @@ const TechTour: React.FC<TechTourProps> = (props) => {
                             {deadline ? tc.endTitle.replace('{date}', deadline) : tc.applyCta}
                         </h2>
                         {count > 0 && <p className="tt-end__text">{withCount(tc.endText)}</p>}
-                        <Link className="tt-btn" href="/techtour/apply">
+                        <Link className="tt-btn" href="/techtour/apply" data-cta="techtour-apply-end">
                             {tc.applyCta}
                         </Link>
                     </motion.section>
