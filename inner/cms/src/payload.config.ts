@@ -48,6 +48,8 @@ import { purgeOrphanApplicantFiles } from './lib/purgeApplicantFiles';
 import { deleteSubmissionFiles, purgeTechTourRegistrations } from './lib/retention';
 import { rejectHoneypot } from './lib/honeypot';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
+import { analyticsApplications } from './endpoints/analyticsApplications';
+import { analyticsFlow } from './endpoints/analyticsFlow';
 import { analyticsSummary } from './endpoints/analyticsSummary';
 import { purgeAnalyticsEvents } from './lib/purgeAnalytics';
 import { SiteConfig } from './globals/SiteConfig';
@@ -129,7 +131,7 @@ export default buildConfig({
   // token alone – see endpoints/manage.ts. So are the one-time image upload
   // links (/api/media-upload/:token) the MCP tool hands out – see
   // endpoints/mediaUpload.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints],
+  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },

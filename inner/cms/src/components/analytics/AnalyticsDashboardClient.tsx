@@ -1,6 +1,11 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import type { AnalyticsApplications } from '../../endpoints/analyticsApplications';
+import type { AnalyticsFlow } from '../../endpoints/analyticsFlow';
 import type { AnalyticsSummary } from '../../endpoints/analyticsSummary';
+import { ApplicationsSection } from './ApplicationsSection';
+import { PathsCard } from './PathExplorer';
+import { BarList, Card, Delta, StatTile, fmtBucketRow, fmtCompact, fmtInt } from './parts';
 import { SourceDonut } from './SourceDonut';
 import { TimeSeriesChart } from './TimeSeriesChart';
 
@@ -8,8 +13,12 @@ import { TimeSeriesChart } from './TimeSeriesChart';
  * The /admin/analytics dashboard body: range filter, KPI tiles, the traffic
  * time-series with a session-share donut beside it, funnel, and
  * channel/source/page/CTA breakdowns, all fed by one
- * GET /api/analytics/summary call so every panel shows the same slice.
- * Rendered inside the Payload admin (DefaultTemplate) by AnalyticsDashboardView.
+ * GET /api/analytics/summary call so every panel shows the same slice. The
+ * visitor-paths card (explorer + common paths) comes from GET /api/analytics/flow
+ * for the same range, fetched alongside so a failure there doesn't blank the
+ * rest. The "Applications" tab has its own endpoint, fetched when opened
+ * (?tab=applications links straight to it). Rendered inside the Payload admin
+ * (DefaultTemplate) by AnalyticsDashboardView.
  */
 
 const RANGES = [
@@ -19,6 +28,10 @@ const RANGES = [
   { days: 365, label: '12 months' },
 ];
 
+/** Local calendar day as YYYY-MM-DD (date inputs speak this format). */
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
 const CHANNEL_LABELS: Record<string, string> = {
   campaign: 'Campaign (tagged)',
   organic_search: 'Organic search',
@@ -27,162 +40,30 @@ const CHANNEL_LABELS: Record<string, string> = {
   direct: 'Direct',
 };
 
+/** Readable names for the site's `data-cta` labels (inner/src, grep "data-cta"). */
+const CTA_LABELS: Record<string, string> = {
+  'apply-bar': 'Apply bar (banner at the top)',
+  'nav-join': 'Navigation: Join / Apply button',
+  'nav-techtour': 'Navigation: Tech Tour',
+  'techtour-apply-hero': 'Tech Tour page: Apply (top)',
+  'techtour-apply-stop': 'Tech Tour page: Apply (at a stop)',
+  'techtour-apply-end': 'Tech Tour page: Apply (bottom)',
+  'join-apply-hero': '/join: Apply (top)',
+  'join-apply-end': '/join: Apply (bottom)',
+  'home-join-hero': 'Home: Join (top)',
+  'home-apply-hero': 'Home: Apply (top)',
+  'home-join-talk': 'Home: Join (talk section)',
+  'closing-join': 'Closing banner: Join',
+};
+
+type Tab = 'website' | 'applications';
+
 const STAGE_LABELS: Record<string, string> = {
   visited: 'Visited',
-  cta_click: 'Clicked a CTA',
+  cta_click: 'Clicked a tracked button',
   form_start: 'Started a form',
   conversion: 'Converted',
 };
-
-const nf = new Intl.NumberFormat('en-GB');
-const nfCompact = new Intl.NumberFormat('en-GB', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
-const fmtInt = (v: number) => nf.format(v);
-const fmtCompact = (v: number) => (v < 10000 ? nf.format(v) : nfCompact.format(v));
-
-/** Table row label for a series bucket: the date, plus hours when intraday. */
-const fmtBucketRow = (bucket: string, bucketHours: number): string => {
-  if (bucketHours >= 24) return bucket.slice(0, 10);
-  const from = Number(bucket.slice(11, 13));
-  const to = (from + bucketHours) % 24;
-  const pad = (v: number) => String(v).padStart(2, '0');
-  return `${bucket.slice(0, 10)} ${pad(from)}:00–${pad(to)}:00`;
-};
-
-/** Sum an array into at most `buckets` points (sparkline downsampling). */
-function downsample(values: number[], buckets = 12): number[] {
-  if (values.length <= buckets) return values;
-  const size = values.length / buckets;
-  const out: number[] = [];
-  for (let b = 0; b < buckets; b++) {
-    const start = Math.floor(b * size);
-    const end = Math.max(Math.floor((b + 1) * size), start + 1);
-    out.push(values.slice(start, end).reduce((a, v) => a + v, 0));
-  }
-  return out;
-}
-
-function Sparkline({ values }: { values: number[] }) {
-  const points = downsample(values);
-  const W = 96;
-  const H = 28;
-  const PAD = 3;
-  const max = Math.max(...points, 1);
-  const x = (i: number) =>
-    PAD + (points.length <= 1 ? (W - 2 * PAD) / 2 : (i * (W - 2 * PAD)) / (points.length - 1));
-  const y = (v: number) => H - PAD - (v / max) * (H - 2 * PAD);
-  const d = points.map((v, i) => `${i === 0 ? 'M' : 'L'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join('');
-  const last = points.length - 1;
-  return (
-    <svg width={W} height={H} className="cfc-spark" aria-hidden="true">
-      <path d={d} fill="none" stroke="var(--cfc-muted)" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={x(last)} cy={y(points[last])} r={3} fill="var(--cfc-s1)" stroke="var(--cfc-surface)" strokeWidth={2} />
-    </svg>
-  );
-}
-
-function Delta({
-  current,
-  previous,
-  unit = '%',
-  vs,
-}: {
-  current: number;
-  previous: number;
-  /** '%' = relative change of counts; 'pp' = absolute difference of two rates. */
-  unit?: '%' | 'pp';
-  vs: string;
-}) {
-  let text: string;
-  let dir: 0 | 1 | -1 = 0;
-  if (unit === 'pp') {
-    const diff = Math.round((current - previous) * 10) / 10;
-    dir = diff > 0 ? 1 : diff < 0 ? -1 : 0;
-    text = `${diff > 0 ? '+' : ''}${diff} pp`;
-  } else if (previous === 0) {
-    if (current === 0) {
-      return <span className="cfc-tile__delta cfc-tile__delta--flat">— vs {vs}</span>;
-    }
-    text = 'new';
-    dir = 1;
-  } else {
-    const pct = Math.round(((current - previous) / previous) * 1000) / 10;
-    dir = pct > 0 ? 1 : pct < 0 ? -1 : 0;
-    text = `${pct > 0 ? '+' : ''}${pct}%`;
-  }
-  const cls =
-    dir > 0 ? 'cfc-tile__delta--up' : dir < 0 ? 'cfc-tile__delta--down' : 'cfc-tile__delta--flat';
-  return (
-    <span className={`cfc-tile__delta ${cls}`}>
-      {dir !== 0 && <span aria-hidden="true">{dir > 0 ? '▲' : '▼'} </span>}
-      {text} vs {vs}
-    </span>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  delta,
-  caption,
-  spark,
-}: {
-  label: string;
-  value: string;
-  delta?: React.ReactNode;
-  caption?: string;
-  spark?: number[];
-}) {
-  return (
-    <div className="cfc-card cfc-tile">
-      <div className="cfc-tile__label">{label}</div>
-      <div className="cfc-tile__row">
-        <span className="cfc-tile__value">{value}</span>
-        {spark && spark.some((v) => v > 0) && <Sparkline values={spark} />}
-      </div>
-      {delta}
-      {caption && <div className="cfc-tile__caption">{caption}</div>}
-    </div>
-  );
-}
-
-type BarItem = {
-  label: string;
-  value: number;
-  valueText?: string;
-  color?: string;
-};
-
-/** Labeled horizontal bar rows — every value is printed, bars reinforce. */
-function BarList({ items, ariaLabel }: { items: BarItem[]; ariaLabel: string }) {
-  const max = Math.max(...items.map((i) => i.value), 1);
-  return (
-    <div className="cfc-bars" role="list" aria-label={ariaLabel}>
-      {items.map((item) => (
-        <div className="cfc-bars__row" role="listitem" key={item.label}>
-          <div className="cfc-bars__meta">
-            <span className="cfc-bars__label" title={item.label}>
-              {item.label}
-            </span>
-            <span className="cfc-bars__value">{item.valueText ?? fmtInt(item.value)}</span>
-          </div>
-          <div className="cfc-bars__track">
-            <div
-              className="cfc-bars__bar"
-              style={{
-                width: `${Math.max((item.value / max) * 100, item.value > 0 ? 1 : 0)}%`,
-                background: item.color ?? 'var(--cfc-s1)',
-              }}
-            />
-          </div>
-        </div>
-      ))}
-      {items.length === 0 && <div className="cfc-empty-line">No data in this range.</div>}
-    </div>
-  );
-}
 
 const FUNNEL_COLORS = ['var(--cfc-f1)', 'var(--cfc-f2)', 'var(--cfc-f3)', 'var(--cfc-f4)'];
 
@@ -227,40 +108,82 @@ function LocaleSplit({ locales }: { locales: AnalyticsSummary['locales'] }) {
   );
 }
 
-function Card({
-  title,
-  caption,
-  wide,
-  children,
-}: {
-  title: string;
-  caption?: string;
-  wide?: boolean;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={`cfc-card ${wide ? 'cfc-card--wide' : 'cfc-card--half'}`}>
-      <header className="cfc-card__head">
-        <h2 className="cfc-card__title">{title}</h2>
-        {caption && <span className="cfc-card__caption">{caption}</span>}
-      </header>
-      {children}
-    </section>
-  );
-}
-
 export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: string }) {
   const [days, setDays] = useState(30);
+  // A custom from–to window (inclusive) overrides the preset once applied.
+  const [custom, setCustom] = useState<{ from: string; to: string } | null>(null);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [draft, setDraft] = useState(() => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - 29);
+    return { from: isoDay(from), to: isoDay(to) };
+  });
+  const draftError =
+    !draft.from || !draft.to
+      ? 'Pick both dates.'
+      : draft.from > draft.to
+        ? 'The start must be before the end.'
+        : draft.to > isoDay(new Date())
+          ? 'The end can’t be in the future.'
+          : null;
+  const rangeQuery = custom ? `from=${custom.from}&to=${custom.to}` : `days=${days}`;
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [flow, setFlow] = useState<AnalyticsFlow | null>(null);
+  const [flowError, setFlowError] = useState<string | null>(null);
+  const [tab, setTabState] = useState<Tab>('website');
+  const [apps, setApps] = useState<AnalyticsApplications | null>(null);
+  const [appsError, setAppsError] = useState<string | null>(null);
+  const [appsLoading, setAppsLoading] = useState(false);
+
+  // The tab lives in the URL (?tab=applications) so it can be linked; read
+  // after mount – the server render doesn't know the query.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tab') === 'applications') {
+      setTabState('applications');
+    }
+  }, []);
+  const setTab = (t: Tab) => {
+    setTabState(t);
+    const url = new URL(window.location.href);
+    if (t === 'website') url.searchParams.delete('tab');
+    else url.searchParams.set('tab', t);
+    window.history.replaceState(window.history.state, '', url);
+  };
+
+  useEffect(() => {
+    if (tab !== 'applications') return;
+    const controller = new AbortController();
+    setAppsLoading(true);
+    setAppsError(null);
+    fetch(`${apiRoute}/analytics/applications?${rangeQuery}`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`The applications endpoint returned ${res.status}.`);
+        return (await res.json()) as AnalyticsApplications;
+      })
+      .then((json) => {
+        setApps(json);
+        setAppsLoading(false);
+      })
+      .catch((err: unknown) => {
+        if ((err as Error)?.name === 'AbortError') return;
+        setAppsError(err instanceof Error ? err.message : 'Failed to load applications.');
+        setAppsLoading(false);
+      });
+    return () => controller.abort();
+  }, [apiRoute, rangeQuery, reloadKey, tab]);
 
   const load = useCallback(
     (signal: AbortSignal) => {
       setLoading(true);
       setError(null);
-      fetch(`${apiRoute}/analytics/summary?days=${days}`, {
+      fetch(`${apiRoute}/analytics/summary?${rangeQuery}`, {
         credentials: 'include',
         signal,
       })
@@ -279,7 +202,7 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
           setLoading(false);
         });
     },
-    [apiRoute, days],
+    [apiRoute, rangeQuery],
   );
 
   useEffect(() => {
@@ -287,6 +210,25 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
     load(controller.signal);
     return () => controller.abort();
   }, [load, reloadKey]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setFlowError(null);
+    fetch(`${apiRoute}/analytics/flow?${rangeQuery}`, {
+      credentials: 'include',
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`The flow endpoint returned ${res.status}.`);
+        return (await res.json()) as AnalyticsFlow;
+      })
+      .then(setFlow)
+      .catch((err: unknown) => {
+        if ((err as Error)?.name === 'AbortError') return;
+        setFlowError(err instanceof Error ? err.message : 'Failed to load the visitor flow.');
+      });
+    return () => controller.abort();
+  }, [apiRoute, rangeQuery, reloadKey]);
 
   const csvQuery = data?.range.from && data?.range.to ? `?from=${data.range.from}&to=${data.range.to}` : '';
 
@@ -306,22 +248,113 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
         </div>
         <div className="cfc-head__actions">
           <div className="cfc-range" role="group" aria-label="Date range">
-            {RANGES.map((r) => (
-              <button
-                key={r.days}
-                type="button"
-                className={`cfc-range__btn ${r.days === days ? 'is-active' : ''}`}
-                aria-pressed={r.days === days}
-                onClick={() => setDays(r.days)}
-              >
-                {r.label}
-              </button>
-            ))}
+            {RANGES.map((r) => {
+              const on = !custom && !customOpen && r.days === days;
+              return (
+                <button
+                  key={r.days}
+                  type="button"
+                  className={`cfc-range__btn ${on ? 'is-active' : ''}`}
+                  aria-pressed={on}
+                  onClick={() => {
+                    setDays(r.days);
+                    setCustom(null);
+                    setCustomOpen(false);
+                  }}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className={`cfc-range__btn ${custom || customOpen ? 'is-active' : ''}`}
+              aria-pressed={Boolean(custom || customOpen)}
+              onClick={() => setCustomOpen(true)}
+            >
+              {custom ? `${custom.from} – ${custom.to}` : 'Custom'}
+            </button>
           </div>
+          {customOpen && (
+            <form
+              className="cfc-custom"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (draftError) return;
+                setCustom({ ...draft });
+                setCustomOpen(false);
+              }}
+            >
+              <label className="cfc-select">
+                <span className="cfc-select__label">From</span>
+                <input
+                  type="date"
+                  value={draft.from}
+                  max={isoDay(new Date())}
+                  onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                />
+              </label>
+              <label className="cfc-select">
+                <span className="cfc-select__label">To</span>
+                <input
+                  type="date"
+                  value={draft.to}
+                  max={isoDay(new Date())}
+                  onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                />
+              </label>
+              <button type="submit" className="cfc-retry">
+                Apply
+              </button>
+              <button type="button" className="cfc-linkbtn" onClick={() => setCustomOpen(false)}>
+                Cancel
+              </button>
+              {draftError && <span className="cfc-custom__error">{draftError}</span>}
+            </form>
+          )}
         </div>
       </div>
 
-      {error && (
+      <div className="cfc-tabs" role="tablist" aria-label="Analytics section">
+        {(
+          [
+            ['website', 'Website'],
+            ['applications', 'Applications'],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={tab === key}
+            className={`cfc-tabs__tab ${tab === key ? 'is-active' : ''}`}
+            onClick={() => setTab(key)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'applications' && (
+        <>
+          {appsError && (
+            <div className="cfc-card cfc-error" role="alert">
+              <p>{appsError}</p>
+              <button type="button" className="cfc-retry" onClick={() => setReloadKey((k) => k + 1)}>
+                Try again
+              </button>
+            </div>
+          )}
+          {!apps && appsLoading && <p className="cfc-loading">Loading applications…</p>}
+          {apps && (
+            <div className={`cfc-grid ${appsLoading ? 'is-refetching' : ''}`}>
+              <ApplicationsSection data={apps} />
+            </div>
+          )}
+        </>
+      )}
+
+      {tab === 'website' && error && (
         <div className="cfc-card cfc-error" role="alert">
           <p>{error}</p>
           <button type="button" className="cfc-retry" onClick={() => setReloadKey((k) => k + 1)}>
@@ -330,9 +363,9 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
         </div>
       )}
 
-      {!data && loading && <p className="cfc-loading">Loading analytics…</p>}
+      {tab === 'website' && !data && loading && <p className="cfc-loading">Loading analytics…</p>}
 
-      {data && (
+      {tab === 'website' && data && (
         <div className={`cfc-grid ${loading ? 'is-refetching' : ''}`}>
           {data.totals.sessions === 0 && (
             <div className="cfc-card cfc-card--wide cfc-notice">
@@ -404,6 +437,13 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
               </aside>
             </div>
           </Card>
+
+          {flowError && (
+            <div className="cfc-card cfc-card--wide cfc-notice">
+              Visitor flow unavailable: {flowError}
+            </div>
+          )}
+          {flow && <PathsCard flow={flow} />}
 
           <Card title="Funnel" caption="distinct sessions reaching each step">
             <BarList
@@ -484,11 +524,20 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
             )}
           </Card>
 
-          <Card title="CTA clicks" caption="by button">
+          <Card title="Button clicks" caption="tracked buttons · page they were clicked on">
             <BarList
-              ariaLabel="CTA clicks by label"
-              items={data.ctas.map((c) => ({ label: c.label, value: c.clicks }))}
+              ariaLabel="Clicks on tracked buttons"
+              items={data.ctas.map((c) => ({
+                label: `${CTA_LABELS[c.label] ?? c.label} · on ${c.path}`,
+                value: c.clicks,
+              }))}
             />
+            {data.ctas.length === 0 && (
+              <p className="cfc-footnote">
+                Counted since the buttons were tagged (apply bar, navigation, apply and join
+                buttons) – empty until the first clicks come in.
+              </p>
+            )}
           </Card>
 
           <Card title="Outbound clicks" caption="by destination">

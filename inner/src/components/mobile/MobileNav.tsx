@@ -139,6 +139,7 @@ const MobileNav: React.FC = () => {
                             <RouterLink
                                 key={link.to}
                                 href={link.to}
+                                data-cta={link.to === '/techtour' ? 'nav-techtour' : undefined}
                                 className="mobile-menu-item"
                                 style={Object.assign({}, styles.navLink, {
                                     animationDelay: `${i * 0.05}s`,
@@ -152,6 +153,7 @@ const MobileNav: React.FC = () => {
 
                     <RouterLink
                         href={students ? '/join/apply' : '/join'}
+                        data-cta="nav-join"
                         className="mobile-menu-item"
                         style={Object.assign({}, styles.ctaButton, {
                             animationDelay: `${navLinks.length * 0.05}s`,
