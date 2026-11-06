@@ -689,90 +689,237 @@ html[data-theme='dark'] .cfc-analytics {
   text-underline-offset: 2px;
 }
 
-/* ---- visitor-flow diagram --------------------------------------------------- */
+/* ---- path explorer ------------------------------------------------------------- */
 
-.cfc-sankey {
-  position: relative;
-  width: 100%;
-  overflow: hidden;
+.cfc-pe__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
 }
 
-.cfc-sankey svg {
-  display: block;
-}
-
-.cfc-sankey__head {
-  fill: var(--cfc-muted);
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-.cfc-sankey__band {
-  stroke: var(--cfc-muted);
-  stroke-opacity: 0.16;
-  transition: stroke-opacity 0.12s ease;
-}
-
-.cfc-sankey__band.is-conversion {
-  stroke: var(--cfc-s3);
-  stroke-opacity: 0.4;
-}
-
-.has-hover .cfc-sankey__band {
-  stroke-opacity: 0.08;
-}
-
-.has-hover .cfc-sankey__band.is-active,
-.cfc-sankey__band:hover {
-  stroke-opacity: 0.5;
-}
-
-.cfc-sankey__node {
-  cursor: pointer;
-  outline: none;
-}
-
-.cfc-sankey__node:focus-visible rect:nth-child(2) {
-  stroke: var(--cfc-ink);
-  stroke-width: 2px;
-}
-
-/* Labels sit over the bands; a halo in the surface colour keeps them legible. */
-.cfc-sankey__label {
-  fill: var(--cfc-ink);
+.cfc-pe__chip {
+  appearance: none;
+  font: inherit;
   font-size: 12px;
-  paint-order: stroke;
-  stroke: var(--cfc-surface);
-  stroke-width: 3px;
-  stroke-linejoin: round;
-  pointer-events: none;
+  padding: 3px 9px;
+  border: 1px solid var(--cfc-s1);
+  border-radius: 4px;
+  background: var(--cfc-surface);
+  color: var(--cfc-ink);
+  cursor: pointer;
 }
 
-.cfc-sankey__label.is-conversion {
-  font-weight: 600;
-}
-
-.cfc-sankey__count {
-  fill: var(--cfc-muted);
-  font-weight: 400;
-}
-
-.cfc-flowtip {
-  top: 0;
-  max-width: 320px;
-  white-space: normal;
-  line-height: 1.45;
-}
-
-.cfc-flowtip__list {
-  margin-top: 4px;
+.cfc-pe__chip.is-suggested {
+  border-style: dashed;
+  border-color: var(--cfc-muted);
   color: var(--cfc-ink-2);
 }
 
-.cfc-legend__key--faded {
-  background: var(--cfc-s1);
-  opacity: 0.32;
+.cfc-pe__chipnum,
+.cfc-pe__arrow,
+.cfc-pe__sum,
+.cfc-pe__after {
+  color: var(--cfc-muted);
+  font-weight: 400;
+}
+
+.cfc-pe__sum {
+  margin-left: 4px;
+}
+
+.cfc-pe {
+  display: grid;
+  gap: 14px;
+}
+
+.cfc-pe__col {
+  min-width: 0;
+}
+
+.cfc-pe__head {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cfc-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cfc-pe__card {
+  appearance: none;
+  display: block;
+  width: 100%;
+  margin: 0 0 6px;
+  padding: 7px 9px;
+  border: 1px solid var(--cfc-border);
+  border-radius: 4px;
+  background: var(--cfc-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cfc-pe__card:hover {
+  background: var(--cfc-wash);
+}
+
+.cfc-pe__card.is-selected {
+  border: 2px solid var(--cfc-s1);
+  padding: 6px 8px;
+}
+
+.cfc-pe__card.is-suggested {
+  border: 2px dashed var(--cfc-s1);
+  padding: 6px 8px;
+}
+
+.cfc-pe__card.is-static {
+  cursor: default;
+  background: transparent;
+}
+
+.cfc-pe__meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.cfc-pe__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cfc-pe__label--conversion {
+  font-weight: 600;
+}
+
+.cfc-pe__label--exit,
+.cfc-pe__label--other {
+  color: var(--cfc-ink-2);
+}
+
+.cfc-pe__num {
+  flex: none;
+  color: var(--cfc-ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cfc-pe__track {
+  display: block;
+  height: 5px;
+  margin-top: 5px;
+  border-radius: 3px;
+  background: var(--cfc-wash);
+}
+
+.cfc-pe__fill {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+}
+
+.cfc-pe__hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--cfc-muted);
+}
+
+.cfc-pe__common {
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--cfc-grid);
+}
+
+.cfc-pe__subtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cfc-pe__paths {
+  margin: 0 0 8px;
+  padding: 0;
+  list-style: none;
+}
+
+.cfc-pe__path {
+  appearance: none;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cfc-pe__path:hover {
+  background: var(--cfc-wash);
+}
+
+.cfc-pe__path.is-active {
+  border-color: var(--cfc-s1);
+}
+
+.cfc-pe__path.is-static {
+  cursor: default;
+}
+
+.cfc-pe__rank {
+  font-size: 12px;
+  color: var(--cfc-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- custom range ------------------------------------------------------------ */
+
+.cfc-head__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.cfc-custom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 12px;
+}
+
+.cfc-custom input[type='date'] {
+  font: inherit;
+  font-size: 13px;
+  color: var(--cfc-ink);
+  background: var(--cfc-surface);
+  border: 1px solid var(--cfc-border);
+  border-radius: 4px;
+  padding: 5px 8px;
+  color-scheme: light dark;
+}
+
+.cfc-custom__error {
+  flex-basis: 100%;
+  text-align: right;
+  font-size: 12px;
+  color: var(--cfc-down);
 }
 
 /* ---- section tabs ------------------------------------------------------------ */

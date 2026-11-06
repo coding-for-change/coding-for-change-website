@@ -1,9 +1,9 @@
 import type { Endpoint } from 'payload';
-import { BASE_CTE, IN_CURRENT, SOURCE_EXPR, TIMEZONE, num, readDays } from './analyticsSummary';
+import { BASE_CTE, IN_CURRENT, SOURCE_EXPR, num, rangeParams, readRange } from './analyticsSummary';
 import { getPool, requireAdmin } from './util';
 
 /**
- * GET /api/analytics/flow?days=30
+ * GET /api/analytics/flow?days=30 (or ?from=YYYY-MM-DD&to=YYYY-MM-DD)
  *
  * Admin-only. How visitors move through the site, rebuilt from the events the
  * site already sends – no extra tracking. Every event carries the tab's random
@@ -82,8 +82,8 @@ export const analyticsFlow: Endpoint = {
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });
 
-    const days = readDays(req);
-    if (days instanceof Response) return days;
+    const range = readRange(req);
+    if (range instanceof Response) return range;
 
     const { rows } = await pool.query(
       `${BASE_CTE},
@@ -140,7 +140,7 @@ export const analyticsFlow: Endpoint = {
        WHERE steps IS NOT NULL
        GROUP BY 1, 2, 3, 4
        ORDER BY n DESC`,
-      [TIMEZONE, days],
+      rangeParams(range),
     );
 
     const paths: PathGroup[] = rows.map((r) => ({
@@ -151,7 +151,7 @@ export const analyticsFlow: Endpoint = {
       n: num(r.n),
     }));
     const body: AnalyticsFlow = {
-      range: { days },
+      range: { days: range.days },
       maxSteps: MAX_STEPS,
       sessions: paths.reduce((a, p) => a + p.n, 0),
       paths,

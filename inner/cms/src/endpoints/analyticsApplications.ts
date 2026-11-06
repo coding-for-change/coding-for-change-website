@@ -5,14 +5,15 @@ import {
   IN_CURRENT,
   IN_EITHER,
   SOURCE_EXPR,
-  TIMEZONE,
+  TODAY_SQL,
   num,
-  readDays,
+  rangeParams,
+  readRange,
 } from './analyticsSummary';
 import { getPool, requireAdmin } from './util';
 
 /**
- * GET /api/analytics/applications?days=30
+ * GET /api/analytics/applications?days=30 (or ?from=YYYY-MM-DD&to=YYYY-MM-DD)
  *
  * Admin-only aggregates for the "Applications" section of /admin/analytics:
  * membership applications, speedrun applications and Tech Tour registrations.
@@ -55,7 +56,7 @@ export type AppOrigin = {
 
 export type AnalyticsApplications = {
   range: { days: number; from: string | null; to: string | null };
-  /** Series bucket: a day for 7 / 30 days, a week (Monday) for longer ranges. */
+  /** Series bucket: a day for ranges up to 31 days, a week (Monday) for longer ones. */
   bucket: 'day' | 'week';
   totals: Record<AppKind, { current: number; previous: number }>;
   series: Array<{ bucket: string } & PerKind>;
@@ -68,7 +69,7 @@ export type AnalyticsApplications = {
 /** Submissions of the three kinds, with local time and unprefixed attribution. */
 const SUBS_CTE = `
   WITH cfg AS (
-    SELECT date_trunc('day', now() AT TIME ZONE $1) AS today, $2::int AS days
+    SELECT ${TODAY_SQL} AS today, $2::int AS days
   ),
   subs AS (
     SELECT CASE WHEN lower(trim(f.title)) = 'techtour' THEN 'techtour'
@@ -113,10 +114,11 @@ export const analyticsApplications: Endpoint = {
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });
 
-    const days = readDays(req);
-    if (days instanceof Response) return days;
-    const bucket: 'day' | 'week' = days <= 30 ? 'day' : 'week';
-    const params = [TIMEZONE, days];
+    const range = readRange(req);
+    if (range instanceof Response) return range;
+    const { days } = range;
+    const bucket: 'day' | 'week' = days <= 31 ? 'day' : 'week';
+    const params = rangeParams(range);
 
     const [totalsRes, seriesRes, sourcesRes, landingRes, originsRes, funnelRes] = await Promise.all([
       pool.query(
@@ -131,14 +133,14 @@ export const analyticsApplications: Endpoint = {
         `${SUBS_CTE},
          d AS (
            SELECT generate_series(
-                    date_trunc($3::text, today - (days - 1) * interval '1 day'),
+                    date_trunc($4::text, today - (days - 1) * interval '1 day'),
                     today,
-                    ('1 ' || $3::text)::interval
+                    ('1 ' || $4::text)::interval
                   ) AS bucket
            FROM cfg
          ),
          agg AS (
-           SELECT date_trunc($3::text, ts) AS bucket, ${PER_KIND}
+           SELECT date_trunc($4::text, ts) AS bucket, ${PER_KIND}
            FROM subs WHERE ${IN_CURRENT}
            GROUP BY 1
          )
@@ -148,7 +150,7 @@ export const analyticsApplications: Endpoint = {
                 COALESCE(a.techtour, 0)   AS techtour
          FROM d LEFT JOIN agg a ON a.bucket = d.bucket
          ORDER BY d.bucket`,
-        [TIMEZONE, days, bucket],
+        [...params, bucket],
       ),
       pool.query(
         `${SUBS_CTE}

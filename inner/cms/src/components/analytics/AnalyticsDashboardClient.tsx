@@ -4,7 +4,7 @@ import type { AnalyticsApplications } from '../../endpoints/analyticsApplication
 import type { AnalyticsFlow } from '../../endpoints/analyticsFlow';
 import type { AnalyticsSummary } from '../../endpoints/analyticsSummary';
 import { ApplicationsSection } from './ApplicationsSection';
-import { FlowCard, JourneysCard } from './FlowCards';
+import { PathsCard } from './PathExplorer';
 import { BarList, Card, Delta, StatTile, fmtBucketRow, fmtCompact, fmtInt } from './parts';
 import { SourceDonut } from './SourceDonut';
 import { TimeSeriesChart } from './TimeSeriesChart';
@@ -14,7 +14,7 @@ import { TimeSeriesChart } from './TimeSeriesChart';
  * time-series with a session-share donut beside it, funnel, and
  * channel/source/page/CTA breakdowns, all fed by one
  * GET /api/analytics/summary call so every panel shows the same slice. The
- * visitor-flow cards (flow diagram, journeys) come from GET /api/analytics/flow
+ * visitor-paths card (explorer + common paths) comes from GET /api/analytics/flow
  * for the same range, fetched alongside so a failure there doesn't blank the
  * rest. The "Applications" tab has its own endpoint, fetched when opened
  * (?tab=applications links straight to it). Rendered inside the Payload admin
@@ -27,6 +27,10 @@ const RANGES = [
   { days: 90, label: '90 days' },
   { days: 365, label: '12 months' },
 ];
+
+/** Local calendar day as YYYY-MM-DD (date inputs speak this format). */
+const isoDay = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
 const CHANNEL_LABELS: Record<string, string> = {
   campaign: 'Campaign (tagged)',
@@ -106,6 +110,24 @@ function LocaleSplit({ locales }: { locales: AnalyticsSummary['locales'] }) {
 
 export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: string }) {
   const [days, setDays] = useState(30);
+  // A custom from–to window (inclusive) overrides the preset once applied.
+  const [custom, setCustom] = useState<{ from: string; to: string } | null>(null);
+  const [customOpen, setCustomOpen] = useState(false);
+  const [draft, setDraft] = useState(() => {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(to.getDate() - 29);
+    return { from: isoDay(from), to: isoDay(to) };
+  });
+  const draftError =
+    !draft.from || !draft.to
+      ? 'Pick both dates.'
+      : draft.from > draft.to
+        ? 'The start must be before the end.'
+        : draft.to > isoDay(new Date())
+          ? 'The end can’t be in the future.'
+          : null;
+  const rangeQuery = custom ? `from=${custom.from}&to=${custom.to}` : `days=${days}`;
   const [data, setData] = useState<AnalyticsSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -137,7 +159,7 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
     const controller = new AbortController();
     setAppsLoading(true);
     setAppsError(null);
-    fetch(`${apiRoute}/analytics/applications?days=${days}`, {
+    fetch(`${apiRoute}/analytics/applications?${rangeQuery}`, {
       credentials: 'include',
       signal: controller.signal,
     })
@@ -155,13 +177,13 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
         setAppsLoading(false);
       });
     return () => controller.abort();
-  }, [apiRoute, days, reloadKey, tab]);
+  }, [apiRoute, rangeQuery, reloadKey, tab]);
 
   const load = useCallback(
     (signal: AbortSignal) => {
       setLoading(true);
       setError(null);
-      fetch(`${apiRoute}/analytics/summary?days=${days}`, {
+      fetch(`${apiRoute}/analytics/summary?${rangeQuery}`, {
         credentials: 'include',
         signal,
       })
@@ -180,7 +202,7 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
           setLoading(false);
         });
     },
-    [apiRoute, days],
+    [apiRoute, rangeQuery],
   );
 
   useEffect(() => {
@@ -192,7 +214,7 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
   useEffect(() => {
     const controller = new AbortController();
     setFlowError(null);
-    fetch(`${apiRoute}/analytics/flow?days=${days}`, {
+    fetch(`${apiRoute}/analytics/flow?${rangeQuery}`, {
       credentials: 'include',
       signal: controller.signal,
     })
@@ -206,7 +228,7 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
         setFlowError(err instanceof Error ? err.message : 'Failed to load the visitor flow.');
       });
     return () => controller.abort();
-  }, [apiRoute, days, reloadKey]);
+  }, [apiRoute, rangeQuery, reloadKey]);
 
   const csvQuery = data?.range.from && data?.range.to ? `?from=${data.range.from}&to=${data.range.to}` : '';
 
@@ -226,18 +248,70 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
         </div>
         <div className="cfc-head__actions">
           <div className="cfc-range" role="group" aria-label="Date range">
-            {RANGES.map((r) => (
-              <button
-                key={r.days}
-                type="button"
-                className={`cfc-range__btn ${r.days === days ? 'is-active' : ''}`}
-                aria-pressed={r.days === days}
-                onClick={() => setDays(r.days)}
-              >
-                {r.label}
-              </button>
-            ))}
+            {RANGES.map((r) => {
+              const on = !custom && !customOpen && r.days === days;
+              return (
+                <button
+                  key={r.days}
+                  type="button"
+                  className={`cfc-range__btn ${on ? 'is-active' : ''}`}
+                  aria-pressed={on}
+                  onClick={() => {
+                    setDays(r.days);
+                    setCustom(null);
+                    setCustomOpen(false);
+                  }}
+                >
+                  {r.label}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className={`cfc-range__btn ${custom || customOpen ? 'is-active' : ''}`}
+              aria-pressed={Boolean(custom || customOpen)}
+              onClick={() => setCustomOpen(true)}
+            >
+              {custom ? `${custom.from} – ${custom.to}` : 'Custom'}
+            </button>
           </div>
+          {customOpen && (
+            <form
+              className="cfc-custom"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (draftError) return;
+                setCustom({ ...draft });
+                setCustomOpen(false);
+              }}
+            >
+              <label className="cfc-select">
+                <span className="cfc-select__label">From</span>
+                <input
+                  type="date"
+                  value={draft.from}
+                  max={isoDay(new Date())}
+                  onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                />
+              </label>
+              <label className="cfc-select">
+                <span className="cfc-select__label">To</span>
+                <input
+                  type="date"
+                  value={draft.to}
+                  max={isoDay(new Date())}
+                  onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                />
+              </label>
+              <button type="submit" className="cfc-retry">
+                Apply
+              </button>
+              <button type="button" className="cfc-linkbtn" onClick={() => setCustomOpen(false)}>
+                Cancel
+              </button>
+              {draftError && <span className="cfc-custom__error">{draftError}</span>}
+            </form>
+          )}
         </div>
       </div>
 
@@ -369,12 +443,7 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
               Visitor flow unavailable: {flowError}
             </div>
           )}
-          {flow && (
-            <>
-              <FlowCard flow={flow} />
-              <JourneysCard flow={flow} />
-            </>
-          )}
+          {flow && <PathsCard flow={flow} />}
 
           <Card title="Funnel" caption="distinct sessions reaching each step">
             <BarList
