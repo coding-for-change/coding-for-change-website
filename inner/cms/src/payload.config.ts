@@ -36,6 +36,8 @@ import { memberEndpoints } from './endpoints/members';
 import { withdrawalEndpoints } from './endpoints/withdrawals';
 import { hostMarkEndpoints } from './endpoints/hostMarks';
 import { mailingEndpoints } from './endpoints/mailing';
+import { mediaUploadEndpoints } from './endpoints/mediaUpload';
+import { mediaUploadTool, rememberMcpKey } from './lib/mcp';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -124,8 +126,10 @@ export default buildConfig({
   // The host share links (/api/share/:token…) are public, guarded by their
   // token and an emailed sign-in code – see endpoints/share.ts. So is a
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
-  // token alone – see endpoints/manage.ts.
-  endpoints: [analyticsSummary, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints],
+  // token alone – see endpoints/manage.ts. So are the one-time image upload
+  // links (/api/media-upload/:token) the MCP tool hands out – see
+  // endpoints/mediaUpload.ts.
+  endpoints: [analyticsSummary, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -276,6 +280,12 @@ export default buildConfig({
         homepage: { enabled: true },
         'tech-tour': { enabled: true },
       },
+      // MCP arguments can't carry files, so images come in through a one-time
+      // upload link instead (lib/mcp.ts, lib/mediaUpload.ts). The tool needs
+      // the calling key, which the plugin only passes to its own tools –
+      // rememberMcpKey keeps it per request; the Bearer-key check is unchanged.
+      mcp: { tools: [mediaUploadTool] },
+      overrideAuth: rememberMcpKey,
     }),
   ],
   db: postgresAdapter({
