@@ -1,0 +1,30 @@
+diff --git a/dist/utils/schemaConversion/convertCollectionSchemaToZod.js b/dist/utils/schemaConversion/convertCollectionSchemaToZod.js
+index d38dab1a6b99e3e31f2215e186c9436fe69f9a18..ec13084b23428306a7a16b49e36b1a7a23250c64 100644
+--- a/dist/utils/schemaConversion/convertCollectionSchemaToZod.js
++++ b/dist/utils/schemaConversion/convertCollectionSchemaToZod.js
+@@ -19,6 +19,13 @@ export const convertCollectionSchemaToZod = (schema)=>{
+             target: ts.ScriptTarget.ES2018
+         }
+     });
++    // Backport of the upstream fix (plugin-mcp 3.93.0): TypeScript 6 prepends a
++    // `"use strict";` directive, so `return ${output}` returned the *string*
++    // "use strict" instead of the Zod schema – the update tool then threw
++    // `convertedFields.partial is not a function` and /api/mcp never answered.
++    // Strip the directive plus the whitespace after it (else ASI turns
++    // `return \n<expr>` into `return;`).
++    const transpiledOutput = transpileResult.outputText.replace(/^\s*['"]use strict['"];?\s*/, '');
+     /**
+    * This Function evaluation is safe because:
+    * 1. The input schema comes from Payload's collection configuration, which is controlled by the application developer
+@@ -27,7 +34,10 @@ export const convertCollectionSchemaToZod = (schema)=>{
+    * 4. The resulting Zod schema is used only for parameter validation in MCP tools, not for data processing
+    * 5. No user input or external data is involved in the schema generation process
+    */ // eslint-disable-next-line @typescript-eslint/no-implied-eval
+-    return new Function('z', `return ${transpileResult.outputText}`)(z);
++    const converted = new Function('z', `return ${transpiledOutput}`)(z);
++    // The create/update tools spread `.partial().shape` – anything other than a
++    // ZodObject would crash tool registration for the whole endpoint.
++    return converted instanceof z.ZodObject ? converted : z.object({}).passthrough();
+ };
+ 
+ //# sourceMappingURL=convertCollectionSchemaToZod.js.map
