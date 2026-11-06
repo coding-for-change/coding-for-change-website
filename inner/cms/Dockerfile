@@ -3,6 +3,8 @@ FROM node:22-alpine
 RUN corepack enable && corepack prepare pnpm@10.33.4 --activate
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# pnpm applies patches/ during install (patchedDependencies in pnpm-workspace.yaml).
+COPY patches ./patches
 RUN pnpm install --frozen-lockfile
 COPY . .
 # next build sets NODE_ENV=production, which disables push:true in payload.config.ts
