@@ -1546,7 +1546,7 @@ export interface PayloadMcpApiKey {
   };
   'payload-mcp-tool'?: {
     /**
-     * Get a one-time URL to upload an image file (e.g. a team photo, sponsor logo) into the Media collection. MCP arguments cannot carry files, so: call this with the alt text, then POST the file to the returned URL as multipart/form-data with the field name "file" – from your code sandbox with curl. The response is JSON with the new media "id"; link it afterwards, e.g. updateTeam with "image" set to that id. JPEG, PNG, WebP or GIF only (no SVG/HEIC), max 15 MB. The URL is valid for 15 minutes and one successful upload. If your sandbox cannot reach the site, give the URL to the user: opened in a browser it shows an upload form.
+     * Get a one-time URL to upload an image file (e.g. a team photo, sponsor logo) into the Media collection. MCP arguments cannot carry files, so: call this with the alt text, then POST the file to the returned URL as multipart/form-data with the field name "file" – from your code sandbox with curl. The response is JSON with the new media "id"; link it afterwards, e.g. updateTeam with "image" set to that id. JPEG, PNG, WebP or GIF only, max 15 MB. SVG (e.g. a logo) is refused because it can carry scripts: convert it to PNG in your sandbox first, about 1600 px wide (e.g. `rsvg-convert -w 1600 logo.svg -o logo.png`, or Python `cairosvg.svg2png(url="logo.svg", write_to="logo.png", output_width=1600)`). HEIC: convert to JPEG first. The URL is valid for 15 minutes and one successful upload. If your sandbox cannot reach the site, give the URL to the user: opened in a browser it shows an upload form.
      */
     createMediaUploadUrl?: boolean | null;
   };

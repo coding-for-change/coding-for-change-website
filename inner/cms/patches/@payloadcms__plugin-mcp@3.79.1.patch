@@ -1,3 +1,36 @@
+diff --git a/dist/mcp/tools/resource/update.js b/dist/mcp/tools/resource/update.js
+index efb0def6782d121e84e0de4515121571826a1ae5..681a2b434a8724fdf6203403b533206857bbe401 100644
+--- a/dist/mcp/tools/resource/update.js
++++ b/dist/mcp/tools/resource/update.js
+@@ -234,10 +234,8 @@ ${JSON.stringify(errors, null, 2)}
+             depth: z.number().optional().default(0).describe('How many levels deep to populate relationships'),
+             draft: z.boolean().optional().default(false).describe('Whether to update the document as a draft'),
+             fallbackLocale: z.string().optional().describe('Optional: fallback locale code to use when requested locale is not available'),
+-            filePath: z.string().optional().describe('File path for file uploads'),
+             locale: z.string().optional().describe('Optional: locale code to update the document in (e.g., "en", "es"). Defaults to the default locale'),
+             overrideLock: z.boolean().optional().default(true).describe('Whether to override document locks'),
+-            overwriteExistingFiles: z.boolean().optional().default(false).describe('Whether to overwrite existing files'),
+             select: z.string().optional().describe('Optional: define exactly which fields you\'d like to return in the response (JSON), e.g., \'{"title": "My Post"}\''),
+             where: z.string().optional().describe('JSON string for where clause to update multiple documents')
+         });
+@@ -245,10 +243,15 @@ ${JSON.stringify(errors, null, 2)}
+             description: `${collections?.[collectionSlug]?.description || toolSchemas.updateResource.description.trim()}`,
+             inputSchema: updateResourceSchema.shape
+         }, async (params)=>{
+-            const { id, depth, draft, fallbackLocale, filePath, locale, overrideLock, overwriteExistingFiles, select, where, ...fieldData } = params;
++            const { id, depth, draft, fallbackLocale, locale, overrideLock, select, where, ...fieldData } = params;
+             // Convert field data back to JSON string format expected by the tool
+             const data = JSON.stringify(fieldData);
+-            return await tool(data, id, where, draft, depth, overrideLock, filePath, overwriteExistingFiles, locale, fallbackLocale, select);
++            // Coding for Change: no `filePath` over MCP. Payload reads that path
++            // from the CMS server's own disk (fs.readFile) for ANY collection –
++            // a server file could end up in the public media library, and
++            // /dev/zero would exhaust memory. MCP uploads go through the one-time
++            // links of the custom tool createMediaUploadUrl instead.
++            return await tool(data, id, where, draft, depth, overrideLock, undefined, false, locale, fallbackLocale, select);
+         });
+     }
+ };
 diff --git a/dist/utils/schemaConversion/convertCollectionSchemaToZod.js b/dist/utils/schemaConversion/convertCollectionSchemaToZod.js
 index d38dab1a6b99e3e31f2215e186c9436fe69f9a18..ec13084b23428306a7a16b49e36b1a7a23250c64 100644
 --- a/dist/utils/schemaConversion/convertCollectionSchemaToZod.js

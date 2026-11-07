@@ -136,7 +136,10 @@ export async function checkImage(data: Buffer): Promise<CheckedImage | { error: 
   // SVG first: sharp may not even read one without a size, and the answer
   // should say why it is refused rather than "not readable".
   if (/^\s*(<\?xml[^>]*>\s*)?(<!--[\s\S]*?-->\s*)*<(svg|!doctype svg)/i.test(data.subarray(0, 4096).toString('utf8'))) {
-    return { error: 'SVG is not accepted here. Upload a JPEG, PNG, WebP or GIF.' };
+    return {
+      error:
+        'SVG is not accepted here (it can carry scripts). Convert it to PNG first, about 1600 px wide – e.g. `rsvg-convert -w 1600 logo.svg -o logo.png` – and upload the PNG.',
+    };
   }
   let meta: sharp.Metadata;
   try {
