@@ -244,6 +244,89 @@ function OriginCard({ origins }: { origins: AppOrigin[] }) {
   );
 }
 
+/* ---- funnel ------------------------------------------------------------------ */
+
+type Stage = { label: string; n: number; note?: string };
+
+/**
+ * A real funnel per form: on the website (visits: saw the form → started →
+ * sent it there), then what happened to the submissions (all of them: review
+ * accepted = interview invitation; Tech Tour: admitted by a host).
+ */
+function FunnelCard({ funnel }: { funnel: AnalyticsApplications['funnel'] }) {
+  const [kind, setKind] = useState<AppKind>(funnel[0]?.kind ?? 'membership');
+  const f = funnel.find((x) => x.kind === kind) ?? funnel[0];
+  if (!f) return null;
+  const web: Stage[] = [
+    { label: 'Saw the form', n: f.views },
+    { label: 'Started filling it in', n: f.starts, note: 'a field was focused' },
+    { label: 'Sent it', n: f.sent },
+  ];
+  const after: Stage[] =
+    f.kind === 'techtour'
+      ? [
+          { label: 'All registrations', n: f.submissions, note: 'incl. tick-box and Do-Not-Track' },
+          { label: 'Admitted by a host', n: f.hostAdmitted, note: 'to at least one evening' },
+        ]
+      : [
+          { label: 'All applications', n: f.submissions, note: 'incl. tick-box and Do-Not-Track' },
+          { label: 'Invited to interview', n: f.accepted, note: 'review status “Accepted”' },
+        ];
+  const max = Math.max(f.views, f.submissions, 1);
+  const row = (s: Stage, prev: number | null) => (
+    <div className="cfc-funnel__row" key={s.label}>
+      <div className="cfc-funnel__meta">
+        <span>
+          {s.label}
+          {s.note && <span className="cfc-funnel__note"> · {s.note}</span>}
+        </span>
+        <span className="cfc-funnel__num">
+          <strong>{fmtInt(s.n)}</strong>
+          {prev !== null && <span className="cfc-funnel__step"> {pct(s.n, prev)}% of the step before</span>}
+        </span>
+      </div>
+      <div className="cfc-funnel__track">
+        <div
+          className="cfc-funnel__bar"
+          style={{ width: `${Math.max((s.n / max) * 100, s.n ? 1 : 0)}%`, background: KIND_COLOR[f.kind] }}
+        />
+      </div>
+    </div>
+  );
+  return (
+    <Card title="Funnel" caption="from seeing the form to the decision">
+      {funnel.length > 1 && (
+        <div className="cfc-flow__bar">
+          <div className="cfc-range cfc-range--small" role="group" aria-label="Form">
+            {funnel.map((x) => (
+              <button
+                key={x.kind}
+                type="button"
+                className={`cfc-range__btn ${x.kind === f.kind ? 'is-active' : ''}`}
+                aria-pressed={x.kind === f.kind}
+                onClick={() => setKind(x.kind)}
+              >
+                {KIND_SHORT[x.kind]}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="cfc-funnel">
+        <div className="cfc-funnel__part">On the website</div>
+        {web.map((s, i) => row(s, i === 0 ? null : web[i - 1].n))}
+        <div className="cfc-funnel__part">After sending</div>
+        {after.map((s, i) => row(s, i === 0 ? null : after[i - 1].n))}
+      </div>
+      <p className="cfc-footnote">
+        Website steps come from page events (no Do-Not-Track visitors) and count visits on this
+        form’s page. The steps after sending count every submission in the range, by its current
+        status. Interviews held and admissions aren’t recorded yet.
+      </p>
+    </Card>
+  );
+}
+
 /* ---- the section --------------------------------------------------------------- */
 
 function KindTable<T extends { total: number } & Record<AppKind, number>>({
@@ -349,42 +432,7 @@ export function ApplicationsSection({ data }: { data: AnalyticsApplications }) {
 
       <OriginCard origins={data.origins.filter((o) => kinds.includes(o.kind))} />
 
-      <Card title="Form funnel" caption="visits that saw the form → started → sent">
-        <div className="cfc-tablewrap">
-          <table className="cfc-table">
-            <thead>
-              <tr>
-                <th>Form</th>
-                <th className="num">Saw the form</th>
-                <th className="num">Started</th>
-                <th className="num">Sent</th>
-                <th className="num">Sent / saw</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.funnel
-                .filter((f) => kinds.includes(f.kind))
-                .map((f) => (
-                  <tr key={f.kind}>
-                    <td>{KIND_SHORT[f.kind]}</td>
-                    <td className="num">{fmtInt(f.views)}</td>
-                    <td className="num">
-                      {fmtInt(f.starts)} <span className="cfc-table__campaign">{pct(f.starts, f.views)}%</span>
-                    </td>
-                    <td className="num">
-                      {fmtInt(f.sent)} <span className="cfc-table__campaign">{pct(f.sent, f.starts)}%</span>
-                    </td>
-                    <td className="num">{pct(f.sent, f.views)}%</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="cfc-footnote">
-          From page events, so visitors with Do-Not-Track are missing here. “Started” = a field was
-          focused. Percentages are of the column before.
-        </p>
-      </Card>
+      <FunnelCard funnel={data.funnel.filter((f) => kinds.includes(f.kind))} />
 
       <Card title="Where applicants came from" caption="campaign tag or referrer of the visit that sent it">
         <KindTable

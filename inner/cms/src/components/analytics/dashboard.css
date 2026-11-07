@@ -920,6 +920,20 @@ html[data-theme='dark'] .cfc-analytics {
   vertical-align: -2px;
 }
 
+.cfc-stations .cfc-range__btn {
+  font-variant-numeric: tabular-nums;
+}
+
+.cfc-stations__pct {
+  color: var(--cfc-muted);
+  font-size: 11px;
+}
+
+.cfc-stations .is-active .cfc-stations__pct {
+  color: inherit;
+  opacity: 0.7;
+}
+
 .cfc-pe__common {
   margin-top: 26px;
   padding-top: 18px;
@@ -972,6 +986,54 @@ html[data-theme='dark'] .cfc-analytics {
   color: var(--cfc-muted);
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* ---- application funnel -------------------------------------------------------- */
+
+.cfc-funnel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cfc-funnel__part {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cfc-muted);
+}
+
+.cfc-funnel__part + .cfc-funnel__row {
+  margin-top: -4px;
+}
+
+.cfc-funnel__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.cfc-funnel__note,
+.cfc-funnel__step {
+  color: var(--cfc-muted);
+  font-size: 12px;
+}
+
+.cfc-funnel__num {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.cfc-funnel__track {
+  border-left: 1px solid var(--cfc-axis);
+}
+
+.cfc-funnel__bar {
+  height: 18px;
+  border-radius: 0 4px 4px 0;
 }
 
 /* ---- custom range ------------------------------------------------------------ */
