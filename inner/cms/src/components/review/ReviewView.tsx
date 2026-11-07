@@ -36,7 +36,13 @@ export function ReviewView({ initPageResult, params, searchParams }: AdminViewSe
       visibleEntities={visibleEntities}
     >
       <Gutter>
-        <ReviewWorkspace apiRoute={config.routes.api} adminRoute={adminRoute} />
+        {/* The sidebar opens this on a tab (?form=application, ?form=techtour);
+            keyed by it, a click there switches the tab even from the other one. */}
+        <ReviewWorkspace
+          key={String(searchParams?.form ?? '')}
+          apiRoute={config.routes.api}
+          adminRoute={adminRoute}
+        />
       </Gutter>
     </DefaultTemplate>
   );

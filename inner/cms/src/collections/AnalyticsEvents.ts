@@ -50,7 +50,6 @@ export const AnalyticsEvents: CollectionConfig = {
   admin: {
     useAsTitle: 'type',
     defaultColumns: ['type', 'label', 'path', 'createdAt'],
-    group: 'Analytics',
     description:
       'Cookieless behavioural events (page views, form starts, conversions) for campaign & funnel analysis. No cookies, no IP, no personal data — a random per-visit session id links events to a conversion.',
   },
