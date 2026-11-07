@@ -257,6 +257,23 @@ html[data-theme='dark'] .rv {
   color: var(--theme-elevation-600);
 }
 
+/* membership application stages after the review (lib/stageOptions.ts) */
+.rv-badge--stage-admitted {
+  --rv-badge-bg: var(--rv-yes-tint);
+  color: var(--rv-yes-ink);
+}
+
+.rv-badge--stage-not_admitted {
+  --rv-badge-bg: var(--theme-error-100);
+  color: var(--theme-error-750);
+}
+
+.rv-badge--stage-withdrew {
+  --rv-badge-bg: transparent;
+  box-shadow: inset 0 0 0 1px var(--theme-elevation-250);
+  color: var(--theme-elevation-600);
+}
+
 .rv-dot {
   flex: none;
   display: inline-block;

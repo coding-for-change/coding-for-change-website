@@ -271,6 +271,8 @@ function FunnelCard({ funnel }: { funnel: AnalyticsApplications['funnel'] }) {
       : [
           { label: 'All applications', n: f.submissions, note: 'incl. tick-box and Do-Not-Track' },
           { label: 'Invited to interview', n: f.accepted, note: 'review status “Accepted”' },
+          { label: 'Interview held', n: f.interviewed, note: 'set in the review workspace' },
+          { label: 'Admitted', n: f.admitted },
         ];
   const max = Math.max(f.views, f.submissions, 1);
   const row = (s: Stage, prev: number | null) => (
@@ -321,7 +323,8 @@ function FunnelCard({ funnel }: { funnel: AnalyticsApplications['funnel'] }) {
       <p className="cfc-footnote">
         Website steps come from page events (no Do-Not-Track visitors) and count visits on this
         form’s page. The steps after sending count every submission in the range, by its current
-        status. Interviews held and admissions aren’t recorded yet.
+        status – interview held and admitted are set under “Interview &amp; admission” in the
+        review workspace.
       </p>
     </Card>
   );
