@@ -51,6 +51,7 @@ import * as migration_20261104_144516_host_rating_waitlist from './20261104_1445
 import * as migration_20261105_122506_techtour_todos from './20261105_122506_techtour_todos';
 import * as migration_20261106_224650_mcp_media_upload_tool from './20261106_224650_mcp_media_upload_tool';
 import * as migration_20261107_114747_add_application_stages from './20261107_114747_add_application_stages';
+import * as migration_20261107_165554_mcp_admin_tools from './20261107_165554_mcp_admin_tools';
 
 export const migrations = [
   {
@@ -316,6 +317,11 @@ export const migrations = [
   {
     up: migration_20261107_114747_add_application_stages.up,
     down: migration_20261107_114747_add_application_stages.down,
-    name: '20261107_114747_add_application_stages'
+    name: '20261107_114747_add_application_stages',
+  },
+  {
+    up: migration_20261107_165554_mcp_admin_tools.up,
+    down: migration_20261107_165554_mcp_admin_tools.down,
+    name: '20261107_165554_mcp_admin_tools'
   },
 ];

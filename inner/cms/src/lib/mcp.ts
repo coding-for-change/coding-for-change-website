@@ -11,7 +11,7 @@ import {
 } from './mediaUpload';
 
 type PluginOptions = Parameters<typeof mcpPlugin>[0];
-type CustomTool = NonNullable<NonNullable<PluginOptions['mcp']>['tools']>[number];
+export type CustomTool = NonNullable<NonNullable<PluginOptions['mcp']>['tools']>[number];
 
 /**
  * The plugin hands its own tools the API key's user, but custom tools only get
@@ -28,9 +28,12 @@ export const rememberMcpKey: NonNullable<PluginOptions['overrideAuth']> = async 
   return settings;
 };
 
-const text = (t: string) => ({ content: [{ type: 'text' as const, text: t }] });
+/** The MCP key behind a tool call, as `rememberMcpKey` kept it. */
+export const mcpKeyOf = (req: PayloadRequest): MCPAccessSettings | undefined => keyOfRequest.get(req);
 
-const idOf = (v: unknown): number | string | null => {
+export const text = (t: string) => ({ content: [{ type: 'text' as const, text: t }] });
+
+export const idOf = (v: unknown): number | string | null => {
   const id = v && typeof v === 'object' ? (v as { id?: unknown }).id : v;
   return typeof id === 'number' || (typeof id === 'string' && id) ? id : null;
 };
