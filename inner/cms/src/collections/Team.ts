@@ -2,6 +2,8 @@ import { CollectionConfig } from 'payload';
 
 export const Team: CollectionConfig = {
   slug: 'team',
+  // Not "Teams", Payload's default for the slug – that is the team sections (TeamGroups).
+  labels: { singular: 'Team Member', plural: 'Team Members' },
   // Enables drag-and-drop reordering in the admin list view. Payload stores the
   // position in a hidden `_order` field; the Team page sorts by it (sort=_order)
   // instead of the default newest-first. Reorder rows in admin → site updates.

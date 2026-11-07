@@ -83,7 +83,6 @@ export const ShareLinks: CollectionConfig = {
   slug: 'share-links',
   labels: { singular: 'Host share link', plural: 'Host share links' },
   admin: {
-    group: 'Forms',
     useAsTitle: 'title',
     defaultColumns: ['title', 'expiresAt', 'blocked', 'updatedAt'],
     description:

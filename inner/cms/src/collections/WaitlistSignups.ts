@@ -15,7 +15,6 @@ export const WaitlistSignups: CollectionConfig = {
   admin: {
     useAsTitle: 'email',
     defaultColumns: ['email', 'locale', 'createdAt'],
-    group: 'Forms',
     description:
       'People who asked to be notified when membership applications reopen.',
     components: {

@@ -14,7 +14,7 @@ export const TeamGroups: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'order'],
     description:
-      'Team sections for the Team page (e.g. Engineering, Design). Assign people to a team under each person in "Team".',
+      'Team sections for the Team page (e.g. Engineering, Design). Assign people to a team under each person in "Team Members".',
   },
   access: {
     read: () => true,

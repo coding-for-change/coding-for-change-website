@@ -68,25 +68,25 @@ export interface Config {
   };
   blocks: {};
   collections: {
-    users: User;
+    'waitlist-signups': WaitlistSignup;
+    'share-links': ShareLink;
+    'share-access-log': ShareAccessLog;
+    'analytics-events': AnalyticsEvent;
+    'consent-records': ConsentRecord;
+    projects: Project;
     team: Team;
     'team-groups': TeamGroup;
-    projects: Project;
     events: Event;
+    'blog-posts': BlogPost;
     faq: Faq;
     sponsors: Sponsor;
     'sponsor-tiers': SponsorTier;
     companies: Company;
     media: Media;
-    'blog-posts': BlogPost;
-    'waitlist-signups': WaitlistSignup;
-    'analytics-events': AnalyticsEvent;
-    'consent-records': ConsentRecord;
-    'applicant-files': ApplicantFile;
-    'share-links': ShareLink;
-    'share-access-log': ShareAccessLog;
     forms: Form;
     'form-submissions': FormSubmission;
+    'applicant-files': ApplicantFile;
+    users: User;
     'payload-mcp-api-keys': PayloadMcpApiKey;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -95,25 +95,25 @@ export interface Config {
   };
   collectionsJoins: {};
   collectionsSelect: {
-    users: UsersSelect<false> | UsersSelect<true>;
+    'waitlist-signups': WaitlistSignupsSelect<false> | WaitlistSignupsSelect<true>;
+    'share-links': ShareLinksSelect<false> | ShareLinksSelect<true>;
+    'share-access-log': ShareAccessLogSelect<false> | ShareAccessLogSelect<true>;
+    'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
+    'consent-records': ConsentRecordsSelect<false> | ConsentRecordsSelect<true>;
+    projects: ProjectsSelect<false> | ProjectsSelect<true>;
     team: TeamSelect<false> | TeamSelect<true>;
     'team-groups': TeamGroupsSelect<false> | TeamGroupsSelect<true>;
-    projects: ProjectsSelect<false> | ProjectsSelect<true>;
     events: EventsSelect<false> | EventsSelect<true>;
+    'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
     faq: FaqSelect<false> | FaqSelect<true>;
     sponsors: SponsorsSelect<false> | SponsorsSelect<true>;
     'sponsor-tiers': SponsorTiersSelect<false> | SponsorTiersSelect<true>;
     companies: CompaniesSelect<false> | CompaniesSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
-    'blog-posts': BlogPostsSelect<false> | BlogPostsSelect<true>;
-    'waitlist-signups': WaitlistSignupsSelect<false> | WaitlistSignupsSelect<true>;
-    'analytics-events': AnalyticsEventsSelect<false> | AnalyticsEventsSelect<true>;
-    'consent-records': ConsentRecordsSelect<false> | ConsentRecordsSelect<true>;
-    'applicant-files': ApplicantFilesSelect<false> | ApplicantFilesSelect<true>;
-    'share-links': ShareLinksSelect<false> | ShareLinksSelect<true>;
-    'share-access-log': ShareAccessLogSelect<false> | ShareAccessLogSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
+    'applicant-files': ApplicantFilesSelect<false> | ApplicantFilesSelect<true>;
+    users: UsersSelect<false> | UsersSelect<true>;
     'payload-mcp-api-keys': PayloadMcpApiKeysSelect<false> | PayloadMcpApiKeysSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -125,22 +125,22 @@ export interface Config {
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('en' | 'de') | ('en' | 'de')[];
   globals: {
-    'site-config': SiteConfig;
+    'tech-tour': TechTour;
+    homepage: Homepage;
+    about: About;
+    partner: Partner;
     membership: Membership;
     legal: Legal;
-    partner: Partner;
-    about: About;
-    homepage: Homepage;
-    'tech-tour': TechTour;
+    'site-config': SiteConfig;
   };
   globalsSelect: {
-    'site-config': SiteConfigSelect<false> | SiteConfigSelect<true>;
+    'tech-tour': TechTourSelect<false> | TechTourSelect<true>;
+    homepage: HomepageSelect<false> | HomepageSelect<true>;
+    about: AboutSelect<false> | AboutSelect<true>;
+    partner: PartnerSelect<false> | PartnerSelect<true>;
     membership: MembershipSelect<false> | MembershipSelect<true>;
     legal: LegalSelect<false> | LegalSelect<true>;
-    partner: PartnerSelect<false> | PartnerSelect<true>;
-    about: AboutSelect<false> | AboutSelect<true>;
-    homepage: HomepageSelect<false> | HomepageSelect<true>;
-    'tech-tour': TechTourSelect<false> | TechTourSelect<true>;
+    'site-config': SiteConfigSelect<false> | SiteConfigSelect<true>;
   };
   locale: 'en' | 'de';
   widgets: {
@@ -187,478 +187,6 @@ export interface PayloadMcpApiKeyAuthOperations {
     email: string;
     password: string;
   };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "team".
- */
-export interface Team {
-  id: number;
-  _order?: string | null;
-  name: string;
-  role: string;
-  /**
-   * Assign this person to one or more teams, with the role they hold in each. Leave a role blank to reuse the main role above.
-   */
-  teamMemberships?:
-    | {
-        team: number | TeamGroup;
-        /**
-         * Optional — role in this team; falls back to the main role above.
-         */
-        role?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  category: 'member' | 'adviser';
-  image?: (number | null) | Media;
-  bio: string;
-  links?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  companies?: (number | Company)[] | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Team sections for the Team page (e.g. Engineering, Design). Assign people to a team under each person in "Team".
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "team-groups".
- */
-export interface TeamGroup {
-  id: number;
-  name: string;
-  /**
-   * Optional logo/image shown beside the team heading.
-   */
-  logo?: (number | null) | Media;
-  /**
-   * Lower shows first (e.g. 10, 20, 30 …).
-   */
-  order: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "media".
- */
-export interface Media {
-  id: number;
-  alt: string;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-  sizes?: {
-    thumbnail?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    card?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-    large?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      mimeType?: string | null;
-      filesize?: number | null;
-      filename?: string | null;
-    };
-  };
-}
-/**
- * Companies our team members have worked at — shown as a logo wall on the Team page.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "companies".
- */
-export interface Company {
-  id: number;
-  name: string;
-  logo?: (number | null) | Media;
-  url?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "projects".
- */
-export interface Project {
-  id: number;
-  title: string;
-  ngoPartner: string;
-  /**
-   * Lowercase, hyphenated (e.g. "lebenshilfe-muenchen"). Needed for the detail page.
-   */
-  slug?: string | null;
-  featured?: boolean | null;
-  description: string;
-  /**
-   * The partner organisation’s logo.
-   */
-  image?: (number | null) | Media;
-  /**
-   * Shown on the projects overview. Upload bare screenshots without device frames – the browser window and phone bezel are drawn by the site. Either one is enough.
-   */
-  screens?: {
-    /**
-     * Landscape, e.g. 2880×1800.
-     */
-    desktop?: (number | null) | Media;
-    /**
-     * Portrait phone screenshot, e.g. 1170×2532.
-     */
-    mobile?: (number | null) | Media;
-  };
-  technologies?:
-    | {
-        name: string;
-        id?: string | null;
-      }[]
-    | null;
-  status: 'active' | 'completed' | 'recruiting';
-  links?:
-    | {
-        label: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Who works on this project. Shown on the Team page under each person — no case study needed. The case study's "Team" block reuses this list.
-   */
-  team?:
-    | {
-        member: number | Team;
-        /**
-         * Role on this project (e.g. "Project Lead"). Falls back to the member's main role if blank.
-         */
-        role?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * The case-study page headline (falls back to the project title).
-   */
-  impactHeadline?: string | null;
-  /**
-   * A one-line impact highlight shown under the headline (e.g. "Saves ~150 companions hours of paperwork a month").
-   */
-  impact?: string | null;
-  /**
-   * Articles about this project. Shown as a "featured in" badge at the top of the case study.
-   */
-  press?:
-    | {
-        /**
-         * e.g. "Süddeutsche Zeitung"
-         */
-        outlet: string;
-        /**
-         * The article headline, in its original language.
-         */
-        headline: string;
-        url: string;
-        date?: string | null;
-        /**
-         * The outlet’s mark, ideally a trimmed SVG/PNG without background. Optional – the badge names the outlet either way.
-         */
-        logo?: (number | null) | Media;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * The body of the case-study page. Add, remove and reorder blocks freely — text sections, quote, gallery, product demo, timeline, team and FAQ.
-   */
-  layout?:
-    | (
-        | {
-            /**
-             * Optional section heading (e.g. "The challenge").
-             */
-            heading?: string | null;
-            /**
-             * Paragraph text. Separate paragraphs with a blank line.
-             */
-            body: string;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'text';
-          }
-        | {
-            text: string;
-            author?: string | null;
-            role?: string | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'quote';
-          }
-        | {
-            /**
-             * Optional section heading (e.g. "From the workshop").
-             */
-            heading?: string | null;
-            /**
-             * Use "Product shots" for app screens and device mock-ups, "Photographs" for workshops, on-site visits and presentations.
-             */
-            layout?: ('stage' | 'photos') | null;
-            images?:
-              | {
-                  image: number | Media;
-                  caption?: string | null;
-                  id?: string | null;
-                }[]
-              | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'gallery';
-          }
-        | {
-            /**
-             * Optional section heading (e.g. "See it in action").
-             */
-            heading?: string | null;
-            /**
-             * A screen recording (MP4), served from our own domain. Keep it short and silent-friendly — it plays on tap, never on its own.
-             */
-            video: number | Media;
-            /**
-             * Still frame shown before playback. Recommended for embeds.
-             */
-            poster?: (number | null) | Media;
-            caption?: string | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'demo';
-          }
-        | {
-            /**
-             * Optional section heading (e.g. "How it came together").
-             */
-            heading?: string | null;
-            points?:
-              | {
-                  /**
-                   * Shown inside the circle — a number (1, 2, 3) or a symbol (e.g. ✓). Leave blank to auto-number by position.
-                   */
-                  marker?: string | null;
-                  /**
-                   * Small badge above the title (e.g. "March 2026" or "Week 2").
-                   */
-                  timing?: string | null;
-                  title: string;
-                  subtitle?: string | null;
-                  /**
-                   * Progress marker: set "Current" on the phase the project is in — earlier steps then show as done, later ones as upcoming. Leave every point blank for a plain timeline.
-                   */
-                  state?: ('done' | 'current' | 'upcoming') | null;
-                  /**
-                   * Optional screenshot or mock-up shown with this step.
-                   */
-                  image?: (number | null) | Media;
-                  id?: string | null;
-                }[]
-              | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'timeline';
-          }
-        | {
-            /**
-             * Optional section heading (e.g. "The team behind it").
-             */
-            heading?: string | null;
-            /**
-             * Leave empty to show the project's Team (set further up this page). Add rows only to show a different list here.
-             */
-            members?:
-              | {
-                  member: number | Team;
-                  /**
-                   * Role on this project (e.g. "Project Lead"). Falls back to the member's main role if blank.
-                   */
-                  role?: string | null;
-                  id?: string | null;
-                }[]
-              | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'team';
-          }
-        | {
-            items?:
-              | {
-                  question: string;
-                  answer: string;
-                  id?: string | null;
-                }[]
-              | null;
-            id?: string | null;
-            blockName?: string | null;
-            blockType: 'faq';
-          }
-      )[]
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "events".
- */
-export interface Event {
-  id: number;
-  title: string;
-  date: string;
-  time: string;
-  location: string;
-  description: string;
-  type: 'Hackathon' | 'Workshop' | 'Info-session' | 'Social';
-  isUpcoming?: boolean | null;
-  link?: {
-    label?: string | null;
-    url?: string | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "faq".
- */
-export interface Faq {
-  id: number;
-  question: string;
-  answer: string;
-  category?: ('general' | 'membership' | 'projects' | 'technical') | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "sponsors".
- */
-export interface Sponsor {
-  id: number;
-  name: string;
-  logo?: (number | null) | Media;
-  /**
-   * The logo links here (opens in a new tab), e.g. https://www.hetzner.com. Left empty, the logo is not clickable.
-   */
-  url?: string | null;
-  /**
-   * Which tier section this partner appears in (managed in Partner Tiers).
-   */
-  tierRef?: (number | null) | SponsorTier;
-  /**
-   * Deprecated — use the Tier relationship above.
-   */
-  tier?: ('platinum' | 'gold' | 'silver' | 'bronze' | 'partner') | null;
-  description?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Tier sections for the Partners page (e.g. Platinum, Gold …).
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "sponsor-tiers".
- */
-export interface SponsorTier {
-  id: number;
-  label: string;
-  /**
-   * Lower shows first (e.g. Platinum 10, Gold 20, Silver 30 …).
-   */
-  order: number;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "blog-posts".
- */
-export interface BlogPost {
-  id: number;
-  title: string;
-  slug: string;
-  publishedAt: string;
-  excerpt: string;
-  featuredImage?: (number | null) | Media;
-  tags?:
-    | {
-        tag: string;
-        id?: string | null;
-      }[]
-    | null;
-  author?: (number | null) | Team;
-  project?: (number | null) | Project;
-  content: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  updatedAt: string;
-  createdAt: string;
 }
 /**
  * People who asked to be notified when membership applications reopen.
@@ -716,150 +244,6 @@ export interface WaitlistSignup {
   };
   updatedAt: string;
   createdAt: string;
-}
-/**
- * Cookieless behavioural events (page views, form starts, conversions) for campaign & funnel analysis. No cookies, no IP, no personal data — a random per-visit session id links events to a conversion.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "analytics-events".
- */
-export interface AnalyticsEvent {
-  id: number;
-  type:
-    | 'landing'
-    | 'pageview'
-    | 'cta_click'
-    | 'form_start'
-    | 'conversion'
-    | 'outbound_click'
-    | 'booking_started'
-    | 'booking_completed';
-  /**
-   * Page path where the event occurred.
-   */
-  path?: string | null;
-  /**
-   * Event detail — CTA id, form name, conversion kind, or link host.
-   */
-  label?: string | null;
-  /**
-   * Site language at the time.
-   */
-  locale?: string | null;
-  /**
-   * Where this submission came from — captured from the landing URL (?src / utm_*) and carried through the session. Empty for direct/organic visits. Used only in aggregate for campaign analysis.
-   */
-  attribution?: {
-    /**
-     * Campaign tag from ?src=, or utm_source (e.g. "poster-tumsom").
-     */
-    source?: string | null;
-    /**
-     * Normalised traffic channel, derived from the tag + referrer: campaign (tagged link), organic_search, social, referral, or direct.
-     */
-    channel?: ('campaign' | 'organic_search' | 'social' | 'referral' | 'direct') | null;
-    /**
-     * utm_medium (e.g. poster, qr, social, newsletter).
-     */
-    medium?: string | null;
-    /**
-     * utm_campaign.
-     */
-    campaign?: string | null;
-    /**
-     * utm_content — distinguishes creatives/variants.
-     */
-    content?: string | null;
-    /**
-     * Referring site host (e.g. instagram.com), when the browser sends one.
-     */
-    referrer?: string | null;
-    /**
-     * First path the visitor landed on this session.
-     */
-    landingPath?: string | null;
-    /**
-     * Random per-visit id (sessionStorage). Links this conversion to the behavioural funnel; not a stable identifier, not personal data.
-     */
-    sessionId?: string | null;
-    /**
-     * When attribution was first captured this session.
-     */
-    firstSeenAt?: string | null;
-  };
-  /**
-   * Optional extra event data.
-   */
-  meta?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * Proof of cookie consent (GDPR Art. 7(1)). One row per interactive banner decision. No IP, no user agent — the random consent id matches the visitor's cfc_consent_id cookie. Never auto-purged.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "consent-records".
- */
-export interface ConsentRecord {
-  id: number;
-  /**
-   * Random id, also stored in the visitor's cfc_consent_id cookie so a stored consent can be matched to this record.
-   */
-  consentId: string;
-  /**
-   * Audience measurement: our own first-party analytics + Google Analytics.
-   */
-  statistics?: boolean | null;
-  /**
-   * Google Ads conversion tracking and ads personalisation.
-   */
-  marketing?: boolean | null;
-  /**
-   * Banner config version the choice was made against (CONSENT_CONFIG_VERSION). Identifies which wording the visitor saw.
-   */
-  configVersion?: number | null;
-  /**
-   * Language the banner was displayed in.
-   */
-  locale?: string | null;
-  /**
-   * Page the decision was made on.
-   */
-  path?: string | null;
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "applicant-files".
- */
-export interface ApplicantFile {
-  id: number;
-  /**
-   * Which form field the file was uploaded for (e.g. "cv").
-   */
-  kind?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person – with "Waitlist" ticked, also put them on a waitlist. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".
@@ -1137,6 +521,573 @@ export interface ShareAccessLog {
   createdAt: string;
 }
 /**
+ * Cookieless behavioural events (page views, form starts, conversions) for campaign & funnel analysis. No cookies, no IP, no personal data — a random per-visit session id links events to a conversion.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-events".
+ */
+export interface AnalyticsEvent {
+  id: number;
+  type:
+    | 'landing'
+    | 'pageview'
+    | 'cta_click'
+    | 'form_start'
+    | 'conversion'
+    | 'outbound_click'
+    | 'booking_started'
+    | 'booking_completed';
+  /**
+   * Page path where the event occurred.
+   */
+  path?: string | null;
+  /**
+   * Event detail — CTA id, form name, conversion kind, or link host.
+   */
+  label?: string | null;
+  /**
+   * Site language at the time.
+   */
+  locale?: string | null;
+  /**
+   * Where this submission came from — captured from the landing URL (?src / utm_*) and carried through the session. Empty for direct/organic visits. Used only in aggregate for campaign analysis.
+   */
+  attribution?: {
+    /**
+     * Campaign tag from ?src=, or utm_source (e.g. "poster-tumsom").
+     */
+    source?: string | null;
+    /**
+     * Normalised traffic channel, derived from the tag + referrer: campaign (tagged link), organic_search, social, referral, or direct.
+     */
+    channel?: ('campaign' | 'organic_search' | 'social' | 'referral' | 'direct') | null;
+    /**
+     * utm_medium (e.g. poster, qr, social, newsletter).
+     */
+    medium?: string | null;
+    /**
+     * utm_campaign.
+     */
+    campaign?: string | null;
+    /**
+     * utm_content — distinguishes creatives/variants.
+     */
+    content?: string | null;
+    /**
+     * Referring site host (e.g. instagram.com), when the browser sends one.
+     */
+    referrer?: string | null;
+    /**
+     * First path the visitor landed on this session.
+     */
+    landingPath?: string | null;
+    /**
+     * Random per-visit id (sessionStorage). Links this conversion to the behavioural funnel; not a stable identifier, not personal data.
+     */
+    sessionId?: string | null;
+    /**
+     * When attribution was first captured this session.
+     */
+    firstSeenAt?: string | null;
+  };
+  /**
+   * Optional extra event data.
+   */
+  meta?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Proof of cookie consent (GDPR Art. 7(1)). One row per interactive banner decision. No IP, no user agent — the random consent id matches the visitor's cfc_consent_id cookie. Never auto-purged.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-records".
+ */
+export interface ConsentRecord {
+  id: number;
+  /**
+   * Random id, also stored in the visitor's cfc_consent_id cookie so a stored consent can be matched to this record.
+   */
+  consentId: string;
+  /**
+   * Audience measurement: our own first-party analytics + Google Analytics.
+   */
+  statistics?: boolean | null;
+  /**
+   * Google Ads conversion tracking and ads personalisation.
+   */
+  marketing?: boolean | null;
+  /**
+   * Banner config version the choice was made against (CONSENT_CONFIG_VERSION). Identifies which wording the visitor saw.
+   */
+  configVersion?: number | null;
+  /**
+   * Language the banner was displayed in.
+   */
+  locale?: string | null;
+  /**
+   * Page the decision was made on.
+   */
+  path?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "projects".
+ */
+export interface Project {
+  id: number;
+  title: string;
+  ngoPartner: string;
+  /**
+   * Lowercase, hyphenated (e.g. "lebenshilfe-muenchen"). Needed for the detail page.
+   */
+  slug?: string | null;
+  featured?: boolean | null;
+  description: string;
+  /**
+   * The partner organisation’s logo.
+   */
+  image?: (number | null) | Media;
+  /**
+   * Shown on the projects overview. Upload bare screenshots without device frames – the browser window and phone bezel are drawn by the site. Either one is enough.
+   */
+  screens?: {
+    /**
+     * Landscape, e.g. 2880×1800.
+     */
+    desktop?: (number | null) | Media;
+    /**
+     * Portrait phone screenshot, e.g. 1170×2532.
+     */
+    mobile?: (number | null) | Media;
+  };
+  technologies?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'active' | 'completed' | 'recruiting';
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Who works on this project. Shown on the Team page under each person — no case study needed. The case study's "Team" block reuses this list.
+   */
+  team?:
+    | {
+        member: number | Team;
+        /**
+         * Role on this project (e.g. "Project Lead"). Falls back to the member's main role if blank.
+         */
+        role?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The case-study page headline (falls back to the project title).
+   */
+  impactHeadline?: string | null;
+  /**
+   * A one-line impact highlight shown under the headline (e.g. "Saves ~150 companions hours of paperwork a month").
+   */
+  impact?: string | null;
+  /**
+   * Articles about this project. Shown as a "featured in" badge at the top of the case study.
+   */
+  press?:
+    | {
+        /**
+         * e.g. "Süddeutsche Zeitung"
+         */
+        outlet: string;
+        /**
+         * The article headline, in its original language.
+         */
+        headline: string;
+        url: string;
+        date?: string | null;
+        /**
+         * The outlet’s mark, ideally a trimmed SVG/PNG without background. Optional – the badge names the outlet either way.
+         */
+        logo?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The body of the case-study page. Add, remove and reorder blocks freely — text sections, quote, gallery, product demo, timeline, team and FAQ.
+   */
+  layout?:
+    | (
+        | {
+            /**
+             * Optional section heading (e.g. "The challenge").
+             */
+            heading?: string | null;
+            /**
+             * Paragraph text. Separate paragraphs with a blank line.
+             */
+            body: string;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'text';
+          }
+        | {
+            text: string;
+            author?: string | null;
+            role?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'quote';
+          }
+        | {
+            /**
+             * Optional section heading (e.g. "From the workshop").
+             */
+            heading?: string | null;
+            /**
+             * Use "Product shots" for app screens and device mock-ups, "Photographs" for workshops, on-site visits and presentations.
+             */
+            layout?: ('stage' | 'photos') | null;
+            images?:
+              | {
+                  image: number | Media;
+                  caption?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'gallery';
+          }
+        | {
+            /**
+             * Optional section heading (e.g. "See it in action").
+             */
+            heading?: string | null;
+            /**
+             * A screen recording (MP4), served from our own domain. Keep it short and silent-friendly — it plays on tap, never on its own.
+             */
+            video: number | Media;
+            /**
+             * Still frame shown before playback. Recommended for embeds.
+             */
+            poster?: (number | null) | Media;
+            caption?: string | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'demo';
+          }
+        | {
+            /**
+             * Optional section heading (e.g. "How it came together").
+             */
+            heading?: string | null;
+            points?:
+              | {
+                  /**
+                   * Shown inside the circle — a number (1, 2, 3) or a symbol (e.g. ✓). Leave blank to auto-number by position.
+                   */
+                  marker?: string | null;
+                  /**
+                   * Small badge above the title (e.g. "March 2026" or "Week 2").
+                   */
+                  timing?: string | null;
+                  title: string;
+                  subtitle?: string | null;
+                  /**
+                   * Progress marker: set "Current" on the phase the project is in — earlier steps then show as done, later ones as upcoming. Leave every point blank for a plain timeline.
+                   */
+                  state?: ('done' | 'current' | 'upcoming') | null;
+                  /**
+                   * Optional screenshot or mock-up shown with this step.
+                   */
+                  image?: (number | null) | Media;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'timeline';
+          }
+        | {
+            /**
+             * Optional section heading (e.g. "The team behind it").
+             */
+            heading?: string | null;
+            /**
+             * Leave empty to show the project's Team (set further up this page). Add rows only to show a different list here.
+             */
+            members?:
+              | {
+                  member: number | Team;
+                  /**
+                   * Role on this project (e.g. "Project Lead"). Falls back to the member's main role if blank.
+                   */
+                  role?: string | null;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'team';
+          }
+        | {
+            items?:
+              | {
+                  question: string;
+                  answer: string;
+                  id?: string | null;
+                }[]
+              | null;
+            id?: string | null;
+            blockName?: string | null;
+            blockType: 'faq';
+          }
+      )[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "media".
+ */
+export interface Media {
+  id: number;
+  alt: string;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+  sizes?: {
+    thumbnail?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    card?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+    large?: {
+      url?: string | null;
+      width?: number | null;
+      height?: number | null;
+      mimeType?: string | null;
+      filesize?: number | null;
+      filename?: string | null;
+    };
+  };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "team".
+ */
+export interface Team {
+  id: number;
+  _order?: string | null;
+  name: string;
+  role: string;
+  /**
+   * Assign this person to one or more teams, with the role they hold in each. Leave a role blank to reuse the main role above.
+   */
+  teamMemberships?:
+    | {
+        team: number | TeamGroup;
+        /**
+         * Optional — role in this team; falls back to the main role above.
+         */
+        role?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  category: 'member' | 'adviser';
+  image?: (number | null) | Media;
+  bio: string;
+  links?:
+    | {
+        label: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  companies?: (number | Company)[] | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Team sections for the Team page (e.g. Engineering, Design). Assign people to a team under each person in "Team Members".
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "team-groups".
+ */
+export interface TeamGroup {
+  id: number;
+  name: string;
+  /**
+   * Optional logo/image shown beside the team heading.
+   */
+  logo?: (number | null) | Media;
+  /**
+   * Lower shows first (e.g. 10, 20, 30 …).
+   */
+  order: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Companies our team members have worked at — shown as a logo wall on the Team page.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "companies".
+ */
+export interface Company {
+  id: number;
+  name: string;
+  logo?: (number | null) | Media;
+  url?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "events".
+ */
+export interface Event {
+  id: number;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  description: string;
+  type: 'Hackathon' | 'Workshop' | 'Info-session' | 'Social';
+  isUpcoming?: boolean | null;
+  link?: {
+    label?: string | null;
+    url?: string | null;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-posts".
+ */
+export interface BlogPost {
+  id: number;
+  title: string;
+  slug: string;
+  publishedAt: string;
+  excerpt: string;
+  featuredImage?: (number | null) | Media;
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  author?: (number | null) | Team;
+  project?: (number | null) | Project;
+  content: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "faq".
+ */
+export interface Faq {
+  id: number;
+  question: string;
+  answer: string;
+  category?: ('general' | 'membership' | 'projects' | 'technical') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsors".
+ */
+export interface Sponsor {
+  id: number;
+  name: string;
+  logo?: (number | null) | Media;
+  /**
+   * The logo links here (opens in a new tab), e.g. https://www.hetzner.com. Left empty, the logo is not clickable.
+   */
+  url?: string | null;
+  /**
+   * Which tier section this partner appears in (managed in Partner Tiers).
+   */
+  tierRef?: (number | null) | SponsorTier;
+  /**
+   * Deprecated — use the Tier relationship above.
+   */
+  tier?: ('platinum' | 'gold' | 'silver' | 'bronze' | 'partner') | null;
+  description?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Tier sections for the Partners page (e.g. Platinum, Gold …).
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sponsor-tiers".
+ */
+export interface SponsorTier {
+  id: number;
+  label: string;
+  /**
+   * Lower shows first (e.g. Platinum 10, Gold 20, Silver 30 …).
+   */
+  order: number;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * Someone withdrew their consent or asked to be deleted? Delete their submission – its CV is deleted with it. TechTour registrations are also deleted automatically on the day set under TechTour Page → "Delete registrations on".
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1255,6 +1206,55 @@ export interface FormSubmission {
   };
   updatedAt: string;
   createdAt: string;
+}
+/**
+ * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "applicant-files".
+ */
+export interface ApplicantFile {
+  id: number;
+  /**
+   * Which form field the file was uploaded for (e.g. "cv").
+   */
+  kind?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
 }
 /**
  * API keys control which collections, resources, tools, and prompts MCP clients can access
@@ -1582,8 +1582,28 @@ export interface PayloadLockedDocument {
   id: number;
   document?:
     | ({
-        relationTo: 'users';
-        value: number | User;
+        relationTo: 'waitlist-signups';
+        value: number | WaitlistSignup;
+      } | null)
+    | ({
+        relationTo: 'share-links';
+        value: number | ShareLink;
+      } | null)
+    | ({
+        relationTo: 'share-access-log';
+        value: number | ShareAccessLog;
+      } | null)
+    | ({
+        relationTo: 'analytics-events';
+        value: number | AnalyticsEvent;
+      } | null)
+    | ({
+        relationTo: 'consent-records';
+        value: number | ConsentRecord;
+      } | null)
+    | ({
+        relationTo: 'projects';
+        value: number | Project;
       } | null)
     | ({
         relationTo: 'team';
@@ -1594,12 +1614,12 @@ export interface PayloadLockedDocument {
         value: number | TeamGroup;
       } | null)
     | ({
-        relationTo: 'projects';
-        value: number | Project;
-      } | null)
-    | ({
         relationTo: 'events';
         value: number | Event;
+      } | null)
+    | ({
+        relationTo: 'blog-posts';
+        value: number | BlogPost;
       } | null)
     | ({
         relationTo: 'faq';
@@ -1622,40 +1642,20 @@ export interface PayloadLockedDocument {
         value: number | Media;
       } | null)
     | ({
-        relationTo: 'blog-posts';
-        value: number | BlogPost;
-      } | null)
-    | ({
-        relationTo: 'waitlist-signups';
-        value: number | WaitlistSignup;
-      } | null)
-    | ({
-        relationTo: 'analytics-events';
-        value: number | AnalyticsEvent;
-      } | null)
-    | ({
-        relationTo: 'consent-records';
-        value: number | ConsentRecord;
-      } | null)
-    | ({
-        relationTo: 'applicant-files';
-        value: number | ApplicantFile;
-      } | null)
-    | ({
-        relationTo: 'share-links';
-        value: number | ShareLink;
-      } | null)
-    | ({
-        relationTo: 'share-access-log';
-        value: number | ShareAccessLog;
-      } | null)
-    | ({
         relationTo: 'forms';
         value: number | Form;
       } | null)
     | ({
         relationTo: 'form-submissions';
         value: number | FormSubmission;
+      } | null)
+    | ({
+        relationTo: 'applicant-files';
+        value: number | ApplicantFile;
+      } | null)
+    | ({
+        relationTo: 'users';
+        value: number | User;
       } | null)
     | ({
         relationTo: 'payload-mcp-api-keys';
@@ -1715,63 +1715,100 @@ export interface PayloadMigration {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users_select".
+ * via the `definition` "waitlist-signups_select".
  */
-export interface UsersSelect<T extends boolean = true> {
-  updatedAt?: T;
-  createdAt?: T;
+export interface WaitlistSignupsSelect<T extends boolean = true> {
   email?: T;
-  resetPasswordToken?: T;
-  resetPasswordExpiration?: T;
-  salt?: T;
-  hash?: T;
-  loginAttempts?: T;
-  lockUntil?: T;
-  sessions?:
+  locale?: T;
+  attribution?:
     | T
     | {
-        id?: T;
-        createdAt?: T;
-        expiresAt?: T;
+        source?: T;
+        channel?: T;
+        medium?: T;
+        campaign?: T;
+        content?: T;
+        referrer?: T;
+        landingPath?: T;
+        sessionId?: T;
+        firstSeenAt?: T;
       };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "team_select".
- */
-export interface TeamSelect<T extends boolean = true> {
-  _order?: T;
-  name?: T;
-  role?: T;
-  teamMemberships?:
-    | T
-    | {
-        team?: T;
-        role?: T;
-        id?: T;
-      };
-  category?: T;
-  image?: T;
-  bio?: T;
-  links?:
-    | T
-    | {
-        label?: T;
-        url?: T;
-        id?: T;
-      };
-  companies?: T;
   updatedAt?: T;
   createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "team-groups_select".
+ * via the `definition` "share-links_select".
  */
-export interface TeamGroupsSelect<T extends boolean = true> {
-  name?: T;
-  logo?: T;
-  order?: T;
+export interface ShareLinksSelect<T extends boolean = true> {
+  title?: T;
+  option?: T;
+  recipients?:
+    | T
+    | {
+        email?: T;
+        name?: T;
+        id?: T;
+      };
+  expiresAt?: T;
+  blocked?: T;
+  rating?: T;
+  waitlist?: T;
+  waitlistUntil?: T;
+  form?: T;
+  token?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "share-access-log_select".
+ */
+export interface ShareAccessLogSelect<T extends boolean = true> {
+  link?: T;
+  email?: T;
+  action?: T;
+  submission?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "analytics-events_select".
+ */
+export interface AnalyticsEventsSelect<T extends boolean = true> {
+  type?: T;
+  path?: T;
+  label?: T;
+  locale?: T;
+  attribution?:
+    | T
+    | {
+        source?: T;
+        channel?: T;
+        medium?: T;
+        campaign?: T;
+        content?: T;
+        referrer?: T;
+        landingPath?: T;
+        sessionId?: T;
+        firstSeenAt?: T;
+      };
+  meta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consent-records_select".
+ */
+export interface ConsentRecordsSelect<T extends boolean = true> {
+  consentId?: T;
+  statistics?: T;
+  marketing?: T;
+  configVersion?: T;
+  locale?: T;
+  path?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1921,6 +1958,46 @@ export interface ProjectsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "team_select".
+ */
+export interface TeamSelect<T extends boolean = true> {
+  _order?: T;
+  name?: T;
+  role?: T;
+  teamMemberships?:
+    | T
+    | {
+        team?: T;
+        role?: T;
+        id?: T;
+      };
+  category?: T;
+  image?: T;
+  bio?: T;
+  links?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  companies?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "team-groups_select".
+ */
+export interface TeamGroupsSelect<T extends boolean = true> {
+  name?: T;
+  logo?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "events_select".
  */
 export interface EventsSelect<T extends boolean = true> {
@@ -1937,6 +2014,28 @@ export interface EventsSelect<T extends boolean = true> {
         label?: T;
         url?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "blog-posts_select".
+ */
+export interface BlogPostsSelect<T extends boolean = true> {
+  title?: T;
+  slug?: T;
+  publishedAt?: T;
+  excerpt?: T;
+  featuredImage?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  author?: T;
+  project?: T;
+  content?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2037,145 +2136,6 @@ export interface MediaSelect<T extends boolean = true> {
               filename?: T;
             };
       };
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "blog-posts_select".
- */
-export interface BlogPostsSelect<T extends boolean = true> {
-  title?: T;
-  slug?: T;
-  publishedAt?: T;
-  excerpt?: T;
-  featuredImage?: T;
-  tags?:
-    | T
-    | {
-        tag?: T;
-        id?: T;
-      };
-  author?: T;
-  project?: T;
-  content?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "waitlist-signups_select".
- */
-export interface WaitlistSignupsSelect<T extends boolean = true> {
-  email?: T;
-  locale?: T;
-  attribution?:
-    | T
-    | {
-        source?: T;
-        channel?: T;
-        medium?: T;
-        campaign?: T;
-        content?: T;
-        referrer?: T;
-        landingPath?: T;
-        sessionId?: T;
-        firstSeenAt?: T;
-      };
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "analytics-events_select".
- */
-export interface AnalyticsEventsSelect<T extends boolean = true> {
-  type?: T;
-  path?: T;
-  label?: T;
-  locale?: T;
-  attribution?:
-    | T
-    | {
-        source?: T;
-        channel?: T;
-        medium?: T;
-        campaign?: T;
-        content?: T;
-        referrer?: T;
-        landingPath?: T;
-        sessionId?: T;
-        firstSeenAt?: T;
-      };
-  meta?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "consent-records_select".
- */
-export interface ConsentRecordsSelect<T extends boolean = true> {
-  consentId?: T;
-  statistics?: T;
-  marketing?: T;
-  configVersion?: T;
-  locale?: T;
-  path?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "applicant-files_select".
- */
-export interface ApplicantFilesSelect<T extends boolean = true> {
-  kind?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  url?: T;
-  thumbnailURL?: T;
-  filename?: T;
-  mimeType?: T;
-  filesize?: T;
-  width?: T;
-  height?: T;
-  focalX?: T;
-  focalY?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "share-links_select".
- */
-export interface ShareLinksSelect<T extends boolean = true> {
-  title?: T;
-  option?: T;
-  recipients?:
-    | T
-    | {
-        email?: T;
-        name?: T;
-        id?: T;
-      };
-  expiresAt?: T;
-  blocked?: T;
-  rating?: T;
-  waitlist?: T;
-  waitlistUntil?: T;
-  form?: T;
-  token?: T;
-  updatedAt?: T;
-  createdAt?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "share-access-log_select".
- */
-export interface ShareAccessLogSelect<T extends boolean = true> {
-  link?: T;
-  email?: T;
-  action?: T;
-  submission?: T;
-  updatedAt?: T;
-  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2354,6 +2314,46 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
       };
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "applicant-files_select".
+ */
+export interface ApplicantFilesSelect<T extends boolean = true> {
+  kind?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  url?: T;
+  thumbnailURL?: T;
+  filename?: T;
+  mimeType?: T;
+  filesize?: T;
+  width?: T;
+  height?: T;
+  focalX?: T;
+  focalY?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users_select".
+ */
+export interface UsersSelect<T extends boolean = true> {
+  updatedAt?: T;
+  createdAt?: T;
+  email?: T;
+  resetPasswordToken?: T;
+  resetPasswordExpiration?: T;
+  salt?: T;
+  hash?: T;
+  loginAttempts?: T;
+  lockUntil?: T;
+  sessions?:
+    | T
+    | {
+        id?: T;
+        createdAt?: T;
+        expiresAt?: T;
+      };
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2545,283 +2545,6 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "site-config".
- */
-export interface SiteConfig {
-  id: number;
-  clubName: string;
-  tagline: string;
-  description: string;
-  email: string;
-  socialLinks?:
-    | {
-        platform: string;
-        url: string;
-        id?: string | null;
-      }[]
-    | null;
-  copyrightText?: string | null;
-  windowTitle?: string | null;
-  bookingUrl?: string | null;
-  /**
-   * Optional wide group photo shown at the top of the Team page. Left empty, the page starts straight at the member grid.
-   */
-  teamHeroImage?: (number | null) | Media;
-  /**
-   * Shown above the team photos, e.g. "20" or "20+". How many people are in the club — not how many have a profile on the site. Leave empty to hide it.
-   */
-  memberCount?: string | null;
-  stats?:
-    | {
-        value: string;
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Controls the site colour theme. "Auto" shows each visitor light or dark based on their device/browser preference; the forced options apply one theme for everyone.
-   */
-  colorMode: 'auto' | 'dark' | 'light';
-  /**
-   * Who the homepage is written for. Switch to "Students" while membership applications are open and back to "Partners" afterwards. Takes effect on the next page load — no deploy needed.
-   */
-  homepageMode: 'partners' | 'students';
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "membership".
- */
-export interface Membership {
-  id: number;
-  /**
-   * Headline of the Join page (/join).
-   */
-  title: string;
-  /**
-   * The lead under the headline – one or two sentences.
-   */
-  description: string;
-  /**
-   * Shown on the application page (/join/apply) for questions about applying.
-   */
-  contactEmail: string;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "legal".
- */
-export interface Legal {
-  id: number;
-  impressum: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  privacyPolicy: {
-    root: {
-      type: string;
-      children: {
-        type: any;
-        version: number;
-        [k: string]: unknown;
-      }[];
-      direction: ('ltr' | 'rtl') | null;
-      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
-      indent: number;
-      version: number;
-    };
-    [k: string]: unknown;
-  };
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "partner".
- */
-export interface Partner {
-  id: number;
-  /**
-   * Page headline.
-   */
-  title?: string | null;
-  /**
-   * Lead paragraph under the headline.
-   */
-  intro?: string | null;
-  /**
-   * Optional hero image under the headline — e.g. the team collaborating with an NGO partner. Left empty, the page stays text-only.
-   */
-  heroImage?: (number | null) | Media;
-  /**
-   * The concrete things a partner gets from working with us.
-   */
-  valueProps?:
-    | {
-        title: string;
-        description: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * The steps of a partnership, from first conversation to hand-off.
-   */
-  process?:
-    | {
-        title: string;
-        description: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Optional: what we ask of a partner (time, a point of contact, etc.).
-   */
-  commitment?: string | null;
-  ctaHeading?: string | null;
-  ctaText?: string | null;
-  contactEmail?: string | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "about".
- */
-export interface About {
-  id: number;
-  kicker?: string | null;
-  /**
-   * Page headline.
-   */
-  title?: string | null;
-  lead?: string | null;
-  /**
-   * Narrative paragraphs.
-   */
-  story?:
-    | {
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
-  valuesTitle?: string | null;
-  values?:
-    | {
-        title: string;
-        text: string;
-        id?: string | null;
-      }[]
-    | null;
-  teamTeaser?: string | null;
-  teamCta?: string | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "homepage".
- */
-export interface Homepage {
-  id: number;
-  heroKicker?: string | null;
-  heroCtaPrimary?: string | null;
-  heroCtaSecondary?: string | null;
-  heroScrollHint?: string | null;
-  /**
-   * Optional hero image beside the headline — ideally a wide candid of the team mid-build. Left empty, the hero stays text-only.
-   */
-  heroImage?: (number | null) | Media;
-  aboutKicker?: string | null;
-  aboutOneLiner?: string | null;
-  aboutPitch?: string | null;
-  stats?:
-    | {
-        value: string;
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Overrides the built-in process timeline (homepage and NGO page). Add, remove or reorder steps freely — e.g. drop the MVP step or add an expansion step.
-   */
-  steps?:
-    | {
-        /**
-         * Small badge above the title (e.g. "Week 0", "≈ 2 weeks in").
-         */
-        timing?: string | null;
-        title: string;
-        text: string;
-        /**
-         * Optional button on this step (e.g. "Book a first talk").
-         */
-        ctaLabel?: string | null;
-        /**
-         * Where the button links to. Left blank, it scrolls to the booking section of the page.
-         */
-        ctaHref?: string | null;
-        id?: string | null;
-      }[]
-    | null;
-  processKicker?: string | null;
-  processHeading?: string | null;
-  processIntro?: string | null;
-  projectsSubtitle?: string | null;
-  projectsTitle?: string | null;
-  projectsIntro?: string | null;
-  eventsSubtitle?: string | null;
-  eventsTitle?: string | null;
-  eventsIntro?: string | null;
-  sponsorsSubtitle?: string | null;
-  sponsorsTitle?: string | null;
-  sponsorsIntro?: string | null;
-  qaSubtitle?: string | null;
-  qaTitle?: string | null;
-  qaIntro?: string | null;
-  threedKicker?: string | null;
-  threedTitle?: string | null;
-  threedText?: string | null;
-  threedCta?: string | null;
-  ctaHeading?: string | null;
-  ctaText?: string | null;
-  ctaJoin?: string | null;
-  ctaContact?: string | null;
-  /**
-   * The big headline, e.g. "Build software for a non-profit. This semester."
-   */
-  studentHeroTitle?: string | null;
-  studentHeroLead?: string | null;
-  /**
-   * The apply button — used in the hero, under the timeline and in the closing call-to-action. Links straight to the application form.
-   */
-  studentHeroCtaPrimary?: string | null;
-  /**
-   * The second hero button; scrolls down to the application timeline.
-   */
-  studentHeroCtaSecondary?: string | null;
-  studentWhyHeading?: string | null;
-  studentWhyIntro?: string | null;
-  studentProjectsTitle?: string | null;
-  studentProjectsIntro?: string | null;
-  updatedAt?: string | null;
-  createdAt?: string | null;
-}
-/**
  * The visits and the registration settings for the Munich TechTour page. The registration form is the form titled "techtour" under Forms; the page's headline and section wording are part of the design, not content.
  *
  * This interface was referenced by `Config`'s JSON-Schema
@@ -2919,115 +2642,314 @@ export interface TechTour {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "site-config_select".
+ * via the `definition` "homepage".
  */
-export interface SiteConfigSelect<T extends boolean = true> {
-  clubName?: T;
-  tagline?: T;
-  description?: T;
-  email?: T;
-  socialLinks?:
-    | T
-    | {
-        platform?: T;
-        url?: T;
-        id?: T;
-      };
-  copyrightText?: T;
-  windowTitle?: T;
-  bookingUrl?: T;
-  teamHeroImage?: T;
-  memberCount?: T;
+export interface Homepage {
+  id: number;
+  heroKicker?: string | null;
+  heroCtaPrimary?: string | null;
+  heroCtaSecondary?: string | null;
+  heroScrollHint?: string | null;
+  /**
+   * Optional hero image beside the headline — ideally a wide candid of the team mid-build. Left empty, the hero stays text-only.
+   */
+  heroImage?: (number | null) | Media;
+  aboutKicker?: string | null;
+  aboutOneLiner?: string | null;
+  aboutPitch?: string | null;
   stats?:
-    | T
     | {
-        value?: T;
-        label?: T;
-        id?: T;
-      };
-  colorMode?: T;
-  homepageMode?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "membership_select".
- */
-export interface MembershipSelect<T extends boolean = true> {
-  title?: T;
-  description?: T;
-  contactEmail?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "legal_select".
- */
-export interface LegalSelect<T extends boolean = true> {
-  impressum?: T;
-  privacyPolicy?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "partner_select".
- */
-export interface PartnerSelect<T extends boolean = true> {
-  title?: T;
-  intro?: T;
-  heroImage?: T;
-  valueProps?:
-    | T
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Overrides the built-in process timeline (homepage and NGO page). Add, remove or reorder steps freely — e.g. drop the MVP step or add an expansion step.
+   */
+  steps?:
     | {
-        title?: T;
-        description?: T;
-        id?: T;
-      };
-  process?:
-    | T
-    | {
-        title?: T;
-        description?: T;
-        id?: T;
-      };
-  commitment?: T;
-  ctaHeading?: T;
-  ctaText?: T;
-  contactEmail?: T;
-  updatedAt?: T;
-  createdAt?: T;
-  globalType?: T;
+        /**
+         * Small badge above the title (e.g. "Week 0", "≈ 2 weeks in").
+         */
+        timing?: string | null;
+        title: string;
+        text: string;
+        /**
+         * Optional button on this step (e.g. "Book a first talk").
+         */
+        ctaLabel?: string | null;
+        /**
+         * Where the button links to. Left blank, it scrolls to the booking section of the page.
+         */
+        ctaHref?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  processKicker?: string | null;
+  processHeading?: string | null;
+  processIntro?: string | null;
+  projectsSubtitle?: string | null;
+  projectsTitle?: string | null;
+  projectsIntro?: string | null;
+  eventsSubtitle?: string | null;
+  eventsTitle?: string | null;
+  eventsIntro?: string | null;
+  sponsorsSubtitle?: string | null;
+  sponsorsTitle?: string | null;
+  sponsorsIntro?: string | null;
+  qaSubtitle?: string | null;
+  qaTitle?: string | null;
+  qaIntro?: string | null;
+  threedKicker?: string | null;
+  threedTitle?: string | null;
+  threedText?: string | null;
+  threedCta?: string | null;
+  ctaHeading?: string | null;
+  ctaText?: string | null;
+  ctaJoin?: string | null;
+  ctaContact?: string | null;
+  /**
+   * The big headline, e.g. "Build software for a non-profit. This semester."
+   */
+  studentHeroTitle?: string | null;
+  studentHeroLead?: string | null;
+  /**
+   * The apply button — used in the hero, under the timeline and in the closing call-to-action. Links straight to the application form.
+   */
+  studentHeroCtaPrimary?: string | null;
+  /**
+   * The second hero button; scrolls down to the application timeline.
+   */
+  studentHeroCtaSecondary?: string | null;
+  studentWhyHeading?: string | null;
+  studentWhyIntro?: string | null;
+  studentProjectsTitle?: string | null;
+  studentProjectsIntro?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "about_select".
+ * via the `definition` "about".
  */
-export interface AboutSelect<T extends boolean = true> {
-  kicker?: T;
-  title?: T;
-  lead?: T;
+export interface About {
+  id: number;
+  kicker?: string | null;
+  /**
+   * Page headline.
+   */
+  title?: string | null;
+  lead?: string | null;
+  /**
+   * Narrative paragraphs.
+   */
   story?:
-    | T
     | {
-        text?: T;
-        id?: T;
-      };
-  valuesTitle?: T;
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  valuesTitle?: string | null;
   values?:
+    | {
+        title: string;
+        text: string;
+        id?: string | null;
+      }[]
+    | null;
+  teamTeaser?: string | null;
+  teamCta?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner".
+ */
+export interface Partner {
+  id: number;
+  /**
+   * Page headline.
+   */
+  title?: string | null;
+  /**
+   * Lead paragraph under the headline.
+   */
+  intro?: string | null;
+  /**
+   * Optional hero image under the headline — e.g. the team collaborating with an NGO partner. Left empty, the page stays text-only.
+   */
+  heroImage?: (number | null) | Media;
+  /**
+   * The concrete things a partner gets from working with us.
+   */
+  valueProps?:
+    | {
+        title: string;
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * The steps of a partnership, from first conversation to hand-off.
+   */
+  process?:
+    | {
+        title: string;
+        description: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional: what we ask of a partner (time, a point of contact, etc.).
+   */
+  commitment?: string | null;
+  ctaHeading?: string | null;
+  ctaText?: string | null;
+  contactEmail?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membership".
+ */
+export interface Membership {
+  id: number;
+  /**
+   * Headline of the Join page (/join).
+   */
+  title: string;
+  /**
+   * The lead under the headline – one or two sentences.
+   */
+  description: string;
+  /**
+   * Shown on the application page (/join/apply) for questions about applying.
+   */
+  contactEmail: string;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal".
+ */
+export interface Legal {
+  id: number;
+  impressum: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  privacyPolicy: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-config".
+ */
+export interface SiteConfig {
+  id: number;
+  clubName: string;
+  tagline: string;
+  description: string;
+  email: string;
+  socialLinks?:
+    | {
+        platform: string;
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  copyrightText?: string | null;
+  windowTitle?: string | null;
+  bookingUrl?: string | null;
+  /**
+   * Optional wide group photo shown at the top of the Team page. Left empty, the page starts straight at the member grid.
+   */
+  teamHeroImage?: (number | null) | Media;
+  /**
+   * Shown above the team photos, e.g. "20" or "20+". How many people are in the club — not how many have a profile on the site. Leave empty to hide it.
+   */
+  memberCount?: string | null;
+  stats?:
+    | {
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Controls the site colour theme. "Auto" shows each visitor light or dark based on their device/browser preference; the forced options apply one theme for everyone.
+   */
+  colorMode: 'auto' | 'dark' | 'light';
+  /**
+   * Who the homepage is written for. Switch to "Students" while membership applications are open and back to "Partners" afterwards. Takes effect on the next page load — no deploy needed.
+   */
+  homepageMode: 'partners' | 'students';
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tech-tour_select".
+ */
+export interface TechTourSelect<T extends boolean = true> {
+  visibility?: T;
+  deleteRegistrationsOn?: T;
+  registrationOpen?: T;
+  registrationDeadline?: T;
+  events?:
     | T
     | {
+        company?: T;
+        date?: T;
         title?: T;
-        text?: T;
+        time?: T;
+        location?: T;
+        description?: T;
+        logo?: T;
+        website?: T;
+        status?: T;
+        todos?:
+          | T
+          | {
+              text?: T;
+              linkUrl?: T;
+              linkLabel?: T;
+              id?: T;
+            };
         id?: T;
       };
-  teamTeaser?: T;
-  teamCta?: T;
+  formHeading?: T;
+  closedMessage?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
@@ -3099,37 +3021,115 @@ export interface HomepageSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "tech-tour_select".
+ * via the `definition` "about_select".
  */
-export interface TechTourSelect<T extends boolean = true> {
-  visibility?: T;
-  deleteRegistrationsOn?: T;
-  registrationOpen?: T;
-  registrationDeadline?: T;
-  events?:
+export interface AboutSelect<T extends boolean = true> {
+  kicker?: T;
+  title?: T;
+  lead?: T;
+  story?:
     | T
     | {
-        company?: T;
-        date?: T;
-        title?: T;
-        time?: T;
-        location?: T;
-        description?: T;
-        logo?: T;
-        website?: T;
-        status?: T;
-        todos?:
-          | T
-          | {
-              text?: T;
-              linkUrl?: T;
-              linkLabel?: T;
-              id?: T;
-            };
+        text?: T;
         id?: T;
       };
-  formHeading?: T;
-  closedMessage?: T;
+  valuesTitle?: T;
+  values?:
+    | T
+    | {
+        title?: T;
+        text?: T;
+        id?: T;
+      };
+  teamTeaser?: T;
+  teamCta?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "partner_select".
+ */
+export interface PartnerSelect<T extends boolean = true> {
+  title?: T;
+  intro?: T;
+  heroImage?: T;
+  valueProps?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  process?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        id?: T;
+      };
+  commitment?: T;
+  ctaHeading?: T;
+  ctaText?: T;
+  contactEmail?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "membership_select".
+ */
+export interface MembershipSelect<T extends boolean = true> {
+  title?: T;
+  description?: T;
+  contactEmail?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "legal_select".
+ */
+export interface LegalSelect<T extends boolean = true> {
+  impressum?: T;
+  privacyPolicy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "site-config_select".
+ */
+export interface SiteConfigSelect<T extends boolean = true> {
+  clubName?: T;
+  tagline?: T;
+  description?: T;
+  email?: T;
+  socialLinks?:
+    | T
+    | {
+        platform?: T;
+        url?: T;
+        id?: T;
+      };
+  copyrightText?: T;
+  windowTitle?: T;
+  bookingUrl?: T;
+  teamHeroImage?: T;
+  memberCount?: T;
+  stats?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  colorMode?: T;
+  homepageMode?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

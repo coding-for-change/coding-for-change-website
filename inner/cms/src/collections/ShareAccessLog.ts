@@ -29,7 +29,6 @@ export const ShareAccessLog: CollectionConfig = {
   slug: 'share-access-log',
   labels: { singular: 'Host link activity', plural: 'Host link activity' },
   admin: {
-    group: 'Forms',
     defaultColumns: ['createdAt', 'link', 'email', 'action', 'submission'],
     description:
       'Every sign-in, CV opened, decision and rating on a host share link. Written by the link itself; deleted together with the link.',

@@ -67,6 +67,7 @@ import { memberTables } from './lib/members';
 import { mailingTables } from './lib/mailing/tables';
 import { hostTables } from './lib/share/tables';
 import { keepMailsOfDuplicates } from './lib/mailing/store';
+import { adminNavPlugin } from './lib/adminNav';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -291,6 +292,10 @@ export default buildConfig({
       mcp: { tools: [mediaUploadTool] },
       overrideAuth: rememberMcpKey,
     }),
+    // Last, so it also reaches the collections the two plugins above add:
+    // every collection and global gets the sidebar section it sits in as
+    // its admin group, in the sidebar's order (lib/adminNav.ts).
+    adminNavPlugin,
   ],
   db: postgresAdapter({
     // push:true is Drizzle's schema-push — dev convenience only.
@@ -343,11 +348,9 @@ export default buildConfig({
           exact: true,
         },
       },
-      afterNavLinks: [
-        '/components/review/ReviewNavLink#ReviewNavLink',
-        '/components/mailing/MailingNavLink#MailingNavLink',
-        '/components/analytics/AnalyticsNavLink#AnalyticsNavLink',
-      ],
+      // The sidebar, with the views above inside its sections and an icon
+      // per entry – sections and order in lib/adminNav.ts.
+      Nav: '/components/nav/Nav#Nav',
     },
   },
   // Enforce the analytics retention window (GDPR storage limitation): purge
