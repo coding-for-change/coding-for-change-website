@@ -60,8 +60,10 @@ export type ExplorerOption = {
   kind: OptionKind;
   label: string;
   n: number;
-  /** Share of the column's base (the visits at the previous selected node). */
+  /** Share of the column's base (the visits on the selected card next to it). */
   pct: number;
+  /** Small: listed only once the column is expanded ("+ N more"). */
+  minor?: boolean;
 };
 
 export type ExplorerColumn = { base: number; options: ExplorerOption[] };
@@ -72,32 +74,93 @@ export const pickable = (o: ExplorerOption) =>
 
 const share = (n: number, base: number) => (base ? Math.round((n / base) * 1000) / 10 : 0);
 
+/** At most this many options per column before "+ N more"… */
+const MAIN_OPTIONS = 6;
+/** …and none below this share (%). Conversions are always shown. */
+const MINOR_PCT = 1;
+
+/** An outside source as a step in a chain (backwards it is where a visit began). */
+export const sourceKey = (src: string, ch: string) => `@${src}|${ch}`;
+export const isSourceKey = (k: string) => k.startsWith('@');
+const parseSourceKey = (k: string) => {
+  const [src, ch] = k.slice(1).split('|');
+  return { src, ch };
+};
+
+/** Label of any chain key: page path, ✓ conversion, or "via <source>" (where the visit began). */
+export function keyLabel(key: string): string {
+  if (isSourceKey(key)) {
+    const { src, ch } = parseSourceKey(key);
+    if (src === '(direct)') return 'Direct entry';
+    if (src === '(other source)') return 'via other sources';
+    return `via ${sourceLabel(src, ch)}`;
+  }
+  return stepLabel(key);
+}
+
+const kindOf = (k: string): OptionKind =>
+  isSourceKey(k) ? 'source' : isConversion(k) ? 'conversion' : 'page';
+
+/**
+ * Raw counts → a column: the biggest options first, small ones flagged
+ * `minor`, conversions always listed, then the static rows ("Other pages",
+ * "Left the site").
+ */
+function toColumn(
+  counts: Map<string, number>,
+  base: number,
+  label: (k: string) => string,
+  kind: (k: string) => OptionKind,
+  statics: { other?: number; exits?: number } = {},
+): ExplorerColumn {
+  const main: ExplorerOption[] = [];
+  const minor: ExplorerOption[] = [];
+  const conv: ExplorerOption[] = [];
+  for (const [k, n] of [...counts.entries()].sort((a, b) => b[1] - a[1])) {
+    if (k === '(other page)') continue;
+    const o: ExplorerOption = { key: k, kind: kind(k), label: label(k), n, pct: share(n, base) };
+    if (o.kind === 'conversion') conv.push(o);
+    else if (main.length < MAIN_OPTIONS && o.pct >= MINOR_PCT) main.push(o);
+    else minor.push({ ...o, minor: true });
+  }
+  // Hiding a single option saves nothing.
+  if (minor.length === 1) main.push({ ...minor.pop()!, minor: false });
+  const options = [...main, ...minor, ...conv];
+  const other = (statics.other ?? 0) + (counts.get('(other page)') ?? 0);
+  if (other) options.push({ key: '', kind: 'other', label: 'Other pages', n: other, pct: share(other, base) });
+  if (statics.exits) {
+    options.push({ key: '', kind: 'exit', label: 'Left the site', n: statics.exits, pct: share(statics.exits, base) });
+  }
+  return { base, options };
+}
+
 const bySource = (paths: PathGroup[], source: string) =>
   source === 'all' ? paths : paths.filter((p) => p.src === source);
 
-/** Column 0: every source, "All sources" first. */
+/* ---- forward: from the source on ---------------------------------------------- */
+
+/** Column 0 of the forward view: every source, "All sources" first. */
 export function sourceColumn(paths: PathGroup[]): ExplorerColumn {
-  const totals = new Map<string, { ch: string; n: number }>();
+  const counts = new Map<string, number>();
+  const channel = new Map<string, string>();
   let base = 0;
   for (const p of paths) {
     base += p.n;
-    const t = totals.get(p.src) ?? { ch: p.ch, n: 0 };
-    t.n += p.n;
-    totals.set(p.src, t);
+    counts.set(p.src, (counts.get(p.src) ?? 0) + p.n);
+    channel.set(p.src, p.ch);
   }
-  const options: ExplorerOption[] = [...totals.entries()]
-    .sort((a, b) => b[1].n - a[1].n)
-    .map(([src, t]) => ({ key: src, kind: 'source', label: sourceLabel(src, t.ch), n: t.n, pct: share(t.n, base) }));
-  return { base, options: [{ key: 'all', kind: 'source', label: 'All sources', n: base, pct: 100 }, ...options] };
+  const col = toColumn(counts, base, (src) => sourceLabel(src, channel.get(src)), () => 'source');
+  return {
+    base,
+    options: [{ key: 'all', kind: 'source', label: 'All sources', n: base, pct: 100 }, ...col.options],
+  };
 }
 
 /**
- * Column k ≥ 1: what visits from `source` that took exactly `prefix` (the
- * steps picked so far) did next. Pages beyond the `keep` biggest fold into
- * "Other pages"; conversions are always listed; visits that ended there are
- * "Left the site".
+ * Forward column k ≥ 1: what visits from `source` that took exactly `prefix`
+ * (the steps picked so far) did next.
  */
-export function stepColumn(paths: PathGroup[], source: string, prefix: string[], keep = 7): ExplorerColumn {
+export function stepColumn(paths: PathGroup[], source: string, prefix: string[]): ExplorerColumn {
   const counts = new Map<string, number>();
   let base = 0;
   let exits = 0;
@@ -111,23 +174,10 @@ export function stepColumn(paths: PathGroup[], source: string, prefix: string[],
       else exits += p.n;
     } else counts.set(next, (counts.get(next) ?? 0) + p.n);
   }
-  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]);
-  const pages = ranked.filter(([k]) => !isConversion(k) && k !== '(other page)');
-  const shown = pages.length === keep + 1 ? pages : pages.slice(0, keep);
-  const folded =
-    pages.slice(shown.length).reduce((a, [, n]) => a + n, 0) + (counts.get('(other page)') ?? 0) + beyond;
-  const options: ExplorerOption[] = [
-    ...shown.map(([k, n]) => ({ key: k, kind: 'page' as const, label: k, n, pct: share(n, base) })),
-    ...ranked
-      .filter(([k]) => isConversion(k))
-      .map(([k, n]) => ({ key: k, kind: 'conversion' as const, label: stepLabel(k), n, pct: share(n, base) })),
-  ];
-  if (folded) options.push({ key: '', kind: 'other', label: 'Other pages', n: folded, pct: share(folded, base) });
-  if (exits) options.push({ key: '', kind: 'exit', label: 'Left the site', n: exits, pct: share(exits, base) });
-  return { base, options };
+  return toColumn(counts, base, stepLabel, kindOf, { other: beyond, exits });
 }
 
-/** All columns for a selection: one per picked element, plus the next one. */
+/** All forward columns for a selection: one per picked element, plus the next one. */
 export function columnsFor(paths: PathGroup[], sel: string[]): ExplorerColumn[] {
   const cols = [sourceColumn(paths)];
   for (let k = 1; k <= sel.length; k++) cols.push(stepColumn(paths, sel[0], sel.slice(1, k)));
@@ -148,6 +198,114 @@ export function extendCommon(paths: PathGroup[], sel: string[], length: number):
     out.push(top.key);
   }
   return out;
+}
+
+/* ---- focus: around one fixed point ------------------------------------------------ */
+
+/** Focus target for "the visit ended here". */
+export const EXIT = '#exit';
+
+type Anchor = { p: PathGroup; k: number };
+
+/**
+ * Visits that reached the target, with the target's position: its first
+ * occurrence for a page or conversion, the end of the visit for EXIT (visits
+ * longer than we keep are skipped there – their end is unknown).
+ */
+function anchors(paths: PathGroup[], target: string): Anchor[] {
+  const out: Anchor[] = [];
+  for (const p of paths) {
+    if (target === EXIT) {
+      if (!p.more) out.push({ p, k: p.steps.length });
+      continue;
+    }
+    const k = p.steps.indexOf(target);
+    if (k >= 0) out.push({ p, k });
+  }
+  return out;
+}
+
+export function focusTotal(paths: PathGroup[], target: string): number {
+  return anchors(paths, target).reduce((a, x) => a + x.p.n, 0);
+}
+
+/** What came j steps before the anchor (0 = right before): a step, the source, or nothing. */
+const before = (a: Anchor, j: number): string | undefined => {
+  const i = a.k - 1 - j;
+  if (i >= 0) return a.p.steps[i];
+  return i === -1 ? sourceKey(a.p.src, a.p.ch) : undefined;
+};
+
+/**
+ * Backward column: for visits that reached the target via exactly `back`
+ * (picked so far, nearest first), what came right before that. Going back far
+ * enough ends at the source ("Entered from …").
+ */
+export function backColumn(paths: PathGroup[], target: string, back: string[]): ExplorerColumn {
+  const counts = new Map<string, number>();
+  let base = 0;
+  outer: for (const a of anchors(paths, target)) {
+    for (let j = 0; j < back.length; j++) if (before(a, j) !== back[j]) continue outer;
+    const prev = before(a, back.length);
+    if (prev === undefined) continue;
+    base += a.p.n;
+    counts.set(prev, (counts.get(prev) ?? 0) + a.p.n);
+  }
+  return toColumn(counts, base, keyLabel, kindOf);
+}
+
+/** Forward column from the target: what came after it via exactly `fwd`. */
+export function fwdColumn(paths: PathGroup[], target: string, fwd: string[]): ExplorerColumn {
+  const counts = new Map<string, number>();
+  let base = 0;
+  let exits = 0;
+  let beyond = 0;
+  outer: for (const a of anchors(paths, target)) {
+    for (let j = 0; j < fwd.length; j++) if (a.p.steps[a.k + 1 + j] !== fwd[j]) continue outer;
+    base += a.p.n;
+    const next = a.p.steps[a.k + 1 + fwd.length];
+    if (next === undefined) {
+      if (a.p.more) beyond += a.p.n;
+      else exits += a.p.n;
+    } else counts.set(next, (counts.get(next) ?? 0) + a.p.n);
+  }
+  return toColumn(counts, base, stepLabel, kindOf, { other: beyond, exits });
+}
+
+/** Suggested backward chain: the most common previous step, until the source. */
+export function extendBack(paths: PathGroup[], target: string, back: string[], length: number): string[] {
+  const out = [...back];
+  while (out.length < length && !(out.length && isSourceKey(out[out.length - 1]))) {
+    const top = backColumn(paths, target, out).options.find((o) => pickable(o) && !o.minor);
+    if (!top) break;
+    out.push(top.key);
+  }
+  return out;
+}
+
+/** Suggested forward chain from the target: the most common next page. */
+export function extendFwd(paths: PathGroup[], target: string, fwd: string[], length: number): string[] {
+  const out = [...fwd];
+  while (out.length < length && !(out.length && isConversion(out[out.length - 1]))) {
+    const top = fwdColumn(paths, target, out).options.find((o) => o.kind === 'page');
+    if (!top) break;
+    out.push(top.key);
+  }
+  return out;
+}
+
+/** What can be focused: pages, conversions, and the end of a visit. */
+export function focusTargets(paths: PathGroup[]) {
+  const pages = new Map<string, number>();
+  for (const p of paths) {
+    for (const step of new Set(p.steps)) {
+      if (!isConversion(step) && step !== '(other page)') pages.set(step, (pages.get(step) ?? 0) + p.n);
+    }
+  }
+  return {
+    pages: [...pages.entries()].sort((a, b) => b[1] - a[1]).map(([value, n]) => ({ value, n })),
+    exits: focusTotal(paths, EXIT),
+  };
 }
 
 /** Conversion types present in the data, for the common-paths menu. */
