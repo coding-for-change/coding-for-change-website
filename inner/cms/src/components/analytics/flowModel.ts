@@ -327,42 +327,100 @@ export function conversionOptions(paths: PathGroup[]) {
 
 export type JourneyRow = {
   steps: string[];
-  /** Earlier steps were dropped (only for paths leading to a conversion). */
+  /** Earlier steps were dropped. */
   cut: boolean;
   /** The visit went on after the steps shown. */
   more: boolean;
   n: number;
 };
 
+/** Station filter for common paths: a page count (6 = six or more), or 'any'. */
+export type Stations = 'any' | 1 | 2 | 3 | 4 | 5 | 6;
+export const MAX_STATIONS = 6;
+
+const pageCount = (steps: string[]) => steps.filter((s) => !isConversion(s)).length;
+
+/** The steps up to and including the k-th page (conversions in between kept). */
+function firstPages(steps: string[], k: number): string[] {
+  let pages = 0;
+  for (let i = 0; i < steps.length; i++) {
+    if (!isConversion(steps[i]) && ++pages === k) return steps.slice(0, i + 1);
+  }
+  return steps;
+}
+
+/** The steps from the k-th last page to the end. */
+function lastPages(steps: string[], k: number): string[] {
+  let pages = 0;
+  for (let i = steps.length - 1; i >= 0; i--) {
+    if (!isConversion(steps[i]) && ++pages === k) return steps.slice(i);
+  }
+  return steps;
+}
+
 /**
- * Most common paths of visits from `source`. For `all`: visits with at least
- * two steps, first `len` steps. For a conversion marker: visits that made that
- * conversion, cut at it – the path that led there (the last `len` steps, with
- * `cut` set when earlier steps were dropped).
+ * Most common paths of visits from `source`.
+ *
+ *  - outcome `all`: the whole visit; outcome `!x`: the visit up to that
+ *    conversion (the path that led there).
+ *  - stations: only paths with exactly that many pages – conversions show in
+ *    the path but don't count – so "3" lists the standard three-page routes;
+ *    6 means six or more (shown as the first six pages, or the last six
+ *    before a conversion). `any` = every length (first / last five steps).
+ *
+ * `byLength[n]` counts the visits with n pages (6 = six or more), for the
+ * station buttons.
  */
-export function topJourneys(paths: PathGroup[], source: string, outcome: string, len = 5, limit = 10) {
+export function topJourneys(
+  paths: PathGroup[],
+  source: string,
+  outcome: string,
+  stations: Stations = 'any',
+  limit = 10,
+) {
   const groups = new Map<string, JourneyRow>();
+  const byLength = Array<number>(MAX_STATIONS + 1).fill(0);
   let total = 0;
-  let single = 0;
   for (const p of bySource(paths, source)) {
-    let steps: string[];
-    let cut = false;
-    let more = false;
+    let path: string[];
+    let truncated: boolean;
     if (outcome === 'all') {
-      total += p.n;
-      if (p.steps.length < 2 && !p.more) {
-        single += p.n;
-        continue;
-      }
-      steps = p.steps.slice(0, len);
-      more = p.more || p.steps.length > len;
+      path = p.steps;
+      truncated = p.more;
     } else {
       const i = p.steps.indexOf(outcome);
       if (i < 0) continue;
-      total += p.n;
-      const from = Math.max(0, i + 1 - len);
-      steps = p.steps.slice(from, i + 1);
-      cut = from > 0;
+      path = p.steps.slice(0, i + 1);
+      truncated = false;
+    }
+    total += p.n;
+    const pages = pageCount(path);
+    const bucket = truncated || pages >= MAX_STATIONS ? MAX_STATIONS : pages;
+    if (bucket >= 1) byLength[bucket] += p.n;
+
+    let steps: string[];
+    let cut = false;
+    let more = false;
+    if (stations === 'any') {
+      if (outcome === 'all') {
+        if (path.length < 2 && !truncated) continue;
+        steps = path.slice(0, 5);
+        more = truncated || path.length > 5;
+      } else {
+        const from = Math.max(0, path.length - 5);
+        steps = path.slice(from);
+        cut = from > 0;
+      }
+    } else {
+      if (bucket !== stations) continue;
+      if (stations < MAX_STATIONS) steps = path;
+      else if (outcome === 'all') {
+        steps = firstPages(path, MAX_STATIONS);
+        more = truncated || steps.length < path.length;
+      } else {
+        steps = lastPages(path, MAX_STATIONS);
+        cut = steps.length < path.length;
+      }
     }
     const key = `${cut ? '…' : ''}${steps.join('\t')}${more ? '…' : ''}`;
     const row = groups.get(key) ?? { steps, cut, more, n: 0 };
@@ -370,5 +428,5 @@ export function topJourneys(paths: PathGroup[], source: string, outcome: string,
     groups.set(key, row);
   }
   const rows = [...groups.values()].sort((a, b) => b.n - a.n).slice(0, limit);
-  return { rows, total, single };
+  return { rows, total, byLength };
 }

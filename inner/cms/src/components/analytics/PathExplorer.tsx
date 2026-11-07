@@ -4,6 +4,8 @@ import type { AnalyticsFlow } from '../../endpoints/analyticsFlow';
 import {
   EXIT,
   type ExplorerColumn,
+  MAX_STATIONS,
+  type Stations,
   type ExplorerOption,
   backColumn,
   columnsFor,
@@ -211,6 +213,8 @@ export function PathsCard({ flow }: { flow: AnalyticsFlow }) {
   const [focus, setFocusState] = useState<Focus | null>(null);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [outcome, setOutcome] = useState('all');
+  // Common paths: how many pages a path has (default: the three-page routes).
+  const [stations, setStations] = useState<Stations>(3);
   const [showAll, setShowAll] = useState(false);
 
   // Refs so the effects below read the latest values without re-running on them.
@@ -359,10 +363,14 @@ export function PathsCard({ flow }: { flow: AnalyticsFlow }) {
   /* ---- common paths ------------------------------------------------------- */
 
   const current = convOptions.some((o) => o.value === outcome) ? outcome : 'all';
-  const { rows, total: jTotal, single } = useMemo(
-    () => topJourneys(paths, sel[0], current, 5, 10),
-    [paths, sel, current],
+  const { rows, total: jTotal, byLength } = useMemo(
+    () => topJourneys(paths, sel[0], current, stations, 10),
+    [paths, sel, current, stations],
   );
+  // Shares in the list are of the visits with that many pages, so "40 %" reads
+  // "40 % of all three-page visits took this route".
+  const rowBase = stations === 'any' ? jTotal : byLength[stations];
+  const stationLabel = (n: number) => (n === MAX_STATIONS ? `${n}+` : String(n));
   const shownRows = showAll ? rows : rows.slice(0, 5);
   const selKey = mode === 'forward' ? sel.slice(1).join('\t') : '';
 
@@ -604,10 +612,38 @@ export function PathsCard({ flow }: { flow: AnalyticsFlow }) {
               ))}
             </select>
           </label>
+        </div>
+        <div className="cfc-flow__bar">
+          <span className="cfc-select__label">Pages in the path</span>
+          <div className="cfc-range cfc-range--small cfc-stations" role="group" aria-label="Pages in the path">
+            <button
+              type="button"
+              className={`cfc-range__btn ${stations === 'any' ? 'is-active' : ''}`}
+              aria-pressed={stations === 'any'}
+              onClick={() => setStations('any')}
+            >
+              Any
+            </button>
+            {([1, 2, 3, 4, 5, 6] as const).map((n) => (
+              <button
+                key={n}
+                type="button"
+                className={`cfc-range__btn ${stations === n ? 'is-active' : ''}`}
+                aria-pressed={stations === n}
+                onClick={() => setStations(n)}
+                title={`${fmtInt(byLength[n])} visits with ${n === MAX_STATIONS ? 'six or more pages' : `exactly ${n} page${n === 1 ? '' : 's'}`}`}
+              >
+                {stationLabel(n)}
+                <span className="cfc-stations__pct"> {fmtPct(jTotal ? (byLength[n] / jTotal) * 100 : 0)}</span>
+              </button>
+            ))}
+          </div>
           <span className="cfc-flow__stats">
-            {current === 'all'
-              ? `${fmtPct(jTotal ? (single / jTotal) * 100 : 0)} of ${fmtInt(jTotal)} visits saw only one page (not listed).`
-              : `${fmtInt(jTotal)} visits made it. Click a path to open it above.`}
+            {stations === 'any'
+              ? current === 'all'
+                ? 'Visits of two steps or more, first five steps.'
+                : `${fmtInt(jTotal)} visits made it – the last five steps before it.`
+              : `${fmtInt(byLength[stations])} visits ${current === 'all' ? '' : 'that made it '}with ${stations === MAX_STATIONS ? 'six or more pages' : `exactly ${stations} page${stations === 1 ? '' : 's'}`}${current === 'all' ? '' : ' before it'}. % = share of those.`}
           </span>
         </div>
         {shownRows.length === 0 ? (
@@ -633,7 +669,7 @@ export function PathsCard({ flow }: { flow: AnalyticsFlow }) {
                     {j.more && <span className="cfc-journey__arrow">→ …</span>}
                   </span>
                   <span className="cfc-bars__value">
-                    {fmtInt(j.n)} · {fmtPct(jTotal ? (j.n / jTotal) * 100 : 0)}
+                    {fmtInt(j.n)} · {fmtPct(rowBase ? (j.n / rowBase) * 100 : 0)}
                   </span>
                 </>
               );

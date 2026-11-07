@@ -26,7 +26,10 @@ import { getPool, requireAdmin } from './util';
  * cover visits we have events for:
  *  - `origins` – did the visit see the Tech Tour pages or the /join pages
  *    first (joined on the session id, up to the moment of sending);
- *  - `funnel`  – form page seen → form started → sent, from the events.
+ *  - `funnel`  – form page seen → form started → sent, from the events; then,
+ *    from the submissions themselves (all of them), how many the review
+ *    accepted (= invited to interview) and – Tech Tour – how many a host
+ *    admitted to an evening.
  *
  * Only counts leave this endpoint – no names, answers or ids.
  */
@@ -63,7 +66,19 @@ export type AnalyticsApplications = {
   sources: Array<{ source: string; channel: string; total: number } & PerKind>;
   landing: Array<{ path: string; total: number } & PerKind>;
   origins: AppOrigin[];
-  funnel: Array<{ kind: AppKind; views: number; starts: number; sent: number }>;
+  funnel: Array<{
+    kind: AppKind;
+    /** Visits that saw the form page / focused a field / sent it there (events). */
+    views: number;
+    starts: number;
+    sent: number;
+    /** All submissions of this kind in the range (incl. tick-box and Do-Not-Track). */
+    submissions: number;
+    /** Review status "accepted" – for membership the interview invitation. */
+    accepted: number;
+    /** Tech Tour: admitted to at least one evening by its host. */
+    hostAdmitted: number;
+  }>;
 };
 
 /** Submissions of the three kinds, with local time and unprefixed attribution. */
@@ -81,6 +96,8 @@ const SUBS_CTE = `
            s.attribution_referrer                      AS referrer,
            s.attribution_landing_path                  AS landing,
            s.attribution_session_id                    AS sid,
+           s.review_status::text                       AS review_status,
+           s.host_decisions,
            cfg.today,
            cfg.days
     FROM form_submissions s
@@ -120,7 +137,7 @@ export const analyticsApplications: Endpoint = {
     const bucket: 'day' | 'week' = days <= 31 ? 'day' : 'week';
     const params = rangeParams(range);
 
-    const [totalsRes, seriesRes, sourcesRes, landingRes, originsRes, funnelRes] = await Promise.all([
+    const [totalsRes, seriesRes, sourcesRes, landingRes, originsRes, funnelRes, reviewRes] = await Promise.all([
       pool.query(
         `${SUBS_CTE}
          SELECT kind, CASE WHEN ${IN_CURRENT} THEN 'current' ELSE 'previous' END AS period, COUNT(*) AS n
@@ -222,6 +239,22 @@ export const analyticsApplications: Endpoint = {
          GROUP BY k.kind`,
         params,
       ),
+      // What happened to the submissions afterwards: the review verdict and,
+      // for the Tech Tour, the hosts' decisions per evening.
+      pool.query(
+        `${SUBS_CTE}
+         SELECT kind,
+                COUNT(*) AS submissions,
+                COUNT(*) FILTER (WHERE review_status = 'accepted') AS accepted,
+                COUNT(*) FILTER (
+                  WHERE jsonb_typeof(host_decisions) = 'object'
+                    AND EXISTS (SELECT 1 FROM jsonb_each(host_decisions) d WHERE d.value->>'decision' = 'admitted')
+                ) AS host_admitted
+         FROM subs
+         WHERE ${IN_CURRENT}
+         GROUP BY kind`,
+        params,
+      ),
     ]);
 
     const totals = Object.fromEntries(
@@ -256,6 +289,7 @@ export const analyticsApplications: Endpoint = {
     }
 
     const funnelByKind = new Map(funnelRes.rows.map((r) => [String(r.kind), r]));
+    const reviewByKind = new Map(reviewRes.rows.map((r) => [String(r.kind), r]));
     const series = seriesRes.rows.map((r) => ({ bucket: String(r.bucket), ...perKind(r) }));
 
     const body: AnalyticsApplications = {
@@ -281,7 +315,16 @@ export const analyticsApplications: Endpoint = {
       origins: [...origins.values()],
       funnel: APP_KINDS.map((kind) => {
         const r = funnelByKind.get(kind);
-        return { kind, views: num(r?.views), starts: num(r?.starts), sent: num(r?.sent) };
+        const v = reviewByKind.get(kind);
+        return {
+          kind,
+          views: num(r?.views),
+          starts: num(r?.starts),
+          sent: num(r?.sent),
+          submissions: num(v?.submissions),
+          accepted: num(v?.accepted),
+          hostAdmitted: num(v?.host_admitted),
+        };
       }),
     };
     return Response.json(body, { headers: { 'Cache-Control': 'no-store' } });
