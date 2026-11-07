@@ -30,7 +30,6 @@ export const ApplicantFiles: CollectionConfig = {
     plural: 'Applicant files',
   },
   admin: {
-    group: 'Forms',
     defaultColumns: ['filename', 'kind', 'filesize', 'createdAt'],
     description:
       'CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.',

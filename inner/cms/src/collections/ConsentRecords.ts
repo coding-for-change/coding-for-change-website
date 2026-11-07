@@ -33,7 +33,6 @@ export const ConsentRecords: CollectionConfig = {
   admin: {
     useAsTitle: 'consentId',
     defaultColumns: ['consentId', 'statistics', 'marketing', 'configVersion', 'createdAt'],
-    group: 'Analytics',
     description:
       'Proof of cookie consent (GDPR Art. 7(1)). One row per interactive banner decision. No IP, no user agent — the random consent id matches the visitor\'s cfc_consent_id cookie. Never auto-purged.',
   },
