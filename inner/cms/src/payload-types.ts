@@ -1474,6 +1474,84 @@ export interface PayloadMcpApiKey {
      */
     delete?: boolean | null;
   };
+  teamGroups?: {
+    /**
+     * Allow clients to find team-groups.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to create team-groups.
+     */
+    create?: boolean | null;
+    /**
+     * Allow clients to update team-groups.
+     */
+    update?: boolean | null;
+    /**
+     * Allow clients to delete team-groups.
+     */
+    delete?: boolean | null;
+  };
+  waitlistSignups?: {
+    /**
+     * Allow clients to find waitlist-signups.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to create waitlist-signups.
+     */
+    create?: boolean | null;
+    /**
+     * Allow clients to update waitlist-signups.
+     */
+    update?: boolean | null;
+    /**
+     * Allow clients to delete waitlist-signups.
+     */
+    delete?: boolean | null;
+  };
+  shareLinks?: {
+    /**
+     * Allow clients to find share-links.
+     */
+    find?: boolean | null;
+    /**
+     * Allow clients to create share-links.
+     */
+    create?: boolean | null;
+    /**
+     * Allow clients to update share-links.
+     */
+    update?: boolean | null;
+    /**
+     * Allow clients to delete share-links.
+     */
+    delete?: boolean | null;
+  };
+  applicantFiles?: {
+    /**
+     * Allow clients to find applicant-files.
+     */
+    find?: boolean | null;
+  };
+  consentRecords?: {
+    /**
+     * Allow clients to find consent-records.
+     */
+    find?: boolean | null;
+  };
+  shareAccessLog?: {
+    /**
+     * Allow clients to find share-access-log.
+     */
+    find?: boolean | null;
+  };
+  analyticsEvents?: {
+    /**
+     * Allow clients to find analytics-events.
+     */
+    find?: boolean | null;
+  };
   siteConfig?: {
     /**
      * Allow clients to find site-config global.
@@ -1549,6 +1627,86 @@ export interface PayloadMcpApiKey {
      * Get a one-time URL to upload an image file (e.g. a team photo, sponsor logo) into the Media collection. MCP arguments cannot carry files, so: call this with the alt text, then POST the file to the returned URL as multipart/form-data with the field name "file" – from your code sandbox with curl. The response is JSON with the new media "id"; link it afterwards, e.g. updateTeam with "image" set to that id. JPEG, PNG, WebP or GIF only, max 15 MB. SVG (e.g. a logo) is refused because it can carry scripts: convert it to PNG in your sandbox first, about 1600 px wide (e.g. `rsvg-convert -w 1600 logo.svg -o logo.png`, or Python `cairosvg.svg2png(url="logo.svg", write_to="logo.png", output_width=1600)`). HEIC: convert to JPEG first. The URL is valid for 15 minutes and one successful upload. If your sandbox cannot reach the site, give the URL to the user: opened in a browser it shows an upload form.
      */
     createMediaUploadUrl?: boolean | null;
+    /**
+     * List all mailings of the CMS mailing tool (/admin/mailing) with their source and send counts.
+     */
+    listMailings?: boolean | null;
+    /**
+     * One mailing: its title, source and config (groups, texts, filters), its sends (newest last) and every recipient so far with status. Recipient ids work with getSentMail.
+     */
+    getMailing?: boolean | null;
+    /**
+     * The filters each mailing source offers (applications, waitlist, techtour) with their options from the current data – the keys to use in a group's filter.
+     */
+    getMailingSources?: boolean | null;
+    /**
+     * Create a mailing (a draft – nothing is sent). source: applications (membership applicants), waitlist, techtour (TechTour registrations). config = { groups: [{ id, label, filter, mail: { en: { subject, message, ctaLabel }, de: { … } }, ctaUrl }], onlyOnce (default true: skip people this mailing already reached), requireAll (refuse to send while someone fits no group), headerImageUrl (absolute image URL or ""), excluded (entries left out by hand, "s:<submission id>" or "w:<waitlist signup id>") }. A person gets the first group whose filter they match. filter keys and their options per source come from getMailingSources (choice = array of option values, range = { min, max }, flag = "yes" | "no" | "any"); {} matches everyone. Placeholders in subject/message/ctaUrl: {{firstName}}, {{link}} (the button link), {{manageLink}} (TechTour only: the person's own manage link). message is plain text with blank lines between paragraphs. A language left empty falls back to the other one. Without config it starts with one group "Everyone". Returns { id }.
+     */
+    createMailing?: boolean | null;
+    /**
+     * Change a mailing's title and/or config. The config replaces the saved one as a whole – start from getMailing's config and change what you need. Without config only the title changes. config = { groups: [{ id, label, filter, mail: { en: { subject, message, ctaLabel }, de: { … } }, ctaUrl }], onlyOnce (default true: skip people this mailing already reached), requireAll (refuse to send while someone fits no group), headerImageUrl (absolute image URL or ""), excluded (entries left out by hand, "s:<submission id>" or "w:<waitlist signup id>") }. A person gets the first group whose filter they match. filter keys and their options per source come from getMailingSources (choice = array of option values, range = { min, max }, flag = "yes" | "no" | "any"); {} matches everyone. Placeholders in subject/message/ctaUrl: {{firstName}}, {{link}} (the button link), {{manageLink}} (TechTour only: the person's own manage link). message is plain text with blank lines between paragraphs. A language left empty falls back to the other one.
+     */
+    updateMailing?: boolean | null;
+    /**
+     * Delete a mailing that never went out. A mailing that was sent stays as history and cannot be deleted.
+     */
+    deleteMailing?: boolean | null;
+    /**
+     * Who would get what if the saved mailing were sent now: per group the people (name, email, language) and the problems that block a send. Ends with "counts" and "lastSend" – the values sendMailing needs. Sends nothing.
+     */
+    checkMailing?: boolean | null;
+    /**
+     * Send one group's mail of the saved mailing as a test, subject prefixed "[Test]", with a sample first name. Goes to `to` (up to 10 addresses) or, without `to`, to the MCP key's admin. Mails to @codingforchange.com addresses often do not arrive – use another address.
+     */
+    sendTestMail?: boolean | null;
+    /**
+     * Send the saved mailing to its real recipients – every person gets their own mail. This cannot be undone. First call checkMailing, show the user how many people get which group's mail, and send only after the user explicitly confirmed those numbers in this conversation. Pass `counts` and `lastSend` exactly as checkMailing returned them: the server sorts the people again and refuses when anything changed since (a decision, an edit, another send).
+     */
+    sendMailing?: boolean | null;
+    /**
+     * The mail one recipient got (subject and text), as it was sent. Recipient ids come from getMailing.
+     */
+    getSentMail?: boolean | null;
+    /**
+     * Every mail the mailing tool sent, per person (address, mailing, group, status, time) – what the review workspace shows as a person's mails.
+     */
+    listMailedPeople?: boolean | null;
+    /**
+     * Where membership applications stand after the written review: { stages: { application id: stage } }. The review status, score and notes themselves are fields of the form submission (findFormSubmissions / updateFormSubmissions).
+     */
+    getApplicationStages?: boolean | null;
+    /**
+     * Set a membership application's stage: "interviewed" (Interview held), "admitted" (Admitted), "not_admitted" (Not admitted), "withdrew" (Withdrew), or null to clear it. Recorded with the MCP key's admin and the time.
+     */
+    setApplicationStage?: boolean | null;
+    /**
+     * TechTour registrations marked as Coding for Change members: { ids: [registration id…] }.
+     */
+    getTechTourMembers?: boolean | null;
+    /**
+     * Mark a TechTour registration as a Coding for Change member, or take the mark off.
+     */
+    setTechTourMember?: boolean | null;
+    /**
+     * Evenings TechTour registrants gave up through their own link: { evenings: { registration id: { evening key: { withdrawn, at, by } } } }.
+     */
+    getTechTourWithdrawals?: boolean | null;
+    /**
+     * Add back an evening a registrant gave up (withdrawn: false), or undo such an add-back (withdrawn: true). Only evenings the person gave up themselves can be changed.
+     */
+    setTechTourWithdrawal?: boolean | null;
+    /**
+     * What TechTour hosts did on their share links besides decisions: scores (1–10 per registration and evening) and moves (who moved up from a waitlist, and whether the mail went out).
+     */
+    getHostMarks?: boolean | null;
+    /**
+     * The site's own analytics (/admin/analytics). Reports: summary (visits, pages, sources, CTAs, conversions), flow (common paths through the site), applications (the application funnel per kind: membership, speedrun, techtour), campaigns.csv (funnel by source and channel), events.csv (raw events), signups.csv (waitlist signups with attribution). Range: days (7, 30, 90 or 365, ending today; default 30) or from + to (YYYY-MM-DD, inclusive). The CSVs take from/to only.
+     */
+    getAnalytics?: boolean | null;
+    /**
+     * Get a download URL for an applicant file (a CV, PDF) – a tool result cannot carry the PDF itself. The file id is in the form submission's "files" field (findFormSubmissions); findApplicantFiles lists the files. Fetch it from your code sandbox, e.g. `curl -sS -o cv.pdf "<url>"`, then read it (e.g. `pdftotext cv.pdf -`). Valid for 10 minutes. If your sandbox cannot reach the site, give the URL to the user to open.
+     */
+    createApplicantFileDownloadUrl?: boolean | null;
   };
   updatedAt: string;
   createdAt: string;
@@ -2451,6 +2609,50 @@ export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
         update?: T;
         delete?: T;
       };
+  teamGroups?:
+    | T
+    | {
+        find?: T;
+        create?: T;
+        update?: T;
+        delete?: T;
+      };
+  waitlistSignups?:
+    | T
+    | {
+        find?: T;
+        create?: T;
+        update?: T;
+        delete?: T;
+      };
+  shareLinks?:
+    | T
+    | {
+        find?: T;
+        create?: T;
+        update?: T;
+        delete?: T;
+      };
+  applicantFiles?:
+    | T
+    | {
+        find?: T;
+      };
+  consentRecords?:
+    | T
+    | {
+        find?: T;
+      };
+  shareAccessLog?:
+    | T
+    | {
+        find?: T;
+      };
+  analyticsEvents?:
+    | T
+    | {
+        find?: T;
+      };
   siteConfig?:
     | T
     | {
@@ -2497,6 +2699,26 @@ export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
     | T
     | {
         createMediaUploadUrl?: T;
+        listMailings?: T;
+        getMailing?: T;
+        getMailingSources?: T;
+        createMailing?: T;
+        updateMailing?: T;
+        deleteMailing?: T;
+        checkMailing?: T;
+        sendTestMail?: T;
+        sendMailing?: T;
+        getSentMail?: T;
+        listMailedPeople?: T;
+        getApplicationStages?: T;
+        setApplicationStage?: T;
+        getTechTourMembers?: T;
+        setTechTourMember?: T;
+        getTechTourWithdrawals?: T;
+        setTechTourWithdrawal?: T;
+        getHostMarks?: T;
+        getAnalytics?: T;
+        createApplicantFileDownloadUrl?: T;
       };
   updatedAt?: T;
   createdAt?: T;

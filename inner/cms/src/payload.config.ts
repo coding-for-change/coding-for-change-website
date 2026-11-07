@@ -37,7 +37,9 @@ import { withdrawalEndpoints } from './endpoints/withdrawals';
 import { hostMarkEndpoints } from './endpoints/hostMarks';
 import { mailingEndpoints } from './endpoints/mailing';
 import { mediaUploadEndpoints } from './endpoints/mediaUpload';
+import { applicantFileLinkEndpoints } from './endpoints/applicantFileLink';
 import { mediaUploadTool, rememberMcpKey } from './lib/mcp';
+import { adminTools } from './lib/mcpAdmin';
 import {
   CheckboxGroupBlock,
   SubformBlock,
@@ -132,8 +134,9 @@ export default buildConfig({
   // TechTour registrant's own link (/api/techtour/manage), guarded by its
   // token alone – see endpoints/manage.ts. So are the one-time image upload
   // links (/api/media-upload/:token) the MCP tool hands out – see
-  // endpoints/mediaUpload.ts.
-  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...stageEndpoints],
+  // endpoints/mediaUpload.ts – and the CV download links of
+  // endpoints/applicantFileLink.ts.
+  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -256,8 +259,8 @@ export default buildConfig({
         },
       },
     }),
-    // Model Context Protocol server at /api/mcp. Full CRUD on content is exposed
-    // here, but every request still needs a Bearer API key (managed in the
+    // Model Context Protocol server at /api/mcp. Content, applicant data and the
+    // admin tools are exposed here, but every request still needs a Bearer API key (managed in the
     // admin "MCP API Keys" collection) whose per-capability access can be
     // narrowed there. Declared after formBuilderPlugin so it can see the
     // forms / form-submissions collections.
@@ -274,6 +277,20 @@ export default buildConfig({
         'blog-posts': { enabled: true },
         forms: { enabled: true },
         'form-submissions': { enabled: true },
+        'team-groups': { enabled: true },
+        'waitlist-signups': { enabled: true },
+        'share-links': { enabled: true },
+        // Read-only: a CV comes in with its form and goes with its submission
+        // (lib/retention.ts); its content comes through
+        // createApplicantFileDownloadUrl. Consent records and the share access
+        // log are evidence, analytics events are raw data with their own
+        // retention – nothing to write by hand.
+        'applicant-files': { enabled: { find: true } },
+        'consent-records': { enabled: { find: true } },
+        'share-access-log': { enabled: { find: true } },
+        'analytics-events': { enabled: { find: true } },
+        // Not here on purpose: users and the MCP API keys themselves – a key
+        // that could make admins or keys could widen its own rights.
       },
       globals: {
         'site-config': { enabled: true },
@@ -288,7 +305,9 @@ export default buildConfig({
       // upload link instead (lib/mcp.ts, lib/mediaUpload.ts). The tool needs
       // the calling key, which the plugin only passes to its own tools –
       // rememberMcpKey keeps it per request; the Bearer-key check is unchanged.
-      mcp: { tools: [mediaUploadTool] },
+      // adminTools (lib/mcpAdmin.ts) run the admin endpoints – mailing, review
+      // stages, TechTour marks, analytics – as the key's user, plus CV links.
+      mcp: { tools: [mediaUploadTool, ...adminTools] },
       overrideAuth: rememberMcpKey,
     }),
   ],
