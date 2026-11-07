@@ -13,6 +13,7 @@ import {
   ViewDescription,
 } from '@payloadcms/ui';
 import { REVIEW_SCORE_MAX, REVIEW_SCORE_MIN, REVIEW_STATUSES } from '../../fields/review';
+import { APPLICATION_STAGES, type ApplicationStage } from '../../lib/stageOptions';
 import type { PersonMail } from '../../lib/mailing/store';
 import { consentedToSharing } from '../../lib/sharingConsent';
 import {
@@ -130,6 +131,8 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
   const [subs, setSubs] = useState<Submission[]>([]);
   const [files, setFiles] = useState<Map<number, FileDoc>>(new Map());
   const [members, setMembers] = useState<Set<number>>(new Set());
+  // Membership applications: interview held / admitted / … (lib/stages.ts).
+  const [stages, setStages] = useState<Record<number, ApplicationStage>>({});
   const [evenings, setEvenings] = useState<Evenings>({});
   const [marks, setMarks] = useState<HostMarks>({ scores: {}, moves: {} });
   const [mails, setMails] = useState<PersonMail[]>([]);
@@ -157,7 +160,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     setError(null);
     (async () => {
       try {
-        const [formDocs, subDocs, fileDocs, memberIds, withdrawn, sentMails, hostMarks] = await Promise.all([
+        const [formDocs, subDocs, fileDocs, memberIds, withdrawn, sentMails, hostMarks, appStages] = await Promise.all([
           fetchAll<FormDoc>(`${apiRoute}/forms?depth=0&locale=en`),
           fetchAll<Submission>(`${apiRoute}/form-submissions?depth=0&sort=-createdAt`),
           fetchAll<FileDoc>(`${apiRoute}/applicant-files?depth=0`),
@@ -177,6 +180,12 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
           fetch(`${apiRoute}/techtour/host-marks`, { credentials: 'include' })
             .then(async (res) => (res.ok ? ((await res.json()) as HostMarks) : { scores: {}, moves: {} }))
             .catch((): HostMarks => ({ scores: {}, moves: {} })),
+          // Interview / admission stages – nice to have, too.
+          fetch(`${apiRoute}/applications/stages`, { credentials: 'include' })
+            .then(async (res) =>
+              res.ok ? ((await res.json()) as { stages: Record<number, ApplicationStage> }).stages : {},
+            )
+            .catch((): Record<number, ApplicationStage> => ({})),
         ]);
         if (cancelled) return;
         setForms(formDocs);
@@ -186,6 +195,7 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
         setEvenings(withdrawn);
         setMails(sentMails);
         setMarks(hostMarks);
+        setStages(appStages);
       } catch (err) {
         if (!cancelled) setError(`Could not load the submissions (${(err as Error).message}).`);
       } finally {
@@ -509,6 +519,44 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
     queues.current.set(id, next);
   }, [selected, techTour, members, apiRoute]);
 
+  // A membership application's stage after the review, its own endpoint, in the
+  // same queue. Clicking the current stage again clears it.
+  const pickStage = useCallback(
+    (value: ApplicationStage) => {
+      if (!selected || techTour) return;
+      const id = selected.id;
+      const before = stages[id] ?? null;
+      const stage = before === value ? null : value;
+      const put = (v: ApplicationStage | null) =>
+        setStages((prev) => {
+          const next = { ...prev };
+          if (v) next[id] = v;
+          else delete next[id];
+          return next;
+        });
+      put(stage);
+      setSaveState('saving');
+      const run = async () => {
+        const res = await fetch(`${apiRoute}/applications/stages`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ submission: id, stage }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+      };
+      const next = (queues.current.get(id) ?? Promise.resolve()).then(run).then(
+        () => setSaveState('saved'),
+        () => {
+          put(before);
+          setSaveState('error');
+        },
+      );
+      queues.current.set(id, next);
+    },
+    [selected, techTour, stages, apiRoute],
+  );
+
   // Add an evening the person gave up back (or undo that), in the same queue.
   const setWithdrawn = useCallback(
     (id: number, option: string, withdrawn: boolean) => {
@@ -803,6 +851,11 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                       Member
                     </span>
                   )}
+                  {stages[s.id] && (
+                    <span className={`rv-badge rv-badge--stage-${stages[s.id]}`} title="Stage after the review">
+                      {APPLICATION_STAGES.find((x) => x.value === stages[s.id])?.label}
+                    </span>
+                  )}
                   {mailsByEmail.has(p.email.toLowerCase()) && (
                     <span
                       className="rv-badge"
@@ -909,6 +962,25 @@ export function ReviewWorkspace({ apiRoute, adminRoute }: Props) {
                     </span>
                   </div>
                 </div>
+                {!techTour && (
+                  <div className="rv-review__field">
+                    <span className="field-label">Interview &amp; admission</span>
+                    <div className="rv-segments" role="group" aria-label="Interview and admission">
+                      {APPLICATION_STAGES.map((st) => (
+                        <button
+                          key={st.value}
+                          type="button"
+                          className={`rv-segments__btn${stages[selected.id] === st.value ? ' is-active' : ''}`}
+                          aria-pressed={stages[selected.id] === st.value}
+                          onClick={() => pickStage(st.value)}
+                          title="Click again to clear"
+                        >
+                          {st.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 {techTour && (
                   <div className="rv-review__field">
                     <span className="field-label">Membership</span>

@@ -49,6 +49,8 @@ import { deleteSubmissionFiles, purgeTechTourRegistrations } from './lib/retenti
 import { rejectHoneypot } from './lib/honeypot';
 import { analyticsExportEndpoints } from './endpoints/analyticsExport';
 import { analyticsApplications } from './endpoints/analyticsApplications';
+import { stageEndpoints } from './endpoints/stages';
+import { stageTables } from './lib/stages';
 import { analyticsFlow } from './endpoints/analyticsFlow';
 import { analyticsSummary } from './endpoints/analyticsSummary';
 import { purgeAnalyticsEvents } from './lib/purgeAnalytics';
@@ -131,7 +133,7 @@ export default buildConfig({
   // token alone – see endpoints/manage.ts. So are the one-time image upload
   // links (/api/media-upload/:token) the MCP tool hands out – see
   // endpoints/mediaUpload.ts.
-  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints],
+  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -299,7 +301,7 @@ export default buildConfig({
     // host ratings and waitlist – plain tables beside the collections, so
     // that no existing table gets a column (lib/manage/tables.ts,
     // lib/members.ts, lib/mailing/tables.ts, lib/share/tables.ts).
-    afterSchemaInit: [manageTables, memberTables, mailingTables, hostTables],
+    afterSchemaInit: [manageTables, memberTables, mailingTables, hostTables, stageTables],
     pool: {
       connectionString:
         process.env.DATABASE_URL ||

@@ -1,4 +1,5 @@
 import type { Endpoint } from 'payload';
+import { CURRENT_STAGES_SQL } from '../lib/stages';
 import { pathExpr } from './analyticsFlow';
 import {
   BASE_CTE,
@@ -28,8 +29,9 @@ import { getPool, requireAdmin } from './util';
  *    first (joined on the session id, up to the moment of sending);
  *  - `funnel`  – form page seen → form started → sent, from the events; then,
  *    from the submissions themselves (all of them), how many the review
- *    accepted (= invited to interview) and – Tech Tour – how many a host
- *    admitted to an evening.
+ *    accepted (= invited to interview), had their interview and were admitted
+ *    (the stages set in the review workspace, lib/stages.ts) – Tech Tour: how
+ *    many a host admitted to an evening.
  *
  * Only counts leave this endpoint – no names, answers or ids.
  */
@@ -78,6 +80,10 @@ export type AnalyticsApplications = {
     accepted: number;
     /** Tech Tour: admitted to at least one evening by its host. */
     hostAdmitted: number;
+    /** Membership: stage "interview held", "admitted" or "not admitted". */
+    interviewed: number;
+    /** Membership: stage "admitted". */
+    admitted: number;
   }>;
 };
 
@@ -87,7 +93,8 @@ const SUBS_CTE = `
     SELECT ${TODAY_SQL} AS today, $2::int AS days
   ),
   subs AS (
-    SELECT CASE WHEN lower(trim(f.title)) = 'techtour' THEN 'techtour'
+    SELECT s.id                                         AS id,
+           CASE WHEN lower(trim(f.title)) = 'techtour' THEN 'techtour'
                 WHEN s.source::text = 'speedrun'       THEN 'speedrun'
                 ELSE 'membership' END                  AS kind,
            (s.created_at AT TIME ZONE $1)             AS ts,
@@ -242,15 +249,19 @@ export const analyticsApplications: Endpoint = {
       // What happened to the submissions afterwards: the review verdict and,
       // for the Tech Tour, the hosts' decisions per evening.
       pool.query(
-        `${SUBS_CTE}
+        `${SUBS_CTE},
+         cur_stage AS (${CURRENT_STAGES_SQL})
          SELECT kind,
                 COUNT(*) AS submissions,
                 COUNT(*) FILTER (WHERE review_status = 'accepted') AS accepted,
                 COUNT(*) FILTER (
                   WHERE jsonb_typeof(host_decisions) = 'object'
                     AND EXISTS (SELECT 1 FROM jsonb_each(host_decisions) d WHERE d.value->>'decision' = 'admitted')
-                ) AS host_admitted
+                ) AS host_admitted,
+                COUNT(*) FILTER (WHERE cs.stage IN ('interviewed', 'admitted', 'not_admitted')) AS interviewed,
+                COUNT(*) FILTER (WHERE cs.stage = 'admitted') AS admitted
          FROM subs
+         LEFT JOIN cur_stage cs ON cs.submission_id = subs.id
          WHERE ${IN_CURRENT}
          GROUP BY kind`,
         params,
@@ -324,6 +335,8 @@ export const analyticsApplications: Endpoint = {
           submissions: num(v?.submissions),
           accepted: num(v?.accepted),
           hostAdmitted: num(v?.host_admitted),
+          interviewed: num(v?.interviewed),
+          admitted: num(v?.admitted),
         };
       }),
     };
