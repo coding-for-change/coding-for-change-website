@@ -84,6 +84,8 @@ const Partner: React.FC<PartnerProps> = (props) => {
                             <p className="lp-kicker">{t.partner.kicker}</p>
                             <h1 className="lp-page__title">{title}</h1>
                             <p className="lp-lead">{intro}</p>
+                            {/* Who we are and what we do – context for the question above. */}
+                            <p className="lp-page__about">{t.partner.about}</p>
                             <div className="lp-page__actions">
                                 <a
                                     className="lp-btn lp-btn--primary"

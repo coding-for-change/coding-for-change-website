@@ -6,7 +6,7 @@ import { useCmsCollection, useCmsGlobal, useSiteConfig, mediaUrl } from '../../a
 import type { CmsProject, CmsSponsor, CmsTeamMember, CmsTechTour } from '../../api/types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { MEMBER_STATS } from '../../lib/memberStats';
-import PartnerMarquee from './PartnerMarquee';
+import PartnerMarquee, { type MarqueePartner } from './PartnerMarquee';
 import Recognition from './Recognition';
 import SponsorTiers from './SponsorTiers';
 import ClosingCta from './ClosingCta';
@@ -31,17 +31,24 @@ const FORMAT_PHOTOS: Record<string, string> = {
  * the TechTour's evenings, the sponsors and the members' companies – so a
  * logo changed there changes here; a host without one is set as its name.
  */
-/** The companies we have run events with, for the logo row under the head. */
+/** The companies we have run events with, for the moving band under the head. */
 const EVENT_PARTNERS = ['McKinsey QuantumBlack', 'QuantCo', 'CHECK24', 'Lio', 'BEO', 'Project A', 'Picus Capital'];
+
+/** Logos we ship for hosts the CMS has none for (public/images/logos). */
+const LOCAL_LOGOS: Record<string, string> = {
+    beo: '/images/logos/beo.svg',
+};
 
 /** The photo beside the head: our members at work in a partner's office. */
 const HEAD_PHOTO = '/images/hero/hackathon-laptops.webp';
 
 const FORMAT_HOSTS: Record<string, string[]> = {
-    company: ['Project A', 'Lio', 'QuantCo', 'McKinsey QuantumBlack'],
-    community: ['CHECK24', 'QuantCo', 'Lio', 'BEO'],
+    company: ['McKinsey QuantumBlack', 'Project A', 'QuantCo', 'Lio'],
+    community: ['CHECK24', 'BEO', 'QuantCo', 'Lio'],
     hackathon: ['Picus Capital'],
 };
+/** How many hosts a format card shows as logos before "+N more". */
+const HOSTS_SHOWN = 2;
 
 /**
  * Scroll to a section of this page. A plain hash link would reload the page
@@ -93,8 +100,8 @@ export interface SponsorsListProps {
 
 /**
  * /partners – the page for companies, led by proof instead of prose. The
- * first screen holds the promise, a photo of our members at work and the
- * logos of the companies we have run events with; then the three formats
+ * first screen holds the promise, a photo of our members at work and a
+ * moving band with the companies we have run events with; then the three formats
  * with photos and hosts, who our members are (figures, universities,
  * degrees, where they have worked), our press and awards, and the sponsors.
  */
@@ -122,8 +129,17 @@ const SponsorsList: React.FC<SponsorsListProps> = (props) => {
         companies.forEach((c) => put(c.name, c.logo));
         (techTour?.events ?? []).forEach((ev) => put(ev.company, mediaUrl(ev.logo, 'card')));
         (sponsors ?? []).forEach((s) => put(s.name, mediaUrl(s.logo, 'card')));
+        Object.entries(LOCAL_LOGOS).forEach(([name, logo]) => {
+            if (!map.has(name)) map.set(name, logo);
+        });
         return map;
     }, [companies, techTour, sponsors]);
+
+    const eventPartners: MarqueePartner[] = EVENT_PARTNERS.map((name) => ({
+        key: `event-${name}`,
+        name,
+        logo: logoByName.get(name.toLowerCase()) ?? null,
+    }));
 
     const figures = [
         { value: memberCount?.trim() ?? '', label: t.team.statMembers },
@@ -164,28 +180,11 @@ const SponsorsList: React.FC<SponsorsListProps> = (props) => {
                             <img src={HEAD_PHOTO} alt={p.partnersPhotoAlt} />
                         </motion.figure>
                     </div>
-
-                    {/* ---- Who we have run events with: in view on the first screen ---- */}
-                    <motion.div
-                        className="lp-logorow"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5, delay: 0.2 }}
-                    >
-                        <p className="lp-logorow__label">{p.partnersEventLabel}</p>
-                        <ul className="lp-logorow__logos">
-                            {EVENT_PARTNERS.map((name) => {
-                                const logo = logoByName.get(name.toLowerCase());
-                                return (
-                                    <li className="lp-logorow__logo" key={name}>
-                                        {logo ? <img src={logo} alt={name} /> : <span>{name}</span>}
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </motion.div>
                 </div>
             </div>
+
+            {/* ---- Who we have run events with: a moving band, on the first screen ---- */}
+            <PartnerMarquee partners={eventPartners} label={p.partnersEventLabel} />
 
             {/* ---- The three formats, side by side ---- */}
             <section id="formats" className="lp-section lp-formats">
@@ -211,7 +210,7 @@ const SponsorsList: React.FC<SponsorsListProps> = (props) => {
                                     <div className="lp-format__hosts">
                                         <span className="lp-format__hosts-label">{p.partnersHostsLabel}</span>
                                         <ul className="lp-format__logos">
-                                            {(FORMAT_HOSTS[format.key] ?? []).map((name) => {
+                                            {(FORMAT_HOSTS[format.key] ?? []).slice(0, HOSTS_SHOWN).map((name) => {
                                                 const logo = logoByName.get(name.toLowerCase());
                                                 return (
                                                     <li className="lp-format__logo" key={name}>
@@ -219,6 +218,14 @@ const SponsorsList: React.FC<SponsorsListProps> = (props) => {
                                                     </li>
                                                 );
                                             })}
+                                            {(FORMAT_HOSTS[format.key] ?? []).length > HOSTS_SHOWN && (
+                                                <li
+                                                    className="lp-format__more"
+                                                    title={(FORMAT_HOSTS[format.key] ?? []).slice(HOSTS_SHOWN).join(', ')}
+                                                >
+                                                    +{(FORMAT_HOSTS[format.key] ?? []).length - HOSTS_SHOWN} {p.partnersHostsMore}
+                                                </li>
+                                            )}
                                         </ul>
                                     </div>
                                 </div>

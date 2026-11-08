@@ -49,14 +49,16 @@ export interface Translations {
         ngoBookLabel: string; ngoBookTitle: string; ngoBookText: string;
         /** Press and awards: three tiles under the head of /ngos and /partners,
          *  one sentence each (Recognition.tsx). */
-        recognitionLabel: string; recognitionTitle: string; recognitionRead: string;
-        recognition: Record<'press' | 'startsocial' | 'movers', string>;
+        recognitionLabel: string; recognitionTitle: string;
+        recognition: Record<'press' | 'startsocial' | 'movers', { title: string; text: string; link: string }>;
         /** /partners – the page for companies. */
         partnersKicker: string; partnersTitle: string; partnersLead: string;
         partnersCta: string; partnersFormatsCta: string;
         /** The photo beside the head, and the row of event partners' logos under it. */
         partnersPhotoAlt: string; partnersEventLabel: string;
         partnersFormatsLabel: string; partnersFormatsTitle: string; partnersHostsLabel: string;
+        /** After the first two hosts' logos: "+2 more". */
+        partnersHostsMore: string;
         /** One card per format; `key` picks the photo and the hosts' logos (SponsorsList.tsx). */
         partnersFormats: { key: 'company' | 'community' | 'hackathon'; title: string; text: string; alt: string }[];
         /** The sponsors' logo tiles (SponsorTiers.tsx). */
@@ -336,6 +338,8 @@ export interface Translations {
     };
     partner: {
         kicker: string; fallbackTitle: string; fallbackLead: string;
+        /** Who we are and what we do, in two sentences under the head's lead. */
+        about: string;
         talkCta: string;
     };
     notFound: {
@@ -406,8 +410,8 @@ const en: Translations = {
         voicesLabel: '~/voices',
         voicesTitle: 'What people say about us.',
         faq: {
-            ngoTitle: 'Questions from NGOs',
-            joinTitle: 'Questions about joining',
+            ngoTitle: 'Questions from NGOs.',
+            joinTitle: 'Questions about joining.',
             all: 'All questions',
             groups: { projects: 'For NGOs', membership: 'For students', general: 'General', technical: 'Technical' },
         },
@@ -429,11 +433,10 @@ const en: Translations = {
         ngoBookText: '30 minutes, free and non-binding: tell us what you need, and we will see together whether we can help.',
         recognitionLabel: '~/impact',
         recognitionTitle: 'Learn more about our impact.',
-        recognitionRead: 'Read the article',
         recognition: {
-            press: 'Süddeutsche Zeitung reported on our project with Lebenshilfe München.',
-            startsocial: 'We are a startsocial scholarship holder for 2026/27.',
-            movers: 'We were finalists for the Allianz Foundation’s Movers of Tomorrow Award 2026.',
+            press: { title: 'Süddeutsche Zeitung', text: 'A feature on our project with Lebenshilfe München.', link: 'Read the article' },
+            startsocial: { title: 'startsocial scholarship', text: 'We are a scholarship holder for 2026/27.', link: 'View our profile' },
+            movers: { title: 'Movers of Tomorrow Award', text: 'Finalists 2026 for the Allianz Foundation’s award.', link: 'Watch the video' },
         },
         partnersKicker: '~/for-companies',
         partnersTitle: 'Meet the talent. Show your impact.',
@@ -445,6 +448,7 @@ const en: Translations = {
         partnersFormatsLabel: '~/formats',
         partnersFormatsTitle: 'What we do with partners.',
         partnersHostsLabel: 'Hosted by',
+        partnersHostsMore: 'more',
         partnersFormats: [
             { key: 'company', title: 'Company Events', text: 'An evening at your office: a talk or case study, a look behind the scenes and time to get to know each other.', alt: 'A full room for a talk at one of our events' },
             { key: 'community', title: 'Community Events', text: 'A charity Mario Kart tournament with 100+ sign-ups, poker nights and more – relaxed, with the right people in the room.', alt: 'Two members talking at our community evening at CHECK24' },
@@ -467,28 +471,28 @@ const en: Translations = {
     },
     process: {
         kicker: 'How it works',
-        heading: 'How we work with NGOs',
-        intro: 'From first conversation to finished software in a single semester – here is the path every project follows.',
+        heading: 'How we work with NGOs.',
+        intro: 'From the first talk to finished software in one semester.',
         steps: [
             {
                 timing: 'Week 0',
                 title: 'First talk',
-                text: 'Tell us about your organisation and the problem you want solved – a relaxed 30-minute call, free and non-binding.',
+                text: 'You tell us about your problem – 30 minutes, free and non-binding.',
             },
             {
                 timing: 'Week 2',
                 title: 'Clickable mock-up',
-                text: 'You see a first clickable design of your product, and we refine it together until it fits the way your team works.',
+                text: 'A first clickable draft, refined with you until it fits.',
             },
             {
                 timing: 'Week 8',
                 title: 'Working MVP',
-                text: 'The core features run, so your team can try the software early and steer what matters most.',
+                text: 'The core features run – your team tests early and steers.',
             },
             {
                 timing: 'Week 12',
                 title: 'Fully featured product',
-                text: 'We hand over the finished software – tested, documented and with everything your team needs to run it. Then we stay on board for maintenance.',
+                text: 'Tested, documented, handed over – and we stay on for maintenance.',
             },
         ],
     },
@@ -910,6 +914,7 @@ const en: Translations = {
         kicker: '~/for-ngos',
         fallbackTitle: 'What is your hardest problem?',
         fallbackLead: 'Let’s find a digital solution – together and free of charge.',
+        about: 'We are students from TUM, LMU and HM. As a non-profit association we build software for NGOs as volunteers – from the first idea to running it.',
         talkCta: 'Book a first talk',
     },
     notFound: {
@@ -985,8 +990,8 @@ const de: Translations = {
         voicesLabel: '~/stimmen',
         voicesTitle: 'Was andere über uns sagen.',
         faq: {
-            ngoTitle: 'Fragen von NGOs',
-            joinTitle: 'Fragen zur Mitgliedschaft',
+            ngoTitle: 'Fragen von NGOs.',
+            joinTitle: 'Fragen zur Mitgliedschaft.',
             all: 'Alle Fragen',
             groups: { projects: 'Für NGOs', membership: 'Für Studierende', general: 'Allgemein', technical: 'Technik' },
         },
@@ -1008,11 +1013,10 @@ const de: Translations = {
         ngoBookText: '30 Minuten, kostenlos und unverbindlich: Erzählt uns, was ihr braucht, und wir schauen gemeinsam, ob wir helfen können.',
         recognitionLabel: '~/wirkung',
         recognitionTitle: 'Mehr über unsere Wirkung.',
-        recognitionRead: 'Artikel lesen',
         recognition: {
-            press: 'Die Süddeutsche Zeitung berichtet über unser Projekt mit der Lebenshilfe München.',
-            startsocial: 'Wir sind startsocial-Stipendiat 2026/27.',
-            movers: 'Wir waren Finalisten beim Movers of Tomorrow Award 2026 der Allianz Foundation.',
+            press: { title: 'Süddeutsche Zeitung', text: 'Bericht über unser Projekt mit der Lebenshilfe München.', link: 'Artikel lesen' },
+            startsocial: { title: 'startsocial-Stipendium', text: 'Wir sind Stipendiat 2026/27.', link: 'Zum Profil' },
+            movers: { title: 'Movers of Tomorrow Award', text: 'Finalisten 2026 beim Award der Allianz Foundation.', link: 'Zum Video' },
         },
         partnersKicker: '~/für-unternehmen',
         partnersTitle: 'Talente treffen. Wirkung zeigen.',
@@ -1024,6 +1028,7 @@ const de: Translations = {
         partnersFormatsLabel: '~/formate',
         partnersFormatsTitle: 'Was wir mit Partnern machen.',
         partnersHostsLabel: 'Gastgeber',
+        partnersHostsMore: 'weitere',
         partnersFormats: [
             { key: 'company', title: 'Company Events', text: 'Ein Abend bei euch: Talk oder Case Study, ein Blick hinter die Kulissen und Zeit zum Kennenlernen.', alt: 'Ein voller Saal bei einem Vortrag auf einem unserer Events' },
             { key: 'community', title: 'Community Events', text: 'Ein Charity-Mario-Kart-Turnier mit 100+ Anmeldungen, Poker Nights und mehr – locker, mit den richtigen Leuten im Raum.', alt: 'Zwei Mitglieder im Gespräch beim Community-Abend bei CHECK24' },
@@ -1046,28 +1051,28 @@ const de: Translations = {
     },
     process: {
         kicker: 'So funktioniert es',
-        heading: 'Wie wir mit NGOs arbeiten',
-        intro: 'Vom ersten Gespräch bis zur fertigen Software in einem einzigen Semester – diesen Weg geht jedes Projekt.',
+        heading: 'Wie wir mit NGOs arbeiten.',
+        intro: 'Vom Erstgespräch bis zur fertigen Software in einem Semester.',
         steps: [
             {
                 timing: 'Woche 0',
                 title: 'Erstgespräch',
-                text: 'Erzählt uns von eurer Organisation und dem Problem, das gelöst werden soll – ein lockeres 30-Minuten-Gespräch, kostenlos und unverbindlich.',
+                text: 'Ihr erzählt uns von eurem Problem – 30 Minuten, kostenlos und unverbindlich.',
             },
             {
                 timing: 'Woche 2',
                 title: 'Klickbares Mock-up',
-                text: 'Ihr seht einen ersten klickbaren Entwurf eures Produkts – gemeinsam passen wir ihn an, bis er zur Arbeitsweise eures Teams passt.',
+                text: 'Ein erster klickbarer Entwurf, den wir mit euch anpassen, bis er passt.',
             },
             {
                 timing: 'Woche 8',
                 title: 'Funktionierendes MVP',
-                text: 'Die Kernfunktionen laufen – euer Team kann die Software früh ausprobieren und mitsteuern, was am wichtigsten ist.',
+                text: 'Die Kernfunktionen laufen – euer Team testet früh und steuert mit.',
             },
             {
                 timing: 'Woche 12',
                 title: 'Fertiges Produkt',
-                text: 'Wir übergeben die fertige Software – getestet, dokumentiert und mit allem, was euer Team für den Betrieb braucht. Danach bleiben wir für die Wartung an Bord.',
+                text: 'Getestet, dokumentiert, übergeben – und wir bleiben für die Wartung an Bord.',
             },
         ],
     },
@@ -1490,6 +1495,7 @@ const de: Translations = {
         kicker: '~/für-ngos',
         fallbackTitle: 'Was ist euer größtes Problem?',
         fallbackLead: 'Lasst uns gemeinsam eine digitale Lösung finden – kostenlos.',
+        about: 'Wir sind Studierende von TUM, LMU und HM. Als gemeinnütziger Verein entwickeln wir ehrenamtlich Software für NGOs – von der ersten Idee bis zum laufenden Betrieb.',
         talkCta: 'Erstgespräch buchen',
     },
     notFound: {

@@ -12,8 +12,8 @@ const reveal = {
 } as const;
 
 /**
- * The three recognitions, each a logo, one sentence (`pages.recognition`) and
- * a link: the press tile to the article from the project's press entry in
+ * The three recognitions, each a logo, a title, one short line
+ * (`pages.recognition`) and a link: the press tile to the article from the project's press entry in
  * the CMS, the awards to their pages about us. Logos from our partner deck
  * (public/images/logos).
  */
@@ -32,10 +32,10 @@ const TILES = [
 ] as const;
 
 /**
- * "Learn more about our impact": the press and our awards as compact tiles,
- * each saying in one sentence what it stands for. `band` sits straight under
- * a page head with a small title, so it is in view on the first screen
- * (/ngos); `section` is a regular band with the usual heading (/partners).
+ * "Learn more about our impact": the press and our awards as tiles – logo,
+ * title, one line on what it stands for, and the link. `band` sits straight under
+ * a page head with less air above, so it is in view on the first screen
+ * (/ngos); `section` is a regular band (/partners).
  */
 const Recognition: React.FC<{ projects?: CmsProject[] | null; variant?: 'band' | 'section' }> = ({
     projects,
@@ -51,7 +51,7 @@ const Recognition: React.FC<{ projects?: CmsProject[] | null; variant?: 'band' |
             <div className="lp-inner">
                 <motion.div className="lp-head" {...reveal} transition={{ duration: 0.5 }}>
                     <p className="lp-kicker">{p.recognitionLabel}</p>
-                    <h2 className={band ? 'lp-recognition__title' : 'lp-h2'}>{p.recognitionTitle}</h2>
+                    <h2 className="lp-h2">{p.recognitionTitle}</h2>
                 </motion.div>
                 <ul className="lp-recog">
                     {TILES.map((tile, i) => {
@@ -61,17 +61,15 @@ const Recognition: React.FC<{ projects?: CmsProject[] | null; variant?: 'band' |
                                 : press.find(
                                       (item) => item.url && item.outlet?.trim().toLowerCase() === tile.outlet
                                   )?.url;
+                        const copy = p.recognition[tile.key];
                         const body = (
                             <>
                                 <span className="lp-recog__logo">
                                     <img src={tile.logo} alt="" />
                                 </span>
-                                <span className="lp-recog__text">{p.recognition[tile.key]}</span>
-                                {href && (
-                                    <span className="lp-recog__arrow" aria-hidden="true">
-                                        ↗
-                                    </span>
-                                )}
+                                <span className="lp-recog__title">{copy.title}</span>
+                                <span className="lp-recog__text">{copy.text}</span>
+                                {href && <span className="lp-recog__link">{copy.link} ↗</span>}
                             </>
                         );
                         return (

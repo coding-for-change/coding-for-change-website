@@ -49,6 +49,7 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
     const joinHref = students ? '/join/apply' : '/join';
     const ngoLabel = hp?.ctaContact || l.closingNgo;
     const onNgoPage = pathname.startsWith('/ngos');
+    const onPartnersPage = pathname.startsWith('/partners');
 
     const toBooking = (e: React.MouseEvent) => {
         const el = document.getElementById('partner-book');
@@ -93,17 +94,23 @@ const ClosingCta: React.FC<ClosingCtaProps> = (props) => {
                     </h2>
                     <p className="lp-closing__text">{text}</p>
                     <div className="lp-closing__ctas">
-                        {students ? joinButton(true) : ngoButton(true)}
-                        {students ? ngoButton(false) : joinButton(false)}
-                        {/* On /partners itself, the companies' button asks them to get in touch. */}
-                        {pathname.startsWith('/partners') ? (
-                            <Link className="lp-btn lp-btn--ghost" href="/contact" data-cta="closing-partner">
-                                {t.pages.partnersCta}
-                            </Link>
+                        {/* On /partners the companies' button leads and asks them to get in touch. */}
+                        {onPartnersPage ? (
+                            <>
+                                <Link className="lp-btn lp-btn--primary" href="/contact" data-cta="closing-partner">
+                                    {t.pages.partnersCta} →
+                                </Link>
+                                {ngoButton(false)}
+                                {joinButton(false)}
+                            </>
                         ) : (
-                            <Link className="lp-btn lp-btn--ghost" href="/partners" data-cta="closing-partner">
-                                {l.closingPartner}
-                            </Link>
+                            <>
+                                {students ? joinButton(true) : ngoButton(true)}
+                                {students ? ngoButton(false) : joinButton(false)}
+                                <Link className="lp-btn lp-btn--ghost" href="/partners" data-cta="closing-partner">
+                                    {l.closingPartner}
+                                </Link>
+                            </>
                         )}
                     </div>
                 </motion.div>
