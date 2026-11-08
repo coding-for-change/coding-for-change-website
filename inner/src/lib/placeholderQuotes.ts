@@ -7,12 +7,21 @@ import type { CmsMedia, CmsTestimonial } from '../api/types';
  * site – a quote goes live by entering it in the CMS.
  *
  * - NGO: Katharina Berger (Lebenshilfe München), as quoted in the Süddeutsche
- *   Zeitung's article on our project. Enter it in the CMS, with her photo,
- *   once she has OK'd it for our website.
+ *   Zeitung's article on our project. Enter it in the CMS, with her photo
+ *   (public/images/voices), once she has OK'd it for our website.
  * - Member: a DRAFT for Richard Ziegler – not his words until he has approved
  *   or rewritten it. His portrait is the one on /team (CMS media 33).
  * - Company: an invented template until a partner gives us a quote.
  */
+const KATHARINA_PHOTO: CmsMedia = {
+    id: 0,
+    url: '/images/voices/katharina-berger.webp',
+    alt: 'Katharina Berger',
+    filename: 'katharina-berger.webp',
+    mimeType: 'image/webp',
+    filesize: 0,
+};
+
 const RICHARD_PHOTO: CmsMedia = {
     id: 33,
     url: '/api/media/file/Richard%20Ziegler.webp',
@@ -32,6 +41,7 @@ export function placeholderQuotes(locale: string): CmsTestimonial[] {
                 role: 'Koordination Schul- und Individualbegleitung',
                 organisation: 'Lebenshilfe München',
                 audience: 'ngo',
+                photo: KATHARINA_PHOTO,
             },
             {
                 quote: 'Bei Coding for Change habe ich früh echte Verantwortung übernommen. Ich bringe ein, was ich kann – und sehe direkt, was unsere Software bei einer NGO bewirkt.',
@@ -57,6 +67,7 @@ export function placeholderQuotes(locale: string): CmsTestimonial[] {
             role: 'Coordinator, school and individual assistance',
             organisation: 'Lebenshilfe München',
             audience: 'ngo',
+            photo: KATHARINA_PHOTO,
         },
         {
             quote: 'At Coding for Change I took on real responsibility early on. I bring in what I’m good at – and see right away what our software does for an NGO.',
