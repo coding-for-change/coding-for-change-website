@@ -5,15 +5,19 @@ import { useSiteConfig, useLanguage } from '../../api';
 import { useSiteFlags } from '@/api/SiteFlagsContext';
 import { useChromeTone } from '../../hooks/useDarkNav';
 import type { PageTone } from '../../hooks/useDarkNav';
+import useIsMobile from '../../hooks/useIsMobile';
 import {
     openConsentSettings,
     consentUiAvailable,
     onConsentUiChange,
 } from '../../lib/consent';
 
-const NAVY = '#0f2040';
-const GRAY = '#6b7280';
-const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif';
+/* Brand tokens (index.css). */
+const INK = 'var(--cfc-ink)';
+const GREY = 'var(--cfc-grey)';
+const LINE = 'var(--cfc-line)';
+const SANS = 'var(--font-sans)';
+const MONO = 'var(--font-mono)';
 
 /**
  * The footer on a page that is dark from top to bottom – /techtour/apply, which
@@ -25,17 +29,16 @@ const FONT = '-apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, s
 const DARK = {
     background: '#060d12',
     border: 'rgba(255, 255, 255, 0.08)',
-    /* The logo is drawn in black; the nav flips it the same way. */
-    logo: 'brightness(0) invert(1)',
     strong: '#ffffff',
     muted: 'rgba(255, 255, 255, 0.62)',
     faint: 'rgba(255, 255, 255, 0.38)',
 } as const;
 
 /**
- * The footer under the tour page (/techtour), which is set on warm paper
- * rather than white (`--tt-paper` in techtour.css): the same strip-of-paper
- * problem, the other way round. Only the ground and the rule change.
+ * The footer under the tour page (/techtour), which keeps its own, warmer
+ * paper (`--tt-paper` in techtour.css): the footer takes that ground so it
+ * does not read as a second strip of paper. Only the ground and the rule
+ * change.
  */
 const PAPER = {
     background: '#f2efe7',
@@ -43,17 +46,20 @@ const PAPER = {
 } as const;
 
 /**
- * Site-wide footer. Shared by the desktop site shell and the mobile layout —
- * with the Windows-95 desktop chrome (and its shortcuts) gone, this is now the
- * canonical way to reach the Imprint and Privacy pages. Labels are
- * localized (EN/DE) via the translation table. A centered max-width inner block
- * keeps it readable full-width on desktop and stacked on mobile.
+ * Site-wide footer, shared by the desktop site shell and the mobile layout:
+ * the canonical way to reach Contact, Q&A, Imprint and Privacy, the cookie
+ * settings, and the way into the 3D version. Labels are localized (EN/DE).
+ *
+ * Styled inline on purpose: the tone overrides below come from
+ * `useChromeTone`, and html[data-nav] (which the nav follows) also flips
+ * while the landing scrolls past its dark bands – the footer must not.
  */
 const SiteFooter: React.FC = () => {
     const siteConfig = useSiteConfig();
     const { t } = useLanguage();
     const { techTourListed } = useSiteFlags();
     const tone = useChromeTone();
+    const isMobile = useIsMobile();
     /** A style from `styles`, with the page tone's override folded in if it has one. */
     const sx = (key: string): React.CSSProperties => {
         const override = tone ? toneStyles[tone][key] : undefined;
@@ -65,7 +71,7 @@ const SiteFooter: React.FC = () => {
         { to: '/', label: f.home },
         { to: '/projects', label: f.projects },
         { to: '/team', label: f.team },
-        { to: '/#partners', label: f.partners },
+        { to: '/partners', label: f.partners },
         { to: '/ngos', label: f.ngos },
         { to: '/join', label: f.join },
         ...(techTourListed ? [{ to: '/techtour', label: f.techtour }] : []),
@@ -90,20 +96,30 @@ const SiteFooter: React.FC = () => {
         []
     );
 
+    /**
+     * The way into the 3D scene. Not on a phone (the scene redirects mobile
+     * visitors back to /) and not inside the scene's monitor, where the nav
+     * carries the way out. Resolved after mount: window.top is unreadable
+     * server-side.
+     */
+    const [embedded, setEmbedded] = useState(true);
+    useEffect(() => {
+        try {
+            setEmbedded(window.self !== window.top);
+        } catch {
+            setEmbedded(true);
+        }
+    }, []);
+    const show3d = !embedded && !isMobile;
+
     return (
         <footer style={sx('footer')}>
             <div style={sx('inner')}>
                 <div style={sx('top')}>
-                    <img
-                        src="/images/logo.svg"
-                        alt="Coding for Change"
-                        width={220}
-                        height={30}
-                        style={sx('logo')}
-                    />
-                    {siteConfig.tagline && (
-                        <p style={sx('tagline')}>{siteConfig.tagline}</p>
-                    )}
+                    <RouterLink href="/" aria-label="Coding for Change" style={styles.logoLink}>
+                        <img src="/images/logo.svg" alt="Coding for Change" style={sx('logo')} />
+                    </RouterLink>
+                    {siteConfig.tagline && <p style={sx('tagline')}>{siteConfig.tagline}</p>}
                     {siteConfig.email && (
                         <a href={`mailto:${siteConfig.email}`} style={sx('email')}>
                             {siteConfig.email}
@@ -113,7 +129,7 @@ const SiteFooter: React.FC = () => {
 
                 <div style={sx('columns')}>
                     <div style={sx('column')}>
-                        <p style={sx('columnHeading')}>{f.pages.toUpperCase()}</p>
+                        <p style={sx('columnHeading')}>{f.pages}</p>
                         {PAGE_LINKS.map((link) => (
                             <RouterLink key={link.label} href={link.to} style={sx('columnLink')}>
                                 {link.label}
@@ -121,7 +137,7 @@ const SiteFooter: React.FC = () => {
                         ))}
                     </div>
                     <div style={sx('column')}>
-                        <p style={sx('columnHeading')}>{f.info.toUpperCase()}</p>
+                        <p style={sx('columnHeading')}>{f.info}</p>
                         {INFO_LINKS.map((link) => (
                             <RouterLink key={link.label} href={link.to} style={sx('columnLink')}>
                                 {link.label}
@@ -140,12 +156,19 @@ const SiteFooter: React.FC = () => {
                 </div>
             </div>
 
-            {siteConfig.copyrightText && (
-                <div style={sx('copyrightWrap')}>
-                    <div style={sx('divider')} />
-                    <p style={sx('copyright')}>{siteConfig.copyrightText}</p>
+            <div style={sx('bottom')}>
+                <div style={sx('divider')} />
+                <div style={sx('bottomRow')}>
+                    {siteConfig.copyrightText && (
+                        <p style={sx('copyright')}>{siteConfig.copyrightText}</p>
+                    )}
+                    {show3d && (
+                        <a href="/3d" style={sx('threeD')}>
+                            {t.common.enterThreeD} →
+                        </a>
+                    )}
                 </div>
-            )}
+            </div>
         </footer>
     );
 };
@@ -159,14 +182,15 @@ const darkStyles: StyleSheetCSS = {
         backgroundColor: DARK.background,
         borderTopColor: DARK.border,
     },
-    logo: { filter: DARK.logo },
-    tagline: { color: DARK.muted },
-    email: { color: DARK.strong },
-    columnHeading: { color: DARK.strong },
+    tagline: { color: DARK.strong },
+    email: { color: DARK.muted },
+    columnHeading: { color: DARK.faint },
     columnLink: { color: DARK.muted },
     consentButton: { color: DARK.muted },
     divider: { backgroundColor: DARK.border },
     copyright: { color: DARK.faint },
+    threeD: { color: DARK.muted },
+    logo: { filter: 'brightness(0) invert(1)' },
 };
 
 /** What changes on the paper page. */
@@ -184,7 +208,7 @@ const styles: StyleSheetCSS = {
     footer: {
         display: 'flex',
         flexDirection: 'column',
-        backgroundColor: '#ffffff',
+        backgroundColor: 'var(--cfc-paper)',
         // Spelled out rather than the `borderTop` shorthand: the dark page
         // overrides the colour alone, and React warns (rightly) that dropping
         // a longhand on re-render while a shorthand still sets it can leave
@@ -192,10 +216,12 @@ const styles: StyleSheetCSS = {
         // same property its light counterpart does.
         borderTopWidth: 1,
         borderTopStyle: 'solid',
-        borderTopColor: '#f0f0f0',
-        padding: '48px 24px 32px',
+        borderTopColor: LINE,
+        padding: '64px 24px 32px',
         width: '100%',
         boxSizing: 'border-box',
+        // A child of the .site-scroll flex column: never let it be squeezed.
+        flexShrink: 0,
     },
     inner: {
         display: 'flex',
@@ -211,34 +237,41 @@ const styles: StyleSheetCSS = {
     top: {
         display: 'flex',
         flexDirection: 'column',
-        gap: 12,
-        flex: '1 1 260px',
+        gap: 16,
+        flex: '1 1 300px',
         minWidth: 240,
     },
+    logoLink: {
+        display: 'flex',
+        alignSelf: 'flex-start',
+        marginBottom: 6,
+    },
     logo: {
+        display: 'block',
         height: 30,
         width: 'auto',
-        objectFit: 'contain',
-        alignSelf: 'flex-start',
     },
     tagline: {
-        fontFamily: FONT,
-        fontSize: 14,
-        color: GRAY,
-        lineHeight: 1.6,
+        fontFamily: SANS,
+        fontSize: 20,
+        fontWeight: 500,
+        lineHeight: 1.2,
+        letterSpacing: '-0.025em',
+        color: INK,
         margin: 0,
-        maxWidth: 280,
+        maxWidth: 380,
     },
     email: {
-        fontFamily: FONT,
-        fontSize: 14,
-        color: NAVY,
+        fontFamily: MONO,
+        fontSize: 13,
+        color: GREY,
         textDecoration: 'none',
+        alignSelf: 'flex-start',
     },
     columns: {
         display: 'flex',
         flexDirection: 'row',
-        gap: 64,
+        gap: 72,
         alignItems: 'flex-start',
         flexWrap: 'wrap',
     },
@@ -247,34 +280,33 @@ const styles: StyleSheetCSS = {
         flexDirection: 'column',
     },
     columnHeading: {
-        fontFamily: FONT,
+        fontFamily: MONO,
         fontSize: 12,
-        fontWeight: 700,
-        color: NAVY,
-        letterSpacing: 1,
-        margin: '0 0 16px 0',
+        fontWeight: 400,
+        color: GREY,
+        margin: '0 0 14px 0',
     },
     columnLink: {
         display: 'flex',
-        fontFamily: FONT,
-        fontSize: 14,
-        color: GRAY,
+        fontFamily: SANS,
+        fontSize: 15,
+        color: INK,
         textDecoration: 'none',
-        padding: '6px 0',
+        padding: '5px 0',
     },
     consentButton: {
         display: 'flex',
-        fontFamily: FONT,
-        fontSize: 14,
-        color: GRAY,
+        fontFamily: SANS,
+        fontSize: 15,
+        color: INK,
         textDecoration: 'none',
-        padding: '6px 0',
+        padding: '5px 0',
         background: 'none',
         border: 'none',
         cursor: 'pointer',
         textAlign: 'left',
     },
-    copyrightWrap: {
+    bottom: {
         display: 'flex',
         flexDirection: 'column',
         width: '100%',
@@ -284,15 +316,28 @@ const styles: StyleSheetCSS = {
     },
     divider: {
         height: 1,
-        backgroundColor: '#f0f0f0',
-        margin: '32px 0 20px',
+        backgroundColor: LINE,
+        margin: '48px 0 18px',
         width: '100%',
     },
+    bottomRow: {
+        display: 'flex',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        alignItems: 'baseline',
+        gap: '8px 24px',
+    },
     copyright: {
-        fontFamily: FONT,
-        fontSize: 12,
-        color: '#9ca3af',
+        fontFamily: SANS,
+        fontSize: 13,
+        color: GREY,
         margin: 0,
+    },
+    threeD: {
+        fontFamily: MONO,
+        fontSize: 12,
+        color: GREY,
+        textDecoration: 'none',
     },
 };
 

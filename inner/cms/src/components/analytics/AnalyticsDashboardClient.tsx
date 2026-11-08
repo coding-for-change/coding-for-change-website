@@ -52,8 +52,19 @@ const CTA_LABELS: Record<string, string> = {
   'join-apply-end': '/join: Apply (bottom)',
   'home-join-hero': 'Home: Join (top)',
   'home-apply-hero': 'Home: Apply (top)',
-  'home-join-talk': 'Home: Join (talk section)',
-  'closing-join': 'Closing banner: Join',
+  'home-ngo-hero': 'Home: Start a project (top)',
+  'home-techtour-hero': 'Home: Tech Tour announcement (top)',
+  'home-way-ngo': 'Home: Three ways – NGOs',
+  'home-way-join': 'Home: Three ways – students',
+  'home-way-partner': 'Home: Three ways – companies',
+  'home-ngo-process': 'Home: Start a project (process)',
+  'home-join-talk': 'Home: Join (talk section, until Nov 2026)',
+  'closing-join': 'Closing (every page): Join / Apply',
+  'closing-ngo': 'Closing (every page): Start a project',
+  'closing-partner': 'Closing (every page): Become a partner',
+  'partners-contact': '/partners: Become a partner (top)',
+  'ngo-book-head': '/ngos: Book a first talk (top)',
+  'team-join': '/team: Your face here (join tile)',
 };
 
 type Tab = 'website' | 'applications';

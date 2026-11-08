@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
-import { IBM_Plex_Sans, Space_Grotesk } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 // All four global stylesheets — importing every one here is what the old CRA
 // build did via index.tsx/App.tsx. (The abandoned migration dropped App.css and
 // mobile.css, which is what broke its formatting.)
@@ -19,6 +19,8 @@ import { techTourListed } from '@/lib/techTour';
 import { getServerLocale } from '@/lib/locale';
 import type { CmsSiteConfig, CmsTechTour } from '@/api/types';
 
+// The TechTour's ASCII skyline is laid out on Roboto Mono's character cell
+// (TechTourSkyline.tsx), so it keeps its own mono.
 const robotoMono = localFont({
     src: '../assets/fonts/RobotoMono-latin.woff2',
     weight: '100 700',
@@ -26,23 +28,20 @@ const robotoMono = localFont({
     variable: '--font-roboto-mono',
 });
 
-// Modern content typography (replaces the illegible Win95 pixel fonts).
-// Next self-hosts both at build time, so there is no runtime request to Google.
-// Body/UI workhorse — IBM Plex Sans: highly legible at small sizes, full German
-// coverage (ä ö ü ß), and an engineering pedigree that pairs with the mono wordmark.
-const plexSans = IBM_Plex_Sans({
+// Site typography: Geist for everything set in words, headings included, and
+// Geist Mono as the second voice (labels, numbers), taken from the >_ wordmark.
+// Both are variable fonts, so one file covers every weight. Next self-hosts
+// them at build time: there is no runtime request to Google. The CSS reads
+// them through --font-sans / --font-mono (index.css).
+const geist = Geist({
     subsets: ['latin'],
-    weight: ['400', '500', '600', '700'],
     display: 'swap',
-    variable: '--font-plex-sans',
+    variable: '--font-geist',
 });
-// Display/headings — Space Grotesk: a proportional grotesque derived from Space
-// Mono, so it echoes the Roboto Mono wordmark while staying crisp and legible.
-const spaceGrotesk = Space_Grotesk({
+const geistMono = Geist_Mono({
     subsets: ['latin'],
-    weight: ['500', '600', '700'],
     display: 'swap',
-    variable: '--font-space-grotesk',
+    variable: '--font-geist-mono',
 });
 
 export const metadata: Metadata = {
@@ -114,7 +113,7 @@ export default async function RootLayout({
     return (
         <html
             lang={locale}
-            className={`${robotoMono.variable} ${plexSans.variable} ${spaceGrotesk.variable}`}
+            className={`${robotoMono.variable} ${geist.variable} ${geistMono.variable}`}
         >
             <head>
                 {/* `_parent` keeps links working when the OS is embedded in the

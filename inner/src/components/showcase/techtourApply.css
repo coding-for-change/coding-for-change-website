@@ -80,7 +80,7 @@
     border-radius: 50%;
     background: #060d12;
     color: var(--tta-accent);
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 12px;
     line-height: 1;
 }
@@ -104,7 +104,7 @@
 }
 .tta-step__title {
     display: block;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     line-height: 1.25;
     color: var(--tta-ink);
@@ -285,7 +285,7 @@
     display: block;
     margin: 0 0 4px;
     padding: 0;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 22px;
     line-height: 1.2;
     color: var(--tta-ink);
@@ -398,7 +398,7 @@
 }
 .tta-ev__company {
     display: block;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15.5px;
     line-height: 1.25;
     color: #ffffff;
@@ -422,7 +422,7 @@
 }
 .tta-ev__day {
     display: block;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 12px;
     letter-spacing: 0.1em;
     text-transform: uppercase;
@@ -453,7 +453,7 @@
 }
 .tta-ask {
     display: block;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 13.5px;
     font-weight: 600;
     line-height: 1.45;
@@ -470,6 +470,9 @@
 }
 .lp--techtour.tta .tta-form .lp-submit {
     background: var(--tta-teal);
+    /* Square like the draft button beside it: the tour pages keep their own
+       look until they move to the site-wide pills. */
+    border-radius: 0;
 }
 .lp--techtour.tta .tta-form .lp-submit:hover:not(:disabled) {
     background: #3aabac;
@@ -485,7 +488,7 @@
     background: none;
     color: var(--tta-accent);
     cursor: pointer;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     transition: background 0.15s ease, border-color 0.15s ease;
 }
@@ -530,7 +533,7 @@
 /* ---- Registration closed: what stands in for the form ---- */
 .lp--techtour.tta .tta-closed__head {
     margin: 0 0 8px;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 26px;
     color: var(--tta-ink);
 }

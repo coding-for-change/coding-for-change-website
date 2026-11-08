@@ -16,17 +16,25 @@ export const Homepage: GlobalConfig = {
       label: 'Hero',
       admin: { initCollapsed: true },
       fields: [
-        { name: 'heroKicker', type: 'text', localized: true },
-        { name: 'heroCtaPrimary', type: 'text', localized: true },
-        { name: 'heroCtaSecondary', type: 'text', localized: true },
-        { name: 'heroScrollHint', type: 'text', localized: true },
+        {
+          name: 'heroCtaPrimary',
+          type: 'text',
+          localized: true,
+          admin: { description: 'The first hero button, to the NGO page ("Start a project").' },
+        },
+        {
+          name: 'heroCtaSecondary',
+          type: 'text',
+          localized: true,
+          admin: { description: 'The second hero button, to the Join page ("Become a member").' },
+        },
         {
           name: 'heroImage',
           type: 'upload',
           relationTo: 'media',
           admin: {
             description:
-              'Optional hero image beside the headline — ideally a wide candid of the team mid-build. Left empty, the hero stays text-only.',
+              'The photo behind the hero headline, across the full width – a wide, landscape candid of the club at an event or mid-build, at least 2400 px wide. The headline sits on its lower left, so keep faces out of that corner. Left empty, the built-in event photo is shown.',
           },
         },
       ],
@@ -36,16 +44,17 @@ export const Homepage: GlobalConfig = {
       label: 'About section',
       admin: { initCollapsed: true },
       fields: [
-        { name: 'aboutKicker', type: 'text', localized: true },
-        { name: 'aboutOneLiner', type: 'textarea', localized: true },
-        { name: 'aboutPitch', type: 'textarea', localized: true },
         {
-          name: 'stats',
-          type: 'array',
-          fields: [
-            { name: 'value', type: 'text', required: true, localized: true },
-            { name: 'label', type: 'text', required: true, localized: true },
-          ],
+          name: 'aboutOneLiner',
+          type: 'textarea',
+          localized: true,
+          admin: { description: 'The statement under the logo strip, first part (dark), e.g. "NGOs have the mission."' },
+        },
+        {
+          name: 'aboutPitch',
+          type: 'textarea',
+          localized: true,
+          admin: { description: 'Its continuation (grey).' },
         },
         {
           name: 'steps',
@@ -97,17 +106,14 @@ export const Homepage: GlobalConfig = {
     {
       type: 'collapsible',
       label: 'Section headers',
-      admin: { initCollapsed: true, description: 'Eyebrow / title / intro for each homepage section.' },
+      admin: {
+        initCollapsed: true,
+        description: 'Label / title / intro of the homepage projects section and of the Q&A page.',
+      },
       fields: [
         { name: 'projectsSubtitle', type: 'text', localized: true },
         { name: 'projectsTitle', type: 'text', localized: true },
         { name: 'projectsIntro', type: 'textarea', localized: true },
-        { name: 'eventsSubtitle', type: 'text', localized: true },
-        { name: 'eventsTitle', type: 'text', localized: true },
-        { name: 'eventsIntro', type: 'textarea', localized: true },
-        { name: 'sponsorsSubtitle', label: 'Partners Subtitle', type: 'text', localized: true },
-        { name: 'sponsorsTitle', label: 'Partners Title', type: 'text', localized: true },
-        { name: 'sponsorsIntro', label: 'Partners Intro', type: 'textarea', localized: true },
         { name: 'qaSubtitle', type: 'text', localized: true },
         { name: 'qaTitle', type: 'text', localized: true },
         { name: 'qaIntro', type: 'textarea', localized: true },
@@ -115,13 +121,55 @@ export const Homepage: GlobalConfig = {
     },
     {
       type: 'collapsible',
-      label: '3D band',
-      admin: { initCollapsed: true },
+      label: 'Voices (quotes)',
+      admin: {
+        initCollapsed: true,
+        description:
+          'Quotes from partner NGOs, companies and members. The homepage shows all of them, between the process and the closing call-to-action; /ngos shows the NGOs\' quotes and /partners the companies\'. While this list is empty the sections stay hidden on the live site. Only real quotes, with the person\'s OK.',
+      },
       fields: [
-        { name: 'threedKicker', type: 'text', localized: true },
-        { name: 'threedTitle', type: 'text', localized: true },
-        { name: 'threedText', type: 'textarea', localized: true },
-        { name: 'threedCta', type: 'text', localized: true },
+        {
+          name: 'testimonials',
+          label: 'Quotes',
+          type: 'array',
+          labels: { singular: 'Quote', plural: 'Quotes' },
+          fields: [
+            { name: 'quote', type: 'textarea', required: true, localized: true },
+            {
+              name: 'audience',
+              label: 'Who is speaking',
+              type: 'select',
+              required: true,
+              defaultValue: 'ngo',
+              options: [
+                { label: 'An NGO', value: 'ngo' },
+                { label: 'A company', value: 'company' },
+                { label: 'A member', value: 'member' },
+              ],
+              admin: {
+                description: 'Decides where else the quote appears: NGO quotes on /ngos, company quotes on /partners.',
+              },
+            },
+            { name: 'name', type: 'text', admin: { description: 'Who said it.' } },
+            {
+              name: 'role',
+              type: 'text',
+              localized: true,
+              admin: { description: 'Their role, e.g. "Managing Director".' },
+            },
+            {
+              name: 'organisation',
+              type: 'text',
+              admin: { description: 'Organisation or company; for a member, e.g. "Member since 2025".' },
+            },
+            {
+              name: 'photo',
+              type: 'upload',
+              relationTo: 'media',
+              admin: { description: 'Optional portrait, shown small beside the name.' },
+            },
+          ],
+        },
       ],
     },
     {

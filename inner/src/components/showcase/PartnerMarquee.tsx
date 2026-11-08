@@ -91,18 +91,25 @@ const Tile: React.FC<{ partner: MarqueePartner; hidden: boolean }> = ({ partner,
  * left, pausing under the pointer. Each logo is announced once; the repeats
  * that make the loop seamless are hidden from screen readers, and with
  * reduced motion the band stands still with each logo shown once.
+ *
+ * `strip` is the homepage's quieter version: the label on the left, the logos
+ * in greyscale without tiles, on one hairline-bounded row.
  */
-const PartnerMarquee: React.FC<{ partners: MarqueePartner[]; label: string }> = ({
-    partners,
-    label,
-}) => {
+const PartnerMarquee: React.FC<{
+    partners: MarqueePartner[];
+    label: string;
+    variant?: 'tiles' | 'strip';
+}> = ({ partners, label, variant = 'tiles' }) => {
     if (partners.length === 0) return null;
     const reps = Math.max(1, Math.ceil(MIN_TILES_PER_PASS / partners.length));
     const pass = Array.from({ length: reps }, () => partners).flat();
     const style = { '--jn-marquee-duration': `${pass.length * 5}s` } as React.CSSProperties;
 
     return (
-        <section className="jn-partners" aria-label={label}>
+        <section
+            className={'jn-partners' + (variant === 'strip' ? ' jn-partners--strip' : '')}
+            aria-label={label}
+        >
             <p className="jn-partners__label">{label}</p>
             <div className="jn-marquee" style={style}>
                 <ul className="jn-marquee__track">

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import Enter3DButton from '../general/Enter3DButton';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useSiteFlags } from '@/api/SiteFlagsContext';
 import { useSiteConfig, useHomepageMode } from '../../api';
 import useNow from '../../hooks/useNow';
 import {
@@ -34,6 +33,19 @@ const TopNav: React.FC = () => {
     const navRef = useRef<HTMLElement>(null);
 
     const onLanding = pathname === '/';
+
+    // Inside the 3D scene's monitor iframe the nav carries the way back out
+    // (the scene hides its own exit while zoomed into the monitor). The way
+    // in lives in the footer. Resolved after mount: window.top is unreadable
+    // server-side.
+    const [embedded, setEmbedded] = useState(false);
+    useEffect(() => {
+        try {
+            setEmbedded(window.self !== window.top);
+        } catch {
+            setEmbedded(true);
+        }
+    }, []);
 
     // The nav sits transparent over the hero gradient at the top of the
     // page and fades to a solid background once the content scrolls beneath
@@ -83,17 +95,13 @@ const TopNav: React.FC = () => {
     // it keeps the row from overflowing as conditional items are added.
     const sectionLinks: { id: string; label: string }[] = [];
 
-    const { techTourListed } = useSiteFlags();
-    const pageLinks: { to: string; label: string; event?: boolean }[] = [
+    // Contact sits in the footer, Join is the button on the right, and an
+    // event like the TechTour is announced in the homepage hero.
+    const pageLinks: { to: string; label: string }[] = [
         { to: '/projects', label: t.nav.projects },
         { to: '/ngos', label: t.nav.ngos },
         { to: '/partners', label: t.nav.partners },
         { to: '/team', label: t.nav.team },
-        // The one accented item: an event, not a page — a small teal pill.
-        // Only while the CMS lists the page (TechTour Page → Visibility).
-        ...(techTourListed ? [{ to: '/techtour', label: t.nav.techtour, event: true }] : []),
-        // Join is intentionally omitted here — the top-right JOIN button covers it.
-        { to: '/contact', label: t.nav.contact },
     ];
 
     return (
@@ -140,13 +148,9 @@ const TopNav: React.FC = () => {
                     <Link
                         key={link.to}
                         href={link.to}
-                        data-cta={link.event ? 'nav-techtour' : undefined}
                         className={
                             'lp-nav__link' +
-                            (link.event ? ' lp-nav__link--event' : '') +
-                            (pathname.startsWith(link.to)
-                                ? ' lp-nav__link--active'
-                                : '')
+                            (pathname.startsWith(link.to) ? ' lp-nav__link--active' : '')
                         }
                     >
                         {link.label}
@@ -155,19 +159,22 @@ const TopNav: React.FC = () => {
             </div>
 
             <div className="lp-nav__right">
-                <Enter3DButton />
+                {embedded && <Enter3DButton />}
                 <div className="lp-lang">
-                    {(['en', 'de'] as const).map((code) => (
-                        <button
-                            key={code}
-                            className={
-                                'lp-lang__btn' +
-                                (locale === code ? ' lp-lang__btn--active' : '')
-                            }
-                            onClick={() => setLocale(code)}
-                        >
-                            {code}
-                        </button>
+                    {(['en', 'de'] as const).map((code, i) => (
+                        <React.Fragment key={code}>
+                            {i > 0 && <span aria-hidden="true">/</span>}
+                            <button
+                                className={
+                                    'lp-lang__btn' +
+                                    (locale === code ? ' lp-lang__btn--active' : '')
+                                }
+                                aria-pressed={locale === code}
+                                onClick={() => setLocale(code)}
+                            >
+                                {code}
+                            </button>
+                        </React.Fragment>
                     ))}
                 </div>
                 {/* Pulses while the round is open (lib/applicationPhase.ts). */}

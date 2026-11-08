@@ -29,66 +29,76 @@ const Contact: React.FC<ContactProps> = (props) => {
         [forms]
     );
 
+    const socials = siteConfig.socialLinks ?? [];
+
     return (
         <div className="lp">
             <div className="lp-page">
-            <div className="lp-inner">
-                <motion.div
-                    className="lp-page__head"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                >
-                    <p className="lp-kicker">{t.nav.contact}</p>
-                    <h1 className="lp-page__title">{t.contact.title}</h1>
-                    <p className="lp-lead">{t.contact.intro}</p>
-                </motion.div>
+                <div className="lp-inner">
+                    <motion.div
+                        className="lp-page__head"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5 }}
+                    >
+                        <p className="lp-kicker">{t.nav.contact}</p>
+                        <h1 className="lp-page__title">{t.contact.title}</h1>
+                        <p className="lp-lead">{t.contact.intro}</p>
+                    </motion.div>
 
-                {(siteConfig.socialLinks ?? []).length > 0 && (
-                    <div className="lp-socials">
-                        {(siteConfig.socialLinks ?? []).map((link) => (
-                            <a
-                                key={link.platform}
-                                className="lp-social"
-                                rel="noreferrer"
-                                target="_blank"
-                                href={link.url}
-                            >
-                                {link.platform}
-                            </a>
-                        ))}
+                    {/* The form on the left, the other ways in beside it. */}
+                    <div className="lp-contact-grid">
+                        <div className="lp-contact">
+                            {loading && <p className="lp-loading">{t.contact.loadingForm}</p>}
+                            {!loading && (error || !form) && (
+                                <p className="lp-empty">{t.contact.formUnavailable}</p>
+                            )}
+                            {!loading && form && <CmsForm form={form} conversion="contact" />}
+                        </div>
+                        <aside className="lp-contact-aside">
+                            <h2 className="lp-contact-aside__title">{t.pages.contactAsideTitle}</h2>
+                            {siteConfig.email && (
+                                <p className="lp-contact-aside__row">
+                                    <span className="lp-contact-aside__label">Email</span>
+                                    <a className="lp-textlink" href={`mailto:${siteConfig.email}`}>
+                                        {siteConfig.email}
+                                    </a>
+                                </p>
+                            )}
+                            {socials.map((link) => (
+                                <p className="lp-contact-aside__row" key={link.platform}>
+                                    <span className="lp-contact-aside__label">{link.platform}</span>
+                                    <a className="lp-textlink" rel="noreferrer" target="_blank" href={link.url}>
+                                        {link.url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '')}
+                                    </a>
+                                </p>
+                            ))}
+                            <p className="lp-contact-aside__row">
+                                <span className="lp-contact-aside__label">{t.book.title}</span>
+                                <a
+                                    className="lp-textlink"
+                                    href="#book"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        document.getElementById('book')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }}
+                                >
+                                    {t.book.pickTime} ↓
+                                </a>
+                            </p>
+                        </aside>
                     </div>
-                )}
 
-                <div className="lp-contact">
-                    <p className="lp-contact__intro">
-                        <b>Email: </b>
-                        <a className="lp-social" href={`mailto:${siteConfig.email}`}>
-                            {siteConfig.email}
-                        </a>
-                    </p>
-
-                    {loading && <p className="lp-loading">{t.contact.loadingForm}</p>}
-
-                    {!loading && (error || !form) && (
-                        <p className="lp-empty">{t.contact.formUnavailable}</p>
-                    )}
-
-                    {!loading && form && (
-                        <CmsForm form={form} conversion="contact" />
-                    )}
+                    <section id="book" className="lp-book lp-book--inline">
+                        <div className="lp-head">
+                            <h2 className="lp-h2">{t.book.title}</h2>
+                            <p className="lp-lead">{t.book.intro}</p>
+                        </div>
+                        <div className="lp-book__embed">
+                            <BookingEmbed />
+                        </div>
+                    </section>
                 </div>
-
-                <section id="book" className="lp-section--book" style={{ marginTop: 56, paddingTop: 40 }}>
-                    <h2 className="lp-page__title" style={{ fontSize: 28 }}>
-                        {t.book.title}
-                    </h2>
-                    <p className="lp-lead" style={{ marginBottom: 24 }}>
-                        {t.book.intro}
-                    </p>
-                    <BookingEmbed />
-                </section>
-            </div>
             </div>
             <ClosingCta />
         </div>
