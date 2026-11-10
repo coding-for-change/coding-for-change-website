@@ -1696,6 +1696,10 @@ export interface PayloadMcpApiKey {
      */
     setTechTourWithdrawal?: boolean | null;
     /**
+     * The to-dos TechTour hosts set for their evening (e.g. accepting a confidentiality agreement, registering in the host's portal) and who has done them: per evening with to-dos, every person the host admitted who has not given the evening up, with the time they ticked each to-do on their own manage page – null = not done yet. { evenings: [{ option, label, date, company, todos: [{ id, text }], people: [{ id, name, email, done: { todo id: ticked at | null } }] }] }.
+     */
+    getTechTourTodos?: boolean | null;
+    /**
      * What TechTour hosts did on their share links besides decisions: scores (1–10 per registration and evening) and moves (who moved up from a waitlist, and whether the mail went out).
      */
     getHostMarks?: boolean | null;
@@ -2716,6 +2720,7 @@ export interface PayloadMcpApiKeysSelect<T extends boolean = true> {
         setTechTourMember?: T;
         getTechTourWithdrawals?: T;
         setTechTourWithdrawal?: T;
+        getTechTourTodos?: T;
         getHostMarks?: T;
         getAnalytics?: T;
         createApplicantFileDownloadUrl?: T;

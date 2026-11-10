@@ -8,6 +8,7 @@ import { hostMarkEndpoints } from '../endpoints/hostMarks';
 import { mailingEndpoints } from '../endpoints/mailing';
 import { memberEndpoints } from '../endpoints/members';
 import { stageEndpoints } from '../endpoints/stages';
+import { todoEndpoints } from '../endpoints/todos';
 import { withdrawalEndpoints } from '../endpoints/withdrawals';
 import { DOWNLOAD_MINUTES, issueDownloadToken } from './applicantFileLink';
 import { emptyConfig, type SourceKey } from './mailing/model';
@@ -252,6 +253,13 @@ const reviewTools: CustomTool[] = [
     handler: run(pick(withdrawalEndpoints, 'post', '/techtour/withdrawals'), (a) => ({
       body: { submission: a.submission, option: a.option, withdrawn: a.withdrawn },
     })),
+  },
+  {
+    name: 'getTechTourTodos',
+    description:
+      'The to-dos TechTour hosts set for their evening (e.g. accepting a confidentiality agreement, registering in the host\'s portal) and who has done them: per evening with to-dos, every person the host admitted who has not given the evening up, with the time they ticked each to-do on their own manage page – null = not done yet. { evenings: [{ option, label, date, company, todos: [{ id, text }], people: [{ id, name, email, done: { todo id: ticked at | null } }] }] }.',
+    parameters: {},
+    handler: run(pick(todoEndpoints, 'get', '/techtour/todos')),
   },
   {
     name: 'getHostMarks',
