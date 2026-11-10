@@ -300,6 +300,10 @@ export interface Translations {
      * form, their to-dos and the documents. {email} is an address, {date} a day.
      */
     onboarding: {
+        liTitle: string; liOptional: string; liPostTitle: string; liLead: string; liName: string;
+        liLine1: string; liLine1Default: string; liLine2: string; liLine2Placeholder: string;
+        liPhotoChoose: string; liPhotoChange: string; liDownloadPost: string; liPhotoNote: string;
+        liFailed: string; liBannerTitle: string; liBannerText: string; liDownloadBanner: string;
         hello: string; statProgress: string; statSteps: string; statSent: string; statOpen: string;
         statOn: string; statFormHint: string; statLeft: string; statAllDone: string;
         kicker: string; title: string; signedInAs: string; signOut: string; signingOut: string;
@@ -820,6 +824,15 @@ const en: Translations = {
         error: 'That didn’t work. Please try again, or write to us at {email}.',
     },
     onboarding: {
+        liTitle: 'Share it on LinkedIn', liOptional: 'Optional', liPostTitle: 'Your new joiner post',
+        liLead: 'Tell your network you joined. The picture is made here with your photo and name; download it and add it to a LinkedIn post.',
+        liName: 'Name', liLine1: 'Role', liLine1Default: 'New member at Coding for Change',
+        liLine2: 'Studies (optional)', liLine2Placeholder: 'e.g. M.Sc. Informatics, TUM',
+        liPhotoChoose: 'Choose a photo', liPhotoChange: 'Use another photo', liDownloadPost: 'Download post',
+        liPhotoNote: 'The picture is made in your browser. A photo you pick here is not uploaded.',
+        liFailed: 'The template could not be loaded. Please reload the page.',
+        liBannerTitle: 'Profile banner', liBannerText: 'Set it as the background picture of your LinkedIn profile.',
+        liDownloadBanner: 'Download banner',
         hello: 'Welcome, {name}', statProgress: 'Progress', statSteps: '{done} of {total} steps done',
         statSent: 'Sent', statOpen: 'Open', statOn: 'on {date}', statFormHint: 'Fill in the form below',
         statLeft: '{n} still open', statAllDone: 'All done',
@@ -1391,6 +1404,15 @@ const de: Translations = {
         error: 'Das hat nicht geklappt. Versuch es bitte noch einmal oder schreib uns an {email}.',
     },
     onboarding: {
+        liTitle: 'Auf LinkedIn teilen', liOptional: 'Optional', liPostTitle: 'Dein New-Joiner-Post',
+        liLead: 'Erzähl deinem Netzwerk, dass du dabei bist. Das Bild entsteht hier mit deinem Foto und Namen; lade es herunter und häng es an einen LinkedIn-Post.',
+        liName: 'Name', liLine1: 'Rolle', liLine1Default: 'New member at Coding for Change',
+        liLine2: 'Studium (optional)', liLine2Placeholder: 'z. B. M.Sc. Informatics, TUM',
+        liPhotoChoose: 'Foto auswählen', liPhotoChange: 'Anderes Foto verwenden', liDownloadPost: 'Post herunterladen',
+        liPhotoNote: 'Das Bild entsteht in deinem Browser. Ein hier gewähltes Foto wird nicht hochgeladen.',
+        liFailed: 'Die Vorlage konnte nicht geladen werden. Bitte lade die Seite neu.',
+        liBannerTitle: 'Profilbanner', liBannerText: 'Setz es als Hintergrundbild deines LinkedIn-Profils.',
+        liDownloadBanner: 'Banner herunterladen',
         hello: 'Willkommen, {name}', statProgress: 'Fortschritt', statSteps: '{done} von {total} Schritten erledigt',
         statSent: 'Gesendet', statOpen: 'Offen', statOn: 'am {date}', statFormHint: 'Fülle das Formular unten aus',
         statLeft: 'noch {n} offen', statAllDone: 'Alles erledigt',

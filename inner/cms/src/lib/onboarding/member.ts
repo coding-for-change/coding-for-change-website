@@ -132,6 +132,22 @@ export async function memberView(req: PayloadRequest, userId: number, locale: 'e
     formView = { doc, sentAt: lastDoc?.createdAt ?? null, previous };
   }
 
+  // Their newest uploaded photo, for the LinkedIn picture the page draws in
+  // the browser. The file is private until the profile is published
+  // (photo.ts); the member reads it with their own session.
+  const photos = await payload
+    .find({
+      collection: 'media',
+      where: { uploadedBy: { equals: account.id } },
+      sort: '-createdAt',
+      limit: 1,
+      depth: 0,
+      overrideAccess: true,
+      req,
+    })
+    .catch(() => null);
+  const photo = (photos?.docs?.[0] ?? null) as { url?: string | null; sizes?: { large?: { url?: string | null } } } | null;
+
   const configured = docusealConfigured();
   const teamDoc = team as { published?: boolean | null; image?: unknown } | null;
   return {
@@ -148,6 +164,7 @@ export async function memberView(req: PayloadRequest, userId: number, locale: 'e
     todos,
     documents: { configured, items: documents },
     profile: teamDoc ? { published: teamDoc.published !== false, hasPhoto: teamDoc.image != null } : null,
+    photoUrl: photo?.sizes?.large?.url || photo?.url || null,
     stepsDone: ownStepsDone({
       formConfigured: formId !== null,
       formSubmittedAt: lastDoc?.createdAt ?? null,

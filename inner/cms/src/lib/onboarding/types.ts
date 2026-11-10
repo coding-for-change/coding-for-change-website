@@ -128,6 +128,8 @@ export type MemberOnboardingView = {
   };
   /** Their team profile, once the form made one. */
   profile: null | { published: boolean; hasPhoto: boolean };
+  /** Their newest uploaded photo (private to them until published), for the LinkedIn picture; null without one. */
+  photoUrl: string | null;
   /** Form, own to-dos and (with DocuSeal) documents all done (progress.ts `ownStepsDone`). */
   stepsDone: boolean;
 };

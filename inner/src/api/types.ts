@@ -621,6 +621,8 @@ export interface MemberOnboardingView {
     todos: MemberTodo[];
     documents: { configured: boolean; items: MemberDocument[] };
     profile: null | { published: boolean; hasPhoto: boolean };
+    /** Their newest uploaded photo, readable with their own session; for the LinkedIn picture. */
+    photoUrl?: string | null;
     stepsDone: boolean;
 }
 

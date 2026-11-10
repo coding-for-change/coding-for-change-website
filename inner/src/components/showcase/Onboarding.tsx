@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import type { MemberDocument, MemberOnboardingView, MemberTodo } from '../../api/types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import CmsForm from '../forms/CmsForm';
+import OnboardingLinkedIn from './OnboardingLinkedIn';
 import './landing.css';
 import './join.css';
 import './onboarding.css';
@@ -578,6 +579,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ initialView, signedOut, initial
                     </div>
                 )}
             </div>
+
+            <OnboardingLinkedIn
+                name={`${view.member.firstName ?? ''} ${view.member.lastName ?? ''}`.trim()}
+                photoUrl={view.photoUrl ?? null}
+            />
 
             <p className="ob-muted ob-contact">{withEmail(o.contact)}</p>
         </>
