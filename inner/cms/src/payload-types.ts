@@ -125,6 +125,7 @@ export interface Config {
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('en' | 'de') | ('en' | 'de')[];
   globals: {
+    onboarding: Onboarding;
     'tech-tour': TechTour;
     homepage: Homepage;
     about: About;
@@ -134,6 +135,7 @@ export interface Config {
     'site-config': SiteConfig;
   };
   globalsSelect: {
+    onboarding: OnboardingSelect<false> | OnboardingSelect<true>;
     'tech-tour': TechTourSelect<false> | TechTourSelect<true>;
     homepage: HomepageSelect<false> | HomepageSelect<true>;
     about: AboutSelect<false> | AboutSelect<true>;
@@ -497,6 +499,10 @@ export interface Form {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Only signed-in members can send this form, and each answer is stored with their account. For the onboarding form.
+   */
+  requiresLogin?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -915,6 +921,10 @@ export interface Media {
 export interface Team {
   id: number;
   _order?: string | null;
+  /**
+   * Shown on the Team page. New members' profiles start unpublished until the board publishes them.
+   */
+  published?: boolean | null;
   name: string;
   role: string;
   /**
@@ -1204,6 +1214,10 @@ export interface FormSubmission {
      */
     firstSeenAt?: string | null;
   };
+  /**
+   * The signed-in account this came from. Empty for the public forms.
+   */
+  submittedBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
 }
@@ -1241,6 +1255,26 @@ export interface User {
    * Member: the onboarding page only. Editor: website content, forms, TechTour page and analytics. Admin: everything.
    */
   role: 'member' | 'editor' | 'admin';
+  firstName?: string | null;
+  lastName?: string | null;
+  /**
+   * From the application; the recovery address of the Google account.
+   */
+  privateEmail?: string | null;
+  githubUsername?: string | null;
+  /**
+   * The membership application this account was created from.
+   */
+  application?: (number | null) | FormSubmission;
+  /**
+   * The public profile on the Team page.
+   */
+  teamProfile?: (number | null) | Team;
+  /**
+   * When the dashboard last put this account into a Google CSV, with a new password.
+   */
+  accountExportedAt?: string | null;
+  signedInAt?: string | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -2128,6 +2162,7 @@ export interface ProjectsSelect<T extends boolean = true> {
  */
 export interface TeamSelect<T extends boolean = true> {
   _order?: T;
+  published?: T;
   name?: T;
   role?: T;
   teamMemberships?:
@@ -2440,6 +2475,7 @@ export interface FormsSelect<T extends boolean = true> {
         message?: T;
         id?: T;
       };
+  requiresLogin?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2478,6 +2514,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         sessionId?: T;
         firstSeenAt?: T;
       };
+  submittedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2505,6 +2542,14 @@ export interface ApplicantFilesSelect<T extends boolean = true> {
  */
 export interface UsersSelect<T extends boolean = true> {
   role?: T;
+  firstName?: T;
+  lastName?: T;
+  privateEmail?: T;
+  githubUsername?: T;
+  application?: T;
+  teamProfile?: T;
+  accountExportedAt?: T;
+  signedInAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2775,6 +2820,80 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * What new members go through after the board admits them: the form, their to-dos and the documents on their onboarding page, and the board's own to-dos in the Onboarding dashboard.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "onboarding".
+ */
+export interface Onboarding {
+  id: number;
+  /**
+   * Shown at the top of the member's onboarding page. Plain text; a blank line starts a new paragraph.
+   */
+  intro?: string | null;
+  /**
+   * The one form every new member fills in on their page (Forms; tick "Requires sign-in" there). Answers to questions named displayName, bio, linkedin, githubUsername, photo and profilePublic are copied to the member's account and team profile.
+   */
+  form?: (number | null) | Form;
+  /**
+   * Tick boxes on the member's page, e.g. "Join the Slack workspace". Ticking is recorded with the time and the wording shown. Fix typos here; for anything else add a new to-do.
+   */
+  memberTodos?:
+    | {
+        text: string;
+        /**
+         * Optional: https://… or a path on our site such as /join. Opens in a new tab.
+         */
+        linkUrl?: string | null;
+        /**
+         * Empty = "Open link".
+         */
+        linkLabel?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Ticked by the board per member in the Onboarding dashboard, e.g. "Add to the GitHub organisation" or "Add to the members@ Google group". Members do not see these.
+   */
+  boardTodos?:
+    | {
+        text: string;
+        /**
+         * Optional: https://… or a path on our site such as /join. Opens in a new tab.
+         */
+        linkUrl?: string | null;
+        /**
+         * Empty = "Open link".
+         */
+        linkLabel?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Documents every new member signs through DocuSeal, e.g. the membership declaration.
+   */
+  documents?:
+    | {
+        title: string;
+        /**
+         * Optional: one or two sentences on the member's page about what this is.
+         */
+        description?: string | null;
+        /**
+         * The number in the template's address in DocuSeal (…/templates/<ID>).
+         */
+        docusealTemplateId: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Where new accounts go in Google Admin, e.g. "/" or "/Members". Written into the CSV the dashboard downloads.
+   */
+  googleOrgUnitPath?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
 }
 /**
  * The visits and the registration settings for the Munich TechTour page. The registration form is the form titled "techtour" under Forms; the page's headline and section wording are part of the design, not content.
@@ -3148,6 +3267,42 @@ export interface SiteConfig {
   homepageMode: 'partners' | 'students';
   updatedAt?: string | null;
   createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "onboarding_select".
+ */
+export interface OnboardingSelect<T extends boolean = true> {
+  intro?: T;
+  form?: T;
+  memberTodos?:
+    | T
+    | {
+        text?: T;
+        linkUrl?: T;
+        linkLabel?: T;
+        id?: T;
+      };
+  boardTodos?:
+    | T
+    | {
+        text?: T;
+        linkUrl?: T;
+        linkLabel?: T;
+        id?: T;
+      };
+  documents?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        docusealTemplateId?: T;
+        id?: T;
+      };
+  googleOrgUnitPath?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

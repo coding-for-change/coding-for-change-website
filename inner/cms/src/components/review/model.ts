@@ -65,9 +65,18 @@ export const formIdOf = (s: Submission): number =>
 export const answersOf = (s: Submission): Map<string, string> =>
   new Map((s.submissionData ?? []).map((kv) => [kv.field, String(kv.value ?? '')]));
 
-/** Name and email, whatever the form calls those fields. */
-export function personOf(s: Submission): { name: string; email: string } {
-  const a = answersOf(s);
+/**
+ * First name, last name, a single "name" answer and email, whatever the form
+ * calls those fields; '' for what it does not have. The onboarding builds
+ * accounts from this (lib/onboarding/applicant.ts).
+ */
+export function namePartsOf(s: Pick<Submission, 'submissionData'>): {
+  firstName: string;
+  lastName: string;
+  name: string;
+  email: string;
+} {
+  const a = answersOf(s as Submission);
   const pick = (...keys: string[]) => {
     for (const k of keys) {
       const hit = [...a.entries()].find(([field]) => field.toLowerCase() === k.toLowerCase());
@@ -75,8 +84,18 @@ export function personOf(s: Submission): { name: string; email: string } {
     }
     return '';
   };
-  const email = pick('email', 'e-mail');
-  const name = [pick('firstName', 'first name'), pick('lastName', 'last name')].filter(Boolean).join(' ') || pick('name');
+  return {
+    firstName: pick('firstName', 'first name'),
+    lastName: pick('lastName', 'last name'),
+    name: pick('name'),
+    email: pick('email', 'e-mail'),
+  };
+}
+
+/** Name and email, whatever the form calls those fields. */
+export function personOf(s: Submission): { name: string; email: string } {
+  const { firstName, lastName, name: single, email } = namePartsOf(s);
+  const name = [firstName, lastName].filter(Boolean).join(' ') || single;
   return { name: name || email || `Submission ${s.id}`, email };
 }
 

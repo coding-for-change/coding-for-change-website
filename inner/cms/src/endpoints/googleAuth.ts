@@ -91,7 +91,7 @@ async function accountFor(req: PayloadRequest, email: string): Promise<Account> 
     const created = await payload.create({
       collection: 'users',
       // Nobody knows this password, and only admins may use one anyway.
-      data: { email, role, password: randomBytes(32).toString('base64url') },
+      data: { email, role, password: randomBytes(32).toString('base64url'), signedInAt: new Date().toISOString() },
       overrideAccess: true,
       req,
     });
@@ -100,9 +100,11 @@ async function accountFor(req: PayloadRequest, email: string): Promise<Account> 
   }
   const current = roleOf({ ...existing, collection: 'users' }) ?? 'member';
   const role = roleAfterSignIn(email, current, admins);
-  if (role !== current) {
-    await payload.update({ collection: 'users', id: existing.id, data: { role }, overrideAccess: true, req });
-    payload.logger.info(`[google-auth] ${email} promoted to ${role} (ADMIN_EMAILS)`);
+  // The first Google sign-in shows in the onboarding dashboard as "Signed in".
+  const firstSignIn = existing.signedInAt ? {} : { signedInAt: new Date().toISOString() };
+  if (role !== current || !existing.signedInAt) {
+    await payload.update({ collection: 'users', id: existing.id, data: { role, ...firstSignIn }, overrideAccess: true, req });
+    if (role !== current) payload.logger.info(`[google-auth] ${email} promoted to ${role} (ADMIN_EMAILS)`);
   }
   return { id: existing.id, role };
 }

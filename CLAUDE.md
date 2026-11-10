@@ -102,6 +102,13 @@ Rules when adding things:
 - MCP keys act as their user (`call()` in `lib/mcpAdmin.ts`); a key whose user is not admin cannot use the admin tools. A raw `payload-mcp-api-keys` login has no role at all.
 - Password login is refused for non-admins (`beforeLogin` in `collections/Users.ts`); everyone else uses Google (`endpoints/googleAuth.ts`, env `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_ALLOWED_DOMAIN`, `ADMIN_EMAILS`). The callback issues a native Payload session (`lib/payloadSession.ts`).
 
+## Member onboarding
+
+- Member data lives on the `users` row (`firstName`, `lastName`, `privateEmail`, `githubUsername`, `application`, `teamProfile`, `accountExportedAt`, `signedInAt`); `email` is the association address. There is no members collection; `team` stays the public profile and has `published` (non-editors only ever read published entries).
+- `/admin/onboarding` (`components/onboarding/`, `endpoints/onboarding.ts`, admins only) creates accounts for applications at stage `admitted` and downloads, once, a ZIP with the Google Admin bulk-upload CSV and printable password sheets. **Google passwords must never be stored, logged or written to disk**: they live only inside that request. Re-export issues new ones. The CSV header is pinned to `lib/onboarding/fixtures/google-users-template.csv` by a test; replace the fixture with a fresh template from the Admin Console if Google changes it.
+- Settings in the `onboarding` global (signed-in read only, admin write, not on MCP). Ticks and DocuSeal documents are the plain tables `onboarding_checks` / `onboarding_documents` (`lib/onboarding/tables.ts`, `store.ts`); the global's `documents` array uses `dbName: 'onboarding_document_items'` because Payload would otherwise name its table `onboarding_documents` too.
+- Pure logic with Vitest tests in `lib/onboarding/` (`pnpm test`).
+
 ## Consent — REQUIRED process when adding anything third-party
 
 The site runs a **self-hosted Klaro CMP** (`inner/src/lib/klaroConfig.ts`), not a hosted one. That means **there is no scanner watching for undeclared trackers** — the compliance obligation is manual and it is on whoever adds the code.

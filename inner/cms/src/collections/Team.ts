@@ -1,5 +1,5 @@
 import { CollectionConfig } from 'payload';
-import { contentAccess } from '../access/roles';
+import { contentAccess, hasEditorRole } from '../access/roles';
 
 export const Team: CollectionConfig = {
   slug: 'team',
@@ -11,10 +11,26 @@ export const Team: CollectionConfig = {
   orderable: true,
   admin: {
     useAsTitle: 'name',
-    defaultColumns: ['name', 'role', 'category'],
+    defaultColumns: ['name', 'role', 'category', 'published'],
   },
-  access: contentAccess,
+  access: {
+    ...contentAccess,
+    // A new member's profile starts unpublished (the onboarding form makes it,
+    // the board publishes it in /admin/onboarding): only editors and admins
+    // see it until then, on the site, over the API and as a relation (a
+    // project's team row then carries the bare id, which the site skips).
+    read: ({ req }) => (hasEditorRole(req.user) ? true : { published: { equals: true } }),
+  },
   fields: [
+    {
+      name: 'published',
+      type: 'checkbox',
+      defaultValue: true,
+      admin: {
+        position: 'sidebar',
+        description: 'Shown on the Team page. New members\' profiles start unpublished until the board publishes them.',
+      },
+    },
     { name: 'name', type: 'text', required: true },
     { name: 'role', type: 'text', required: true, localized: true },
     {

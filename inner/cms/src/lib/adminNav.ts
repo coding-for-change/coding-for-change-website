@@ -35,6 +35,7 @@ export type NavIconName =
   | 'Layers'
   | 'LayoutDashboard'
   | 'Link2'
+  | 'ListChecks'
   | 'Mail'
   | 'MapPinned'
   | 'MousePointerClick'
@@ -45,6 +46,7 @@ export type NavIconName =
   | 'Settings'
   | 'ShieldCheck'
   | 'Ticket'
+  | 'UserCheck'
   | 'UserCog'
   | 'UserPlus'
   | 'Users';
@@ -68,6 +70,13 @@ export const ADMIN_NAV: NavSection[] = [
       { view: '/review', query: { form: 'application' }, label: 'Review applications', icon: 'ClipboardCheck', role: 'admin' },
       { collection: 'waitlist-signups', icon: 'Hourglass' },
       { view: '/mailing', label: 'Mailing', icon: 'Mail', role: 'admin' },
+    ],
+  },
+  {
+    label: 'Members',
+    items: [
+      { view: '/onboarding', label: 'Onboarding', icon: 'UserCheck', role: 'admin' },
+      { global: 'onboarding', icon: 'ListChecks' },
     ],
   },
   {

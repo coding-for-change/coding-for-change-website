@@ -64,6 +64,10 @@ import { Partner } from './globals/Partner';
 import { About } from './globals/About';
 import { Homepage } from './globals/Homepage';
 import { TechTour } from './globals/TechTour';
+import { Onboarding } from './globals/Onboarding';
+import { onboardingEndpoints } from './endpoints/onboarding';
+import { onboardingTables } from './lib/onboarding/tables';
+import { requiresLoginField, submittedByField } from './fields/submittedBy';
 import { brandApplicationEmails } from './lib/applicationEmail';
 import { manageTables } from './lib/manage/tables';
 import { memberTables } from './lib/members';
@@ -139,7 +143,7 @@ export default buildConfig({
   sharp,
   editor: lexicalEditor(),
   collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles, ShareLinks, ShareAccessLog],
-  globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour],
+  globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour, Onboarding],
   // Admin-only analytics reporting: JSON aggregates for the /admin/analytics
   // dashboard, plus CSV exports (campaign funnel, raw events, signups) and
   // the bulk "email the waitlist" sender (individual mails via Resend).
@@ -150,8 +154,10 @@ export default buildConfig({
   // links (/api/media-upload/:token) the MCP tool hands out – see
   // endpoints/mediaUpload.ts – and the CV download links of
   // endpoints/applicantFileLink.ts.
-  // Google sign-in (/api/auth/google…) – see endpoints/googleAuth.ts.
-  endpoints: [...googleAuthEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
+  // Google sign-in (/api/auth/google…) – see endpoints/googleAuth.ts. The
+  // board's onboarding dashboard (/api/onboarding/admin/…, admins only) – see
+  // endpoints/onboarding.ts.
+  endpoints: [...googleAuthEndpoints, ...onboardingEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -232,7 +238,9 @@ export default buildConfig({
               return field;
             })
             .map(questionsWithoutWidth)
-            .map(emailsForEditors),
+            .map(emailsForEditors)
+            // The onboarding form: members only, answers tied to their account.
+            .concat(requiresLoginField),
       },
       // Submissions get: the reviewer's status + notes (sidebar), the answers
       // (read-only in the admin — what the applicant sent stays as sent), the
@@ -255,6 +263,8 @@ export default buildConfig({
           submissionSourceField,
           hostDecisionsField,
           attributionField,
+          // The signed-in account it came from (fields/submittedBy.ts).
+          submittedByField,
         ],
         hooks: {
           beforeOperation: [rejectHoneypot],
@@ -350,7 +360,8 @@ export default buildConfig({
     // host ratings and waitlist – plain tables beside the collections, so
     // that no existing table gets a column (lib/manage/tables.ts,
     // lib/members.ts, lib/mailing/tables.ts, lib/share/tables.ts).
-    afterSchemaInit: [manageTables, memberTables, mailingTables, hostTables, stageTables],
+    // The onboarding's to-do ticks and DocuSeal documents too (lib/onboarding/tables.ts).
+    afterSchemaInit: [manageTables, memberTables, mailingTables, hostTables, stageTables, onboardingTables],
     pool: {
       connectionString:
         process.env.DATABASE_URL ||
@@ -389,6 +400,15 @@ export default buildConfig({
         mailing: {
           Component: '/components/mailing/MailingView#MailingView',
           path: '/mailing',
+          exact: true,
+        },
+        // New members from "admitted" to done: creating their accounts with
+        // the Google CSV and password sheets, then their progress, the board's
+        // to-dos and their public profile (components/onboarding/). Guards
+        // auth itself.
+        onboarding: {
+          Component: '/components/onboarding/OnboardingView#OnboardingView',
+          path: '/onboarding',
           exact: true,
         },
       },

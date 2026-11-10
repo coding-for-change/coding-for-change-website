@@ -31,6 +31,7 @@ import { GoogleLoginButton as GoogleLoginButton_e18c40a699dec6b9fb9e7fbcabc3035c
 import { AnalyticsDashboardView as AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93 } from '../../../components/analytics/AnalyticsDashboardView'
 import { ReviewView as ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be } from '../../../components/review/ReviewView'
 import { MailingView as MailingView_4688fc1704f49ef061705dd53f31d2ab } from '../../../components/mailing/MailingView'
+import { OnboardingView as OnboardingView_cd5381d22714150aff446b9dbe28fefc } from '../../../components/onboarding/OnboardingView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 export const importMap = {
@@ -67,5 +68,6 @@ export const importMap = {
   "/components/analytics/AnalyticsDashboardView#AnalyticsDashboardView": AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93,
   "/components/review/ReviewView#ReviewView": ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be,
   "/components/mailing/MailingView#MailingView": MailingView_4688fc1704f49ef061705dd53f31d2ab,
+  "/components/onboarding/OnboardingView#OnboardingView": OnboardingView_cd5381d22714150aff446b9dbe28fefc,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }
