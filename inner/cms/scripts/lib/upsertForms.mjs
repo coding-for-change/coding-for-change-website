@@ -69,6 +69,9 @@ export async function attachTechTourLogos({ base, cookie, log = console.log }) {
  * Shared by the dev seed and the production `upsert-forms.mjs` CLI (both log
  * in as an admin: Onboarding Settings are admin-only).
  *
+ * `only: 'onboarding'` touches nothing but the onboarding form and Onboarding
+ * Settings.
+ *
  * Forms are matched by title. An existing form's fields are REPLACED by the
  * definitions (that is the point of running this), so run it once to set the
  * forms up, then edit in the admin — or edit `formDefinitions.mjs` and re-run.
@@ -101,7 +104,7 @@ async function upsertOnboardingSettings(req, formId, log) {
   log(`onboarding settings: ${settings?.form ? '' : `form set to ${formId}`}${!settings?.form && empty ? ', ' : ''}${empty ? 'starting intro and to-dos added (en + de)' : ''}`);
 }
 
-export async function upsertForms({ base, cookie, toEmail, fromEmail, log = console.log, dryRun = false }) {
+export async function upsertForms({ base, cookie, toEmail, fromEmail, log = console.log, dryRun = false, only = null }) {
   const headers = { 'content-type': 'application/json', cookie };
   const req = async (method, path, body) => {
     const res = await fetch(`${base}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined });
@@ -132,14 +135,6 @@ export async function upsertForms({ base, cookie, toEmail, fromEmail, log = cons
     const r = await req('POST', '/api/forms?locale=en', body);
     return r.doc;
   };
-  const opts = { toEmail, fromEmail };
-  let app = await upsertEn('application', applicationForm('en', opts));
-  let tt = await upsertEn('techtour', techtourForm('en', opts));
-
-  // Pass 2 (EN): add the "also …" subform blocks now that both ids are known.
-  app = (await req('PATCH', `/api/forms/${app.id}?locale=en`, applicationForm('en', { ...opts, techtourFormId: tt.id }))).doc;
-  tt = (await req('PATCH', `/api/forms/${tt.id}?locale=en`, techtourForm('en', { ...opts, applicationFormId: app.id }))).doc;
-
   // DE: block rows are matched by id, so reuse the ids from the EN documents
   // (by position — the definitions produce the same field order per locale).
   const localise = async (doc, def) => {
@@ -158,15 +153,33 @@ export async function upsertForms({ base, cookie, toEmail, fromEmail, log = cons
       fields,
     });
   };
+  // The onboarding form: no cross-references, one pass per language.
+  const onboarding = async () => {
+    const ob = await upsertEn('onboarding', onboardingForm('en'));
+    await localise(ob, onboardingForm('de'));
+    log(`form upserted: onboarding id ${ob.id} (en + de)`);
+    await upsertOnboardingSettings(req, ob.id, log);
+  };
+  // On a site whose application and TechTour forms were edited in the admin,
+  // only the onboarding form is wanted: the rest stays exactly as it is.
+  if (only === 'onboarding') {
+    await onboarding();
+    return current;
+  }
+
+  const opts = { toEmail, fromEmail };
+  let app = await upsertEn('application', applicationForm('en', opts));
+  let tt = await upsertEn('techtour', techtourForm('en', opts));
+
+  // Pass 2 (EN): add the "also …" subform blocks now that both ids are known.
+  app = (await req('PATCH', `/api/forms/${app.id}?locale=en`, applicationForm('en', { ...opts, techtourFormId: tt.id }))).doc;
+  tt = (await req('PATCH', `/api/forms/${tt.id}?locale=en`, techtourForm('en', { ...opts, applicationFormId: app.id }))).doc;
+
   await localise(app, applicationForm('de', { techtourFormId: tt.id }));
   await localise(tt, techtourForm('de', { applicationFormId: app.id }));
   log(`forms upserted: application id ${app.id}, techtour id ${tt.id} (en + de)`);
 
-  // The onboarding form: no cross-references, one pass per language.
-  const ob = await upsertEn('onboarding', onboardingForm('en'));
-  await localise(ob, onboardingForm('de'));
-  log(`form upserted: onboarding id ${ob.id} (en + de)`);
-  await upsertOnboardingSettings(req, ob.id, log);
+  await onboarding();
 
   // TechTour page: only seed when nobody has written content yet.
   const page = await req('GET', '/api/globals/tech-tour?locale=en&depth=0');

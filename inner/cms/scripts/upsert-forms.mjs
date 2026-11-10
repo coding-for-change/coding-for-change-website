@@ -8,12 +8,14 @@
  *   CMS_URL=https://codingforchange.com CMS_EMAIL=… CMS_PASSWORD=… \
  *     node scripts/upsert-forms.mjs            # shows what exists, writes nothing
  *     node scripts/upsert-forms.mjs --apply    # creates / replaces the forms
+ *     node scripts/upsert-forms.mjs --apply --onboarding   # only the onboarding form and Onboarding Settings
  *     node scripts/upsert-forms.mjs --logos    # only attach the bundled company logos
  *
  * WARNING: --apply replaces the FIELDS of an existing form with the definitions
  * in scripts/lib/formDefinitions.mjs. Existing submissions are not touched.
  * After the first run, edit questions in the admin (Forms) — or change the
- * definitions and re-run.
+ * definitions and re-run. On production, where the application and TechTour
+ * forms have been edited in the admin, add --onboarding so they are left alone.
  */
 import { attachTechTourLogos, upsertForms } from './lib/upsertForms.mjs';
 
@@ -22,6 +24,7 @@ const EMAIL = process.env.CMS_EMAIL;
 const PASSWORD = process.env.CMS_PASSWORD;
 const APPLY = process.argv.includes('--apply');
 const LOGOS_ONLY = process.argv.includes('--logos');
+const ONLY_ONBOARDING = process.argv.includes('--onboarding');
 
 if (!EMAIL || !PASSWORD) {
   console.error('Set CMS_EMAIL and CMS_PASSWORD (an admin user of the CMS).');
@@ -56,5 +59,6 @@ if (LOGOS_ONLY) {
     toEmail: process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com',
     fromEmail: process.env.EMAIL_FROM || 'noreply@codingforchange.com',
     dryRun: !APPLY,
+    only: ONLY_ONBOARDING ? 'onboarding' : null,
   });
 }
