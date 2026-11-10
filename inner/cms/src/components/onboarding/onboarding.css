@@ -292,3 +292,15 @@ html[data-theme='dark'] .ob {
 .ob-confirm p {
   margin: 0 0 0.4em;
 }
+
+.ob-manual {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.ob-manual .ob-linkbtn,
+.ob-hint .ob-linkbtn {
+  margin: 0;
+  font-size: 12px;
+}

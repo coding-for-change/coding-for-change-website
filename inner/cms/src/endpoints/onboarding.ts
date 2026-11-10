@@ -11,6 +11,7 @@ import type { Submission } from '../components/review/model';
 import { applicantOf } from '../lib/onboarding/applicant';
 import { addressProblem, normalizeAddress, proposeAddresses } from '../lib/onboarding/cfcEmail';
 import { buildGoogleCsv, safeAddress, safeOrgUnitPath, safeText, type GoogleUserRow } from '../lib/onboarding/googleCsv';
+import { planManualRows } from '../lib/onboarding/manual';
 import { generatePassword, meetsGoogleRules } from '../lib/onboarding/password';
 import { memberProgress, type MemberAccount } from '../lib/onboarding/progress';
 import { buildSheetsHtml } from '../lib/onboarding/sheets';
@@ -30,9 +31,12 @@ import { poolOf, requireAdmin } from './util';
  *   GET  /api/onboarding/admin/overview
  *        → OnboardingOverview (lib/onboarding/types.ts)
  *   POST /api/onboarding/admin/accounts
- *        { create?: [{ application, email, firstName?, lastName? }], reissue?: [userId] }
+ *        { create?: [{ application, email, firstName?, lastName? }],
+ *          manual?: [{ firstName, lastName, email, privateEmail? }],
+ *          reissue?: [userId] }
  *        → 200 application/zip (google-users.csv + password-sheets.html), or
- *          400/409 { error, problems: [{ application?, user?, message }] }
+ *          400/409 { error, problems: [{ application?, manual?, user?, message }] }
+ *          (`manual` is the row's index in the request's `manual`)
  *   POST /api/onboarding/admin/check    { user, item, done }
  *        → { user, item, done, at, by }
  *   POST /api/onboarding/admin/profile  { user, title?, projects?, published? }
@@ -45,12 +49,16 @@ import { poolOf, requireAdmin } from './util';
  * the log. Each account's Payload password is a second random value nobody
  * ever sees (members sign in with Google). `reissue` puts accounts that exist
  * into a new download with new passwords: for a download that got lost.
+ * `manual` is for people the board added by hand, who never applied: the
+ * same accounts (role member), only without `application`, checked by
+ * lib/onboarding/manual.ts; someone with an admitted application or an
+ * account under the same private address is refused, not created twice.
  */
 
 const BASE = '/onboarding/admin';
 const MAX_BATCH = 100;
 
-type Problem = { application?: number; user?: number; message: string };
+type Problem = { application?: number; manual?: number; user?: number; message: string };
 
 type OnboardingGlobal = {
   form?: number | { id: number } | null;
@@ -112,6 +120,16 @@ async function allAddresses(payload: Payload): Promise<Set<string>> {
   return new Set(rows.map((r) => String(r.email)));
 }
 
+/** Every account's private address (lower case) → that account's address. */
+async function privateOwners(payload: Payload): Promise<Map<string, string>> {
+  const { rows } = await poolOf(payload).query(
+    "SELECT lower(trim(private_email)) AS private, lower(email) AS email FROM users WHERE coalesce(trim(private_email), '') <> '' ORDER BY id",
+  );
+  const out = new Map<string, string>();
+  for (const r of rows) if (!out.has(String(r.private))) out.set(String(r.private), String(r.email));
+  return out;
+}
+
 type Application = { id: number; createdAt: string; submissionData?: Submission['submissionData'] };
 
 async function admittedApplications(req: PayloadRequest, ids?: number[]): Promise<Application[]> {
@@ -133,9 +151,9 @@ async function admittedApplications(req: PayloadRequest, ids?: number[]): Promis
 /** Admitted applications without an account, oldest first; one per private address (the newest application). */
 function waitingFor(applications: Application[], users: UserDoc[]): Application[] {
   const linked = new Set(users.map((u) => idOf(u.application)).filter((id): id is number => id !== null));
-  const knownPrivate = new Set(
-    users.filter((u) => idOf(u.application) !== null && u.privateEmail).map((u) => normalizeAddress(u.privateEmail!)),
-  );
+  // Every tracked account's private address, also of accounts the board
+  // added by hand: someone who applies after that is not offered a second one.
+  const knownPrivate = new Set(users.filter((u) => u.privateEmail).map((u) => normalizeAddress(u.privateEmail!)));
   const newestPerAddress = new Map<string, Application>();
   const out: Application[] = [];
   for (const a of [...applications].sort((x, y) => y.createdAt.localeCompare(x.createdAt) || y.id - x.id)) {
@@ -265,6 +283,7 @@ const overview: Endpoint = {
       formConfigured: formId !== null,
       docuseal: { configured: docuseal, url: docuseal ? docusealBase() : null },
       projects: projectDocs.map((p) => ({ id: p.id, title: p.title ?? `Project ${p.id}` })),
+      accountAddresses: [...addresses].filter((a) => a.endsWith(`@${domain}`)).sort(),
       admitted,
       members,
     };
@@ -278,7 +297,7 @@ type CreateRequest = { application?: unknown; email?: unknown; firstName?: unkno
 
 /** One person going into the download, before anything is written. */
 type Planned =
-  | { kind: 'create'; application: number; email: string; firstName: string; lastName: string; privateEmail: string }
+  | { kind: 'create'; application: number | null; email: string; firstName: string; lastName: string; privateEmail: string }
   | { kind: 'reissue'; user: number; email: string; firstName: string; lastName: string; privateEmail: string };
 
 const isUniqueViolation = (err: unknown): boolean => {
@@ -301,15 +320,23 @@ const accounts: Endpoint = {
     const denied = requireAdmin(req);
     if (denied) return denied;
     const { payload } = req;
-    const body = await readBody<{ create?: unknown; reissue?: unknown }>(req);
+    const body = await readBody<{ create?: unknown; manual?: unknown; reissue?: unknown }>(req);
     if (!body) return bad('Invalid JSON body.');
     const createList = (Array.isArray(body.create) ? body.create : []) as CreateRequest[];
+    const manualList: unknown[] = Array.isArray(body.manual) ? body.manual : [];
     const reissueList = Array.isArray(body.reissue) ? body.reissue.map(Number) : [];
-    if ((body.create !== undefined && !Array.isArray(body.create)) || (body.reissue !== undefined && !Array.isArray(body.reissue))) {
-      return bad('Expected { create?: [{ application, email }], reissue?: [user id] }.');
+    if (
+      (body.create !== undefined && !Array.isArray(body.create)) ||
+      (body.manual !== undefined && !Array.isArray(body.manual)) ||
+      (body.reissue !== undefined && !Array.isArray(body.reissue))
+    ) {
+      return bad(
+        'Expected { create?: [{ application, email }], manual?: [{ firstName, lastName, email, privateEmail? }], reissue?: [user id] }.',
+      );
     }
-    if (createList.length + reissueList.length === 0) return bad('Nobody selected.');
-    if (createList.length + reissueList.length > MAX_BATCH) return bad(`At most ${MAX_BATCH} people at once.`);
+    const total = createList.length + manualList.length + reissueList.length;
+    if (total === 0) return bad('Nobody selected.');
+    if (total > MAX_BATCH) return bad(`At most ${MAX_BATCH} people at once.`);
 
     const domain = onboardingDomain();
     const problems: Problem[] = [];
@@ -369,6 +396,31 @@ const accounts: Endpoint = {
       }
       inBatch.add(email);
       planned.push({ kind: 'create', application, email, firstName, lastName, privateEmail: person.privateEmail });
+    }
+
+    if (manualList.length > 0) {
+      // Someone added by hand may have applied after all: the private
+      // address finds their admitted application (one per address, as in
+      // the list), or an account they have already.
+      const [owners, allAdmitted] = await Promise.all([privateOwners(payload), admittedApplications(req)]);
+      const admittedByPrivate = new Map<string, number>();
+      for (const a of waitingFor(allAdmitted, users)) {
+        const email = applicantOf(a).privateEmail;
+        if (email) admittedByPrivate.set(email, a.id);
+      }
+      const manual = planManualRows(manualList, {
+        domain,
+        accountAddresses: addresses,
+        privateOwners: owners,
+        admittedByPrivate,
+        applicationsInBatch: seenApplications,
+        inBatch,
+      });
+      for (const p of manual.problems) {
+        if (p.conflict) conflict = true;
+        problems.push({ manual: p.manual, message: p.message });
+      }
+      for (const m of manual.planned) planned.push({ kind: 'create', application: null, ...m });
     }
 
     const byId = new Map(users.map((u) => [u.id, u]));
@@ -431,7 +483,8 @@ const accounts: Endpoint = {
               // email field and with it the whole batch: kept only when it is
               // a plain address (the CSV then has no recovery address either).
               privateEmail: safeAddress(p.privateEmail) || undefined,
-              application: p.application,
+              // None for someone the board added by hand.
+              application: p.application ?? undefined,
               accountExportedAt: now.toISOString(),
             },
             overrideAccess: true,
@@ -464,8 +517,9 @@ const accounts: Endpoint = {
     }
 
     const created = planned.filter((p) => p.kind === 'create').length;
+    const byHand = planned.filter((p) => p.kind === 'create' && p.application === null).length;
     payload.logger.info(
-      `[onboarding] ${String((req.user as { email?: string })?.email ?? 'admin')} exported ${planned.length} account(s): ${created} new, ${planned.length - created} with new passwords`,
+      `[onboarding] ${String((req.user as { email?: string })?.email ?? 'admin')} exported ${planned.length} account(s): ${created} new (${byHand} added by hand), ${planned.length - created} with new passwords`,
     );
 
     const entries: ZipEntry[] = [

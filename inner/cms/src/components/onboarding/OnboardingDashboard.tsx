@@ -1,6 +1,8 @@
 'use client';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Banner, Button, CheckboxInput, ConfirmationModal, SetStepNav, useModal, ViewDescription } from '@payloadcms/ui';
+import { normalizeAddress } from '../../lib/onboarding/cfcEmail';
+import { manualAddresses } from '../../lib/onboarding/manual';
 import type { AdmittedPerson, OnboardingMember, OnboardingOverview } from '../../lib/onboarding/types';
 import { PageHeader } from '../shared/PageHeader';
 import './onboarding.css';
@@ -12,6 +14,10 @@ import './onboarding.css';
  * - Admitted: applications at stage "admitted" without an account. The board
  *   checks names and the proposed address, selects people and creates their
  *   accounts; the answer is the one-time ZIP (Google CSV + password sheets).
+ *   "Add person" adds rows for people the board contacted directly (no
+ *   application). They live only in this component's state until the
+ *   accounts are created (no storage of any kind), and go into the same
+ *   request and the same ZIP (lib/onboarding/manual.ts).
  * - In onboarding: per member what they have done, the board's to-dos, title,
  *   project and the profile's publication. Accounts can be exported again
  *   with new passwords when a download got lost.
@@ -21,6 +27,17 @@ import './onboarding.css';
 type Props = { apiRoute: string; adminRoute: string };
 
 type Draft = { selected: boolean; firstName: string; lastName: string; email: string };
+
+/** Someone added by hand. `edited`: the board typed the address, so it is no longer re-proposed from the names. */
+type ManualDraft = {
+  key: number;
+  selected: boolean;
+  firstName: string;
+  lastName: string;
+  privateEmail: string;
+  email: string;
+  edited: boolean;
+};
 
 const CREATE_MODAL = 'onboarding-create';
 const REISSUE_MODAL = 'onboarding-reissue';
@@ -59,7 +76,7 @@ async function saveDownload(res: Response) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-type Problem = { application?: number; user?: number; message: string };
+type Problem = { application?: number; manual?: number; user?: number; message: string };
 
 export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
   const { openModal } = useModal();
@@ -70,6 +87,11 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
   const [drafts, setDrafts] = useState<Record<number, Draft>>({});
   const [reissue, setReissue] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState(false);
+  const [manual, setManual] = useState<ManualDraft[]>([]);
+  // The keys of the manual rows in the last request, in order: problems name them by index.
+  const [sentManual, setSentManual] = useState<number[]>([]);
+  const nextKey = useRef(1);
+  const focusKey = useRef<number | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -100,15 +122,56 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
     () => (data?.admitted ?? []).filter((p) => drafts[p.application]?.selected),
     [data, drafts],
   );
+  // The address each manual row shows: typed, or proposed free of every
+  // account, every applicant row and the manual rows above it.
+  const manualEmails = useMemo(
+    () =>
+      data
+        ? manualAddresses(
+            manual,
+            data.domain,
+            data.accountAddresses,
+            data.admitted.map((p) => drafts[p.application]?.email ?? ''),
+          )
+        : [],
+    [data, drafts, manual],
+  );
+  const manualSelected = manual.filter((m) => m.selected);
+  const selectedCount = selected.length + manualSelected.length;
+  const rowCount = (data?.admitted.length ?? 0) + manual.length;
+  const emailOf = (m: ManualDraft) => manualEmails[manual.indexOf(m)] ?? '';
+  const appliedToo = (m: ManualDraft) => {
+    const own = normalizeAddress(m.privateEmail);
+    return own ? data?.admitted.find((p) => p.privateEmail && normalizeAddress(p.privateEmail) === own) : undefined;
+  };
+
+  const setManualRow = (key: number, patch: Partial<ManualDraft>) =>
+    setManual((rows) => rows.map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  const addPerson = () => {
+    const key = nextKey.current++;
+    focusKey.current = key;
+    setManual((rows) => [...rows, { key, selected: true, firstName: '', lastName: '', privateEmail: '', email: '', edited: false }]);
+  };
+  const removePerson = (key: number) => setManual((rows) => rows.filter((r) => r.key !== key));
+  /** Someone added by hand who applied after all: take the application instead of a second account. */
+  const takeApplication = (m: ManualDraft, p: AdmittedPerson) => {
+    removePerson(m.key);
+    setDrafts((all) => (all[p.application] ? { ...all, [p.application]: { ...all[p.application], selected: true } } : all));
+  };
   const inProgress = (data?.members ?? []).filter((m) => !m.complete);
   const completed = (data?.members ?? []).filter((m) => m.complete);
 
-  const exportAccounts = async (body: { create?: unknown[]; reissue?: number[] }, what: string) => {
+  const exportAccounts = async (
+    body: { create?: unknown[]; manual?: unknown[]; reissue?: number[] },
+    what: string,
+    manualKeys: number[] = [],
+  ) => {
     if (busy) return;
     setBusy(true);
     setError(null);
     setNotice(null);
     setProblems([]);
+    setSentManual(manualKeys);
     try {
       const res = await fetch(`${apiRoute}/onboarding/admin/accounts`, {
         method: 'POST',
@@ -129,6 +192,8 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
         `${what} The download holds the Google CSV and the password sheets. Upload the CSV in Google Admin (Directory, Users, "Bulk update users"), print the sheets, then delete the download: the passwords are not kept anywhere else. Lost it? Export the accounts again below; that sets new passwords, and the new CSV has to be uploaded again.`,
       );
       setReissue(new Set());
+      // Created now: they show under "In onboarding" after the reload.
+      setManual((rows) => rows.filter((r) => !manualKeys.includes(r.key)));
       await load();
     } catch (err) {
       setError(
@@ -149,8 +214,15 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
           firstName: drafts[p.application].firstName.trim(),
           lastName: drafts[p.application].lastName.trim(),
         })),
+        manual: manualSelected.map((m) => ({
+          firstName: m.firstName.trim(),
+          lastName: m.lastName.trim(),
+          email: emailOf(m).trim(),
+          privateEmail: m.privateEmail.trim(),
+        })),
       },
-      `${plural(selected.length, 'account', 'accounts')} created.`,
+      `${plural(selectedCount, 'account', 'accounts')} created.`,
+      manualSelected.map((m) => m.key),
     );
 
   const reexport = () =>
@@ -160,6 +232,16 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
     setData((d) => (d ? { ...d, members: d.members.map((m) => (m.id === id ? change(m) : m)) } : d));
 
   const problemFor = (p: AdmittedPerson) => problems.find((x) => x.application === p.application)?.message;
+  const manualProblemFor = (m: ManualDraft) =>
+    problems.find((x) => x.manual !== undefined && sentManual[x.manual] === m.key)?.message;
+  const manualName = (index: number) => {
+    const m = manual.find((r) => r.key === sentManual[index]);
+    return m ? fullName({ ...m, email: emailOf(m) }) || 'Added by hand' : 'Added by hand';
+  };
+  const selectAll = (on: boolean) => {
+    setDrafts((d) => Object.fromEntries(Object.entries(d).map(([k, v]) => [k, { ...v, selected: on }])));
+    setManual((rows) => rows.map((r) => ({ ...r, selected: on })));
+  };
 
   return (
     <div className="ob">
@@ -189,7 +271,9 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
                 <li key={i}>
                   {p.application
                     ? `${admittedName(data, p.application)}: `
-                    : p.user
+                    : p.manual !== undefined
+                      ? `${manualName(p.manual)}: `
+                      : p.user
                       ? `${data?.members.find((m) => m.id === p.user)?.email ?? `Account ${p.user}`}: `
                       : ''}
                   {p.message}
@@ -207,23 +291,31 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
           {/* ---- admitted, no account yet ------------------------------------ */}
           <section className="ob-section" aria-labelledby="ob-admitted">
             <div className="ob-section__head">
-              <h2 id="ob-admitted">Admitted ({data.admitted.length})</h2>
-              <Button
-                buttonStyle="primary"
-                size="small"
-                margin={false}
-                disabled={busy || selected.length === 0}
-                onClick={() => openModal(CREATE_MODAL)}
-              >
-                {busy ? 'Working…' : `Create ${plural(selected.length, 'account', 'accounts')} and download`}
-              </Button>
+              <h2 id="ob-admitted">Admitted ({rowCount})</h2>
+              <div className="ob-actions">
+                <Button buttonStyle="secondary" size="small" margin={false} disabled={busy} onClick={addPerson}>
+                  Add person
+                </Button>
+                <Button
+                  buttonStyle="primary"
+                  size="small"
+                  margin={false}
+                  disabled={busy || selectedCount === 0}
+                  onClick={() => openModal(CREATE_MODAL)}
+                >
+                  {busy ? 'Working…' : `Create ${plural(selectedCount, 'account', 'accounts')} and download`}
+                </Button>
+              </div>
             </div>
             <p className="ob-hint">
               Applications set to "Admitted" in the review that have no account yet. Check the names and the
               association address (@{data.domain}), select people and create their accounts. Google org unit:{' '}
-              <code>{data.orgUnitPath}</code>.
+              <code>{data.orgUnitPath}</code>. "Add person" is for people who never applied here.
             </p>
-            {data.admitted.length === 0 ? (
+            {manual.length > 0 && (
+              <p className="ob-hint">People added by hand are kept on this page only: reloading it before creating their accounts drops them.</p>
+            )}
+            {rowCount === 0 ? (
               <p className="ob-empty">Nobody is waiting for an account.</p>
             ) : (
               <div className="ob-table" role="table" aria-label="Admitted applications">
@@ -232,12 +324,8 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
                     <input
                       type="checkbox"
                       aria-label="Select all"
-                      checked={selected.length === data.admitted.length}
-                      onChange={(e) =>
-                        setDrafts((d) =>
-                          Object.fromEntries(Object.entries(d).map(([k, v]) => [k, { ...v, selected: e.target.checked }])),
-                        )
-                      }
+                      checked={selectedCount === rowCount}
+                      onChange={(e) => selectAll(e.target.checked)}
                     />
                   </span>
                   <span role="columnheader">First name</span>
@@ -281,6 +369,78 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
                         <a href={`${adminRoute}/collections/form-submissions/${p.application}`}>{p.privateEmail || 'No address'}</a>
                         <br />
                         {day(p.appliedAt)}
+                      </span>
+                    </div>
+                  );
+                })}
+                {manual.map((m) => {
+                  const problem = manualProblemFor(m);
+                  const application = appliedToo(m);
+                  return (
+                    <div key={`manual-${m.key}`} className={`ob-table__row${problem ? ' ob-table__row--problem' : ''}`} role="row">
+                      <span role="cell">
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${fullName({ ...m, email: '' }) || 'person added by hand'}`}
+                          checked={m.selected}
+                          onChange={(e) => setManualRow(m.key, { selected: e.target.checked })}
+                        />
+                      </span>
+                      <span role="cell">
+                        <input
+                          className="ob-input"
+                          value={m.firstName}
+                          aria-label="First name"
+                          ref={(el) => {
+                            if (el && focusKey.current === m.key) {
+                              focusKey.current = null;
+                              el.focus();
+                            }
+                          }}
+                          onChange={(e) => setManualRow(m.key, { firstName: e.target.value })}
+                        />
+                      </span>
+                      <span role="cell">
+                        <input
+                          className="ob-input"
+                          value={m.lastName}
+                          aria-label="Last name"
+                          onChange={(e) => setManualRow(m.key, { lastName: e.target.value })}
+                        />
+                      </span>
+                      <span role="cell">
+                        <input
+                          className="ob-input ob-input--mono"
+                          value={emailOf(m)}
+                          aria-label="Association address"
+                          placeholder={`first.last@${data.domain}`}
+                          onChange={(e) => setManualRow(m.key, { email: e.target.value, edited: true })}
+                        />
+                        {problem && <span className="ob-hint ob-hint--error">{problem}</span>}
+                      </span>
+                      <span role="cell" className="ob-muted">
+                        <input
+                          className="ob-input"
+                          type="email"
+                          value={m.privateEmail}
+                          aria-label="Private address (optional)"
+                          placeholder="Private address (optional)"
+                          onChange={(e) => setManualRow(m.key, { privateEmail: e.target.value })}
+                        />
+                        {application && (
+                          <span className="ob-hint ob-hint--error">
+                            Applied too ({day(application.appliedAt)}).{' '}
+                            <button type="button" className="ob-linkbtn" onClick={() => takeApplication(m, application)}>
+                              Use the application instead
+                            </button>
+                          </span>
+                        )}
+                        <span className="ob-manual">
+                          Added by hand{' '}
+                          <button type="button" className="ob-linkbtn" onClick={() => removePerson(m.key)}>
+                            Remove
+                          </button>
+                        </span>
                       </span>
                     </div>
                   );
@@ -378,13 +538,18 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
 
       <ConfirmationModal
         modalSlug={CREATE_MODAL}
-        heading={`Create ${plural(selected.length, 'account', 'accounts')}?`}
+        heading={`Create ${plural(selectedCount, 'account', 'accounts')}?`}
         body={
           <div className="ob-confirm">
             <ul>
               {selected.map((p) => (
                 <li key={p.application}>
                   {fullName({ ...drafts[p.application], email: '' })}: <code>{drafts[p.application].email}</code>
+                </li>
+              ))}
+              {manualSelected.map((m) => (
+                <li key={`manual-${m.key}`}>
+                  {fullName({ ...m, email: '' })} (added by hand): <code>{emailOf(m)}</code>
                 </li>
               ))}
             </ul>

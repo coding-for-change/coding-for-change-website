@@ -63,6 +63,8 @@ export type OnboardingOverview = {
   /** DocuSeal on this server: `url` is DOCUSEAL_URL (for links to submissions), null when not configured. */
   docuseal: { configured: boolean; url: string | null };
   projects: { id: number; title: string }[];
+  /** Every account's address on `domain`, lower case: what a proposal for someone added by hand must avoid (lib/onboarding/manual.ts). */
+  accountAddresses: string[];
   admitted: AdmittedPerson[];
   members: OnboardingMember[];
 };
