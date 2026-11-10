@@ -11,13 +11,24 @@ import type { CmsMedia, CmsTestimonial } from '../api/types';
  *   (public/images/voices), once she has OK'd it for our website.
  * - Member: a DRAFT for Richard Ziegler – not his words until he has approved
  *   or rewritten it. His portrait is the one on /team (CMS media 33).
- * - Company: an invented template until a partner gives us a quote.
+ * - Company: a DRAFT for Luisa Hosenfeld (McKinsey QuantumBlack, who hosted a
+ *   company event) – not Luisa's words until approved or rewritten. Photo in
+ *   public/images/voices.
  */
 const KATHARINA_PHOTO: CmsMedia = {
     id: 0,
     url: '/images/voices/katharina-berger.webp',
     alt: 'Katharina Berger',
     filename: 'katharina-berger.webp',
+    mimeType: 'image/webp',
+    filesize: 0,
+};
+
+const LUISA_PHOTO: CmsMedia = {
+    id: 0,
+    url: '/images/voices/luisa-hosenfeld.webp',
+    alt: 'Luisa Hosenfeld',
+    filename: 'luisa-hosenfeld.webp',
     mimeType: 'image/webp',
     filesize: 0,
 };
@@ -38,7 +49,7 @@ export function placeholderQuotes(locale: string): CmsTestimonial[] {
             {
                 quote: 'Weniger Verwaltungsaufwand bedeutet Zeitersparnis, die uns ermöglicht, für mehr Kinder und Jugendliche mit Unterstützungsbedarf gleichberechtigte Teilhabe möglich zu machen.',
                 name: 'Katharina Berger',
-                role: 'Koordination Schul- und Individualbegleitung',
+                role: 'Schulbegleitung',
                 organisation: 'Lebenshilfe München',
                 audience: 'ngo',
                 photo: KATHARINA_PHOTO,
@@ -52,11 +63,12 @@ export function placeholderQuotes(locale: string): CmsTestimonial[] {
                 photo: RICHARD_PHOTO,
             },
             {
-                quote: 'Die Studierenden arbeiten wie ein gutes Produktteam: schnell, gründlich und mit echtem Interesse daran, was die Software bewirkt.',
-                name: 'Vorname Nachname',
-                role: 'Head of Engineering',
-                organisation: 'Partnerunternehmen (Platzhalter)',
+                quote: 'Von der Planung bis zum Abend selbst war alles top organisiert. Und wir haben richtig spannende Talente kennengelernt, mit denen wir gern in Kontakt bleiben.',
+                name: 'Luisa Hosenfeld',
+                role: 'Recruiter',
+                organisation: 'McKinsey QuantumBlack',
                 audience: 'company',
+                photo: LUISA_PHOTO,
             },
         ];
     }
@@ -64,7 +76,7 @@ export function placeholderQuotes(locale: string): CmsTestimonial[] {
         {
             quote: 'Less admin means time saved – time that lets us make equal participation possible for more children and young people who need support.',
             name: 'Katharina Berger',
-            role: 'Coordinator, school and individual assistance',
+            role: 'School assistance',
             organisation: 'Lebenshilfe München',
             audience: 'ngo',
             photo: KATHARINA_PHOTO,
@@ -78,11 +90,12 @@ export function placeholderQuotes(locale: string): CmsTestimonial[] {
             photo: RICHARD_PHOTO,
         },
         {
-            quote: 'The students work like a good product team: fast, thorough and genuinely interested in what the software changes.',
-            name: 'First Last',
-            role: 'Head of Engineering',
-            organisation: 'Partner company (placeholder)',
+            quote: 'From planning to the evening itself, everything ran smoothly. And we met some genuinely exciting talent we’d love to stay in touch with.',
+            name: 'Luisa Hosenfeld',
+            role: 'Recruiter',
+            organisation: 'McKinsey QuantumBlack',
             audience: 'company',
+            photo: LUISA_PHOTO,
         },
     ];
 }

@@ -51,6 +51,8 @@ export interface Translations {
          *  one sentence each (Recognition.tsx). */
         recognitionLabel: string; recognitionTitle: string;
         recognition: Record<'press' | 'startsocial' | 'movers', { title: string; text: string; link: string }>;
+        /** Homepage: the card that leads into the 3D version of the site (ThreeDTeaser.tsx). */
+        threedLabel: string; threedTitle: string; threedText: string; threedCta: string;
         /** /partners – the page for companies. */
         partnersKicker: string; partnersTitle: string; partnersLead: string;
         partnersCta: string; partnersFormatsCta: string;
@@ -372,7 +374,7 @@ const en: Translations = {
         heroCtaSecondary: 'Become a member',
         photoAlt: 'Students at laptops during a Coding for Change hackathon at Picus Capital',
         photoCaption: 'Community event, Munich',
-        photoCaptions: ['Hackathon at Picus Capital', 'Building at the hackathon'],
+        photoCaptions: ['Hackathon at Picus Capital', 'Mario Kart tournament at CHECK24', 'Company event at QuantCo', 'Tech Tour evening at Project A'],
         partnersLabel: 'Partners & organisations',
         statement: 'NGOs have the mission.',
         statementDim: 'We have the people who turn it into software – selected, mentored and volunteering.',
@@ -421,12 +423,12 @@ const en: Translations = {
         ngoFactsLabel: '~/at-a-glance',
         ngoFactsTitle: 'At a glance.',
         ngoFacts: [
-            { label: 'Cost', value: '€0', note: 'for development, hosting and maintenance' },
-            { label: 'Duration', value: '1 semester', note: 'from the first talk to the handover' },
-            { label: 'Team', value: '~5 students', note: 'from TUM, LMU and HM' },
-            { label: 'Hosting', value: 'Germany', note: 'on Hetzner servers' },
-            { label: 'Maintenance', value: '12 months', note: 'included, renewable' },
-            { label: 'Privacy', value: 'Test data only', note: 'while we build; live access for 1–2 people' },
+            { label: 'Cost', value: '€0', note: 'for development, and the code is yours' },
+            { label: 'Duration', value: '1 semester', note: 'from the first talk to a working MVP' },
+            { label: 'Team', value: '3–5 students', note: 'plus a dedicated project lead' },
+            { label: 'Your part', value: '~1 hour a week', note: 'one contact person on your side' },
+            { label: 'Hosting', value: 'Germany', note: 'GDPR-compliant, on German servers' },
+            { label: 'Confidentiality', value: 'NDA', note: 'signed before we start' },
         ],
         ngoBookLabel: '~/first-talk',
         ngoBookTitle: 'Book a first talk.',
@@ -438,6 +440,10 @@ const en: Translations = {
             startsocial: { title: 'startsocial scholarship', text: 'We are a scholarship holder for 2026/27.', link: 'View our profile' },
             movers: { title: 'Movers of Tomorrow Award', text: 'Finalists 2026 for the Allianz Foundation’s award.', link: 'Watch the video' },
         },
+        threedLabel: '~/3d',
+        threedTitle: 'Prefer the scenic route?',
+        threedText: 'This site also comes in 3D: a retro computer on a desk that you can explore right in your browser.',
+        threedCta: 'Open the 3D version',
         partnersKicker: '~/for-companies',
         partnersTitle: 'Meet the talent. Show your impact.',
         partnersLead: 'Get to know driven students from TUM, LMU and HM – at events in your offices.',
@@ -952,7 +958,7 @@ const de: Translations = {
         heroCtaSecondary: 'Mitglied werden',
         photoAlt: 'Studierende an Laptops beim Hackathon von Coding for Change bei Picus Capital',
         photoCaption: 'Community-Event, München',
-        photoCaptions: ['Hackathon bei Picus Capital', 'Mitten im Hackathon'],
+        photoCaptions: ['Hackathon bei Picus Capital', 'Mario-Kart-Turnier bei CHECK24', 'Company Event bei QuantCo', 'Tech Tour Evening bei Project A'],
         partnersLabel: 'Partner & Organisationen',
         statement: 'NGOs haben die Mission.',
         statementDim: 'Wir haben die Menschen, die sie digital umsetzen – ausgewählt, betreut und ehrenamtlich.',
@@ -1001,12 +1007,12 @@ const de: Translations = {
         ngoFactsLabel: '~/auf-einen-blick',
         ngoFactsTitle: 'Auf einen Blick.',
         ngoFacts: [
-            { label: 'Kosten', value: '0 €', note: 'für Entwicklung, Hosting und Wartung' },
-            { label: 'Dauer', value: '1 Semester', note: 'vom Erstgespräch bis zur Übergabe' },
-            { label: 'Team', value: '~5 Studierende', note: 'von TUM, LMU und HM' },
-            { label: 'Hosting', value: 'Deutschland', note: 'auf Servern von Hetzner' },
-            { label: 'Wartung', value: '12 Monate', note: 'inklusive, verlängerbar' },
-            { label: 'Datenschutz', value: 'Nur Testdaten', note: 'beim Entwickeln; Live-Zugriff für 1–2 Personen' },
+            { label: 'Kosten', value: '0 €', note: 'für die Entwicklung, der Code gehört euch' },
+            { label: 'Dauer', value: '1 Semester', note: 'vom ersten Gespräch bis zum fertigen MVP' },
+            { label: 'Team', value: '3–5 Studierende', note: 'plus eine feste Projektleitung' },
+            { label: 'Euer Aufwand', value: '~1 Stunde pro Woche', note: 'eine feste Ansprechperson bei euch' },
+            { label: 'Hosting', value: 'Deutschland', note: 'DSGVO-konform, auf Servern in Deutschland' },
+            { label: 'Vertraulichkeit', value: 'NDA', note: 'unterschrieben vor Projektstart' },
         ],
         ngoBookLabel: '~/erstgespräch',
         ngoBookTitle: 'Erstgespräch buchen.',
@@ -1018,6 +1024,10 @@ const de: Translations = {
             startsocial: { title: 'startsocial-Stipendium', text: 'Wir sind Stipendiat 2026/27.', link: 'Zum Profil' },
             movers: { title: 'Movers of Tomorrow Award', text: 'Finalisten 2026 beim Award der Allianz Foundation.', link: 'Zum Video' },
         },
+        threedLabel: '~/3d',
+        threedTitle: 'Lieber die szenische Route?',
+        threedText: 'Unsere Seite gibt es auch in 3D: ein Retro-Computer auf einem Schreibtisch, den du direkt im Browser erkunden kannst.',
+        threedCta: '3D-Version öffnen',
         partnersKicker: '~/für-unternehmen',
         partnersTitle: 'Talente treffen. Wirkung zeigen.',
         partnersLead: 'Lernt engagierte Studierende von TUM, LMU und HM kennen – bei Events in euren Räumen.',

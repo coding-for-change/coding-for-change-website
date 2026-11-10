@@ -17,6 +17,7 @@ import { buildProcessSteps } from './ProcessTimeline';
 import ProcessSteps from './ProcessSteps';
 import ProjectShowcase from './ProjectShowcase';
 import Testimonials from './Testimonials';
+import ThreeDTeaser from './ThreeDTeaser';
 import HeroPhotos, { HERO_SLIDES, useHeroSlideshow } from './HeroPhotos';
 import ClosingCta from './ClosingCta';
 import PartnerMarquee, { joinPartners } from './PartnerMarquee';
@@ -382,6 +383,9 @@ const Landing: React.FC<LandingProps> = (props) => {
 
             {/* ---- Voices: quotes from NGOs, companies and members ---- */}
             <Testimonials items={hp?.testimonials} bandColor={PAPER} />
+
+            {/* ---- The 3D version of the site (desktop only) ---- */}
+            <ThreeDTeaser bandColor={PAPER} />
 
             {/* ---- Closing claim; the footer's >_♡ follows ---- */}
             <ClosingCta homepage={props.homepage} />

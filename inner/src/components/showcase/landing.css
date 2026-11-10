@@ -255,11 +255,12 @@ a.lp-hero__pill:hover {
     background: rgba(241, 240, 234, 0.6);
     box-shadow: none;
 }
+/* Two lines from tablet width up, so the copy leaves most of the photo free. */
 .lp-hero__title {
     margin: 0;
-    max-width: 13.5ch;
+    max-width: 22ch;
     font-family: var(--font-sans);
-    font-size: clamp(42px, 6.2vw, 92px);
+    font-size: clamp(40px, 4.8vw, 76px);
     font-weight: 500;
     line-height: 0.96;
     letter-spacing: -0.048em;
@@ -279,10 +280,12 @@ a.lp-hero__pill:hover {
 }
 .lp-hero__lead {
     margin: 0;
-    max-width: 52ch;
+    /* Wide enough for the German line in one. */
+    max-width: 64ch;
     font-size: clamp(16px, 1.35vw, 19px);
     line-height: 1.5;
     color: rgba(241, 240, 234, 0.84);
+    text-wrap: pretty;
 }
 .lp-hero__ctas {
     display: flex;
@@ -4106,6 +4109,79 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
 @media (max-width: 760px) {
     .lp-faq__a p {
         padding-right: 0;
+    }
+}
+
+/* ================================================================== */
+/* Homepage – the card into the 3D version (ThreeDTeaser.tsx)           */
+/* ================================================================== */
+.lp-3d {
+    padding: 0 0 88px;
+}
+.lp-3d__card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+    align-items: center;
+    overflow: hidden;
+    border-radius: 16px;
+    /* The render's own backdrop, so the scene sits in the card without an edge. */
+    background: linear-gradient(180deg, #b6b6b6 0%, #d1d2cf 100%);
+    color: var(--ink);
+    text-decoration: none;
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.lp-3d__card:hover {
+    box-shadow: 0 22px 44px -22px rgba(19, 22, 20, 0.45);
+    transform: translateY(-2px);
+}
+.lp-3d__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 40px 0 40px 44px;
+}
+.lp-3d__copy .lp-kicker {
+    margin-bottom: 12px;
+    color: var(--ink);
+}
+.lp-3d__title {
+    margin: 0 0 10px;
+    font-size: clamp(28px, 2.8vw, 36px);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+}
+.lp-3d__text {
+    max-width: 36ch;
+    margin: 0 0 24px;
+    font-size: 16px;
+    line-height: 1.55;
+    color: #363a37;
+}
+/* The render fills the card's height and fades in from the left, into the
+   card's grey – no edge where the picture starts. */
+.lp-3d__scene {
+    display: block;
+    align-self: stretch;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    object-fit: cover;
+    object-position: 55% 55%;
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
+}
+/* /3d is a desktop experience: below the site's mobile breakpoint it is not offered. */
+@media (max-width: 1024px) {
+    .lp-3d {
+        display: none;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .lp-3d__card,
+    .lp-3d__card:hover {
+        transition: none;
+        transform: none;
     }
 }
 
