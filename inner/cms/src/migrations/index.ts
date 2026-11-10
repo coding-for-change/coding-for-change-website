@@ -53,6 +53,9 @@ import * as migration_20261106_224650_mcp_media_upload_tool from './20261106_224
 import * as migration_20261107_114747_add_application_stages from './20261107_114747_add_application_stages';
 import * as migration_20261107_165554_mcp_admin_tools from './20261107_165554_mcp_admin_tools';
 import * as migration_20261110_141651_mcp_techtour_todos_tool from './20261110_141651_mcp_techtour_todos_tool';
+import * as migration_20261110_184212_user_roles from './20261110_184212_user_roles';
+import * as migration_20261110_190747_onboarding from './20261110_190747_onboarding';
+import * as migration_20261110_194713_member_page from './20261110_194713_member_page';
 
 export const migrations = [
   {
@@ -328,6 +331,21 @@ export const migrations = [
   {
     up: migration_20261110_141651_mcp_techtour_todos_tool.up,
     down: migration_20261110_141651_mcp_techtour_todos_tool.down,
-    name: '20261110_141651_mcp_techtour_todos_tool'
+    name: '20261110_141651_mcp_techtour_todos_tool',
+  },
+  {
+    up: migration_20261110_184212_user_roles.up,
+    down: migration_20261110_184212_user_roles.down,
+    name: '20261110_184212_user_roles',
+  },
+  {
+    up: migration_20261110_190747_onboarding.up,
+    down: migration_20261110_190747_onboarding.down,
+    name: '20261110_190747_onboarding',
+  },
+  {
+    up: migration_20261110_194713_member_page.up,
+    down: migration_20261110_194713_member_page.down,
+    name: '20261110_194713_member_page'
   },
 ];

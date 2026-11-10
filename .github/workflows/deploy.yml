@@ -111,6 +111,13 @@ jobs:
             "GOOGLE_ADS_LABEL_TECHTOUR=${{ secrets.GOOGLE_ADS_LABEL_TECHTOUR }}" \
             "GOOGLE_ADS_LABEL_BOOKING=${{ secrets.GOOGLE_ADS_LABEL_BOOKING }}" \
             "GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}" \
+            "GOOGLE_OAUTH_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}" \
+            "GOOGLE_OAUTH_CLIENT_SECRET=${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}" \
+            "GOOGLE_ALLOWED_DOMAIN=codingforchange.com" \
+            "ADMIN_EMAILS=info@codingforchange.com,jakob.landbrecht@codingforchange.com" \
+            "DOCUSEAL_URL=https://docuseal.codingforchange.com" \
+            "DOCUSEAL_API_KEY=${{ secrets.DOCUSEAL_API_KEY }}" \
+            "DOCUSEAL_WEBHOOK_SECRET=${{ secrets.DOCUSEAL_WEBHOOK_SECRET }}" \
             > /tmp/.env
           $SCP /tmp/.env ${SSH_TARGET}:/var/www/homepage/.env
           rm -f /tmp/.env

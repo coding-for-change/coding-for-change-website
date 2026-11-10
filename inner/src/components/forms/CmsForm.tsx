@@ -1,9 +1,10 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { submitForm, uploadApplicantFile } from '../../api';
+import { submitForm, uploadApplicantFile, uploadMemberPhoto } from '../../api';
 import { UploadError } from '../../api/client';
 import type { CmsApplicantFile, CmsForm as CmsFormDoc, CmsFormField } from '../../api';
+import type { MemberPhoto } from '../../api/types';
 import { getAttribution } from '../../lib/attribution';
 import { trackConversion, trackFormStart } from '../../lib/analytics';
 import { trackAdsConversion, type AdsConversionAction } from '../../lib/googleAds';
@@ -21,7 +22,10 @@ import '../showcase/landing.css';
  *
  * - `upload`        — a PDF (CV) uploaded to the private `applicant-files`
  *                     collection as soon as it is picked; the id rides along
- *                     on the submission's `files` relationship.
+ *                     on the submission's `files` relationship. With
+ *                     `accept: 'image'` a signed-in member's photo instead,
+ *                     sent to POST /api/onboarding/photo (the onboarding
+ *                     form); the answer is the stored photo's id.
  * - `checkboxGroup` — a multi-select; the submission stores the ticked labels.
  * - `subform`       — a checkbox that reveals another form's questions inline
  *                     ("also apply for membership"). On submit that form gets
@@ -55,8 +59,15 @@ const validateEmail = (email: string) => {
     return re.test(String(email).toLowerCase());
 };
 
-/** Mirrors APPLICANT_FILE_MAX_BYTES in the CMS. */
+/** Mirrors APPLICANT_FILE_MAX_BYTES (and PHOTO_MAX_BYTES) in the CMS. */
 const UPLOAD_MAX_BYTES = 5 * 1024 * 1024;
+
+/** What the CMS takes as a member photo (inner/cms/src/lib/mediaUpload.ts checks the bytes). */
+const PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const PHOTO_ACCEPT = `${PHOTO_TYPES.join(',')},.jpg,.jpeg,.png,.webp,.gif`;
+
+/** Answers that can be handed in as a starting point (`initialValues`): typed or picked, never ticked. */
+const PREFILLABLE = new Set(['text', 'email', 'textarea', 'number', 'select']);
 
 /**
  * Checkbox labels may carry `[text](url)` links, so a consent box can point at
@@ -132,6 +143,8 @@ const isAdsAction = (label: string): label is AdsConversionAction =>
 
 interface UploadState {
     file?: CmsApplicantFile;
+    /** An image upload's stored photo (`accept: 'image'`). */
+    photo?: MemberPhoto;
     /** Local filename for display. */
     name?: string;
     uploading?: boolean;
@@ -276,6 +289,23 @@ export interface CmsFormProps {
      * message from the CMS. Gets the answers as typed, by field name.
      */
     confirmation?: (answers: Record<string, string>) => React.ReactNode;
+    /**
+     * Answers to start from, by field name: /onboarding passes what the member
+     * sent last time. Only typed or picked answers are taken; tick boxes and
+     * uploads always start empty.
+     */
+    initialValues?: Record<string, string> | null;
+    /**
+     * Extra checks per field name for typed answers: return the message to
+     * show under the box, or null when it is fine. A failing check keeps the
+     * form from being sent. The CMS checks the same again.
+     */
+    checks?: Record<string, (value: string) => string | null>;
+    /**
+     * Send no analytics events and no campaign attribution with it: for a
+     * signed-in member's own form, which is not a conversion of anything.
+     */
+    untracked?: boolean;
     className?: string;
     onSubmitted?: () => void;
 }
@@ -294,6 +324,9 @@ const CmsForm: React.FC<CmsFormProps> = ({
     adsOnlyWithConsent,
     source,
     confirmation,
+    initialValues,
+    checks,
+    untracked,
     className,
     onSubmitted,
 }) => {
@@ -304,7 +337,19 @@ const CmsForm: React.FC<CmsFormProps> = ({
         [hiddenSubforms]
     );
 
-    const [values, setValues] = useState<Values>({});
+    const [values, setValues] = useState<Values>(() => {
+        if (!initialValues) return {};
+        const start: Values = {};
+        (form.fields ?? []).forEach((f) => {
+            if (!isPlainInput(f) || !PREFILLABLE.has(f.blockType)) return;
+            const v = initialValues[f.name];
+            if (typeof v !== 'string' || v === '') return;
+            // A select only takes one of its options.
+            if (f.blockType === 'select' && !(f.options ?? []).some((o) => o.value === v)) return;
+            start[f.name] = v;
+        });
+        return start;
+    });
     const [uploads, setUploads] = useState<Record<string, UploadState>>({});
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
@@ -515,8 +560,18 @@ const CmsForm: React.FC<CmsFormProps> = ({
         return '';
     };
 
+    /** The page's own check of a typed answer; null when there is none or it passes. */
+    const checkProblem = (field: PlainInput): string | null => {
+        const check = checks?.[field.name];
+        if (!check) return null;
+        const value = valueOf(field);
+        if (typeof value !== 'string' || value.trim() === '') return null;
+        return check(value);
+    };
+
     const isValid = (field: PlainInput): boolean => {
         const value = valueOf(field);
+        if (checkProblem(field)) return false;
         switch (field.blockType) {
             case 'email': {
                 const str = String(value);
@@ -532,7 +587,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
             case 'upload': {
                 const up = uploads[field.name];
                 if (up?.uploading) return false;
-                return field.required ? Boolean(up?.file) : true;
+                return field.required ? Boolean(up?.file || up?.photo) : true;
             }
             case 'select':
                 // Picking "other" is only an answer once something is typed.
@@ -583,6 +638,11 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     break;
                 }
                 case 'upload': {
+                    const photo = uploads[field.name]?.photo;
+                    if (photo) {
+                        data.push({ field: field.name, value: String(photo.id) });
+                        break;
+                    }
                     const up = uploads[field.name]?.file;
                     if (up) files.push(up.id);
                     data.push({ field: field.name, value: up?.filename ?? '' });
@@ -612,7 +672,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
         if (!formValid || submitting) return;
         setSendError(false);
         setSubmitting(true);
-        const attribution = getAttribution();
+        const attribution = untracked ? null : getAttribution();
         // Parent first, then each ticked linked form.
         const jobs: { id: number; label: string; list: CmsFormField[]; source?: string }[] = [
             { id: form.id, label, list: fields, source },
@@ -642,6 +702,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
                 const { data, files } = serialise(job.list);
                 await submitForm(job.id, data, attribution, files, locale, honeypot, job.source);
                 doneRef.current.add(job.id);
+                if (untracked) continue;
                 trackConversion(job.label);
                 if (
                     isAdsAction(job.label) &&
@@ -667,13 +728,47 @@ const CmsForm: React.FC<CmsFormProps> = ({
     // Funnel: `form_start` the first time any field gets focus.
     const started = useRef(false);
     const handleFocus = () => {
-        if (started.current) return;
+        if (started.current || untracked) return;
         started.current = true;
         trackFormStart(label);
     };
 
+    const handlePhoto = async (field: Extract<PlainInput, { blockType: 'upload' }>, file: File) => {
+        // A first look only, for a quick answer: the CMS decides from the bytes.
+        if (file.type && !PHOTO_TYPES.includes(file.type)) {
+            setUploads((p) => ({ ...p, [field.name]: { error: t.forms.photoWrongType } }));
+            return;
+        }
+        if (file.size > UPLOAD_MAX_BYTES) {
+            setUploads((p) => ({ ...p, [field.name]: { error: t.forms.uploadTooLarge } }));
+            return;
+        }
+        setUploads((p) => ({ ...p, [field.name]: { uploading: true, name: file.name } }));
+        try {
+            const photo = await uploadMemberPhoto(file);
+            setUploads((p) => ({ ...p, [field.name]: { photo, name: file.name } }));
+        } catch (err) {
+            const reason = err instanceof UploadError ? err.reason : 'failed';
+            setUploads((p) => ({
+                ...p,
+                [field.name]: {
+                    error:
+                        reason === 'too-large'
+                            ? t.forms.uploadTooLarge
+                            : reason === 'wrong-type'
+                            ? t.forms.photoWrongType
+                            : t.forms.uploadFailed,
+                },
+            }));
+        }
+    };
+
     const handleFile = async (field: Extract<PlainInput, { blockType: 'upload' }>, file: File | null) => {
         if (!file) return;
+        if (field.accept === 'image') {
+            await handlePhoto(field, file);
+            return;
+        }
         const isPdf =
             file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
         if (!isPdf) {
@@ -798,16 +893,28 @@ const CmsForm: React.FC<CmsFormProps> = ({
 
         if (field.blockType === 'upload') {
             const up = uploads[field.name] ?? {};
+            const isPhoto = field.accept === 'image';
             return (
-                <div key={key} className="lp-field lp-upload">
+                <div key={key} className={`lp-field lp-upload${isPhoto ? ' lp-upload--photo' : ''}`}>
                     <span className="lp-label">
                         {star(field)}
                         {fieldLabel}
                     </span>
-                    {up.file ? (
+                    {up.file || up.photo ? (
                         <div className="lp-upload__done">
+                            {up.photo?.thumbnailUrl && (
+                                // The member's own private photo, served to their session only.
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                    className="lp-upload__preview"
+                                    src={up.photo.thumbnailUrl}
+                                    alt=""
+                                    width={56}
+                                    height={56}
+                                />
+                            )}
                             <span className="lp-upload__name">
-                                {up.name ?? up.file.filename}
+                                {up.name ?? up.file?.filename ?? up.photo?.filename}
                             </span>
                             <button
                                 type="button"
@@ -825,7 +932,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
                         >
                             <input
                                 type="file"
-                                accept="application/pdf,.pdf"
+                                accept={isPhoto ? PHOTO_ACCEPT : 'application/pdf,.pdf'}
                                 disabled={Boolean(up.uploading)}
                                 onChange={(e) => {
                                     void handleFile(field, e.target.files?.[0] ?? null);
@@ -833,12 +940,16 @@ const CmsForm: React.FC<CmsFormProps> = ({
                                 }}
                             />
                             <span className="lp-upload__btn">
-                                {up.uploading ? t.forms.uploading : t.forms.uploadChoose}
+                                {up.uploading
+                                    ? t.forms.uploading
+                                    : isPhoto
+                                    ? t.forms.photoChoose
+                                    : t.forms.uploadChoose}
                             </span>
                             <span className="lp-upload__hint">
                                 {up.uploading && up.name
                                     ? up.name
-                                    : field.description || t.forms.uploadHint}
+                                    : field.description || (isPhoto ? t.forms.photoHint : t.forms.uploadHint)}
                             </span>
                         </label>
                     )}
@@ -953,6 +1064,7 @@ const CmsForm: React.FC<CmsFormProps> = ({
             );
         }
 
+        const problem = touched[field.name] ? checkProblem(field) : null;
         return (
             <div className="lp-field" key={key}>
                 <span className="lp-label">
@@ -970,8 +1082,11 @@ const CmsForm: React.FC<CmsFormProps> = ({
                     }
                     name={field.name}
                     value={String(value)}
+                    aria-invalid={problem ? true : undefined}
                     onChange={(e) => setValue(field.name, e.target.value)}
+                    onBlur={() => markTouched(field.name)}
                 />
+                {problem && <p className="lp-field__hint lp-field__hint--req">{problem}</p>}
             </div>
         );
     };

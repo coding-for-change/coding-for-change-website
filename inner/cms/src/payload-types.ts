@@ -125,6 +125,7 @@ export interface Config {
   };
   fallbackLocale: ('false' | 'none' | 'null') | false | null | ('en' | 'de') | ('en' | 'de')[];
   globals: {
+    onboarding: Onboarding;
     'tech-tour': TechTour;
     homepage: Homepage;
     about: About;
@@ -134,6 +135,7 @@ export interface Config {
     'site-config': SiteConfig;
   };
   globalsSelect: {
+    onboarding: OnboardingSelect<false> | OnboardingSelect<true>;
     'tech-tour': TechTourSelect<false> | TechTourSelect<true>;
     homepage: HomepageSelect<false> | HomepageSelect<true>;
     about: AboutSelect<false> | AboutSelect<true>;
@@ -391,6 +393,7 @@ export interface Form {
             name: string;
             label?: string | null;
             required?: boolean | null;
+            accept: 'pdf' | 'image';
             /**
              * Shown under the field, e.g. "PDF, max. 5 MB".
              */
@@ -497,6 +500,10 @@ export interface Form {
         id?: string | null;
       }[]
     | null;
+  /**
+   * Only signed-in members can send this form, and each answer is stored with their account. For the onboarding form.
+   */
+  requiresLogin?: boolean | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -870,6 +877,14 @@ export interface Project {
 export interface Media {
   id: number;
   alt: string;
+  /**
+   * A new member's photo: hidden from the public until it is the image of a published team profile.
+   */
+  private?: boolean | null;
+  /**
+   * The member who sent this photo with the onboarding form. Empty for everything uploaded in the admin.
+   */
+  uploadedBy?: (number | null) | User;
   updatedAt: string;
   createdAt: string;
   url?: string | null;
@@ -910,11 +925,216 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "users".
+ */
+export interface User {
+  id: number;
+  /**
+   * Member: the onboarding page only. Editor: website content, forms, TechTour page and analytics. Admin: everything.
+   */
+  role: 'member' | 'editor' | 'admin';
+  firstName?: string | null;
+  lastName?: string | null;
+  /**
+   * From the application; the recovery address of the Google account.
+   */
+  privateEmail?: string | null;
+  githubUsername?: string | null;
+  /**
+   * The membership application this account was created from.
+   */
+  application?: (number | null) | FormSubmission;
+  /**
+   * The public profile on the Team page.
+   */
+  teamProfile?: (number | null) | Team;
+  /**
+   * When the dashboard last put this account into a Google CSV, with a new password.
+   */
+  accountExportedAt?: string | null;
+  signedInAt?: string | null;
+  /**
+   * The first time the member had sent the form and done all their to-dos and documents; the board got a mail then (lib/onboarding/notify.ts).
+   */
+  stepsCompletedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  email: string;
+  resetPasswordToken?: string | null;
+  resetPasswordExpiration?: string | null;
+  salt?: string | null;
+  hash?: string | null;
+  loginAttempts?: number | null;
+  lockUntil?: string | null;
+  sessions?:
+    | {
+        id: string;
+        createdAt?: string | null;
+        expiresAt: string;
+      }[]
+    | null;
+  password?: string | null;
+  collection: 'users';
+}
+/**
+ * Someone withdrew their consent or asked to be deleted? Delete their submission – its CV is deleted with it. TechTour registrations are also deleted automatically on the day set under TechTour Page → "Delete registrations on".
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "form-submissions".
+ */
+export interface FormSubmission {
+  id: number;
+  /**
+   * Your verdict on this applicant.
+   */
+  reviewStatus?: ('unreviewed' | 'accepted' | 'unsure' | 'rejected') | null;
+  /**
+   * How strong the applicant is, from 1 (weak) to 10 (outstanding). Leave empty until reviewed.
+   */
+  reviewScore?: number | null;
+  /**
+   * Internal notes — never shown to the applicant. Included in the Excel export.
+   */
+  reviewNotes?: string | null;
+  form: number | Form;
+  submissionData?:
+    | {
+        field: string;
+        value: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Documents uploaded with this submission (e.g. the CV). Click one to open or download it.
+   */
+  files?: (number | ApplicantFile)[] | null;
+  /**
+   * The language the form was sent in. Write back in it.
+   */
+  language?: ('en' | 'de') | null;
+  /**
+   * Every box the person ticked, worded exactly as they saw it, with the version of that wording and the time it was sent – the proof of their consent. Kept as sent: the form’s own labels may be edited later, and nobody can change this record.
+   */
+  agreedTo?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * The stable keys of the options picked in multi-select questions (e.g. the TechTour evenings, "tue-lio"). The answers above keep the labels as shown, which change when an option is renamed; these do not.
+   */
+  choiceKeys?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Empty = the full form. "Speedrun" = the short application at /join/speedrun: no CV, only some of the questions.
+   */
+  source?: 'speedrun' | null;
+  /**
+   * What each evening’s host company decided through its share link: admitted or declined, by whom, when.
+   */
+  hostDecisions?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Where this submission came from — captured from the landing URL (?src / utm_*) and carried through the session. Empty for direct/organic visits. Used only in aggregate for campaign analysis.
+   */
+  attribution?: {
+    /**
+     * Campaign tag from ?src=, or utm_source (e.g. "poster-tumsom").
+     */
+    source?: string | null;
+    /**
+     * Normalised traffic channel, derived from the tag + referrer: campaign (tagged link), organic_search, social, referral, or direct.
+     */
+    channel?: ('campaign' | 'organic_search' | 'social' | 'referral' | 'direct') | null;
+    /**
+     * utm_medium (e.g. poster, qr, social, newsletter).
+     */
+    medium?: string | null;
+    /**
+     * utm_campaign.
+     */
+    campaign?: string | null;
+    /**
+     * utm_content — distinguishes creatives/variants.
+     */
+    content?: string | null;
+    /**
+     * Referring site host (e.g. instagram.com), when the browser sends one.
+     */
+    referrer?: string | null;
+    /**
+     * First path the visitor landed on this session.
+     */
+    landingPath?: string | null;
+    /**
+     * Random per-visit id (sessionStorage). Links this conversion to the behavioural funnel; not a stable identifier, not personal data.
+     */
+    sessionId?: string | null;
+    /**
+     * When attribution was first captured this session.
+     */
+    firstSeenAt?: string | null;
+  };
+  /**
+   * The signed-in account this came from. Empty for the public forms.
+   */
+  submittedBy?: (number | null) | User;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "applicant-files".
+ */
+export interface ApplicantFile {
+  id: number;
+  /**
+   * Which form field the file was uploaded for (e.g. "cv").
+   */
+  kind?: string | null;
+  updatedAt: string;
+  createdAt: string;
+  url?: string | null;
+  thumbnailURL?: string | null;
+  filename?: string | null;
+  mimeType?: string | null;
+  filesize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  focalX?: number | null;
+  focalY?: number | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "team".
  */
 export interface Team {
   id: number;
   _order?: string | null;
+  /**
+   * Shown on the Team page. New members' profiles start unpublished until the board publishes them.
+   */
+  published?: boolean | null;
   name: string;
   role: string;
   /**
@@ -1086,175 +1306,6 @@ export interface SponsorTier {
   order: number;
   updatedAt: string;
   createdAt: string;
-}
-/**
- * Someone withdrew their consent or asked to be deleted? Delete their submission – its CV is deleted with it. TechTour registrations are also deleted automatically on the day set under TechTour Page → "Delete registrations on".
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "form-submissions".
- */
-export interface FormSubmission {
-  id: number;
-  /**
-   * Your verdict on this applicant.
-   */
-  reviewStatus?: ('unreviewed' | 'accepted' | 'unsure' | 'rejected') | null;
-  /**
-   * How strong the applicant is, from 1 (weak) to 10 (outstanding). Leave empty until reviewed.
-   */
-  reviewScore?: number | null;
-  /**
-   * Internal notes — never shown to the applicant. Included in the Excel export.
-   */
-  reviewNotes?: string | null;
-  form: number | Form;
-  submissionData?:
-    | {
-        field: string;
-        value: string;
-        id?: string | null;
-      }[]
-    | null;
-  /**
-   * Documents uploaded with this submission (e.g. the CV). Click one to open or download it.
-   */
-  files?: (number | ApplicantFile)[] | null;
-  /**
-   * The language the form was sent in. Write back in it.
-   */
-  language?: ('en' | 'de') | null;
-  /**
-   * Every box the person ticked, worded exactly as they saw it, with the version of that wording and the time it was sent – the proof of their consent. Kept as sent: the form’s own labels may be edited later, and nobody can change this record.
-   */
-  agreedTo?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * The stable keys of the options picked in multi-select questions (e.g. the TechTour evenings, "tue-lio"). The answers above keep the labels as shown, which change when an option is renamed; these do not.
-   */
-  choiceKeys?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Empty = the full form. "Speedrun" = the short application at /join/speedrun: no CV, only some of the questions.
-   */
-  source?: 'speedrun' | null;
-  /**
-   * What each evening’s host company decided through its share link: admitted or declined, by whom, when.
-   */
-  hostDecisions?:
-    | {
-        [k: string]: unknown;
-      }
-    | unknown[]
-    | string
-    | number
-    | boolean
-    | null;
-  /**
-   * Where this submission came from — captured from the landing URL (?src / utm_*) and carried through the session. Empty for direct/organic visits. Used only in aggregate for campaign analysis.
-   */
-  attribution?: {
-    /**
-     * Campaign tag from ?src=, or utm_source (e.g. "poster-tumsom").
-     */
-    source?: string | null;
-    /**
-     * Normalised traffic channel, derived from the tag + referrer: campaign (tagged link), organic_search, social, referral, or direct.
-     */
-    channel?: ('campaign' | 'organic_search' | 'social' | 'referral' | 'direct') | null;
-    /**
-     * utm_medium (e.g. poster, qr, social, newsletter).
-     */
-    medium?: string | null;
-    /**
-     * utm_campaign.
-     */
-    campaign?: string | null;
-    /**
-     * utm_content — distinguishes creatives/variants.
-     */
-    content?: string | null;
-    /**
-     * Referring site host (e.g. instagram.com), when the browser sends one.
-     */
-    referrer?: string | null;
-    /**
-     * First path the visitor landed on this session.
-     */
-    landingPath?: string | null;
-    /**
-     * Random per-visit id (sessionStorage). Links this conversion to the behavioural funnel; not a stable identifier, not personal data.
-     */
-    sessionId?: string | null;
-    /**
-     * When attribution was first captured this session.
-     */
-    firstSeenAt?: string | null;
-  };
-  updatedAt: string;
-  createdAt: string;
-}
-/**
- * CVs and other documents uploaded with a form submission. Private: only logged-in admins can open them. A file is deleted together with its submission; one not attached to any submission within 24 hours is deleted automatically.
- *
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "applicant-files".
- */
-export interface ApplicantFile {
-  id: number;
-  /**
-   * Which form field the file was uploaded for (e.g. "cv").
-   */
-  kind?: string | null;
-  updatedAt: string;
-  createdAt: string;
-  url?: string | null;
-  thumbnailURL?: string | null;
-  filename?: string | null;
-  mimeType?: string | null;
-  filesize?: number | null;
-  width?: number | null;
-  height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
-}
-/**
- * This interface was referenced by `Config`'s JSON-Schema
- * via the `definition` "users".
- */
-export interface User {
-  id: number;
-  updatedAt: string;
-  createdAt: string;
-  email: string;
-  resetPasswordToken?: string | null;
-  resetPasswordExpiration?: string | null;
-  salt?: string | null;
-  hash?: string | null;
-  loginAttempts?: number | null;
-  lockUntil?: string | null;
-  sessions?:
-    | {
-        id: string;
-        createdAt?: string | null;
-        expiresAt: string;
-      }[]
-    | null;
-  password?: string | null;
-  collection: 'users';
 }
 /**
  * API keys control which collections, resources, tools, and prompts MCP clients can access
@@ -2124,6 +2175,7 @@ export interface ProjectsSelect<T extends boolean = true> {
  */
 export interface TeamSelect<T extends boolean = true> {
   _order?: T;
+  published?: T;
   name?: T;
   role?: T;
   teamMemberships?:
@@ -2253,6 +2305,8 @@ export interface CompaniesSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  private?: T;
+  uploadedBy?: T;
   updatedAt?: T;
   createdAt?: T;
   url?: T;
@@ -2388,6 +2442,7 @@ export interface FormsSelect<T extends boolean = true> {
               name?: T;
               label?: T;
               required?: T;
+              accept?: T;
               description?: T;
               id?: T;
               blockName?: T;
@@ -2436,6 +2491,7 @@ export interface FormsSelect<T extends boolean = true> {
         message?: T;
         id?: T;
       };
+  requiresLogin?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2474,6 +2530,7 @@ export interface FormSubmissionsSelect<T extends boolean = true> {
         sessionId?: T;
         firstSeenAt?: T;
       };
+  submittedBy?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -2500,6 +2557,16 @@ export interface ApplicantFilesSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
+  firstName?: T;
+  lastName?: T;
+  privateEmail?: T;
+  githubUsername?: T;
+  application?: T;
+  teamProfile?: T;
+  accountExportedAt?: T;
+  signedInAt?: T;
+  stepsCompletedAt?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;
@@ -2770,6 +2837,80 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   batch?: T;
   updatedAt?: T;
   createdAt?: T;
+}
+/**
+ * What new members go through after the board admits them: the form, their to-dos and the documents on their onboarding page, and the board's own to-dos in the Onboarding dashboard.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "onboarding".
+ */
+export interface Onboarding {
+  id: number;
+  /**
+   * Shown at the top of the member's onboarding page. Plain text; a blank line starts a new paragraph.
+   */
+  intro?: string | null;
+  /**
+   * The one form every new member fills in on their page (Forms; tick "Requires sign-in" there). Answers to questions named displayName, bio, linkedin, githubUsername, photo (a "Photo" upload) and profilePublic (a checkbox: consent to a public profile) are copied to the member's account and team profile. With profilePublic ticked the member gets an unpublished team profile (name, bio, photo, LinkedIn and GitHub links) for the board to publish; without it none, and their photo is deleted. Sending it again updates that profile and unpublishes it until the board publishes it again.
+   */
+  form?: (number | null) | Form;
+  /**
+   * Tick boxes on the member's page, e.g. "Join the Slack workspace". Ticking is recorded with the time and the wording shown. Fix typos here; for anything else add a new to-do.
+   */
+  memberTodos?:
+    | {
+        text: string;
+        /**
+         * Optional: https://… or a path on our site such as /join. Opens in a new tab.
+         */
+        linkUrl?: string | null;
+        /**
+         * Empty = "Open link".
+         */
+        linkLabel?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Ticked by the board per member in the Onboarding dashboard, e.g. "Add to the GitHub organisation" or "Add to the members@ Google group". Members do not see these.
+   */
+  boardTodos?:
+    | {
+        text: string;
+        /**
+         * Optional: https://… or a path on our site such as /join. Opens in a new tab.
+         */
+        linkUrl?: string | null;
+        /**
+         * Empty = "Open link".
+         */
+        linkLabel?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Documents every new member signs through DocuSeal, e.g. the membership declaration.
+   */
+  documents?:
+    | {
+        title: string;
+        /**
+         * Optional: one or two sentences on the member's page about what this is.
+         */
+        description?: string | null;
+        /**
+         * The number in the template's address in DocuSeal (…/templates/<ID>).
+         */
+        docusealTemplateId: number;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Where new accounts go in Google Admin, e.g. "/" or "/Members". Written into the CSV the dashboard downloads.
+   */
+  googleOrgUnitPath?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
 }
 /**
  * The visits and the registration settings for the Munich TechTour page. The registration form is the form titled "techtour" under Forms; the page's headline and section wording are part of the design, not content.
@@ -3143,6 +3284,42 @@ export interface SiteConfig {
   homepageMode: 'partners' | 'students';
   updatedAt?: string | null;
   createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "onboarding_select".
+ */
+export interface OnboardingSelect<T extends boolean = true> {
+  intro?: T;
+  form?: T;
+  memberTodos?:
+    | T
+    | {
+        text?: T;
+        linkUrl?: T;
+        linkLabel?: T;
+        id?: T;
+      };
+  boardTodos?:
+    | T
+    | {
+        text?: T;
+        linkUrl?: T;
+        linkLabel?: T;
+        id?: T;
+      };
+  documents?:
+    | T
+    | {
+        title?: T;
+        description?: T;
+        docusealTemplateId?: T;
+        id?: T;
+      };
+  googleOrgUnitPath?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

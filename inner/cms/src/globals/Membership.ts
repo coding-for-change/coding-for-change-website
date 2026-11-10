@@ -1,4 +1,5 @@
 import { GlobalConfig } from 'payload';
+import { pageAccess } from '../access/roles';
 
 // The Join page (/join) takes its headline and lead from here; everything
 // else on it – what to expect, the ways to get involved, the three steps of
@@ -7,9 +8,7 @@ import { GlobalConfig } from 'payload';
 export const Membership: GlobalConfig = {
   slug: 'membership',
   label: 'Membership Page',
-  access: {
-    read: () => true,
-  },
+  access: pageAccess,
   fields: [
     {
       name: 'title',

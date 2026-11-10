@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { contentAccess } from '../access/roles';
 
 /**
  * Sponsor tiers, managed in the CMS (add / rename / reorder without code).
@@ -14,9 +15,7 @@ export const SponsorTiers: CollectionConfig = {
     defaultColumns: ['label', 'order'],
     description: 'Tier sections for the Partners page (e.g. Platinum, Gold …).',
   },
-  access: {
-    read: () => true,
-  },
+  access: contentAccess,
   fields: [
     { name: 'label', type: 'text', required: true, localized: true },
     {

@@ -1,5 +1,6 @@
 import type { CollectionConfig } from 'payload';
 import { APIError } from 'payload';
+import { isAdmin } from '../access/roles';
 
 /** Hard cap per uploaded document. Mirrored in the inner site's file input hint. */
 export const APPLICANT_FILE_MAX_BYTES = 5 * 1024 * 1024;
@@ -38,9 +39,9 @@ export const ApplicantFiles: CollectionConfig = {
     // Applicants are anonymous, so anyone may upload…
     create: () => true,
     // …but only admins may see, download, change or delete.
-    read: ({ req: { user } }) => Boolean(user),
-    update: ({ req: { user } }) => Boolean(user),
-    delete: ({ req: { user } }) => Boolean(user),
+    read: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   upload: {
     // Default storage dir = the collection slug, resolved the same way `media`

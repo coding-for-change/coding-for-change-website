@@ -1849,6 +1849,16 @@ a.lp-member__project:hover {
 .lp-upload__name::before {
     content: '✓ ';
 }
+/* A photo question: the uploaded photo, small, before its name. */
+.lp-upload__preview {
+    flex: none;
+    width: 56px;
+    height: 56px;
+    object-fit: cover;
+}
+.lp-upload--photo .lp-upload__name {
+    flex: 1 1 auto;
+}
 .lp-upload__remove {
     padding: 0;
     border: 0;

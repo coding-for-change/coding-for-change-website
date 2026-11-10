@@ -1,5 +1,6 @@
 import { CollectionConfig } from 'payload';
 import { attributionField } from '../fields/attribution';
+import { isAdmin, isEditor } from '../access/roles';
 
 // The behavioural events the site beacons in. Kept as a fixed list so the data
 // stays queryable; extend here (and in the inner `lib/analytics.ts` helpers)
@@ -56,10 +57,11 @@ export const AnalyticsEvents: CollectionConfig = {
   access: {
     // The public site beacons events in anonymously…
     create: () => true,
-    // …only logged-in admins may read / manage them.
-    read: ({ req: { user } }) => Boolean(user),
-    update: ({ req: { user } }) => Boolean(user),
-    delete: ({ req: { user } }) => Boolean(user),
+    // …editors may read them (the analytics are theirs too), only admins
+    // change or delete them.
+    read: isEditor,
+    update: isAdmin,
+    delete: isAdmin,
   },
   fields: [
     {

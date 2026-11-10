@@ -2,7 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { applicationForm, techtourForm, techTourGlobal } from './formDefinitions.mjs';
+import { applicationForm, onboardingForm, onboardingGlobal, techtourForm, techTourGlobal } from './formDefinitions.mjs';
 
 const ASSETS = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'assets', 'techtour');
 
@@ -62,9 +62,12 @@ export async function attachTechTourLogos({ base, cookie, log = console.log }) {
 }
 
 /**
- * Create or update the "application" and "techtour" forms (EN + DE) and, if the
- * TechTour page global is still empty, give it starting content. Shared by the
- * dev seed and the production `upsert-forms.mjs` CLI.
+ * Create or update the "application", "techtour" and "onboarding" forms (EN +
+ * DE) and, if the TechTour page global is still empty, give it starting
+ * content. The onboarding form is chosen in Onboarding Settings when none is
+ * chosen yet, and empty Onboarding Settings get a starting intro and to-dos.
+ * Shared by the dev seed and the production `upsert-forms.mjs` CLI (both log
+ * in as an admin: Onboarding Settings are admin-only).
  *
  * Forms are matched by title. An existing form's fields are REPLACED by the
  * definitions (that is the point of running this), so run it once to set the
@@ -73,6 +76,31 @@ export async function attachTechTourLogos({ base, cookie, log = console.log }) {
  * Two passes because each form's "also …" checkbox points at the other form:
  * both must exist before the subform blocks can reference them.
  */
+/**
+ * Point Onboarding Settings at the onboarding form when no form is chosen
+ * yet, and give empty settings (no intro, no to-dos) their starting content.
+ * Anything the board has set stays as it is.
+ */
+async function upsertOnboardingSettings(req, formId, log) {
+  const settings = await req('GET', '/api/globals/onboarding?locale=en&depth=0');
+  const empty = !settings?.intro && !(settings?.memberTodos ?? []).length && !(settings?.boardTodos ?? []).length;
+  if (settings?.form && !empty) {
+    log('onboarding settings already set up, left untouched');
+    return;
+  }
+  const en = empty ? onboardingGlobal('en') : {};
+  await req('POST', '/api/globals/onboarding?locale=en', { ...en, ...(settings?.form ? {} : { form: formId }) });
+  if (empty) {
+    const saved = await req('GET', '/api/globals/onboarding?locale=en&depth=0');
+    const de = onboardingGlobal('de');
+    await req('POST', '/api/globals/onboarding?locale=de', {
+      intro: de.intro,
+      memberTodos: de.memberTodos.map((t, i) => ({ ...t, id: saved.memberTodos?.[i]?.id })),
+    });
+  }
+  log(`onboarding settings: ${settings?.form ? '' : `form set to ${formId}`}${!settings?.form && empty ? ', ' : ''}${empty ? 'starting intro and to-dos added (en + de)' : ''}`);
+}
+
 export async function upsertForms({ base, cookie, toEmail, fromEmail, log = console.log, dryRun = false }) {
   const headers = { 'content-type': 'application/json', cookie };
   const req = async (method, path, body) => {
@@ -86,8 +114,9 @@ export async function upsertForms({ base, cookie, toEmail, fromEmail, log = cons
 
   const existing = (await req('GET', '/api/forms?limit=100&depth=0&locale=en')).docs ?? [];
   const byTitle = (title) => existing.find((f) => f.title?.trim().toLowerCase() === title);
-  const current = { application: byTitle('application'), techtour: byTitle('techtour') };
-  log(`forms: application ${current.application ? `exists (id ${current.application.id})` : 'missing'}, techtour ${current.techtour ? `exists (id ${current.techtour.id})` : 'missing'}`);
+  const current = { application: byTitle('application'), techtour: byTitle('techtour'), onboarding: byTitle('onboarding') };
+  const state = (title) => (current[title] ? `exists (id ${current[title].id})` : 'missing');
+  log(`forms: application ${state('application')}, techtour ${state('techtour')}, onboarding ${state('onboarding')}`);
   if (dryRun) {
     log('dry run — nothing written. Re-run with --apply to create/update.');
     return current;
@@ -132,6 +161,12 @@ export async function upsertForms({ base, cookie, toEmail, fromEmail, log = cons
   await localise(app, applicationForm('de', { techtourFormId: tt.id }));
   await localise(tt, techtourForm('de', { applicationFormId: app.id }));
   log(`forms upserted: application id ${app.id}, techtour id ${tt.id} (en + de)`);
+
+  // The onboarding form: no cross-references, one pass per language.
+  const ob = await upsertEn('onboarding', onboardingForm('en'));
+  await localise(ob, onboardingForm('de'));
+  log(`form upserted: onboarding id ${ob.id} (en + de)`);
+  await upsertOnboardingSettings(req, ob.id, log);
 
   // TechTour page: only seed when nobody has written content yet.
   const page = await req('GET', '/api/globals/tech-tour?locale=en&depth=0');

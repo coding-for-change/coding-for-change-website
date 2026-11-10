@@ -1,4 +1,5 @@
 import { GlobalConfig } from 'payload';
+import { pageAccess } from '../access/roles';
 
 /**
  * "Partner with us / For NGOs" page content. A dedicated pitch for non-profit
@@ -8,9 +9,7 @@ export const Partner: GlobalConfig = {
   slug: 'partner',
   // Not "Partner …": that is what the admin now calls the sponsors.
   label: 'NGO Page',
-  access: {
-    read: () => true,
-  },
+  access: pageAccess,
   fields: [
     { name: 'title', type: 'text', localized: true, admin: { description: 'Page headline.' } },
     { name: 'intro', type: 'textarea', localized: true, admin: { description: 'Lead paragraph under the headline.' } },

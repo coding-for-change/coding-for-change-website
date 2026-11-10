@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { isAdmin } from '../access/roles';
 
 /**
  * Proof of consent — GDPR Art. 7(1) accountability.
@@ -39,10 +40,10 @@ export const ConsentRecords: CollectionConfig = {
   access: {
     // The public site files records anonymously…
     create: () => true,
-    // …only logged-in admins may read / manage them.
-    read: ({ req: { user } }) => Boolean(user),
-    update: ({ req: { user } }) => Boolean(user),
-    delete: ({ req: { user } }) => Boolean(user),
+    // …only admins may read / manage them.
+    read: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   fields: [
     {

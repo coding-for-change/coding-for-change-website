@@ -1,0 +1,306 @@
+/*
+ * /admin/onboarding – the board's onboarding dashboard.
+ *
+ * Like the mailing tool (components/mailing/mailing.css): Payload's own pieces
+ * where it has them (list header, buttons, checkboxes, banners, the
+ * confirmation modal) and its tokens for the rest. "Done" is the one colour of
+ * our own, green as in the mailing tool.
+ */
+
+.ob {
+  --ob-yes-ink: #116329;
+  --ob-no-ink: var(--theme-elevation-500);
+  --ob-gap: calc(var(--base) * 0.8);
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--ob-gap);
+  padding-bottom: calc(var(--base) * 2);
+}
+
+html[data-theme='dark'] .ob {
+  --ob-yes-ink: #7ee787;
+}
+
+.ob .list-header {
+  margin-top: calc(var(--base) * 0.5);
+}
+
+.ob .custom-view-description {
+  margin-top: calc(var(--base) * 0.3);
+  color: var(--theme-elevation-500);
+}
+
+.ob-section {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--base) * 0.5);
+  padding-top: calc(var(--base) * 0.6);
+  border-top: 1px solid var(--theme-elevation-100);
+}
+
+.ob-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(var(--base) * 0.5);
+}
+
+.ob-section__head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.ob-empty,
+.ob-hint {
+  margin: 0;
+  color: var(--theme-elevation-500);
+}
+
+.ob-hint {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ob-hint--error {
+  display: block;
+  color: var(--theme-error-500);
+}
+
+.ob-muted {
+  color: var(--theme-elevation-500);
+  font-size: 13px;
+}
+
+.ob-mono,
+.ob-input--mono {
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+
+.ob-problems {
+  margin: 0.4em 0 0;
+  padding-left: 1.2em;
+}
+
+/* ---- admitted table ---- */
+
+.ob-table {
+  display: flex;
+  flex-direction: column;
+}
+
+.ob-table__row {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 1.2fr);
+  gap: calc(var(--base) * 0.5);
+  align-items: center;
+  padding: calc(var(--base) * 0.4) calc(var(--base) * 0.5);
+  border-radius: var(--style-radius-s);
+}
+
+.ob-table__row:nth-child(even) {
+  background: var(--theme-elevation-50);
+}
+
+.ob-table__row--head {
+  color: var(--theme-elevation-500);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ob-table__row--problem {
+  outline: 1px solid var(--theme-error-500);
+}
+
+.ob-input {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: var(--style-radius-s);
+  background: var(--theme-input-bg, var(--theme-elevation-0));
+  color: var(--theme-text);
+  font: inherit;
+  font-size: 13px;
+}
+
+.ob-input:focus {
+  outline: none;
+  border-color: var(--theme-elevation-400);
+}
+
+/* ---- member cards ---- */
+
+.ob-cards {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--base) * 0.6);
+}
+
+.ob-card {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--base) * 0.5);
+  padding: calc(var(--base) * 0.7);
+  border: 1px solid var(--theme-elevation-100);
+  border-radius: var(--style-radius-m);
+}
+
+.ob-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: calc(var(--base) * 0.5);
+}
+
+.ob-card__head h3 {
+  margin: 0 0 2px;
+  font-size: 1rem;
+}
+
+.ob-badge {
+  margin-left: 0.5em;
+  padding: 1px 6px;
+  border-radius: var(--style-radius-s);
+  background: var(--theme-elevation-100);
+  font-size: 11px;
+  text-transform: capitalize;
+}
+
+.ob-reissue,
+.ob-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.ob-status {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: calc(var(--base) * 0.4);
+  margin: 0;
+}
+
+.ob-status dt {
+  color: var(--theme-elevation-500);
+  font-size: 12px;
+}
+
+.ob-status dd {
+  margin: 0;
+  font-size: 13px;
+}
+
+.ob-yes {
+  color: var(--ob-yes-ink);
+}
+
+.ob-no {
+  color: var(--ob-no-ink);
+}
+
+.ob-doc {
+  display: block;
+}
+
+.ob-doc a {
+  color: inherit;
+}
+
+.ob-linkbtn {
+  margin: 4px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--theme-text);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ob-linkbtn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.ob-card__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(var(--base) * 1);
+}
+
+@media (max-width: 900px) {
+  .ob-card__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ob-table__row {
+    grid-template-columns: 2rem minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.ob-card__body h4 {
+  margin: 0 0 calc(var(--base) * 0.3);
+  font-size: 13px;
+}
+
+.ob-todo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: calc(var(--base) * 0.3);
+}
+
+.ob-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: calc(var(--base) * 0.4);
+  color: var(--theme-elevation-500);
+  font-size: 12px;
+}
+
+.ob-projects {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin: 0 0 calc(var(--base) * 0.4);
+  padding: 0;
+  border: 0;
+}
+
+.ob-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.ob-done summary {
+  cursor: pointer;
+  padding: calc(var(--base) * 0.3) 0;
+}
+
+.ob-confirm ul {
+  margin: 0 0 0.6em;
+  padding-left: 1.2em;
+}
+
+.ob-confirm p {
+  margin: 0 0 0.4em;
+}
+
+.ob-manual {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+}
+
+.ob-manual .ob-linkbtn,
+.ob-hint .ob-linkbtn {
+  margin: 0;
+  font-size: 12px;
+}

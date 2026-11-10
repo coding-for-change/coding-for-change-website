@@ -64,6 +64,13 @@ import { Partner } from './globals/Partner';
 import { About } from './globals/About';
 import { Homepage } from './globals/Homepage';
 import { TechTour } from './globals/TechTour';
+import { Onboarding } from './globals/Onboarding';
+import { onboardingEndpoints } from './endpoints/onboarding';
+import { onboardingMemberEndpoints } from './endpoints/onboardingMember';
+import { onboardingDocumentEndpoints } from './endpoints/onboardingDocuments';
+import { checkOnboardingAnswers, requireLoginForForm, syncOnboardingSubmission } from './lib/onboarding/sync';
+import { onboardingTables } from './lib/onboarding/tables';
+import { requiresLoginField, submittedByField } from './fields/submittedBy';
 import { brandApplicationEmails } from './lib/applicationEmail';
 import { manageTables } from './lib/manage/tables';
 import { memberTables } from './lib/members';
@@ -71,6 +78,8 @@ import { mailingTables } from './lib/mailing/tables';
 import { hostTables } from './lib/share/tables';
 import { keepMailsOfDuplicates } from './lib/mailing/store';
 import { adminNavPlugin } from './lib/adminNav';
+import { googleAuthEndpoints } from './endpoints/googleAuth';
+import { adminOnlyAccess, fieldIsEditor, isAdmin, isEditor } from './access/roles';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -109,6 +118,16 @@ const withoutWidthSetting = (fields: Field[]): Field[] =>
     })
     .filter((field) => field.type !== 'row' || field.fields.length > 0);
 
+/**
+ * The plugin shows a form's notification emails (recipients, reply-to) to
+ * anyone logged in; with members signed in on the public site that has to be
+ * editors and admins.
+ */
+const emailsForEditors = (field: Field): Field =>
+  'name' in field && field.name === 'emails'
+    ? ({ ...field, access: { ...('access' in field ? field.access : {}), read: fieldIsEditor } } as Field)
+    : field;
+
 /** `withoutWidthSetting` applied to every question block of a form. */
 const questionsWithoutWidth = (field: Field): Field =>
   field.type === 'blocks' && field.name === 'fields'
@@ -127,7 +146,7 @@ export default buildConfig({
   sharp,
   editor: lexicalEditor(),
   collections: [Users, Team, TeamGroups, Projects, Events, FAQ, Sponsors, SponsorTiers, Companies, Media, BlogPost, WaitlistSignups, AnalyticsEvents, ConsentRecords, ApplicantFiles, ShareLinks, ShareAccessLog],
-  globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour],
+  globals: [SiteConfig, Membership, Legal, Partner, About, Homepage, TechTour, Onboarding],
   // Admin-only analytics reporting: JSON aggregates for the /admin/analytics
   // dashboard, plus CSV exports (campaign funnel, raw events, signups) and
   // the bulk "email the waitlist" sender (individual mails via Resend).
@@ -138,7 +157,12 @@ export default buildConfig({
   // links (/api/media-upload/:token) the MCP tool hands out – see
   // endpoints/mediaUpload.ts – and the CV download links of
   // endpoints/applicantFileLink.ts.
-  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
+  // Google sign-in (/api/auth/google…) – see endpoints/googleAuth.ts. The
+  // board's onboarding dashboard (/api/onboarding/admin/…, admins only) – see
+  // endpoints/onboarding.ts. The member's own page (/api/onboarding/me…,
+  // /api/onboarding/photo, any signed-in account, always their own) – see
+  // endpoints/onboardingMember.ts.
+  endpoints: [...googleAuthEndpoints, ...onboardingEndpoints, ...onboardingMemberEndpoints, ...onboardingDocumentEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -195,7 +219,10 @@ export default buildConfig({
       // `withoutWidthSetting`), and "redirect to a page after submit" —
       // CmsForm always shows the confirmation message, so picking Redirect
       // leaves a form that appears to do nothing once it is sent.
+      // Editors keep the form definitions; reading them stays public, the
+      // site renders its forms from them.
       formOverrides: {
+        access: { read: () => true, create: isEditor, update: isEditor, delete: isEditor },
         fields: ({ defaultFields }) =>
           defaultFields
             .filter(
@@ -215,7 +242,10 @@ export default buildConfig({
               }
               return field;
             })
-            .map(questionsWithoutWidth),
+            .map(questionsWithoutWidth)
+            .map(emailsForEditors)
+            // The onboarding form: members only, answers tied to their account.
+            .concat(requiresLoginField),
       },
       // Submissions get: the reviewer's status + notes (sidebar), the answers
       // (read-only in the admin — what the applicant sent stays as sent), the
@@ -238,17 +268,27 @@ export default buildConfig({
           submissionSourceField,
           hostDecisionsField,
           attributionField,
+          // The signed-in account it came from (fields/submittedBy.ts).
+          submittedByField,
         ],
+        // A form with "Requires sign-in" takes members only, and the
+        // onboarding form's answers go to the member's account and profile
+        // (lib/onboarding/sync.ts).
         hooks: {
-          beforeOperation: [rejectHoneypot],
-          beforeChange: [recordSubmission],
+          beforeOperation: [rejectHoneypot, requireLoginForForm],
+          beforeChange: [recordSubmission, checkOnboardingAnswers],
+          afterChange: [syncOnboardingSubmission],
           // A mail sent to someone who applied twice stays recorded when the duplicate goes (lib/mailing/store.ts).
           beforeDelete: [keepMailsOfDuplicates('submission')],
           afterDelete: [deleteSubmissionFiles],
         },
-        // The plugin forbids updates; admins need them for the review fields.
+        // Anyone may send a form (the plugin's `create`); only admins read,
+        // review or delete what came in. The plugin forbids updates; admins
+        // need them for the review fields.
         access: {
-          update: ({ req: { user } }) => Boolean(user),
+          read: isAdmin,
+          update: isAdmin,
+          delete: isAdmin,
         },
         admin: {
           defaultColumns: ['form', 'reviewStatus', 'reviewScore', 'createdAt'],
@@ -311,6 +351,9 @@ export default buildConfig({
       // stages, TechTour marks, analytics – as the key's user, plus CV links.
       mcp: { tools: [mediaUploadTool, ...adminTools] },
       overrideAuth: rememberMcpKey,
+      // A key acts with its user's rights, so making or reading keys is for
+      // admins only (the plugin leaves the collection open to any login).
+      overrideApiKeyCollection: (collection) => ({ ...collection, access: { ...collection.access, ...adminOnlyAccess } }),
     }),
     // Last, so it also reaches the collections the two plugins above add:
     // every collection and global gets the sidebar section it sits in as
@@ -326,7 +369,8 @@ export default buildConfig({
     // host ratings and waitlist – plain tables beside the collections, so
     // that no existing table gets a column (lib/manage/tables.ts,
     // lib/members.ts, lib/mailing/tables.ts, lib/share/tables.ts).
-    afterSchemaInit: [manageTables, memberTables, mailingTables, hostTables, stageTables],
+    // The onboarding's to-do ticks and DocuSeal documents too (lib/onboarding/tables.ts).
+    afterSchemaInit: [manageTables, memberTables, mailingTables, hostTables, stageTables, onboardingTables],
     pool: {
       connectionString:
         process.env.DATABASE_URL ||
@@ -367,7 +411,19 @@ export default buildConfig({
           path: '/mailing',
           exact: true,
         },
+        // New members from "admitted" to done: creating their accounts with
+        // the Google CSV and password sheets, then their progress, the board's
+        // to-dos and their public profile (components/onboarding/). Guards
+        // auth itself.
+        onboarding: {
+          Component: '/components/onboarding/OnboardingView#OnboardingView',
+          path: '/onboarding',
+          exact: true,
+        },
       },
+      // "Sign in with Google" above the password form, shown only when Google
+      // sign-in is configured (components/auth/GoogleLoginButton.tsx).
+      beforeLogin: ['/components/auth/GoogleLoginButton#GoogleLoginButton'],
       // The sidebar, with the views above inside its sections and an icon
       // per entry – sections and order in lib/adminNav.ts.
       Nav: '/components/nav/Nav#Nav',

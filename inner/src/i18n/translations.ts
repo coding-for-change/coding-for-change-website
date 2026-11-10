@@ -213,6 +213,8 @@ export interface Translations {
         charCount: string;
         uploadChoose: string; uploadHint: string; uploading: string; uploadRemove: string;
         uploadTooLarge: string; uploadWrongType: string; uploadFailed: string;
+        /** A photo question (`accept: image`, the onboarding form). */
+        photoChoose: string; photoHint: string; photoWrongType: string;
     };
     /**
      * Munich TechTour page (/techtour). The page's own wording lives here and
@@ -293,6 +295,34 @@ export interface Translations {
      * evening, linked from the to-do on /techtour/manage. Only the page's own
      * lines live here; the agreement itself is data/mckinseyNda.ts.
      */
+    /**
+     * /onboarding: a new member's own page behind Google sign-in, with the
+     * form, their to-dos and the documents. {email} is an address, {date} a day.
+     */
+    onboarding: {
+        liTitle: string; liOptional: string; liPostTitle: string; liLead: string; liName: string;
+        liLine1: string; liLine1Default: string; liLine2: string; liLine2Placeholder: string;
+        liPhotoChoose: string; liPhotoChange: string; liDownloadPost: string; liPhotoNote: string;
+        liFailed: string; liBannerTitle: string; liBannerText: string; liDownloadBanner: string;
+        hello: string; statProgress: string; statSteps: string; statSent: string; statOpen: string;
+        statOn: string; statFormHint: string; statLeft: string; statAllDone: string;
+        kicker: string; title: string; signedInAs: string; signOut: string; signingOut: string;
+        signedOutTitle: string; signedOutLead: string; signIn: string; signInNote: string;
+        unavailable: string;
+        formTitle: string; formLead: string; formSentOn: string; formChange: string; formCancel: string;
+        formThanks: string;
+        githubInvalid: string; linkedinInvalid: string;
+        profileDraft: string; profileLive: string;
+        todosTitle: string; todosLead: string; todoDoneOn: string; openLink: string; todoError: string;
+        docsTitle: string; docsLead: string; docsHint: string;
+        signStart: string; signContinue: string; signAgain: string; signOpening: string;
+        signError: string; signUnavailable: string; signBlocked: string; signOpenLink: string;
+        docStatus: {
+            not_started: string; pending: string; opened: string; completed: string;
+            declined: string; expired: string;
+        };
+        doneTitle: string; doneText: string; contact: string;
+    };
     techtourNda: {
         kicker: string; title: string; lead: string; versions: string; german: string; english: string;
     };
@@ -706,6 +736,9 @@ const en: Translations = {
         uploadTooLarge: 'That file is too large. The limit is 5 MB.',
         uploadWrongType: 'Please upload a PDF.',
         uploadFailed: 'The upload failed. Please try again.',
+        photoChoose: 'Choose photo',
+        photoHint: 'JPEG, PNG or WebP, max. 5 MB',
+        photoWrongType: 'Please upload a photo as JPEG, PNG, WebP or GIF.',
     },
     techtour: {
         statusOpen: 'Registration open',
@@ -789,6 +822,69 @@ const en: Translations = {
         invalid: 'This link doesn’t work. Please use the link from our email, or write to us at {email}.',
         sample: 'This is the sample link from a test mail – each recipient sees their own registration here.',
         error: 'That didn’t work. Please try again, or write to us at {email}.',
+    },
+    onboarding: {
+        liTitle: 'Share it on LinkedIn', liOptional: 'Optional', liPostTitle: 'Your new joiner post',
+        liLead: 'Tell your network you joined. The picture is made here with your photo and name; download it and add it to a LinkedIn post.',
+        liName: 'Name', liLine1: 'Role', liLine1Default: 'New member at Coding for Change',
+        liLine2: 'Studies (optional)', liLine2Placeholder: 'e.g. M.Sc. Informatics, TUM',
+        liPhotoChoose: 'Choose a photo', liPhotoChange: 'Use another photo', liDownloadPost: 'Download post',
+        liPhotoNote: 'The picture is made in your browser. A photo you pick here is not uploaded.',
+        liFailed: 'The template could not be loaded. Please reload the page.',
+        liBannerTitle: 'Profile banner', liBannerText: 'Set it as the background picture of your LinkedIn profile.',
+        liDownloadBanner: 'Download banner',
+        hello: 'Welcome, {name}', statProgress: 'Progress', statSteps: '{done} of {total} steps done',
+        statSent: 'Sent', statOpen: 'Open', statOn: 'on {date}', statFormHint: 'Fill in the form below',
+        statLeft: '{n} still open', statAllDone: 'All done',
+        kicker: 'Coding for Change · New members',
+        title: 'Welcome on board',
+        signedInAs: 'Signed in as {email}',
+        signOut: 'Sign out',
+        signingOut: 'Signing out…',
+        signedOutTitle: 'Your onboarding',
+        signedOutLead:
+            'This page is for new members of Coding for Change. Sign in with your new @codingforchange.com account to see your form, your to-dos and your documents.',
+        signIn: 'Sign in with Google',
+        signInNote: 'Your address and first password are on the sheet the board gave you. Trouble signing in? Write to {email}.',
+        unavailable: 'Your onboarding page can’t be loaded right now. Please try again in a moment, or write to us at {email}.',
+        formTitle: 'About you',
+        formLead:
+            'This goes to the board. If you agree, it also becomes your profile on our Team page, once the board has looked at it.',
+        formSentOn: 'Sent on {date}. Send it again any time to change your details.',
+        formChange: 'Change my details',
+        formCancel: 'Cancel',
+        formThanks: 'Thank you, the board has your details.',
+        githubInvalid: 'That is not a GitHub username. Use letters, digits and single hyphens, for example octocat.',
+        linkedinInvalid: 'Please paste the link to your LinkedIn profile, for example https://www.linkedin.com/in/your-name.',
+        profileDraft: 'Your profile is waiting for the board. It appears on the Team page once they publish it.',
+        profileLive: 'Your profile is on the Team page.',
+        todosTitle: 'Your to-dos',
+        todosLead: 'Tick each one once it is done. You can take a tick back.',
+        todoDoneOn: 'Done on {date}',
+        openLink: 'Open link',
+        todoError: 'That did not save. Please try again.',
+        docsTitle: 'Your documents',
+        docsLead: 'Please read and sign these.',
+        docsHint: 'Signing opens our signing service in a new tab. When you are done, come back to this tab: it updates by itself.',
+        signStart: 'Read and sign',
+        signContinue: 'Continue signing',
+        signAgain: 'Sign again',
+        signOpening: 'Opening…',
+        signError: 'The signing page could not be opened. Please try again in a few minutes.',
+        signUnavailable: 'Signing is not available at the moment. Please try again later or write to us at {email}.',
+        signBlocked: 'Your browser did not open a new tab.',
+        signOpenLink: 'Open the signing page',
+        docStatus: {
+            not_started: 'Not signed yet',
+            pending: 'Started',
+            opened: 'Opened',
+            completed: 'Signed on {date}',
+            declined: 'Declined',
+            expired: 'Expired',
+        },
+        doneTitle: 'All done on your side. Thank you!',
+        doneText: 'The board still sets up a few things for you and will be in touch.',
+        contact: 'Questions? Write to us at {email}.',
     },
     techtourNda: {
         kicker: 'Tech Tour · McKinsey QuantumBlack',
@@ -1220,6 +1316,9 @@ const de: Translations = {
         uploadTooLarge: 'Die Datei ist zu groß. Das Limit sind 5 MB.',
         uploadWrongType: 'Bitte lade ein PDF hoch.',
         uploadFailed: 'Der Upload ist fehlgeschlagen. Bitte versuche es erneut.',
+        photoChoose: 'Foto auswählen',
+        photoHint: 'JPEG, PNG oder WebP, max. 5 MB',
+        photoWrongType: 'Bitte lade ein Foto als JPEG, PNG, WebP oder GIF hoch.',
     },
     techtour: {
         statusOpen: 'Anmeldung offen',
@@ -1303,6 +1402,69 @@ const de: Translations = {
         invalid: 'Dieser Link funktioniert nicht. Nutz bitte den Link aus unserer E-Mail oder schreib uns an {email}.',
         sample: 'Das ist der Beispiel-Link aus einer Test-Mail – alle Empfänger:innen sehen hier ihre eigene Anmeldung.',
         error: 'Das hat nicht geklappt. Versuch es bitte noch einmal oder schreib uns an {email}.',
+    },
+    onboarding: {
+        liTitle: 'Auf LinkedIn teilen', liOptional: 'Optional', liPostTitle: 'Dein New-Joiner-Post',
+        liLead: 'Erzähl deinem Netzwerk, dass du dabei bist. Das Bild entsteht hier mit deinem Foto und Namen; lade es herunter und häng es an einen LinkedIn-Post.',
+        liName: 'Name', liLine1: 'Rolle', liLine1Default: 'New member at Coding for Change',
+        liLine2: 'Studium (optional)', liLine2Placeholder: 'z. B. M.Sc. Informatics, TUM',
+        liPhotoChoose: 'Foto auswählen', liPhotoChange: 'Anderes Foto verwenden', liDownloadPost: 'Post herunterladen',
+        liPhotoNote: 'Das Bild entsteht in deinem Browser. Ein hier gewähltes Foto wird nicht hochgeladen.',
+        liFailed: 'Die Vorlage konnte nicht geladen werden. Bitte lade die Seite neu.',
+        liBannerTitle: 'Profilbanner', liBannerText: 'Setz es als Hintergrundbild deines LinkedIn-Profils.',
+        liDownloadBanner: 'Banner herunterladen',
+        hello: 'Willkommen, {name}', statProgress: 'Fortschritt', statSteps: '{done} von {total} Schritten erledigt',
+        statSent: 'Gesendet', statOpen: 'Offen', statOn: 'am {date}', statFormHint: 'Fülle das Formular unten aus',
+        statLeft: 'noch {n} offen', statAllDone: 'Alles erledigt',
+        kicker: 'Coding for Change · Neue Mitglieder',
+        title: 'Willkommen an Bord',
+        signedInAs: 'Angemeldet als {email}',
+        signOut: 'Abmelden',
+        signingOut: 'Abmelden…',
+        signedOutTitle: 'Dein Onboarding',
+        signedOutLead:
+            'Diese Seite ist für neue Mitglieder von Coding for Change. Melde dich mit deinem neuen @codingforchange.com-Konto an, dann siehst du dein Formular, deine To-dos und deine Dokumente.',
+        signIn: 'Mit Google anmelden',
+        signInNote: 'Deine Adresse und dein erstes Passwort stehen auf dem Zettel vom Vorstand. Probleme bei der Anmeldung? Schreib an {email}.',
+        unavailable: 'Deine Onboarding-Seite lässt sich gerade nicht laden. Bitte versuch es gleich noch einmal oder schreib uns an {email}.',
+        formTitle: 'Über dich',
+        formLead:
+            'Das geht an den Vorstand. Wenn du zustimmst, wird daraus auch dein Profil auf unserer Team-Seite, sobald der Vorstand es angesehen hat.',
+        formSentOn: 'Gesendet am {date}. Du kannst es jederzeit noch einmal senden, um deine Angaben zu ändern.',
+        formChange: 'Angaben ändern',
+        formCancel: 'Abbrechen',
+        formThanks: 'Danke, der Vorstand hat deine Angaben.',
+        githubInvalid: 'Das ist kein GitHub-Benutzername. Erlaubt sind Buchstaben, Ziffern und einzelne Bindestriche, zum Beispiel octocat.',
+        linkedinInvalid: 'Bitte füge den Link zu deinem LinkedIn-Profil ein, zum Beispiel https://www.linkedin.com/in/dein-name.',
+        profileDraft: 'Dein Profil wartet auf den Vorstand. Es erscheint auf der Team-Seite, sobald er es veröffentlicht.',
+        profileLive: 'Dein Profil ist auf der Team-Seite.',
+        todosTitle: 'Deine To-dos',
+        todosLead: 'Hak jedes ab, sobald es erledigt ist. Du kannst einen Haken auch wieder entfernen.',
+        todoDoneOn: 'Erledigt am {date}',
+        openLink: 'Link öffnen',
+        todoError: 'Das wurde nicht gespeichert. Bitte versuch es noch einmal.',
+        docsTitle: 'Deine Dokumente',
+        docsLead: 'Bitte lies und unterschreib diese.',
+        docsHint: 'Zum Unterschreiben öffnet sich unser Signatur-Dienst in einem neuen Tab. Wenn du fertig bist, komm zu diesem Tab zurück: Er aktualisiert sich von selbst.',
+        signStart: 'Lesen und unterschreiben',
+        signContinue: 'Weiter unterschreiben',
+        signAgain: 'Noch einmal unterschreiben',
+        signOpening: 'Wird geöffnet…',
+        signError: 'Die Seite zum Unterschreiben ließ sich nicht öffnen. Bitte versuch es in ein paar Minuten noch einmal.',
+        signUnavailable: 'Unterschreiben geht gerade nicht. Bitte versuch es später noch einmal oder schreib uns an {email}.',
+        signBlocked: 'Dein Browser hat keinen neuen Tab geöffnet.',
+        signOpenLink: 'Seite zum Unterschreiben öffnen',
+        docStatus: {
+            not_started: 'Noch nicht unterschrieben',
+            pending: 'Begonnen',
+            opened: 'Geöffnet',
+            completed: 'Unterschrieben am {date}',
+            declined: 'Abgelehnt',
+            expired: 'Abgelaufen',
+        },
+        doneTitle: 'Auf deiner Seite ist alles erledigt. Danke!',
+        doneText: 'Der Vorstand richtet noch ein paar Dinge für dich ein und meldet sich.',
+        contact: 'Fragen? Schreib uns an {email}.',
     },
     techtourNda: {
         kicker: 'Tech Tour · McKinsey QuantumBlack',

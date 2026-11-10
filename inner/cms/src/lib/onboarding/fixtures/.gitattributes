@@ -1,0 +1,2 @@
+# The Google template byte for byte (CRLF): googleCsv.test.ts compares against it.
+*.csv -text
