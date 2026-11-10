@@ -108,7 +108,14 @@ function LocaleSplit({ locales }: { locales: AnalyticsSummary['locales'] }) {
   );
 }
 
-export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: string }) {
+export function AnalyticsDashboardClient({
+  apiRoute = '/api',
+  canExportSignups = false,
+}: {
+  apiRoute?: string;
+  /** The signups CSV carries addresses: admins only (endpoints/analyticsExport.ts). */
+  canExportSignups?: boolean;
+}) {
   const [days, setDays] = useState(30);
   // A custom from–to window (inclusive) overrides the preset once applied.
   const [custom, setCustom] = useState<{ from: string; to: string } | null>(null);
@@ -558,8 +565,13 @@ export function AnalyticsDashboardClient({ apiRoute = '/api' }: { apiRoute?: str
             <span className="cfc-foot__links">
               Export CSV:{' '}
               <a href={`${apiRoute}/analytics/campaigns.csv${csvQuery}`}>campaigns</a> ·{' '}
-              <a href={`${apiRoute}/analytics/events.csv${csvQuery}`}>events</a> ·{' '}
-              <a href={`${apiRoute}/analytics/signups.csv${csvQuery}`}>signups</a>
+              <a href={`${apiRoute}/analytics/events.csv${csvQuery}`}>events</a>
+              {canExportSignups && (
+                <>
+                  {' · '}
+                  <a href={`${apiRoute}/analytics/signups.csv${csvQuery}`}>signups</a>
+                </>
+              )}
             </span>
           </footer>
         </div>

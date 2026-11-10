@@ -1,5 +1,5 @@
 import type { Endpoint, PayloadRequest } from 'payload';
-import { getPool, requireAdmin } from './util';
+import { getPool, requireAdmin, requireEditor } from './util';
 
 /**
  * Admin-only CSV export endpoints, mounted at the API root:
@@ -61,7 +61,7 @@ const campaignsCsv: Endpoint = {
   path: '/analytics/campaigns.csv',
   method: 'get',
   handler: async (req) => {
-    const denied = requireAdmin(req);
+    const denied = requireEditor(req);
     if (denied) return denied;
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });
@@ -103,7 +103,7 @@ const eventsCsv: Endpoint = {
   path: '/analytics/events.csv',
   method: 'get',
   handler: async (req) => {
-    const denied = requireAdmin(req);
+    const denied = requireEditor(req);
     if (denied) return denied;
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });
@@ -135,6 +135,7 @@ const signupsCsv: Endpoint = {
   path: '/analytics/signups.csv',
   method: 'get',
   handler: async (req) => {
+    // Addresses, not counts: the waitlist is admin-only, so is its export.
     const denied = requireAdmin(req);
     if (denied) return denied;
     const pool = getPool(req);

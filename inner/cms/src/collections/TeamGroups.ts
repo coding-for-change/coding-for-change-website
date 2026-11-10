@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { contentAccess } from '../access/roles';
 
 /**
  * Teams (groups) shown as sections on the Team page — e.g. Engineering, Design,
@@ -16,9 +17,7 @@ export const TeamGroups: CollectionConfig = {
     description:
       'Team sections for the Team page (e.g. Engineering, Design). Assign people to a team under each person in "Team Members".',
   },
-  access: {
-    read: () => true,
-  },
+  access: contentAccess,
   fields: [
     { name: 'name', type: 'text', required: true, localized: true },
     {

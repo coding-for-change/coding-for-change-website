@@ -1,4 +1,5 @@
 import { GlobalConfig } from 'payload';
+import { pageAccess } from '../access/roles';
 
 /**
  * The Munich TechTour page (/techtour): a week of company visits where we
@@ -29,9 +30,7 @@ const lastEvening = (data: unknown): Date | null => {
 export const TechTour: GlobalConfig = {
   slug: 'tech-tour',
   label: 'TechTour Page',
-  access: {
-    read: () => true,
-  },
+  access: pageAccess,
   admin: {
     description:
       'The visits and the registration settings for the Munich TechTour page. The registration form is the form titled "techtour" under Forms; the page\'s headline and section wording are part of the design, not content.',

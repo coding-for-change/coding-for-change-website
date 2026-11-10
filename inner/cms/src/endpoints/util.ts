@@ -1,9 +1,18 @@
 import type { Payload, PayloadRequest } from 'payload';
+import { requireRole } from '../access/roles';
 
-/** 401 unless a logged-in admin user is on the request; null when allowed. */
+/**
+ * 401 without a login, 403 unless it is a `users` account with role admin;
+ * null when allowed. The MCP admin tools pass the key's user, so a key works
+ * here exactly when its user is an admin (access/roles.ts).
+ */
 export function requireAdmin(req: PayloadRequest): Response | null {
-  if (!req.user) return new Response('Unauthorized', { status: 401 });
-  return null;
+  return requireRole(req, 'admin');
+}
+
+/** The same for editors and admins: the analytics endpoints. */
+export function requireEditor(req: PayloadRequest): Response | null {
+  return requireRole(req, 'editor');
 }
 
 export type PgPool = {

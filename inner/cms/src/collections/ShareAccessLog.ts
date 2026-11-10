@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { isAdmin } from '../access/roles';
 
 /**
  * What happened on the host share links (collections/ShareLinks.ts): who
@@ -34,10 +35,10 @@ export const ShareAccessLog: CollectionConfig = {
       'Every sign-in, CV opened, decision and rating on a host share link. Written by the link itself; deleted together with the link.',
   },
   access: {
-    read: ({ req: { user } }) => Boolean(user),
+    read: isAdmin,
     create: () => false,
     update: () => false,
-    delete: ({ req: { user } }) => Boolean(user),
+    delete: isAdmin,
   },
   fields: [
     { name: 'link', type: 'relationship', relationTo: 'share-links', index: true },

@@ -27,6 +27,7 @@ import { ItalicFeatureClient as ItalicFeatureClient_e70f5e05f09f93e00b997edb1ef0
 import { ExportSubmissions as ExportSubmissions_6ea02889351cc84afeb57e6c6b8e6635 } from '../../../components/submissions/ExportSubmissions'
 import { EveningDistribution as EveningDistribution_ae2905e4638c02173999e699041afdbb } from '../../../components/techtour/EveningDistribution'
 import { Nav as Nav_2bbd50066e558bff01afc6b2e7fff4f6 } from '../../../components/nav/Nav'
+import { GoogleLoginButton as GoogleLoginButton_e18c40a699dec6b9fb9e7fbcabc3035c } from '../../../components/auth/GoogleLoginButton'
 import { AnalyticsDashboardView as AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93 } from '../../../components/analytics/AnalyticsDashboardView'
 import { ReviewView as ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be } from '../../../components/review/ReviewView'
 import { MailingView as MailingView_4688fc1704f49ef061705dd53f31d2ab } from '../../../components/mailing/MailingView'
@@ -62,6 +63,7 @@ export const importMap = {
   "/components/submissions/ExportSubmissions#ExportSubmissions": ExportSubmissions_6ea02889351cc84afeb57e6c6b8e6635,
   "/components/techtour/EveningDistribution#EveningDistribution": EveningDistribution_ae2905e4638c02173999e699041afdbb,
   "/components/nav/Nav#Nav": Nav_2bbd50066e558bff01afc6b2e7fff4f6,
+  "/components/auth/GoogleLoginButton#GoogleLoginButton": GoogleLoginButton_e18c40a699dec6b9fb9e7fbcabc3035c,
   "/components/analytics/AnalyticsDashboardView#AnalyticsDashboardView": AnalyticsDashboardView_437bf7eb4f9f75c32e7168e0b4412e93,
   "/components/review/ReviewView#ReviewView": ReviewView_c7d0bbff6e75229ec34a15cf7bbdc8be,
   "/components/mailing/MailingView#MailingView": MailingView_4688fc1704f49ef061705dd53f31d2ab,

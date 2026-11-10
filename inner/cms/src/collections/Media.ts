@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { contentAccess } from '../access/roles';
 
 /**
  * Every image uploaded in the admin is stored ready for the web: the original
@@ -14,9 +15,7 @@ import { CollectionConfig } from 'payload';
  */
 export const Media: CollectionConfig = {
   slug: 'media',
-  access: {
-    read: () => true,
-  },
+  access: contentAccess,
   upload: {
     // HEIC (iPhone camera files) is deliberately left out: the libvips bundled
     // with sharp cannot decode it, so it would be stored untouched and most

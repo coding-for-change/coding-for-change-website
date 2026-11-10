@@ -1237,6 +1237,10 @@ export interface ApplicantFile {
  */
 export interface User {
   id: number;
+  /**
+   * Member: the onboarding page only. Editor: website content, forms, TechTour page and analytics. Admin: everything.
+   */
+  role: 'member' | 'editor' | 'admin';
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -2500,6 +2504,7 @@ export interface ApplicantFilesSelect<T extends boolean = true> {
  * via the `definition` "users_select".
  */
 export interface UsersSelect<T extends boolean = true> {
+  role?: T;
   updatedAt?: T;
   createdAt?: T;
   email?: T;

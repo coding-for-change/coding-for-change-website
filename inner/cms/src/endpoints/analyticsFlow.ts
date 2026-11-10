@@ -1,6 +1,6 @@
 import type { Endpoint } from 'payload';
 import { BASE_CTE, IN_CURRENT, SOURCE_EXPR, num, rangeParams, readRange } from './analyticsSummary';
-import { getPool, requireAdmin } from './util';
+import { getPool, requireEditor } from './util';
 
 /**
  * GET /api/analytics/flow?days=30 (or ?from=YYYY-MM-DD&to=YYYY-MM-DD)
@@ -77,7 +77,7 @@ export const analyticsFlow: Endpoint = {
   path: '/analytics/flow',
   method: 'get',
   handler: async (req) => {
-    const denied = requireAdmin(req);
+    const denied = requireEditor(req);
     if (denied) return denied;
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });

@@ -71,6 +71,8 @@ import { mailingTables } from './lib/mailing/tables';
 import { hostTables } from './lib/share/tables';
 import { keepMailsOfDuplicates } from './lib/mailing/store';
 import { adminNavPlugin } from './lib/adminNav';
+import { googleAuthEndpoints } from './endpoints/googleAuth';
+import { adminOnlyAccess, fieldIsEditor, isAdmin, isEditor } from './access/roles';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -109,6 +111,16 @@ const withoutWidthSetting = (fields: Field[]): Field[] =>
     })
     .filter((field) => field.type !== 'row' || field.fields.length > 0);
 
+/**
+ * The plugin shows a form's notification emails (recipients, reply-to) to
+ * anyone logged in; with members signed in on the public site that has to be
+ * editors and admins.
+ */
+const emailsForEditors = (field: Field): Field =>
+  'name' in field && field.name === 'emails'
+    ? ({ ...field, access: { ...('access' in field ? field.access : {}), read: fieldIsEditor } } as Field)
+    : field;
+
 /** `withoutWidthSetting` applied to every question block of a form. */
 const questionsWithoutWidth = (field: Field): Field =>
   field.type === 'blocks' && field.name === 'fields'
@@ -138,7 +150,8 @@ export default buildConfig({
   // links (/api/media-upload/:token) the MCP tool hands out – see
   // endpoints/mediaUpload.ts – and the CV download links of
   // endpoints/applicantFileLink.ts.
-  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
+  // Google sign-in (/api/auth/google…) – see endpoints/googleAuth.ts.
+  endpoints: [...googleAuthEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -195,7 +208,10 @@ export default buildConfig({
       // `withoutWidthSetting`), and "redirect to a page after submit" —
       // CmsForm always shows the confirmation message, so picking Redirect
       // leaves a form that appears to do nothing once it is sent.
+      // Editors keep the form definitions; reading them stays public, the
+      // site renders its forms from them.
       formOverrides: {
+        access: { read: () => true, create: isEditor, update: isEditor, delete: isEditor },
         fields: ({ defaultFields }) =>
           defaultFields
             .filter(
@@ -215,7 +231,8 @@ export default buildConfig({
               }
               return field;
             })
-            .map(questionsWithoutWidth),
+            .map(questionsWithoutWidth)
+            .map(emailsForEditors),
       },
       // Submissions get: the reviewer's status + notes (sidebar), the answers
       // (read-only in the admin — what the applicant sent stays as sent), the
@@ -246,9 +263,13 @@ export default buildConfig({
           beforeDelete: [keepMailsOfDuplicates('submission')],
           afterDelete: [deleteSubmissionFiles],
         },
-        // The plugin forbids updates; admins need them for the review fields.
+        // Anyone may send a form (the plugin's `create`); only admins read,
+        // review or delete what came in. The plugin forbids updates; admins
+        // need them for the review fields.
         access: {
-          update: ({ req: { user } }) => Boolean(user),
+          read: isAdmin,
+          update: isAdmin,
+          delete: isAdmin,
         },
         admin: {
           defaultColumns: ['form', 'reviewStatus', 'reviewScore', 'createdAt'],
@@ -311,6 +332,9 @@ export default buildConfig({
       // stages, TechTour marks, analytics – as the key's user, plus CV links.
       mcp: { tools: [mediaUploadTool, ...adminTools] },
       overrideAuth: rememberMcpKey,
+      // A key acts with its user's rights, so making or reading keys is for
+      // admins only (the plugin leaves the collection open to any login).
+      overrideApiKeyCollection: (collection) => ({ ...collection, access: { ...collection.access, ...adminOnlyAccess } }),
     }),
     // Last, so it also reaches the collections the two plugins above add:
     // every collection and global gets the sidebar section it sits in as
@@ -368,6 +392,9 @@ export default buildConfig({
           exact: true,
         },
       },
+      // "Sign in with Google" above the password form, shown only when Google
+      // sign-in is configured (components/auth/GoogleLoginButton.tsx).
+      beforeLogin: ['/components/auth/GoogleLoginButton#GoogleLoginButton'],
       // The sidebar, with the views above inside its sections and an icon
       // per entry – sections and order in lib/adminNav.ts.
       Nav: '/components/nav/Nav#Nav',

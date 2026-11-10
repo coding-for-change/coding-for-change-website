@@ -49,6 +49,7 @@ pnpm install     # has pnpm-lock.yaml
 pnpm dev         # Next.js dev server
 pnpm build       # production build
 pnpm generate:types  # generate Payload TypeScript types
+pnpm test            # Vitest (pure logic: roles, Google sign-in checks)
 ```
 
 ### Full stack (Docker)
@@ -87,6 +88,19 @@ Hard rules / gotchas:
 - **Never enable `push` in production**, and never "fix" a schema drift by toggling it — `push` can drop columns non-interactively and destroy data.
 - `inner/cms/package.json` **must keep `"type": "module"`** — `payload migrate` loads the TS config via tsx and without it the extensionless `./collections/*` imports fail with `ERR_MODULE_NOT_FOUND` (the boot crash fixed in `9dcc818`). `next build`/`next start` bundle the config so they hide this; only the migrate CLI exposes it.
 - To repair a DB that already drifted (has the old schema, no matching migrations): restore a backup into a local Postgres, write a transactional reconcile script that creates the missing tables, copies data, drops old columns, and records the baseline migration as applied; diff the result against a fresh `pnpm payload migrate` (`pg_dump --schema-only`) to prove it matches, and boot the CMS against it before touching prod. `scripts/prod-localize-reconcile.sql` is the worked example.
+
+## CMS roles and sign-in
+
+`users.role` is `member` | `editor` | `admin` (helpers and the access sets in `inner/cms/src/access/roles.ts`):
+- **member**: Google sign-in for the onboarding page only; `users.access.admin` keeps them out of the admin panel.
+- **editor**: website content, page globals incl. `tech-tour`, `forms` (definitions, not submissions), analytics (not the signups CSV, which has addresses).
+- **admin**: everything else: submissions, CVs, waitlist, consent records, share links, users, MCP API keys, `/admin/review`, `/admin/mailing`.
+
+Rules when adding things:
+- A new collection/global needs explicit access from `access/roles.ts`. Never `Boolean(user)`: members now have sessions on the public site, so "logged in" no longer means "staff".
+- Custom endpoints use `requireAdmin` / `requireEditor` (`endpoints/util.ts`); custom admin views check the role themselves (root views skip Payload's gate) and get a `role` in `lib/adminNav.ts`.
+- MCP keys act as their user (`call()` in `lib/mcpAdmin.ts`); a key whose user is not admin cannot use the admin tools. A raw `payload-mcp-api-keys` login has no role at all.
+- Password login is refused for non-admins (`beforeLogin` in `collections/Users.ts`); everyone else uses Google (`endpoints/googleAuth.ts`, env `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_ALLOWED_DOMAIN`, `ADMIN_EMAILS`). The callback issues a native Payload session (`lib/payloadSession.ts`).
 
 ## Consent — REQUIRED process when adding anything third-party
 

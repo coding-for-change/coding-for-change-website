@@ -52,8 +52,12 @@ export type NavIconName =
 export type NavItem =
   | { collection: string; icon: NavIconName }
   | { global: string; icon: NavIconName }
-  /** One of our own admin views (payload.config.ts → admin.components.views). */
-  | { view: `/${string}`; query?: Record<string, string>; label: string; icon: NavIconName };
+  /**
+   * One of our own admin views (payload.config.ts → admin.components.views).
+   * `role` is the least role that sees it, the same the view itself checks
+   * (access/roles.ts); collections and globals follow their own access.
+   */
+  | { view: `/${string}`; query?: Record<string, string>; label: string; icon: NavIconName; role: 'editor' | 'admin' };
 
 export type NavSection = { label: string; items: NavItem[] };
 
@@ -61,16 +65,16 @@ export const ADMIN_NAV: NavSection[] = [
   {
     label: 'Applications',
     items: [
-      { view: '/review', query: { form: 'application' }, label: 'Review applications', icon: 'ClipboardCheck' },
+      { view: '/review', query: { form: 'application' }, label: 'Review applications', icon: 'ClipboardCheck', role: 'admin' },
       { collection: 'waitlist-signups', icon: 'Hourglass' },
-      { view: '/mailing', label: 'Mailing', icon: 'Mail' },
+      { view: '/mailing', label: 'Mailing', icon: 'Mail', role: 'admin' },
     ],
   },
   {
     label: 'Event Platform',
     items: [
       { global: 'tech-tour', icon: 'MapPinned' },
-      { view: '/review', query: { form: 'techtour' }, label: 'TechTour registrations', icon: 'Ticket' },
+      { view: '/review', query: { form: 'techtour' }, label: 'TechTour registrations', icon: 'Ticket', role: 'admin' },
       { collection: 'share-links', icon: 'Link2' },
       { collection: 'share-access-log', icon: 'Activity' },
     ],
@@ -78,7 +82,7 @@ export const ADMIN_NAV: NavSection[] = [
   {
     label: 'Analytics',
     items: [
-      { view: '/analytics', label: 'Dashboard', icon: 'LayoutDashboard' },
+      { view: '/analytics', label: 'Dashboard', icon: 'LayoutDashboard', role: 'editor' },
       { collection: 'analytics-events', icon: 'MousePointerClick' },
       { collection: 'consent-records', icon: 'ShieldCheck' },
     ],

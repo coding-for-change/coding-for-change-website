@@ -3,6 +3,7 @@ import { Logout } from '@payloadcms/ui';
 import type { SanitizedCollectionConfig, SanitizedGlobalConfig, ServerProps } from 'payload';
 import { formatAdminURL, PREFERENCE_KEYS } from 'payload/shared';
 import React from 'react';
+import { hasAdminRole, hasEditorRole } from '../../access/roles';
 import { ADMIN_NAV } from '../../lib/adminNav';
 import { SidebarNav, type SidebarItem, type SidebarSection } from './SidebarNav';
 import './nav.css';
@@ -28,7 +29,8 @@ const labelText = (label: unknown, i18n: ServerProps['i18n'], fallback: string):
  * mobile drawer behave as before; a section folded away stays folded, in the
  * same per-user preference Payload keeps.
  *
- * Shows only what the user may read, like Payload's nav.
+ * Shows only what the user may read, like Payload's nav, and our views only
+ * from the role they ask for (lib/adminNav.ts).
  */
 export async function Nav({ i18n, payload, permissions, user, visibleEntities }: ServerProps) {
   if (!payload?.config) return null;
@@ -77,6 +79,7 @@ export async function Nav({ i18n, payload, permissions, user, visibleEntities }:
         listed.add(`g:${item.global}`);
         return globals.has(item.global) ? [globalItem(item.global, item.icon)] : [];
       }
+      if (!(item.role === 'admin' ? hasAdminRole(user) : hasEditorRole(user))) return [];
       const path = formatAdminURL({ adminRoute, path: item.view });
       const query = item.query ? `?${new URLSearchParams(item.query)}` : '';
       const id = ['nav', item.view.replace(/\W+/g, ''), ...Object.values(item.query ?? {})].join('-');

@@ -11,7 +11,7 @@ import {
   rangeParams,
   readRange,
 } from './analyticsSummary';
-import { getPool, requireAdmin } from './util';
+import { getPool, requireEditor } from './util';
 
 /**
  * GET /api/analytics/applications?days=30 (or ?from=YYYY-MM-DD&to=YYYY-MM-DD)
@@ -133,7 +133,7 @@ export const analyticsApplications: Endpoint = {
   path: '/analytics/applications',
   method: 'get',
   handler: async (req) => {
-    const denied = requireAdmin(req);
+    const denied = requireEditor(req);
     if (denied) return denied;
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });

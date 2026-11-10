@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { contentAccess } from '../access/roles';
 
 export const Events: CollectionConfig = {
   slug: 'events',
@@ -6,9 +7,7 @@ export const Events: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'date', 'type', 'isUpcoming'],
   },
-  access: {
-    read: () => true,
-  },
+  access: contentAccess,
   fields: [
     { name: 'title', type: 'text', required: true, localized: true },
     { name: 'date', type: 'text', required: true },

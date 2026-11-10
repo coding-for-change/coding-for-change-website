@@ -3,12 +3,14 @@ import { DefaultTemplate } from '@payloadcms/next/templates';
 import { Gutter } from '@payloadcms/ui';
 import { redirect } from 'next/navigation';
 import React from 'react';
+import { hasAdminRole } from '../../access/roles';
 import { ReviewWorkspace } from './ReviewWorkspace';
 
 /**
  * /admin/review – the review workspace, registered as a custom admin view in
  * payload.config.ts. Root custom views skip Payload's auth gate, so this
- * guards itself: no user → bounce to the admin login, then back here.
+ * guards itself: no user → bounce to the admin login, then back here; a
+ * user below admin → the dashboard (applications are the board's).
  */
 export function ReviewView({ initPageResult, params, searchParams }: AdminViewServerProps) {
   const { locale, permissions, req, visibleEntities } = initPageResult;
@@ -23,6 +25,7 @@ export function ReviewView({ initPageResult, params, searchParams }: AdminViewSe
   if (!user) {
     redirect(`${adminRoute}${config.admin.routes.login}?redirect=${encodeURIComponent(`${adminRoute}/review`)}`);
   }
+  if (!hasAdminRole(user)) redirect(adminRoute);
 
   return (
     <DefaultTemplate

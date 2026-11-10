@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { contentAccess } from '../access/roles';
 
 export const Team: CollectionConfig = {
   slug: 'team',
@@ -12,9 +13,7 @@ export const Team: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'role', 'category'],
   },
-  access: {
-    read: () => true,
-  },
+  access: contentAccess,
   fields: [
     { name: 'name', type: 'text', required: true },
     { name: 'role', type: 'text', required: true, localized: true },

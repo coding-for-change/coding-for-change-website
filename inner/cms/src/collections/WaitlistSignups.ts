@@ -1,6 +1,7 @@
 import { CollectionConfig } from 'payload';
 import { attributionField } from '../fields/attribution';
 import { keepMailsOfDuplicates } from '../lib/mailing/store';
+import { isAdmin } from '../access/roles';
 
 // Emails collected on /join/apply while applications are closed ("sign up to
 // know first when applications open"). The public inner site POSTs to
@@ -26,10 +27,10 @@ export const WaitlistSignups: CollectionConfig = {
   access: {
     // Anyone may add themselves to the list…
     create: () => true,
-    // …but only logged-in admins may read / manage it.
-    read: ({ req: { user } }) => Boolean(user),
-    update: ({ req: { user } }) => Boolean(user),
-    delete: ({ req: { user } }) => Boolean(user),
+    // …but only admins may read / manage it.
+    read: isAdmin,
+    update: isAdmin,
+    delete: isAdmin,
   },
   hooks: {
     // Normalise so casing/whitespace don't create near-duplicate rows.

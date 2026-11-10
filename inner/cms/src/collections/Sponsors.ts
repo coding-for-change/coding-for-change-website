@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { contentAccess } from '../access/roles';
 
 export const Sponsors: CollectionConfig = {
   slug: 'sponsors',
@@ -9,9 +10,7 @@ export const Sponsors: CollectionConfig = {
     useAsTitle: 'name',
     defaultColumns: ['name', 'url', 'tierRef'],
   },
-  access: {
-    read: () => true,
-  },
+  access: contentAccess,
   fields: [
     { name: 'name', type: 'text', required: true },
     { name: 'logo', type: 'upload', relationTo: 'media' },
