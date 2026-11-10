@@ -693,9 +693,13 @@ function MemberCard({
           <span className="ob-muted ob-mono">{m.email}</span>
           {m.role !== 'member' && <span className="ob-badge">{m.role}</span>}
         </div>
-        <label className="ob-reissue">
-          <input type="checkbox" checked={reissue} onChange={(e) => onReissue(e.target.checked)} /> Export again
-        </label>
+        {/* Only accounts the board made get a Google export: not an editor or
+            admin who went through the page with the account they already had. */}
+        {(m.role === 'member' || m.application !== null) && (
+          <label className="ob-reissue">
+            <input type="checkbox" checked={reissue} onChange={(e) => onReissue(e.target.checked)} /> Export again
+          </label>
+        )}
       </header>
 
       <dl className="ob-status">

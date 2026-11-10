@@ -100,11 +100,37 @@ async function readBody<T>(req: PayloadRequest): Promise<T | null> {
   }
 }
 
-/** Everyone the dashboard tracks: accounts made from an application, and every member account. */
+/**
+ * Accounts that sent the onboarding form themselves. An editor or admin who
+ * goes through /onboarding (the board members do, for their own profile) is
+ * followed like a member from then on; before that they would only clutter
+ * the list.
+ */
+async function formSenders(req: PayloadRequest): Promise<Set<number>> {
+  const formId = idOf((await settings(req)).form);
+  if (formId === null) return new Set();
+  const { rows } = await poolOf(req.payload).query(
+    'SELECT DISTINCT submitted_by_id AS id FROM form_submissions WHERE form_id = $1 AND submitted_by_id IS NOT NULL',
+    [formId],
+  );
+  return new Set(rows.map((r) => Number(r.id)));
+}
+
+/**
+ * Everyone the dashboard tracks: accounts made from an application, every
+ * member account, and whoever else sent the onboarding form.
+ */
 async function onboardingUsers(req: PayloadRequest): Promise<UserDoc[]> {
+  const senders = [...(await formSenders(req))];
   const found = await req.payload.find({
     collection: 'users',
-    where: { or: [{ application: { exists: true } }, { role: { equals: 'member' } }] },
+    where: {
+      or: [
+        { application: { exists: true } },
+        { role: { equals: 'member' } },
+        ...(senders.length ? [{ id: { in: senders } }] : []),
+      ],
+    },
     depth: 0,
     pagination: false,
     sort: 'email',
@@ -113,7 +139,11 @@ async function onboardingUsers(req: PayloadRequest): Promise<UserDoc[]> {
   return found.docs as unknown as UserDoc[];
 }
 
+/** An account the board made for onboarding: only these get a Google export. */
 const inScope = (u: UserDoc) => u.role === 'member' || idOf(u.application) !== null;
+
+/** As tracked by the dashboard: in scope, or sent the onboarding form. */
+const tracked = async (req: PayloadRequest, u: UserDoc) => inScope(u) || (await formSenders(req)).has(u.id);
 
 async function allAddresses(payload: Payload): Promise<Set<string>> {
   const { rows } = await poolOf(payload).query('SELECT lower(email) AS email FROM users');
@@ -557,7 +587,7 @@ const check: Endpoint = {
     const todo = todosOf((await settings(req)).boardTodos).find((t) => t.id === item);
     if (!todo) return bad('No such board to-do (any more). Reload the page.', [], 404);
     const account = (await req.payload.findByID({ collection: 'users', id: user, depth: 0, req }).catch(() => null)) as UserDoc | null;
-    if (!account || !inScope(account)) return bad('Not a member account.', [], 404);
+    if (!account || !(await tracked(req, account))) return bad('Not a member account.', [], 404);
     const by = String((req.user as { email?: string } | null)?.email ?? 'admin');
     const { at } = await setCheck(req.payload, {
       user,
@@ -599,7 +629,7 @@ const profile: Endpoint = {
     if (title !== undefined && (!title || title.length > 120)) return bad('The title must be 1 to 120 characters.');
 
     const account = (await payload.findByID({ collection: 'users', id: user, depth: 0, req }).catch(() => null)) as UserDoc | null;
-    if (!account || !inScope(account)) return bad('Not a member account.', [], 404);
+    if (!account || !(await tracked(req, account))) return bad('Not a member account.', [], 404);
     const teamId = idOf(account.teamProfile);
     if (teamId === null) {
       return bad('No profile yet: it is made when the member sends the onboarding form.', [], 409);
