@@ -454,13 +454,18 @@ export type CmsFormField =
           blockType: 'message';
           message?: LexicalRichText | null;
       }
-    /** PDF stored privately in `applicant-files`; the submission carries the id. */
+    /**
+     * A PDF stored privately in `applicant-files` (the submission carries the
+     * id), or with `accept: 'image'` a signed-in member's photo, stored in
+     * `media` through POST /api/onboarding/photo (the answer is its id).
+     */
     | {
           blockType: 'upload';
           name: string;
           label?: string | null;
           required?: boolean | null;
           description?: string | null;
+          accept?: 'pdf' | 'image' | null;
           width?: number | null;
       }
     /** Multi-select rendered as one checkbox per option. */
@@ -577,4 +582,54 @@ export interface TechTourManageView {
     /** False once every evening is over: the page only shows. */
     open: boolean;
     evenings: TechTourManageEvening[];
+}
+
+/**
+ * GET /api/onboarding/me – a signed-in member's own onboarding page
+ * (/onboarding), always for the account of the session cookie
+ * (inner/cms/src/lib/onboarding/types.ts, MemberOnboardingView). POST
+ * /api/onboarding/me/check answers the same.
+ */
+export interface MemberTodo {
+    id: string;
+    text: string;
+    linkUrl: string | null;
+    linkLabel: string | null;
+    done: boolean;
+    at: string | null;
+}
+
+export interface MemberDocument {
+    id: string;
+    title: string;
+    description: string | null;
+    /** "not_started", then DocuSeal's: "pending", "opened", "completed", "declined", "expired". */
+    status: string;
+    startedAt: string | null;
+    completedAt: string | null;
+}
+
+export interface MemberOnboardingView {
+    locale: 'en' | 'de';
+    member: { id: number; email: string; firstName: string; lastName: string; role: string };
+    intro: string;
+    form: null | {
+        doc: CmsForm;
+        sentAt: string | null;
+        previous: Record<string, string> | null;
+    };
+    todos: MemberTodo[];
+    documents: { configured: boolean; items: MemberDocument[] };
+    profile: null | { published: boolean; hasPhoto: boolean };
+    stepsDone: boolean;
+}
+
+/** POST /api/onboarding/photo – the stored photo (private to the member until their profile is published). */
+export interface MemberPhoto {
+    id: number;
+    filename: string | null;
+    url: string | null;
+    thumbnailUrl: string | null;
+    width: number | null;
+    height: number | null;
 }

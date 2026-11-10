@@ -1,0 +1,269 @@
+/* ---- /onboarding – a new member's own page, on /join/apply's light page ---- */
+/*
+ * Builds on join.css (.jn-apply: the column, the head, the form styling) and
+ * landing.css (.lp-submit, the CmsForm fields). Only what this page adds is
+ * here: the numbered sections, the to-do and document rows, the sign-in.
+ * Every div states its display (App.css sets `div { display: flex }`).
+ */
+
+.ob .ob-head {
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+}
+
+.ob .ob-intro {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.ob .ob-who {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: baseline;
+    gap: 4px 14px;
+    margin: 22px 0 0;
+    font-size: 14px;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+}
+
+.ob .ob-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font: inherit;
+    font-size: 14px;
+    color: var(--teal-dark);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.ob .ob-link:disabled {
+    opacity: 0.6;
+    cursor: progress;
+}
+
+.ob .ob-note {
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+.ob .ob-note a,
+.ob .jn-apply__lead a {
+    color: var(--teal-dark);
+    text-underline-offset: 3px;
+}
+
+/* ---- Signed out ---- */
+.ob .ob-signin {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.ob .ob-signin__btn {
+    align-self: center;
+    text-decoration: none;
+}
+
+/* ---- Everything done ---- */
+.ob .ob-allset {
+    display: block;
+    margin: 0 0 32px;
+    padding: 16px 18px;
+    border: 1px solid rgba(47, 143, 144, 0.45);
+    background: rgba(47, 143, 144, 0.08);
+    box-shadow: inset 3px 0 0 var(--teal);
+}
+
+.ob .ob-allset__title {
+    margin: 0;
+    font-family: var(--jn-display);
+    font-size: 18px;
+    color: var(--navy);
+}
+
+.ob .ob-allset__text {
+    margin: 6px 0 0;
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+
+/* ---- The numbered sections ---- */
+.ob .ob-section {
+    display: block;
+    margin: 0 0 40px;
+}
+
+.ob .ob-section__title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 6px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--jn-display);
+    font-size: 22px;
+    color: var(--navy);
+}
+
+.ob .ob-section__num {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: 1px solid rgba(47, 143, 144, 0.55);
+    font-size: 15px;
+    color: var(--teal-dark);
+}
+
+.ob .ob-section__lead {
+    margin: 12px 0 22px;
+    font-size: 15.5px;
+    line-height: 1.6;
+    color: var(--muted);
+}
+
+/* The form, once sent: one line, and the way to send it again. */
+.ob .ob-done {
+    display: block;
+    margin-top: 16px;
+}
+
+.ob .ob-done__thanks {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: var(--teal-dark);
+}
+
+.ob .ob-done__line {
+    margin: 0 0 4px;
+    font-size: 15.5px;
+    line-height: 1.55;
+    color: var(--ink);
+}
+
+.ob .ob-done .ob-link {
+    margin-top: 10px;
+}
+
+.ob .ob-check {
+    margin-right: 6px;
+    color: var(--teal);
+}
+
+/* ---- To-do and document rows ---- */
+.ob .ob-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ob .ob-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    background: #fff;
+}
+
+.ob .ob-item--done {
+    border-color: rgba(47, 143, 144, 0.45);
+    background: rgba(47, 143, 144, 0.06);
+}
+
+.ob .ob-item__check {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.ob .ob-item__check input[type='checkbox'] {
+    flex: none;
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--teal);
+    box-shadow: none;
+}
+
+.ob .ob-item__text,
+.ob .ob-item__title {
+    font-size: 15.5px;
+    line-height: 1.5;
+    color: var(--ink);
+    overflow-wrap: anywhere;
+}
+
+.ob .ob-item__title {
+    font-weight: 600;
+}
+
+.ob .ob-item__desc {
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.ob .ob-item__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+    padding-left: 30px;
+    font-size: 13.5px;
+    color: var(--muted);
+}
+
+.ob .ob-item__meta a {
+    color: var(--teal-dark);
+    text-underline-offset: 3px;
+}
+
+.ob .ob-item__when {
+    color: var(--teal-dark);
+}
+
+.ob .ob-item__error {
+    margin: 0;
+    padding-left: 30px;
+    font-size: 13.5px;
+    color: #cc3333;
+}
+
+.ob .ob-pill {
+    align-self: flex-start;
+    padding: 3px 10px;
+    border: 1px solid var(--line);
+    font-size: 13px;
+    color: var(--muted);
+}
+
+.ob .ob-pill--done {
+    border-color: rgba(47, 143, 144, 0.45);
+    color: var(--teal-dark);
+}
+
+@media (max-width: 560px) {
+    .ob .ob-section__title {
+        font-size: 19px;
+    }
+
+    .ob .ob-item__meta,
+    .ob .ob-item__error {
+        padding-left: 0;
+    }
+}

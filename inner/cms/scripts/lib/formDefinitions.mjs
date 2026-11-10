@@ -1,5 +1,5 @@
 /**
- * The two application forms, as form-builder documents — shared by the dev
+ * The two application forms and the new members' onboarding form, as form-builder documents — shared by the dev
  * seed (`scripts/seed.mjs`) and the production upsert (`scripts/upsert-forms.mjs`)
  * so both environments start from the same questions. After that, questions
  * are edited in the admin; this file is the starting point, not the truth.
@@ -59,6 +59,19 @@ const L = {
     techtourSubmit: 'Apply',
     techtourConfirm:
       'You are registered! The host companies decide who joins their evening – we will email you as soon as they have, with the time and place.',
+    // The onboarding form (no dashes in these: the member's page avoids them).
+    obDisplayName: 'Name on your profile (leave empty to use your first and last name)',
+    obBio: 'A few sentences about you: what you study, what you like building, what you want to do at Coding for Change',
+    obLinkedin: 'Link to your LinkedIn profile (optional)',
+    obGithub: 'Your GitHub username (we add you to our GitHub organisation)',
+    obPhoto: 'A photo of you for the Team page (optional)',
+    obPhotoHint: 'A portrait, JPEG, PNG or WebP, max. 5 MB',
+    obProfilePublic:
+      'I agree that Coding for Change e.V. shows my name, photo, the few sentences above and my LinkedIn and GitHub links on the Team page of codingforchange.com. I can take this back at any time by sending this form again without this tick, or by writing to info@codingforchange.com.',
+    obPrivacy:
+      'I agree that Coding for Change e.V. processes the data in this form for my membership, as described in the [privacy policy](/privacy).',
+    obSubmit: 'Send',
+    obConfirm: 'Thank you! The board has your details.',
   },
   de: {
     firstName: 'Vorname',
@@ -94,6 +107,18 @@ const L = {
     techtourSubmit: 'Bewerben',
     techtourConfirm:
       'Du bist angemeldet! Die gastgebenden Unternehmen entscheiden, wer an ihrem Abend dabei ist – sobald sie das getan haben, schreiben wir dir per E-Mail, mit Uhrzeit und Ort.',
+    obDisplayName: 'Name auf deinem Profil (leer lassen für Vor- und Nachnamen)',
+    obBio: 'Ein paar Sätze über dich: was du studierst, was du gern baust, was du bei Coding for Change machen willst',
+    obLinkedin: 'Link zu deinem LinkedIn-Profil (optional)',
+    obGithub: 'Dein GitHub-Benutzername (wir nehmen dich in unsere GitHub-Organisation auf)',
+    obPhoto: 'Ein Foto von dir für die Team-Seite (optional)',
+    obPhotoHint: 'Ein Porträt, JPEG, PNG oder WebP, max. 5 MB',
+    obProfilePublic:
+      'Ich bin einverstanden, dass Coding for Change e.V. meinen Namen, mein Foto, die Sätze oben und meine LinkedIn- und GitHub-Links auf der Team-Seite von codingforchange.com zeigt. Ich kann das jederzeit zurücknehmen, indem ich dieses Formular ohne diesen Haken noch einmal sende oder an info@codingforchange.com schreibe.',
+    obPrivacy:
+      'Ich bin einverstanden, dass Coding for Change e.V. die Angaben in diesem Formular für meine Mitgliedschaft verarbeitet, wie in der [Datenschutzerklärung](/privacy) beschrieben.',
+    obSubmit: 'Senden',
+    obConfirm: 'Danke! Der Vorstand hat deine Angaben.',
   },
 };
 
@@ -210,6 +235,60 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
           ],
         }
       : {}),
+  };
+};
+
+/**
+ * The new members' onboarding form (the `onboarding` global's `form`, shown on
+ * /onboarding). Members only (`requiresLogin`). The field names are fixed:
+ * the CMS copies displayName, bio, linkedin, githubUsername, photo and
+ * profilePublic to the member's account and team profile
+ * (inner/cms/src/lib/onboarding/sync.ts). No notification emails: the CMS
+ * mails the admins itself (lib/onboarding/notify.ts).
+ */
+export const onboardingForm = (locale) => {
+  const t = L[locale];
+  return {
+    title: 'onboarding',
+    requiresLogin: true,
+    submitButtonLabel: t.obSubmit,
+    confirmationMessage: doc(paragraph(t.obConfirm)),
+    fields: [
+      { blockType: 'text', name: 'displayName', label: t.obDisplayName, required: false },
+      { blockType: 'textarea', name: 'bio', label: t.obBio, required: true },
+      { blockType: 'text', name: 'githubUsername', label: t.obGithub, required: true },
+      { blockType: 'text', name: 'linkedin', label: t.obLinkedin, required: false },
+      { blockType: 'upload', name: 'photo', accept: 'image', label: t.obPhoto, required: false, description: t.obPhotoHint },
+      { blockType: 'checkbox', name: 'profilePublic', label: t.obProfilePublic, required: false },
+      { blockType: 'checkbox', name: 'privacy', label: t.obPrivacy, required: true },
+    ],
+  };
+};
+
+/**
+ * Starting content for the Onboarding Settings global, when it is still
+ * empty: a short intro, one to-do for the member and the board's two usual
+ * ones. The board edits them in the admin.
+ */
+export const onboardingGlobal = (locale) => {
+  const en = locale === 'en';
+  return {
+    intro: en
+      ? 'Great to have you with us! Below is everything that is still open for you: a short form about you, a few to-dos and the documents to sign. It takes about fifteen minutes.'
+      : 'Schön, dass du dabei bist! Unten steht alles, was für dich noch offen ist: ein kurzes Formular über dich, ein paar To-dos und die Dokumente zum Unterschreiben. Das dauert etwa eine Viertelstunde.',
+    memberTodos: [
+      {
+        text: en
+          ? 'Sign in to your new Google account once at mail.google.com and choose your own password.'
+          : 'Melde dich einmal bei mail.google.com mit deinem neuen Google-Konto an und wähl dein eigenes Passwort.',
+        linkUrl: 'https://mail.google.com',
+        linkLabel: en ? 'Open Gmail' : 'Gmail öffnen',
+      },
+    ],
+    // Not localized: the board's working list.
+    boardTodos: en
+      ? [{ text: 'Add to the GitHub organisation' }, { text: 'Add to the members@ Google group' }]
+      : undefined,
   };
 };
 

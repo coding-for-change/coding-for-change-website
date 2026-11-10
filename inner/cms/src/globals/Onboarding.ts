@@ -63,7 +63,7 @@ export const Onboarding: GlobalConfig = {
       relationTo: 'forms',
       admin: {
         description:
-          'The one form every new member fills in on their page (Forms; tick "Requires sign-in" there). Answers to questions named displayName, bio, linkedin, githubUsername, photo and profilePublic are copied to the member\'s account and team profile.',
+          'The one form every new member fills in on their page (Forms; tick "Requires sign-in" there). Answers to questions named displayName, bio, linkedin, githubUsername, photo (a "Photo" upload) and profilePublic (a checkbox: consent to a public profile) are copied to the member\'s account and team profile. With profilePublic ticked the member gets an unpublished team profile (name, bio, photo, LinkedIn and GitHub links) for the board to publish; without it none, and their photo is deleted. Sending it again updates that profile and unpublishes it until the board publishes it again.',
       },
     },
     {

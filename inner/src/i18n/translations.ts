@@ -213,6 +213,8 @@ export interface Translations {
         charCount: string;
         uploadChoose: string; uploadHint: string; uploading: string; uploadRemove: string;
         uploadTooLarge: string; uploadWrongType: string; uploadFailed: string;
+        /** A photo question (`accept: image`, the onboarding form). */
+        photoChoose: string; photoHint: string; photoWrongType: string;
     };
     /**
      * Munich TechTour page (/techtour). The page's own wording lives here and
@@ -293,6 +295,26 @@ export interface Translations {
      * evening, linked from the to-do on /techtour/manage. Only the page's own
      * lines live here; the agreement itself is data/mckinseyNda.ts.
      */
+    /**
+     * /onboarding: a new member's own page behind Google sign-in, with the
+     * form, their to-dos and the documents. {email} is an address, {date} a day.
+     */
+    onboarding: {
+        kicker: string; title: string; signedInAs: string; signOut: string; signingOut: string;
+        signedOutTitle: string; signedOutLead: string; signIn: string; signInNote: string;
+        unavailable: string;
+        formTitle: string; formLead: string; formSentOn: string; formChange: string; formCancel: string;
+        formThanks: string;
+        githubInvalid: string; linkedinInvalid: string;
+        profileDraft: string; profileLive: string;
+        todosTitle: string; todosLead: string; todoDoneOn: string; openLink: string; todoError: string;
+        docsTitle: string; docsLead: string; docsLater: string;
+        docStatus: {
+            not_started: string; pending: string; opened: string; completed: string;
+            declined: string; expired: string;
+        };
+        doneTitle: string; doneText: string; contact: string;
+    };
     techtourNda: {
         kicker: string; title: string; lead: string; versions: string; german: string; english: string;
     };
@@ -706,6 +728,9 @@ const en: Translations = {
         uploadTooLarge: 'That file is too large. The limit is 5 MB.',
         uploadWrongType: 'Please upload a PDF.',
         uploadFailed: 'The upload failed. Please try again.',
+        photoChoose: 'Choose photo',
+        photoHint: 'JPEG, PNG or WebP, max. 5 MB',
+        photoWrongType: 'Please upload a photo as JPEG, PNG, WebP or GIF.',
     },
     techtour: {
         statusOpen: 'Registration open',
@@ -789,6 +814,49 @@ const en: Translations = {
         invalid: 'This link doesn’t work. Please use the link from our email, or write to us at {email}.',
         sample: 'This is the sample link from a test mail – each recipient sees their own registration here.',
         error: 'That didn’t work. Please try again, or write to us at {email}.',
+    },
+    onboarding: {
+        kicker: 'Coding for Change · New members',
+        title: 'Welcome on board',
+        signedInAs: 'Signed in as {email}',
+        signOut: 'Sign out',
+        signingOut: 'Signing out…',
+        signedOutTitle: 'Your onboarding',
+        signedOutLead:
+            'This page is for new members of Coding for Change. Sign in with your new @codingforchange.com account to see your form, your to-dos and your documents.',
+        signIn: 'Sign in with Google',
+        signInNote: 'Your address and first password are on the sheet the board gave you. Trouble signing in? Write to {email}.',
+        unavailable: 'Your onboarding page can’t be loaded right now. Please try again in a moment, or write to us at {email}.',
+        formTitle: 'About you',
+        formLead:
+            'This goes to the board. If you agree, it also becomes your profile on our Team page, once the board has looked at it.',
+        formSentOn: 'Sent on {date}. Send it again any time to change your details.',
+        formChange: 'Change my details',
+        formCancel: 'Cancel',
+        formThanks: 'Thank you, the board has your details.',
+        githubInvalid: 'That is not a GitHub username. Use letters, digits and single hyphens, for example octocat.',
+        linkedinInvalid: 'Please paste the link to your LinkedIn profile, for example https://www.linkedin.com/in/your-name.',
+        profileDraft: 'Your profile is waiting for the board. It appears on the Team page once they publish it.',
+        profileLive: 'Your profile is on the Team page.',
+        todosTitle: 'Your to-dos',
+        todosLead: 'Tick each one once it is done. You can take a tick back.',
+        todoDoneOn: 'Done on {date}',
+        openLink: 'Open link',
+        todoError: 'That did not save. Please try again.',
+        docsTitle: 'Your documents',
+        docsLead: 'Please read and sign these.',
+        docsLater: 'You can sign them here soon. We will let you know.',
+        docStatus: {
+            not_started: 'Not signed yet',
+            pending: 'Started',
+            opened: 'Opened',
+            completed: 'Signed on {date}',
+            declined: 'Declined',
+            expired: 'Expired',
+        },
+        doneTitle: 'All done on your side. Thank you!',
+        doneText: 'The board still sets up a few things for you and will be in touch.',
+        contact: 'Questions? Write to us at {email}.',
     },
     techtourNda: {
         kicker: 'Tech Tour · McKinsey QuantumBlack',
@@ -1220,6 +1288,9 @@ const de: Translations = {
         uploadTooLarge: 'Die Datei ist zu groß. Das Limit sind 5 MB.',
         uploadWrongType: 'Bitte lade ein PDF hoch.',
         uploadFailed: 'Der Upload ist fehlgeschlagen. Bitte versuche es erneut.',
+        photoChoose: 'Foto auswählen',
+        photoHint: 'JPEG, PNG oder WebP, max. 5 MB',
+        photoWrongType: 'Bitte lade ein Foto als JPEG, PNG, WebP oder GIF hoch.',
     },
     techtour: {
         statusOpen: 'Anmeldung offen',
@@ -1303,6 +1374,49 @@ const de: Translations = {
         invalid: 'Dieser Link funktioniert nicht. Nutz bitte den Link aus unserer E-Mail oder schreib uns an {email}.',
         sample: 'Das ist der Beispiel-Link aus einer Test-Mail – alle Empfänger:innen sehen hier ihre eigene Anmeldung.',
         error: 'Das hat nicht geklappt. Versuch es bitte noch einmal oder schreib uns an {email}.',
+    },
+    onboarding: {
+        kicker: 'Coding for Change · Neue Mitglieder',
+        title: 'Willkommen an Bord',
+        signedInAs: 'Angemeldet als {email}',
+        signOut: 'Abmelden',
+        signingOut: 'Abmelden…',
+        signedOutTitle: 'Dein Onboarding',
+        signedOutLead:
+            'Diese Seite ist für neue Mitglieder von Coding for Change. Melde dich mit deinem neuen @codingforchange.com-Konto an, dann siehst du dein Formular, deine To-dos und deine Dokumente.',
+        signIn: 'Mit Google anmelden',
+        signInNote: 'Deine Adresse und dein erstes Passwort stehen auf dem Zettel vom Vorstand. Probleme bei der Anmeldung? Schreib an {email}.',
+        unavailable: 'Deine Onboarding-Seite lässt sich gerade nicht laden. Bitte versuch es gleich noch einmal oder schreib uns an {email}.',
+        formTitle: 'Über dich',
+        formLead:
+            'Das geht an den Vorstand. Wenn du zustimmst, wird daraus auch dein Profil auf unserer Team-Seite, sobald der Vorstand es angesehen hat.',
+        formSentOn: 'Gesendet am {date}. Du kannst es jederzeit noch einmal senden, um deine Angaben zu ändern.',
+        formChange: 'Angaben ändern',
+        formCancel: 'Abbrechen',
+        formThanks: 'Danke, der Vorstand hat deine Angaben.',
+        githubInvalid: 'Das ist kein GitHub-Benutzername. Erlaubt sind Buchstaben, Ziffern und einzelne Bindestriche, zum Beispiel octocat.',
+        linkedinInvalid: 'Bitte füge den Link zu deinem LinkedIn-Profil ein, zum Beispiel https://www.linkedin.com/in/dein-name.',
+        profileDraft: 'Dein Profil wartet auf den Vorstand. Es erscheint auf der Team-Seite, sobald er es veröffentlicht.',
+        profileLive: 'Dein Profil ist auf der Team-Seite.',
+        todosTitle: 'Deine To-dos',
+        todosLead: 'Hak jedes ab, sobald es erledigt ist. Du kannst einen Haken auch wieder entfernen.',
+        todoDoneOn: 'Erledigt am {date}',
+        openLink: 'Link öffnen',
+        todoError: 'Das wurde nicht gespeichert. Bitte versuch es noch einmal.',
+        docsTitle: 'Deine Dokumente',
+        docsLead: 'Bitte lies und unterschreib diese.',
+        docsLater: 'Du kannst sie bald hier unterschreiben. Wir sagen dir Bescheid.',
+        docStatus: {
+            not_started: 'Noch nicht unterschrieben',
+            pending: 'Begonnen',
+            opened: 'Geöffnet',
+            completed: 'Unterschrieben am {date}',
+            declined: 'Abgelehnt',
+            expired: 'Abgelaufen',
+        },
+        doneTitle: 'Auf deiner Seite ist alles erledigt. Danke!',
+        doneText: 'Der Vorstand richtet noch ein paar Dinge für dich ein und meldet sich.',
+        contact: 'Fragen? Schreib uns an {email}.',
     },
     techtourNda: {
         kicker: 'Tech Tour · McKinsey QuantumBlack',

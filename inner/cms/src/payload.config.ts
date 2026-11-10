@@ -66,6 +66,8 @@ import { Homepage } from './globals/Homepage';
 import { TechTour } from './globals/TechTour';
 import { Onboarding } from './globals/Onboarding';
 import { onboardingEndpoints } from './endpoints/onboarding';
+import { onboardingMemberEndpoints } from './endpoints/onboardingMember';
+import { checkOnboardingAnswers, requireLoginForForm, syncOnboardingSubmission } from './lib/onboarding/sync';
 import { onboardingTables } from './lib/onboarding/tables';
 import { requiresLoginField, submittedByField } from './fields/submittedBy';
 import { brandApplicationEmails } from './lib/applicationEmail';
@@ -156,8 +158,10 @@ export default buildConfig({
   // endpoints/applicantFileLink.ts.
   // Google sign-in (/api/auth/google…) – see endpoints/googleAuth.ts. The
   // board's onboarding dashboard (/api/onboarding/admin/…, admins only) – see
-  // endpoints/onboarding.ts.
-  endpoints: [...googleAuthEndpoints, ...onboardingEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
+  // endpoints/onboarding.ts. The member's own page (/api/onboarding/me…,
+  // /api/onboarding/photo, any signed-in account, always their own) – see
+  // endpoints/onboardingMember.ts.
+  endpoints: [...googleAuthEndpoints, ...onboardingEndpoints, ...onboardingMemberEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
@@ -266,9 +270,13 @@ export default buildConfig({
           // The signed-in account it came from (fields/submittedBy.ts).
           submittedByField,
         ],
+        // A form with "Requires sign-in" takes members only, and the
+        // onboarding form's answers go to the member's account and profile
+        // (lib/onboarding/sync.ts).
         hooks: {
-          beforeOperation: [rejectHoneypot],
-          beforeChange: [recordSubmission],
+          beforeOperation: [rejectHoneypot, requireLoginForForm],
+          beforeChange: [recordSubmission, checkOnboardingAnswers],
+          afterChange: [syncOnboardingSubmission],
           // A mail sent to someone who applied twice stays recorded when the duplicate goes (lib/mailing/store.ts).
           beforeDelete: [keepMailsOfDuplicates('submission')],
           afterDelete: [deleteSubmissionFiles],

@@ -56,7 +56,7 @@ export type WaitlistEmailContent = {
   ctaUrl?: string;
 };
 
-export type EmailAudience = 'waitlist' | 'techtour' | 'applications';
+export type EmailAudience = 'waitlist' | 'techtour' | 'applications' | 'board';
 
 export type BuiltWaitlistEmail = {
   html: string;
@@ -149,6 +149,11 @@ const REASONS: Record<EmailAudience, { de: string; en: string }> = {
     de: 'Du erhältst diese E-Mail, weil du dich auf codingforchange.com bei Coding for Change beworben hast. Bei Fragen genügt eine kurze Antwort auf diese Mail oder eine Nachricht an {contact}.',
     en: 'You are receiving this email because you applied to Coding for Change on codingforchange.com. Questions? Just reply to this email or write to {contact}.',
   },
+  // The onboarding's notices to the board (lib/onboarding/notify.ts).
+  board: {
+    de: 'Du erhältst diese E-Mail, weil du im CMS von Coding for Change Admin bist. Fragen an {contact}.',
+    en: 'You are receiving this email because you are an admin in the Coding for Change CMS. Questions to {contact}.',
+  },
 };
 
 const footerParagraphs = (contactEmail: string, audience: EmailAudience) => {
@@ -183,7 +188,8 @@ export function buildWaitlistEmail(input: WaitlistEmailContent): BuiltWaitlistEm
   if (ctaLabel && ctaUrl) textParts.push(`${ctaLabel}: ${ctaUrl}`);
   textParts.push(
     [
-      '—',
+      // A plain separator, not a dash character: mail text stays free of em dashes.
+      '--',
       REASONS[audience].de.replace('{contact}', contactEmail),
       REASONS[audience].en.replace('{contact}', contactEmail),
     ].join('\n\n'),

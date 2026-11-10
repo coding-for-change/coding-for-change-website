@@ -1,5 +1,5 @@
 import 'server-only';
-import type { CmsBlogPost, CmsProject, TechTourManageView } from '@/api/types';
+import type { CmsBlogPost, CmsProject, MemberOnboardingView, TechTourManageView } from '@/api/types';
 
 // Server-side CMS fetching. Unlike the browser client (`@/api/client`, which
 // hits the relative `/api` proxied by the outer Express server), server
@@ -98,4 +98,32 @@ export async function fetchTechTourManage(
     locale = 'en'
 ): Promise<TechTourManageView | null> {
     return getJson<TechTourManageView>(buildUrl('techtour/manage', { token, locale }));
+}
+
+/** Payload's session cookie (cookiePrefix "payload"), set by the CMS on sign-in. */
+export const SESSION_COOKIE = 'payload-token';
+
+/**
+ * A signed-in member's own onboarding page (/onboarding): the CMS answers for
+ * the account of the session cookie, which is forwarded as it came, and only
+ * that cookie. Never cached (no-store). 'signed-out' when the CMS does not
+ * know the session (none, expired, signed out elsewhere); null when the CMS
+ * cannot be reached.
+ */
+export async function fetchOnboardingMe(
+    sessionToken: string,
+    locale = 'en'
+): Promise<MemberOnboardingView | 'signed-out' | null> {
+    try {
+        const res = await fetch(buildUrl('onboarding/me', { locale }), {
+            cache: 'no-store',
+            headers: { cookie: `${SESSION_COOKIE}=${sessionToken}` },
+            signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        });
+        if (res.status === 401) return 'signed-out';
+        if (!res.ok) return null;
+        return (await res.json()) as MemberOnboardingView;
+    } catch {
+        return null;
+    }
 }

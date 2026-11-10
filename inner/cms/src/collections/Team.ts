@@ -1,5 +1,6 @@
 import { CollectionConfig } from 'payload';
 import { contentAccess, hasEditorRole } from '../access/roles';
+import { hidePhotoOfDeletedProfile, syncPhotoVisibility } from '../lib/onboarding/photo';
 
 export const Team: CollectionConfig = {
   slug: 'team',
@@ -20,6 +21,12 @@ export const Team: CollectionConfig = {
     // see it until then, on the site, over the API and as a relation (a
     // project's team row then carries the bare id, which the site skips).
     read: ({ req }) => (hasEditorRole(req.user) ? true : { published: { equals: true } }),
+  },
+  // A new member's photo is public only while it is the image of a published
+  // profile (lib/onboarding/photo.ts).
+  hooks: {
+    afterChange: [syncPhotoVisibility],
+    afterDelete: [hidePhotoOfDeletedProfile],
   },
   fields: [
     {

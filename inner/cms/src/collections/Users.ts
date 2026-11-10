@@ -1,5 +1,12 @@
-import { APIError, type CollectionBeforeLoginHook, type CollectionConfig, type Field, type FieldAccess } from 'payload';
-import { fieldIsAdmin, hasAdminRole, hasEditorRole, isAdmin, isAdminOrSelf, roleOf, ROLES } from '../access/roles';
+import {
+  APIError,
+  type CollectionBeforeLoginHook,
+  type CollectionBeforeValidateHook,
+  type CollectionConfig,
+  type Field,
+  type FieldAccess,
+} from 'payload';
+import { fieldIsAdmin, firstAccountRole, hasAdminRole, hasEditorRole, isAdmin, isAdminOrSelf, roleOf, ROLES } from '../access/roles';
 
 /**
  * Password sign-in is the board's emergency access only: everyone else signs
@@ -11,6 +18,20 @@ const onlyAdminsByPassword: CollectionBeforeLoginHook = ({ user }) => {
     throw new APIError('Password sign-in is for admins only. Please use "Sign in with Google".', 403, null, true);
   }
   return user;
+};
+
+/**
+ * The very first account of an empty `users` table is an admin: a fresh
+ * install (the admin panel's "create first user", `scripts/seed.mjs`) gets
+ * through `POST /api/users/first-register`, which Payload only allows while
+ * the table is empty, and needs an admin to pass the password-login rule
+ * above. Every later account keeps whatever role an admin gave it (or the
+ * default `member`): see `firstAccountRole` in access/roles.ts.
+ */
+const firstAccountIsAdmin: CollectionBeforeValidateHook = async ({ data, operation, req }) => {
+  if (operation !== 'create' || !data) return data;
+  const { totalDocs } = await req.payload.count({ collection: 'users', overrideAccess: true, req });
+  return { ...data, role: firstAccountRole(totalDocs, data.role) };
 };
 
 /** An admin, or the account's own user (a member reading their own data on the onboarding page). */
@@ -86,6 +107,19 @@ const memberFields: Field[] = [
     access: memberAccess,
     admin: { position: 'sidebar', readOnly: true, date: { pickerAppearance: 'dayAndTime' } },
   },
+  {
+    name: 'stepsCompletedAt',
+    label: 'Own onboarding steps done',
+    type: 'date',
+    access: memberAccess,
+    admin: {
+      position: 'sidebar',
+      readOnly: true,
+      date: { pickerAppearance: 'dayAndTime' },
+      description:
+        'The first time the member had sent the form and done all their to-dos and documents; the board got a mail then (lib/onboarding/notify.ts).',
+    },
+  },
 ];
 
 export const Users: CollectionConfig = {
@@ -108,6 +142,7 @@ export const Users: CollectionConfig = {
     unlock: isAdmin,
   },
   hooks: {
+    beforeValidate: [firstAccountIsAdmin],
     beforeLogin: [onlyAdminsByPassword],
   },
   fields: [

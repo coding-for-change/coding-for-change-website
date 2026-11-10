@@ -38,6 +38,16 @@ export const hasEditorRole = (user: unknown): boolean => {
   return role === 'editor' || role === 'admin';
 };
 
+/**
+ * The role a new account gets: an admin when it is the first account of all
+ * (`existingAccounts` = 0, the fresh install's first-register), otherwise
+ * exactly what was asked for. Never a promotion for a later account: who may
+ * ask for a role at all is the field access (admins only).
+ */
+export function firstAccountRole(existingAccounts: number, requested: unknown): unknown {
+  return existingAccounts === 0 ? 'admin' : requested;
+}
+
 const userId = (user: unknown): string | null => {
   const id = user && typeof user === 'object' ? (user as { id?: unknown }).id : null;
   return typeof id === 'number' || (typeof id === 'string' && id) ? String(id) : null;

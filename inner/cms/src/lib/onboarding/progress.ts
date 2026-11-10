@@ -75,3 +75,24 @@ export function memberProgress(input: ProgressInput): OnboardingMember {
   };
 }
 
+
+/**
+ * Whether a member has done everything that is theirs to do: the form (when
+ * one is set), every member to-do, and every document, but documents only
+ * when DocuSeal is configured (without it the page cannot offer them, so they
+ * cannot hold the member up). The board's to-dos are not theirs. Drives the
+ * "all done" notice to the board (lib/onboarding/notify.ts).
+ */
+export function ownStepsDone(input: {
+  formConfigured: boolean;
+  formSubmittedAt: string | null;
+  todos: { done: boolean }[];
+  documents: { status: string }[];
+  docusealConfigured: boolean;
+}): boolean {
+  return (
+    (!input.formConfigured || input.formSubmittedAt !== null) &&
+    input.todos.every((t) => t.done) &&
+    (!input.docusealConfigured || input.documents.every((d) => d.status === 'completed'))
+  );
+}

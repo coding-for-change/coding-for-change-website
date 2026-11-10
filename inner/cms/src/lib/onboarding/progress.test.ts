@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { memberProgress, type ProgressInput } from './progress';
+import { memberProgress, ownStepsDone, type ProgressInput } from './progress';
 
 const base: ProgressInput = {
   account: { id: 7, email: 'max.mustermann@codingforchange.com', firstName: 'Max', lastName: 'Mustermann', signedInAt: '2026-11-01T10:00:00.000Z', application: { id: 3 } },
@@ -52,5 +52,21 @@ describe('memberProgress', () => {
 
   it('does not wait for a form when none is set', () => {
     expect(memberProgress({ ...base, memberTodos: [], boardTodos: [], documents: [], formConfigured: false }).complete).toBe(true);
+  });
+});
+
+describe('ownStepsDone', () => {
+  const done = { formConfigured: true, formSubmittedAt: at, todos: [{ done: true }], documents: [{ status: 'completed' }], docusealConfigured: true };
+
+  it('needs the form, every to-do and every document', () => {
+    expect(ownStepsDone(done)).toBe(true);
+    expect(ownStepsDone({ ...done, formSubmittedAt: null })).toBe(false);
+    expect(ownStepsDone({ ...done, todos: [{ done: true }, { done: false }] })).toBe(false);
+    expect(ownStepsDone({ ...done, documents: [{ status: 'pending' }] })).toBe(false);
+  });
+
+  it('does not wait for documents without DocuSeal, nor for a form that is not set', () => {
+    expect(ownStepsDone({ ...done, documents: [{ status: 'not_started' }], docusealConfigured: false })).toBe(true);
+    expect(ownStepsDone({ ...done, formConfigured: false, formSubmittedAt: null })).toBe(true);
   });
 });

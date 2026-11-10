@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasAdminRole, hasEditorRole, isAdmin, isAdminOrSelf, isEditor, requireRole, roleOf } from './roles';
+import { firstAccountRole, hasAdminRole, hasEditorRole, isAdmin, isAdminOrSelf, isEditor, requireRole, roleOf } from './roles';
 
 const member = { id: 1, collection: 'users', role: 'member' };
 const editor = { id: 2, collection: 'users', role: 'editor' };
@@ -71,5 +71,18 @@ describe('requireRole', () => {
     expect(requireRole(as(editor), 'admin')?.status).toBe(403);
     expect(requireRole(as(admin), 'admin')).toBeNull();
     expect(requireRole(as(apiKey), 'editor')?.status).toBe(403);
+  });
+});
+
+describe('firstAccountRole', () => {
+  it('makes the first account of an empty table an admin, whatever was asked', () => {
+    expect(firstAccountRole(0, undefined)).toBe('admin');
+    expect(firstAccountRole(0, 'member')).toBe('admin');
+  });
+
+  it('never changes the role of a later account', () => {
+    expect(firstAccountRole(1, 'member')).toBe('member');
+    expect(firstAccountRole(1, undefined)).toBeUndefined();
+    expect(firstAccountRole(5, 'editor')).toBe('editor');
   });
 });
