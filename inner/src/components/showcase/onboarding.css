@@ -1,288 +1,632 @@
-/* ---- /onboarding – a new member's own page, on /join/apply's light page ---- */
+/* ---- /onboarding – a new member's own dashboard ---- */
 /*
- * Builds on join.css (.jn-apply: the column, the head, the form styling) and
- * landing.css (.lp-submit, the CmsForm fields). Only what this page adds is
- * here: the numbered sections, the to-do and document rows, the sign-in.
+ * A dashboard, not a landing page: a left-aligned head with the account on
+ * the right, a row of figures, then cards with rows. The look follows the
+ * usual shadcn conventions (hairline borders, soft radius, small type, pill
+ * badges) in the site's own colours.
+ *
+ * Still builds on landing.css and join.css for the colour variables and for
+ * the CmsForm fields inside the form card.
  * Every div states its display (App.css sets `div { display: flex }`).
  */
 
-.ob .ob-head {
-    margin-bottom: 36px;
-    padding-bottom: 28px;
-    border-bottom: 1px solid var(--line);
+.ob {
+    --ob-fg: var(--navy, #0f2040);
+    --ob-muted: #6b7280;
+    --ob-border: #e5e7eb;
+    --ob-soft: #f4f5f6;
+    --ob-radius: 14px;
+    --ob-accent: var(--teal, #2f8f90);
+    --ob-accent-dark: var(--teal-dark, #1f6f70);
+    background: #fafafa;
 }
 
-.ob .ob-intro {
-    margin-left: auto;
-    margin-right: auto;
+.ob .lp-page {
+    background: transparent;
 }
 
-.ob .ob-who {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: baseline;
-    gap: 4px 14px;
-    margin: 22px 0 0;
-    font-size: 14px;
-    color: var(--muted);
-    overflow-wrap: anywhere;
+.ob .ob-shell {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 40px 24px 72px;
+    text-align: left;
+    color: var(--ob-fg);
 }
 
-.ob .ob-link {
-    padding: 0;
-    border: 0;
-    background: none;
-    cursor: pointer;
-    font: inherit;
-    font-size: 14px;
-    color: var(--teal-dark);
-    text-decoration: underline;
+.ob .ob-shell *,
+.ob .ob-shell *::before,
+.ob .ob-shell *::after {
+    box-sizing: border-box;
+}
+
+.ob .ob-shell a {
+    color: var(--ob-accent-dark);
     text-underline-offset: 3px;
 }
 
-.ob .ob-link:disabled {
-    opacity: 0.6;
-    cursor: progress;
-}
-
-.ob .ob-note {
-    margin: 12px 0 0;
-    font-size: 14px;
-    line-height: 1.55;
-    color: var(--muted);
-}
-
-.ob .ob-note a,
-.ob .jn-apply__lead a {
-    color: var(--teal-dark);
-    text-underline-offset: 3px;
-}
-
-/* ---- Signed out ---- */
-.ob .ob-signin {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-
-.ob .ob-signin__btn {
-    align-self: center;
-    text-decoration: none;
-}
-
-/* ---- Everything done ---- */
-.ob .ob-allset {
-    display: block;
-    margin: 0 0 32px;
-    padding: 16px 18px;
-    border: 1px solid rgba(47, 143, 144, 0.45);
-    background: rgba(47, 143, 144, 0.08);
-    box-shadow: inset 3px 0 0 var(--teal);
-}
-
-.ob .ob-allset__title {
-    margin: 0;
-    font-family: var(--jn-display);
-    font-size: 18px;
-    color: var(--navy);
-}
-
-.ob .ob-allset__text {
-    margin: 6px 0 0;
-    font-size: 15px;
-    line-height: 1.55;
-    color: var(--muted);
-}
-
-/* ---- The numbered sections ---- */
-.ob .ob-section {
-    display: block;
-    margin: 0 0 40px;
-}
-
-.ob .ob-section__title {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+.ob .ob-kicker {
     margin: 0 0 6px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--line);
-    font-family: var(--jn-display);
-    font-size: 22px;
-    color: var(--navy);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ob-accent-dark);
 }
 
-.ob .ob-section__num {
+.ob .ob-muted {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ob-muted);
+}
+
+.ob .ob-muted--small {
+    font-size: 13px;
+}
+
+/* ---- Card ---- */
+.ob .ob-card {
+    display: block;
+    border: 1px solid var(--ob-border);
+    border-radius: var(--ob-radius);
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 32, 64, 0.04);
+}
+
+.ob .ob-card--pad {
+    padding: 22px;
+}
+
+.ob .ob-card__lead {
+    margin-bottom: 18px;
+}
+
+/* ---- Buttons ---- */
+.ob .ob-btn {
     display: inline-flex;
     flex: none;
     align-items: center;
     justify-content: center;
-    width: 30px;
-    height: 30px;
-    border: 1px solid rgba(47, 143, 144, 0.55);
-    font-size: 15px;
-    color: var(--teal-dark);
-}
-
-.ob .ob-section__lead {
-    margin: 12px 0 22px;
-    font-size: 15.5px;
-    line-height: 1.6;
-    color: var(--muted);
-}
-
-/* The form, once sent: one line, and the way to send it again. */
-.ob .ob-done {
-    display: block;
-    margin-top: 16px;
-}
-
-.ob .ob-done__thanks {
-    margin: 0 0 6px;
-    font-size: 16px;
-    color: var(--teal-dark);
-}
-
-.ob .ob-done__line {
-    margin: 0 0 4px;
-    font-size: 15.5px;
-    line-height: 1.55;
-    color: var(--ink);
-}
-
-.ob .ob-done .ob-link {
-    margin-top: 10px;
-}
-
-.ob .ob-check {
-    margin-right: 6px;
-    color: var(--teal);
-}
-
-/* ---- To-do and document rows ---- */
-.ob .ob-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin: 0;
-    padding: 0;
-    list-style: none;
-}
-
-.ob .ob-item {
-    display: flex;
-    flex-direction: column;
     gap: 6px;
-    padding: 14px 16px;
-    border: 1px solid var(--line);
+    height: 36px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    background: none;
+    font: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1;
+    white-space: nowrap;
+    text-decoration: none;
+    cursor: pointer;
+    transition:
+        background-color 0.15s,
+        border-color 0.15s;
+}
+
+.ob .ob-btn:disabled {
+    opacity: 0.55;
+    cursor: progress;
+}
+
+.ob .ob-btn:focus-visible {
+    outline: 2px solid var(--ob-accent);
+    outline-offset: 2px;
+}
+
+.ob .ob-shell .ob-btn--primary {
+    background: var(--ob-fg);
+    color: #fff;
+}
+
+.ob .ob-btn--primary:hover:not(:disabled) {
+    background: #1b315c;
+}
+
+.ob .ob-shell .ob-btn--outline {
+    border-color: var(--ob-border);
+    background: #fff;
+    color: var(--ob-fg);
+    box-shadow: 0 1px 2px rgba(15, 32, 64, 0.04);
+}
+
+.ob .ob-btn--outline:hover:not(:disabled),
+.ob .ob-btn--ghost:hover:not(:disabled) {
+    background: var(--ob-soft);
+}
+
+.ob .ob-shell .ob-btn--ghost {
+    margin-top: 10px;
+    color: var(--ob-muted);
+}
+
+.ob .ob-btn--wide {
+    width: 100%;
+    height: 40px;
+}
+
+/* ---- Badge ---- */
+.ob .ob-badge {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    align-self: flex-start;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--ob-soft);
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--ob-muted);
+    white-space: nowrap;
+}
+
+.ob .ob-badge--ok {
+    background: rgba(47, 143, 144, 0.12);
+    color: var(--ob-accent-dark);
+}
+
+/* ---- Head ---- */
+.ob .ob-top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px 32px;
+    margin-bottom: 28px;
+}
+
+.ob .ob-top__text {
+    display: block;
+    flex: 1 1 420px;
+    min-width: 0;
+    max-width: 640px;
+}
+
+.ob .ob-title {
+    margin: 0 0 8px;
+    font-family: var(--jn-display, inherit);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--ob-fg);
+}
+
+.ob .ob-top__lead + .ob-top__lead {
+    margin-top: 8px;
+}
+
+.ob .ob-account {
+    display: flex;
+    box-sizing: border-box;
+    flex: none;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+    padding: 6px 6px 6px 8px;
+    border: 1px solid var(--ob-border);
+    border-radius: 999px;
     background: #fff;
 }
 
-.ob .ob-item--done {
-    border-color: rgba(47, 143, 144, 0.45);
-    background: rgba(47, 143, 144, 0.06);
+.ob .ob-account .ob-btn {
+    height: 30px;
+    border-radius: 999px;
+    box-shadow: none;
 }
 
-.ob .ob-item__check {
+.ob .ob-avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(47, 143, 144, 0.14);
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ob-accent-dark);
+}
+
+.ob .ob-account__mail {
+    min-width: 0;
+    overflow: hidden;
+    font-size: 13px;
+    color: var(--ob-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* ---- Everything done ---- */
+.ob .ob-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding: 14px 16px;
+    border: 1px solid rgba(47, 143, 144, 0.35);
+    border-radius: var(--ob-radius);
+    background: rgba(47, 143, 144, 0.07);
+}
+
+.ob .ob-alert__icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--ob-accent);
+    font-size: 13px;
+    color: #fff;
+}
+
+.ob .ob-alert__body {
+    display: block;
+}
+
+.ob .ob-alert__title {
+    margin: 0 0 2px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ob-fg);
+}
+
+/* ---- Figures ---- */
+.ob .ob-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+}
+
+.ob .ob-stat {
+    padding: 18px 20px;
+}
+
+.ob .ob-stat__label {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ob-muted);
+}
+
+.ob .ob-stat__value {
+    margin: 10px 0 6px;
+    font-family: var(--jn-display, inherit);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--ob-fg);
+}
+
+.ob .ob-stat__unit {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ob-muted);
+}
+
+.ob .ob-stat__sub {
+    margin: 0;
+    font-size: 13px;
+    color: var(--ob-muted);
+}
+
+.ob .ob-progress {
+    display: block;
+    height: 6px;
+    margin: 0 0 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--ob-soft);
+}
+
+.ob .ob-progress__bar {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--ob-accent);
+    transition: width 0.3s ease;
+}
+
+/* ---- Sections ---- */
+.ob .ob-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+    align-items: start;
+}
+
+.ob .ob-side {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+}
+
+@media (min-width: 900px) {
+    .ob .ob-grid--two {
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    }
+}
+
+.ob .ob-section {
+    display: block;
+    min-width: 0;
+    margin: 0;
+}
+
+.ob .ob-section__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.ob .ob-section__title {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ob-fg);
+}
+
+.ob .ob-section__head .ob-badge {
+    align-self: center;
+}
+
+.ob .ob-section__foot {
+    margin-top: 10px;
+}
+
+/* The shared CmsForm inside the card, in the dashboard's proportions. */
+.ob .ob-card .lp-label {
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ob-fg);
+}
+
+.ob .ob-card .lp-input,
+.ob .ob-card .lp-textarea,
+.ob .ob-card .lp-select {
+    border: 1px solid var(--ob-border);
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(15, 32, 64, 0.04);
+    font-size: 14.5px;
+}
+
+.ob .ob-card .lp-input:focus,
+.ob .ob-card .lp-textarea:focus,
+.ob .ob-card .lp-select:focus {
+    border-color: var(--ob-accent);
+    outline: 2px solid rgba(47, 143, 144, 0.25);
+    outline-offset: 0;
+}
+
+.ob .ob-card .lp-upload__btn {
+    border-radius: 8px;
+}
+
+.ob .ob-card .lp-submit {
+    height: 40px;
+    padding: 0 18px;
+    border-radius: 8px;
+    background: var(--ob-fg);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.ob .ob-card .lp-submit:hover:not(:disabled) {
+    background: #1b315c;
+}
+
+/* The form, once sent. */
+.ob .ob-sent {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px 20px;
+}
+
+.ob .ob-sent__text {
+    display: block;
+    flex: 1 1 260px;
+    min-width: 0;
+}
+
+.ob .ob-sent__line {
+    margin: 0 0 4px;
+    font-size: 14.5px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: var(--ob-fg);
+}
+
+/* ---- Rows in a card ---- */
+.ob .ob-rows {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    list-style: none;
+}
+
+.ob .ob-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 14px 18px;
+}
+
+.ob .ob-row + .ob-row {
+    border-top: 1px solid var(--ob-border);
+}
+
+.ob .ob-row__check {
     display: flex;
     align-items: flex-start;
     gap: 12px;
     cursor: pointer;
 }
 
-.ob .ob-item__check input[type='checkbox'] {
+.ob .ob-row__check input[type='checkbox'] {
+    appearance: none;
+    display: inline-grid;
     flex: none;
+    place-content: center;
     width: 18px;
     height: 18px;
-    margin: 2px 0 0;
-    accent-color: var(--teal);
+    margin: 1px 0 0;
+    border: 1px solid #c4c8cf;
+    border-radius: 5px;
+    background: #fff;
     box-shadow: none;
+    cursor: pointer;
 }
 
-.ob .ob-item__text,
-.ob .ob-item__title {
-    font-size: 15.5px;
-    line-height: 1.5;
-    color: var(--ink);
+.ob .ob-row__check input[type='checkbox']::after {
+    content: '';
+    width: 9px;
+    height: 5px;
+    margin-top: -2px;
+    border: solid #fff;
+    border-width: 0 0 2px 2px;
+    transform: rotate(-45deg) scale(0);
+}
+
+.ob .ob-row__check input[type='checkbox']:checked {
+    border-color: var(--ob-accent);
+    background: var(--ob-accent);
+}
+
+.ob .ob-row__check input[type='checkbox']:checked::after {
+    transform: rotate(-45deg) scale(1);
+}
+
+.ob .ob-row__check input[type='checkbox']:focus-visible {
+    outline: 2px solid var(--ob-accent);
+    outline-offset: 2px;
+}
+
+.ob .ob-row__check input[type='checkbox']:disabled {
+    cursor: progress;
+}
+
+.ob .ob-row__text,
+.ob .ob-row__title {
+    font-size: 14.5px;
+    line-height: 1.45;
+    color: var(--ob-fg);
     overflow-wrap: anywhere;
 }
 
-.ob .ob-item__title {
+.ob .ob-row__title {
     font-weight: 600;
 }
 
-.ob .ob-item__desc {
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--muted);
+.ob .ob-row--done .ob-row__text {
+    color: var(--ob-muted);
+    text-decoration: line-through;
 }
 
-.ob .ob-item__meta {
+.ob .ob-row__meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 4px 16px;
+    gap: 2px 14px;
     padding-left: 30px;
-    font-size: 13.5px;
-    color: var(--muted);
+    font-size: 13px;
+    color: var(--ob-muted);
 }
 
-.ob .ob-item__meta a {
-    color: var(--teal-dark);
-    text-underline-offset: 3px;
-}
-
-.ob .ob-item__when {
-    color: var(--teal-dark);
-}
-
-.ob .ob-item__error {
+.ob .ob-row__error {
     margin: 0;
     padding-left: 30px;
-    font-size: 13.5px;
-    color: #cc3333;
-}
-
-.ob .ob-pill {
-    align-self: flex-start;
-    padding: 3px 10px;
-    border: 1px solid var(--line);
     font-size: 13px;
-    color: var(--muted);
+    color: #c62828;
 }
 
-.ob .ob-item__row {
+.ob .ob-row__error--flush {
+    padding-left: 0;
+}
+
+.ob .ob-row__split {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 10px 16px;
+    gap: 12px 16px;
 }
 
-.ob .ob-sign {
-    width: auto;
+.ob .ob-row__main {
+    display: flex;
+    flex: 1 1 200px;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.ob .ob-contact {
+    margin-top: 36px;
+    padding-top: 18px;
+    border-top: 1px solid var(--ob-border);
+}
+
+/* ---- Signed out ---- */
+.ob .ob-gate {
+    display: flex;
+    justify-content: center;
+    padding: 32px 0;
+}
+
+.ob .ob-gate__card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 100%;
+    max-width: 420px;
+    padding: 28px;
+}
+
+.ob .ob-gate__title {
     margin: 0;
-    padding: 9px 18px;
-    font-size: 14.5px;
-}
-
-.ob .ob-item__error--flush {
-    padding-left: 0;
-}
-
-.ob .ob-pill--done {
-    border-color: rgba(47, 143, 144, 0.45);
-    color: var(--teal-dark);
+    font-family: var(--jn-display, inherit);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ob-fg);
 }
 
 @media (max-width: 560px) {
-    .ob .ob-section__title {
-        font-size: 19px;
+    .ob .ob-shell {
+        padding: 28px 16px 56px;
     }
 
-    .ob .ob-item__meta,
-    .ob .ob-item__error {
+    .ob .ob-title {
+        font-size: 28px;
+    }
+
+    .ob .ob-account {
+        width: 100%;
+    }
+
+    .ob .ob-account__mail {
+        flex: 1;
+    }
+
+    .ob .ob-row__meta,
+    .ob .ob-row__error {
         padding-left: 0;
     }
 }

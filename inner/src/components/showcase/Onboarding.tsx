@@ -236,163 +236,54 @@ const Onboarding: React.FC<OnboardingProps> = ({ initialView, signedOut, initial
         }
     };
 
-    const head = (title: string, lead?: React.ReactNode) => (
-        <motion.div
-            className="jn-apply__head ob-head"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-        >
-            <p className="lp-kicker">{o.kicker}</p>
-            <h1 className="lp-page__title">{title}</h1>
-            {lead}
-        </motion.div>
-    );
-
     const shell = (children: React.ReactNode) => (
         <div className="lp jn jn-apply ob">
             <div className="lp-page">
-                <div className="lp-inner jn-apply__col">{children}</div>
+                <motion.div
+                    className="ob-shell"
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                >
+                    {children}
+                </motion.div>
             </div>
         </div>
     );
 
     if (!view) {
         return shell(
-            <>
-                {head(
-                    o.signedOutTitle,
-                    <p className="jn-apply__lead">{signedOut ? o.signedOutLead : withEmail(o.unavailable)}</p>
-                )}
-                {signedOut && (
-                    <div className="ob-signin">
-                        <a className="lp-submit ob-signin__btn" href={SIGN_IN_URL}>
-                            {o.signIn}
-                        </a>
-                        <p className="ob-note">{withEmail(o.signInNote)}</p>
-                    </div>
-                )}
-            </>
+            <div className="ob-gate">
+                <div className="ob-card ob-gate__card">
+                    <p className="ob-kicker">{o.kicker}</p>
+                    <h1 className="ob-gate__title">{o.signedOutTitle}</h1>
+                    <p className="ob-muted">{signedOut ? o.signedOutLead : withEmail(o.unavailable)}</p>
+                    {signedOut && (
+                        <>
+                            <a className="ob-btn ob-btn--primary ob-btn--wide" href={SIGN_IN_URL}>
+                                {o.signIn}
+                            </a>
+                            <p className="ob-muted ob-muted--small">{withEmail(o.signInNote)}</p>
+                        </>
+                    )}
+                </div>
+            </div>
         );
     }
 
     const form = view.form;
     const todos = view.todos;
     const documents = view.documents.configured ? view.documents.items : [];
-    const sections: { id: string; render: (n: number) => React.ReactNode }[] = [];
 
-    if (form) {
-        sections.push({
-            id: 'form',
-            render: (n) => (
-                <section className="ob-section" aria-labelledby="ob-form">
-                    <h2 className="ob-section__title" id="ob-form">
-                        <span className="ob-section__num">{n}</span>
-                        {o.formTitle}
-                    </h2>
-                    {editing ? (
-                        <>
-                            <p className="ob-section__lead">{o.formLead}</p>
-                            <CmsForm
-                                key={`${formKey}-${locale}`}
-                                form={form.doc}
-                                untracked
-                                initialValues={form.previous}
-                                checks={{
-                                    githubUsername: (v) => (githubOk(v) ? null : o.githubInvalid),
-                                    linkedin: (v) => (linkedinOk(v) ? null : o.linkedinInvalid),
-                                }}
-                                textLimits={{ bio: 1500 }}
-                                onSubmitted={() => {
-                                    setJustSent(true);
-                                    setEditing(false);
-                                    void load(locale);
-                                }}
-                            />
-                            {form.sentAt && (
-                                <button className="ob-link" type="button" onClick={() => setEditing(false)}>
-                                    {o.formCancel}
-                                </button>
-                            )}
-                        </>
-                    ) : (
-                        <div className="ob-done" role={justSent ? 'status' : undefined}>
-                            {justSent && <p className="ob-done__thanks">{o.formThanks}</p>}
-                            <p className="ob-done__line">
-                                <span className="ob-check" aria-hidden="true">
-                                    ✓
-                                </span>
-                                {form.sentAt ? o.formSentOn.replace('{date}', day(form.sentAt)) : o.formThanks}
-                            </p>
-                            {view.profile && (
-                                <p className="ob-note">{view.profile.published ? o.profileLive : o.profileDraft}</p>
-                            )}
-                            <button
-                                className="ob-link"
-                                type="button"
-                                onClick={() => {
-                                    setFormKey((k) => k + 1);
-                                    setJustSent(false);
-                                    setEditing(true);
-                                }}
-                            >
-                                {o.formChange}
-                            </button>
-                        </div>
-                    )}
-                </section>
-            ),
-        });
-    }
-
-    if (todos.length > 0) {
-        sections.push({
-            id: 'todos',
-            render: (n) => (
-                <section className="ob-section" aria-labelledby="ob-todos">
-                    <h2 className="ob-section__title" id="ob-todos">
-                        <span className="ob-section__num">{n}</span>
-                        {o.todosTitle}
-                    </h2>
-                    <p className="ob-section__lead">{o.todosLead}</p>
-                    <ul className="ob-list">
-                        {todos.map((td) => (
-                            <li key={td.id} className={`ob-item${td.done ? ' ob-item--done' : ''}`}>
-                                <label className="ob-item__check">
-                                    <input
-                                        type="checkbox"
-                                        checked={td.done}
-                                        disabled={busy !== null}
-                                        onChange={(e) => void tick(td, e.target.checked)}
-                                    />
-                                    <span className="ob-item__text">{td.text}</span>
-                                </label>
-                                {(td.linkUrl || (td.done && td.at)) && (
-                                    <span className="ob-item__meta">
-                                        {td.linkUrl && (
-                                            <a href={td.linkUrl} target="_blank" rel="noopener noreferrer">
-                                                {td.linkLabel || o.openLink} ↗
-                                            </a>
-                                        )}
-                                        {td.done && td.at && (
-                                            <span className="ob-item__when">
-                                                {o.todoDoneOn.replace('{date}', day(td.at))}
-                                            </span>
-                                        )}
-                                    </span>
-                                )}
-                                {todoError === td.id && (
-                                    <p className="ob-item__error" role="alert">
-                                        {o.todoError}
-                                    </p>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-            ),
-        });
-    }
+    // What the cards at the top count: the form is one step, every to-do and
+    // every document another.
+    const todosDone = todos.filter((td) => td.done).length;
+    const docsDone = documents.filter((d) => d.status === 'completed').length;
+    const formSent = Boolean(form?.sentAt);
+    const total = (form ? 1 : 0) + todos.length + documents.length;
+    const done = (formSent ? 1 : 0) + todosDone + docsDone;
+    const share = total ? Math.round((done / total) * 100) : 100;
+    const left = (open: number) => (open ? o.statLeft.replace('{n}', String(open)) : o.statAllDone);
 
     const docStatus = (d: MemberDocument) => {
         const key = d.status as keyof typeof o.docStatus;
@@ -401,106 +292,294 @@ const Onboarding: React.FC<OnboardingProps> = ({ initialView, signedOut, initial
         return d.completedAt ? text.replace('{date}', day(d.completedAt)) : text.replace(/\s*\{date\}/, '');
     };
 
-    if (documents.length > 0) {
-        sections.push({
-            id: 'documents',
-            render: (n) => (
-                <section className="ob-section" aria-labelledby="ob-docs">
-                    <h2 className="ob-section__title" id="ob-docs">
-                        <span className="ob-section__num">{n}</span>
-                        {o.docsTitle}
-                    </h2>
-                    <p className="ob-section__lead">{o.docsLead}</p>
-                    <ul className="ob-list">
-                        {documents.map((d) => (
-                            <li key={d.id} className={`ob-item${d.status === 'completed' ? ' ob-item--done' : ''}`}>
-                                <span className="ob-item__title">{d.title}</span>
-                                {d.description && <span className="ob-item__desc">{d.description}</span>}
-                                <span className="ob-item__row">
-                                    <span className={`ob-pill ob-pill--${d.status === 'completed' ? 'done' : 'open'}`}>
-                                        {d.status === 'completed' && '✓ '}
-                                        {docStatus(d)}
-                                    </span>
-                                    {d.status !== 'completed' && (
-                                        <button
-                                            type="button"
-                                            className="lp-submit ob-sign"
-                                            disabled={signing !== null}
-                                            onClick={() => void sign(d)}
-                                        >
-                                            {signing === d.id
-                                                ? o.signOpening
-                                                : d.status === 'pending' || d.status === 'opened'
-                                                  ? o.signContinue
-                                                  : d.status === 'declined' || d.status === 'expired'
-                                                    ? o.signAgain
-                                                    : o.signStart}{' '}
-                                            ↗
-                                        </button>
-                                    )}
-                                </span>
-                                {blocked?.id === d.id && (
-                                    <p className="ob-note" role="status">
-                                        {o.signBlocked}{' '}
-                                        <a href={blocked.url} target="_blank" rel="noopener noreferrer">
-                                            {o.signOpenLink} ↗
-                                        </a>
-                                    </p>
-                                )}
-                                {docError?.id === d.id && (
-                                    <p className="ob-item__error ob-item__error--flush" role="alert">
-                                        {docError.text === 'unavailable' ? withEmail(o.signUnavailable) : o.signError}
-                                    </p>
-                                )}
-                            </li>
-                        ))}
-                    </ul>
-                    {documents.some((d) => d.status !== 'completed') && <p className="ob-note">{o.docsHint}</p>}
-                </section>
-            ),
-        });
-    }
+    const badge = (ok: boolean, text: string) => (
+        <span className={`ob-badge${ok ? ' ob-badge--ok' : ''}`}>
+            {ok && <span aria-hidden="true">✓ </span>}
+            {text}
+        </span>
+    );
+
+    const name = view.member.firstName?.trim();
+    const initials =
+        `${view.member.firstName?.[0] ?? ''}${view.member.lastName?.[0] ?? ''}`.toUpperCase() ||
+        view.member.email[0].toUpperCase();
 
     return shell(
         <>
-            {head(
-                o.title,
-                <>
-                    {view.intro ? (
-                        view.intro
-                            .split(/\n{2,}/)
-                            .map((p, i) => (
-                                <p key={i} className="jn-apply__lead ob-intro">
-                                    {p}
-                                </p>
-                            ))
-                    ) : null}
-                    <p className="ob-who">
-                        <span>{o.signedInAs.replace('{email}', view.member.email)}</span>
-                        <button className="ob-link" type="button" onClick={() => void signOut()} disabled={leaving}>
-                            {leaving ? o.signingOut : o.signOut}
-                        </button>
-                    </p>
-                </>
+            <header className="ob-top">
+                <div className="ob-top__text">
+                    <p className="ob-kicker">{o.kicker}</p>
+                    <h1 className="ob-title">{name ? o.hello.replace('{name}', name) : o.title}</h1>
+                    {view.intro
+                        ? view.intro.split(/\n{2,}/).map((p, i) => (
+                              <p key={i} className="ob-muted ob-top__lead">
+                                  {p}
+                              </p>
+                          ))
+                        : null}
+                </div>
+                <div className="ob-account">
+                    <span className="ob-avatar" aria-hidden="true">
+                        {initials}
+                    </span>
+                    <span className="ob-account__mail" title={o.signedInAs.replace('{email}', view.member.email)}>
+                        {view.member.email}
+                    </span>
+                    <button
+                        className="ob-btn ob-btn--outline"
+                        type="button"
+                        onClick={() => void signOut()}
+                        disabled={leaving}
+                    >
+                        {leaving ? o.signingOut : o.signOut}
+                    </button>
+                </div>
+            </header>
+
+            {view.stepsDone && (
+                <div className="ob-alert" role="status">
+                    <span className="ob-alert__icon" aria-hidden="true">
+                        ✓
+                    </span>
+                    <div className="ob-alert__body">
+                        <p className="ob-alert__title">{o.doneTitle}</p>
+                        <p className="ob-muted">{o.doneText}</p>
+                    </div>
+                </div>
             )}
 
-            <motion.div
-                className="jn-apply__main ob-main"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-            >
-                {view.stepsDone && (
-                    <div className="ob-allset" role="status">
-                        <p className="ob-allset__title">{o.doneTitle}</p>
-                        <p className="ob-allset__text">{o.doneText}</p>
+            <div className="ob-stats">
+                <div className="ob-card ob-stat ob-stat--wide">
+                    <p className="ob-stat__label">{o.statProgress}</p>
+                    <p className="ob-stat__value">
+                        {share}
+                        <span className="ob-stat__unit"> %</span>
+                    </p>
+                    <div
+                        className="ob-progress"
+                        role="progressbar"
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={share}
+                        aria-label={o.statProgress}
+                    >
+                        <span className="ob-progress__bar" style={{ width: `${share}%` }} />
+                    </div>
+                    <p className="ob-stat__sub">
+                        {o.statSteps.replace('{done}', String(done)).replace('{total}', String(total))}
+                    </p>
+                </div>
+                {form && (
+                    <div className="ob-card ob-stat">
+                        <p className="ob-stat__label">{o.formTitle}</p>
+                        <p className="ob-stat__value">{formSent ? o.statSent : o.statOpen}</p>
+                        <p className="ob-stat__sub">
+                            {form.sentAt ? o.statOn.replace('{date}', day(form.sentAt)) : o.statFormHint}
+                        </p>
                     </div>
                 )}
-                {sections.map((s, i) => (
-                    <React.Fragment key={s.id}>{s.render(i + 1)}</React.Fragment>
-                ))}
-                <p className="jn-apply__contact">{withEmail(o.contact)}</p>
-            </motion.div>
+                {todos.length > 0 && (
+                    <div className="ob-card ob-stat">
+                        <p className="ob-stat__label">{o.todosTitle}</p>
+                        <p className="ob-stat__value">
+                            {todosDone}
+                            <span className="ob-stat__unit"> / {todos.length}</span>
+                        </p>
+                        <p className="ob-stat__sub">{left(todos.length - todosDone)}</p>
+                    </div>
+                )}
+                {documents.length > 0 && (
+                    <div className="ob-card ob-stat">
+                        <p className="ob-stat__label">{o.docsTitle}</p>
+                        <p className="ob-stat__value">
+                            {docsDone}
+                            <span className="ob-stat__unit"> / {documents.length}</span>
+                        </p>
+                        <p className="ob-stat__sub">{left(documents.length - docsDone)}</p>
+                    </div>
+                )}
+            </div>
+
+            <div className={`ob-grid${form && (todos.length > 0 || documents.length > 0) ? ' ob-grid--two' : ''}`}>
+                {form && (
+                    <section className="ob-section" aria-labelledby="ob-form">
+                        <div className="ob-section__head">
+                            <h2 className="ob-section__title" id="ob-form">
+                                {o.formTitle}
+                            </h2>
+                            {badge(formSent, formSent ? o.statSent : o.statOpen)}
+                        </div>
+                        <div className="ob-card ob-card--pad">
+                            {editing ? (
+                                <>
+                                    <p className="ob-muted ob-card__lead">{o.formLead}</p>
+                                    <CmsForm
+                                        key={`${formKey}-${locale}`}
+                                        form={form.doc}
+                                        untracked
+                                        initialValues={form.previous}
+                                        checks={{
+                                            githubUsername: (v) => (githubOk(v) ? null : o.githubInvalid),
+                                            linkedin: (v) => (linkedinOk(v) ? null : o.linkedinInvalid),
+                                        }}
+                                        textLimits={{ bio: 1500 }}
+                                        onSubmitted={() => {
+                                            setJustSent(true);
+                                            setEditing(false);
+                                            void load(locale);
+                                        }}
+                                    />
+                                    {form.sentAt && (
+                                        <button
+                                            className="ob-btn ob-btn--ghost"
+                                            type="button"
+                                            onClick={() => setEditing(false)}
+                                        >
+                                            {o.formCancel}
+                                        </button>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="ob-sent" role={justSent ? 'status' : undefined}>
+                                    <div className="ob-sent__text">
+                                        <p className="ob-sent__line">
+                                            {form.sentAt
+                                                ? o.formSentOn.replace('{date}', day(form.sentAt))
+                                                : o.formThanks}
+                                        </p>
+                                        {justSent && <p className="ob-muted">{o.formThanks}</p>}
+                                        {view.profile && (
+                                            <p className="ob-muted">
+                                                {view.profile.published ? o.profileLive : o.profileDraft}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <button
+                                        className="ob-btn ob-btn--outline"
+                                        type="button"
+                                        onClick={() => {
+                                            setFormKey((k) => k + 1);
+                                            setJustSent(false);
+                                            setEditing(true);
+                                        }}
+                                    >
+                                        {o.formChange}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+                )}
+
+                {(todos.length > 0 || documents.length > 0) && (
+                    <div className="ob-side">
+                        {todos.length > 0 && (
+                            <section className="ob-section" aria-labelledby="ob-todos">
+                                <div className="ob-section__head">
+                                    <h2 className="ob-section__title" id="ob-todos">
+                                        {o.todosTitle}
+                                    </h2>
+                                    {badge(todosDone === todos.length, `${todosDone} / ${todos.length}`)}
+                                </div>
+                                <ul className="ob-card ob-rows">
+                                    {todos.map((td) => (
+                                        <li key={td.id} className={`ob-row${td.done ? ' ob-row--done' : ''}`}>
+                                            <label className="ob-row__check">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={td.done}
+                                                    disabled={busy !== null}
+                                                    onChange={(e) => void tick(td, e.target.checked)}
+                                                />
+                                                <span className="ob-row__text">{td.text}</span>
+                                            </label>
+                                            {(td.linkUrl || (td.done && td.at)) && (
+                                                <span className="ob-row__meta">
+                                                    {td.linkUrl && (
+                                                        <a href={td.linkUrl} target="_blank" rel="noopener noreferrer">
+                                                            {td.linkLabel || o.openLink} ↗
+                                                        </a>
+                                                    )}
+                                                    {td.done && td.at && (
+                                                        <span>{o.todoDoneOn.replace('{date}', day(td.at))}</span>
+                                                    )}
+                                                </span>
+                                            )}
+                                            {todoError === td.id && (
+                                                <p className="ob-row__error" role="alert">
+                                                    {o.todoError}
+                                                </p>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className="ob-muted ob-muted--small ob-section__foot">{o.todosLead}</p>
+                            </section>
+                        )}
+
+                        {documents.length > 0 && (
+                            <section className="ob-section" aria-labelledby="ob-docs">
+                                <div className="ob-section__head">
+                                    <h2 className="ob-section__title" id="ob-docs">
+                                        {o.docsTitle}
+                                    </h2>
+                                    {badge(docsDone === documents.length, `${docsDone} / ${documents.length}`)}
+                                </div>
+                                <ul className="ob-card ob-rows">
+                                    {documents.map((d) => (
+                                        <li key={d.id} className="ob-row">
+                                            <div className="ob-row__split">
+                                                <div className="ob-row__main">
+                                                    <span className="ob-row__title">{d.title}</span>
+                                                    {d.description && <span className="ob-muted">{d.description}</span>}
+                                                    {badge(d.status === 'completed', docStatus(d))}
+                                                </div>
+                                                {d.status !== 'completed' && (
+                                                    <button
+                                                        type="button"
+                                                        className="ob-btn ob-btn--primary"
+                                                        disabled={signing !== null}
+                                                        onClick={() => void sign(d)}
+                                                    >
+                                                        {signing === d.id
+                                                            ? o.signOpening
+                                                            : d.status === 'pending' || d.status === 'opened'
+                                                              ? o.signContinue
+                                                              : d.status === 'declined' || d.status === 'expired'
+                                                                ? o.signAgain
+                                                                : o.signStart}{' '}
+                                                        ↗
+                                                    </button>
+                                                )}
+                                            </div>
+                                            {blocked?.id === d.id && (
+                                                <p className="ob-muted ob-muted--small" role="status">
+                                                    {o.signBlocked}{' '}
+                                                    <a href={blocked.url} target="_blank" rel="noopener noreferrer">
+                                                        {o.signOpenLink} ↗
+                                                    </a>
+                                                </p>
+                                            )}
+                                            {docError?.id === d.id && (
+                                                <p className="ob-row__error ob-row__error--flush" role="alert">
+                                                    {docError.text === 'unavailable'
+                                                        ? withEmail(o.signUnavailable)
+                                                        : o.signError}
+                                                </p>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <p className="ob-muted ob-muted--small ob-section__foot">
+                                    {documents.some((d) => d.status !== 'completed') ? o.docsHint : o.docsLead}
+                                </p>
+                            </section>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            <p className="ob-muted ob-contact">{withEmail(o.contact)}</p>
         </>
     );
 };

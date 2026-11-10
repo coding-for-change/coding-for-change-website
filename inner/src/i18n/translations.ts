@@ -300,6 +300,8 @@ export interface Translations {
      * form, their to-dos and the documents. {email} is an address, {date} a day.
      */
     onboarding: {
+        hello: string; statProgress: string; statSteps: string; statSent: string; statOpen: string;
+        statOn: string; statFormHint: string; statLeft: string; statAllDone: string;
         kicker: string; title: string; signedInAs: string; signOut: string; signingOut: string;
         signedOutTitle: string; signedOutLead: string; signIn: string; signInNote: string;
         unavailable: string;
@@ -818,6 +820,9 @@ const en: Translations = {
         error: 'That didn’t work. Please try again, or write to us at {email}.',
     },
     onboarding: {
+        hello: 'Welcome, {name}', statProgress: 'Progress', statSteps: '{done} of {total} steps done',
+        statSent: 'Sent', statOpen: 'Open', statOn: 'on {date}', statFormHint: 'Fill in the form below',
+        statLeft: '{n} still open', statAllDone: 'All done',
         kicker: 'Coding for Change · New members',
         title: 'Welcome on board',
         signedInAs: 'Signed in as {email}',
@@ -1386,6 +1391,9 @@ const de: Translations = {
         error: 'Das hat nicht geklappt. Versuch es bitte noch einmal oder schreib uns an {email}.',
     },
     onboarding: {
+        hello: 'Willkommen, {name}', statProgress: 'Fortschritt', statSteps: '{done} von {total} Schritten erledigt',
+        statSent: 'Gesendet', statOpen: 'Offen', statOn: 'am {date}', statFormHint: 'Fülle das Formular unten aus',
+        statLeft: 'noch {n} offen', statAllDone: 'Alles erledigt',
         kicker: 'Coding for Change · Neue Mitglieder',
         title: 'Willkommen an Bord',
         signedInAs: 'Angemeldet als {email}',
