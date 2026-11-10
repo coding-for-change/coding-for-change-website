@@ -53,10 +53,17 @@ interface Seed {
     worldH: number;
 }
 
-/** Deterministic 0..1 from an index — the seed has to match on server and client. */
+/**
+ * Deterministic 0..1 from an index — the seed has to match on server and
+ * client. An integer hash, not the usual sin() trick: Math.sin is allowed to
+ * differ in its last digit between Node and a browser, which was enough to
+ * hydrate with a mismatch.
+ */
 const noise = (i: number, salt: number) => {
-    const x = Math.sin(i * 127.1 + salt * 311.7) * 43758.5453;
-    return x - Math.floor(x);
+    let h = Math.imul(i + 1, 0x9e3779b1) ^ Math.imul(salt + 1, 0x85ebca6b);
+    h = Math.imul(h ^ (h >>> 15), 0x2c1b3c6d);
+    h = Math.imul(h ^ (h >>> 12), 0x297a2d39);
+    return ((h ^ (h >>> 15)) >>> 0) / 4294967296;
 };
 
 const STEP_X = 1.1;
@@ -67,9 +74,18 @@ const SELECT_GROWTH = 1.42;
 /** Headroom around the resting cluster so a grown bubble has somewhere to go. */
 const WORLD_PAD = 0.55;
 
-const COLLIDE_PAD = 0.05;
-/** Share of an overlap corrected per frame. Below 1 so separation eases in. */
-const COLLIDE_STRENGTH = 0.42;
+/** Gap kept between two circles. None: neighbours touch. */
+const COLLIDE_PAD = 0;
+/**
+ * Share of an overlap corrected per pass, and passes per frame. One soft pass
+ * a frame never caught up with the centre pull: the cluster came to rest with
+ * the faces overlapping, the more people the worse (a fifth of a diameter at
+ * 18). Full corrections, repeated and run after the pull, leave the circles
+ * touching without overlap up to ~45 people. The easing you see still comes
+ * from the radius, not from this.
+ */
+const COLLIDE_STRENGTH = 1;
+const COLLIDE_PASSES = 16;
 const CENTER_PULL = 0.022;
 const RADIUS_EASE = 0.14;
 /**
@@ -81,6 +97,8 @@ const RADIUS_EASE = 0.14;
 const REST = 0.008;
 /** Hard stop, so a parameter change can never leave the loop spinning. */
 const MAX_FRAMES = 600;
+/** The same for relaxing the starting arrangement. */
+const SEED_FRAMES = 400;
 
 /**
  * Row lengths tracing the chord of a circle at each height, so the cluster
@@ -121,9 +139,6 @@ const discRows = (count: number): number[] => {
  */
 const seedCluster = (count: number): Seed => {
     const rows = discRows(count);
-    const widest = Math.max(...rows, 1);
-    const restW = (widest - 1) * STEP_X + 1;
-    const restH = (rows.length - 1) * STEP_Y + 1;
     const nodes: Node[] = [];
     let i = 0;
     rows.forEach((inRow, rowIndex) => {
@@ -144,16 +159,27 @@ const seedCluster = (count: number): Seed => {
             });
         }
     });
+    // Relax it here, so the server-rendered positions are already the settled,
+    // non-overlapping ones, and size the world to what the cluster really
+    // takes up: the grid it started from is tighter than circles can pack.
+    for (let f = 0; f < SEED_FRAMES; f++)
+        if (stepCluster(nodes) <= REST) break;
+    let reachX = 0.5;
+    let reachY = 0.5;
+    for (const n of nodes) {
+        reachX = Math.max(reachX, Math.abs(n.x) + n.r);
+        reachY = Math.max(reachY, Math.abs(n.y) + n.r);
+    }
     return {
         nodes,
-        worldW: restW + WORLD_PAD,
-        worldH: restH + WORLD_PAD,
+        worldW: reachX * 2 + WORLD_PAD,
+        worldH: reachY * 2 + WORLD_PAD,
     };
 };
 
 /**
  * Advance the soft-body cluster one frame: ease each radius toward its target,
- * separate overlapping pairs, pull everything gently back to the centre.
+ * pull everything gently back to the centre, then separate overlapping pairs.
  *
  * Corrections are applied straight to position rather than as impulses on a
  * velocity. Velocities gave every nudge a springy overshoot that read as the
@@ -167,27 +193,40 @@ const stepCluster = (nodes: Node[]): number => {
         n.r += (n.targetR - n.r) * RADIUS_EASE;
         n.px = n.x;
         n.py = n.y;
+        // The pull comes first and the separation has the last word, so a
+        // frame never ends with circles pushed into each other.
+        n.x -= n.x * CENTER_PULL;
+        // Slightly stronger vertically, which keeps the cluster from stretching
+        // into a column as it grows.
+        n.y -= n.y * CENTER_PULL * 1.15;
     }
 
-    for (let i = 0; i < nodes.length; i++) {
-        for (let j = i + 1; j < nodes.length; j++) {
-            const a = nodes[i];
-            const b = nodes[j];
-            let dx = b.x - a.x;
-            let dy = b.y - a.y;
-            let dist = Math.hypot(dx, dy);
-            if (dist < 1e-4) {
-                dx = 1e-3;
-                dy = 0;
-                dist = 1e-3;
-            }
-            const min = a.r + b.r + COLLIDE_PAD;
-            if (dist < min) {
-                const shift = (((min - dist) / dist) * COLLIDE_STRENGTH) / 2;
-                a.x -= dx * shift;
-                a.y -= dy * shift;
-                b.x += dx * shift;
-                b.y += dy * shift;
+    for (let pass = 0; pass < COLLIDE_PASSES; pass++) {
+        for (let i = 0; i < nodes.length; i++) {
+            for (let j = i + 1; j < nodes.length; j++) {
+                const a = nodes[i];
+                const b = nodes[j];
+                let dx = b.x - a.x;
+                let dy = b.y - a.y;
+                // sqrt, not Math.hypot: hypot is not bit-identical between
+                // Node and browsers, and the seed is relaxed on both sides of
+                // hydration, where a last-digit difference grows into a
+                // different layout.
+                let dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < 1e-4) {
+                    dx = 1e-3;
+                    dy = 0;
+                    dist = 1e-3;
+                }
+                const min = a.r + b.r + COLLIDE_PAD;
+                if (dist < min) {
+                    const shift =
+                        (((min - dist) / dist) * COLLIDE_STRENGTH) / 2;
+                    a.x -= dx * shift;
+                    a.y -= dy * shift;
+                    b.x += dx * shift;
+                    b.y += dy * shift;
+                }
             }
         }
     }
@@ -197,10 +236,6 @@ const stepCluster = (nodes: Node[]): number => {
     // force magnitudes never converges and the loop would spin forever.
     let motion = 0;
     for (const n of nodes) {
-        n.x -= n.x * CENTER_PULL;
-        // Slightly stronger vertically, which keeps the cluster from stretching
-        // into a column as it grows.
-        n.y -= n.y * CENTER_PULL * 1.15;
         motion +=
             Math.abs(n.x - n.px) +
             Math.abs(n.y - n.py) +
