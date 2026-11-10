@@ -7,8 +7,7 @@
 /* ------------------------------------------------------------------ */
 
 .jn {
-    --navy: #0f2040;
-    --jn-display: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    --jn-display: var(--font-sans);
 }
 
 .jn-head {
@@ -17,14 +16,14 @@
     margin-bottom: 44px;
 }
 .jn-head .lp-h2 {
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 
 /* ---- Head: the pitch on the left, a photo with the round's chip right ---- */
 .jn-hero {
     display: block;
     padding: 64px 0 88px;
-    background: #ffffff;
+    background: var(--cfc-paper);
     overflow: hidden;
 }
 .jn .jn-hero__inner {
@@ -39,11 +38,11 @@
 .jn-hero__title {
     margin: 0;
     font-family: var(--jn-display);
-    font-weight: 700;
-    font-size: clamp(38px, 5vw, 60px);
-    line-height: 1.04;
-    letter-spacing: -1.5px;
-    color: var(--navy);
+    font-weight: 500;
+    font-size: clamp(38px, 5vw, 62px);
+    line-height: 1;
+    letter-spacing: -0.045em;
+    color: var(--cfc-ink);
     /* Wrap at spaces only – auto-hyphenation chops short headline words. */
     hyphens: manual;
     overflow-wrap: break-word;
@@ -74,7 +73,7 @@
     right: -22px;
     width: 70%;
     height: 62%;
-    background: rgba(47, 143, 144, 0.12);
+    background: rgba(11, 70, 67, 0.12);
 }
 
 /* ---- The head's slideshow: photos fade into each other, the event's cover
@@ -88,7 +87,7 @@
     display: block;
     aspect-ratio: 5 / 4;
     background: var(--alt);
-    box-shadow: 0 30px 60px rgba(15, 32, 64, 0.16);
+    box-shadow: 0 30px 60px rgba(19, 22, 20, 0.16);
 }
 .jn-slides__photo {
     position: absolute;
@@ -116,7 +115,7 @@
     padding: 5px;
     box-sizing: border-box;
     background: #ffffff;
-    box-shadow: 0 16px 36px rgba(15, 32, 64, 0.22);
+    box-shadow: 0 16px 36px rgba(19, 22, 20, 0.22);
     opacity: 0;
     transform: rotate(3deg) scale(0.94);
     transition: opacity 0.6s ease, transform 0.6s ease;
@@ -162,7 +161,7 @@
     height: 8px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.55);
-    box-shadow: 0 1px 4px rgba(15, 32, 64, 0.35);
+    box-shadow: 0 1px 4px rgba(19, 22, 20, 0.35);
     transition: background 0.2s ease, transform 0.2s ease;
 }
 .jn-slides__dot:hover .jn-slides__pip {
@@ -188,15 +187,15 @@
     width: 64px;
     height: 54px;
     margin-top: -12px;
-    color: #8a9999;
+    color: #8d8f88;
 }
 .jn-slides__note-text {
     padding-top: 26px;
-    font-family: var(--font-roboto-mono), 'Roboto Mono', ui-monospace, monospace;
+    font-family: var(--font-mono);
     font-size: 14px;
     font-weight: 500;
     line-height: 1.45;
-    color: #6b7a7a;
+    color: #6e716a;
     animation: jn-note-in 0.5s ease both;
 }
 @keyframes jn-note-in {
@@ -224,32 +223,32 @@
     gap: 12px;
     padding: 14px 22px 14px 18px;
     background: #ffffff;
-    box-shadow: 0 18px 44px rgba(15, 32, 64, 0.18);
+    box-shadow: 0 18px 44px rgba(19, 22, 20, 0.18);
 }
 .jn-hero__dot {
     flex: none;
     width: 10px;
     height: 10px;
     border-radius: 50%;
-    background: var(--teal);
+    background: var(--accent);
 }
 .jn-hero__chip[data-status='upcoming'] .jn-hero__dot {
     background: transparent;
-    box-shadow: inset 0 0 0 2px var(--teal);
+    box-shadow: inset 0 0 0 2px var(--accent);
 }
 .jn-hero__chip[data-status='open'] .jn-hero__dot {
     animation: jn-pulse 2.2s ease-out infinite;
 }
 .jn-hero__chip[data-status='closed'] .jn-hero__dot {
-    background: #9aa6a6;
+    background: #a2a399;
 }
 @keyframes jn-pulse {
     0% {
-        box-shadow: 0 0 0 0 rgba(47, 143, 144, 0.45);
+        box-shadow: 0 0 0 0 rgba(11, 70, 67, 0.45);
     }
     70%,
     100% {
-        box-shadow: 0 0 0 9px rgba(47, 143, 144, 0);
+        box-shadow: 0 0 0 9px rgba(11, 70, 67, 0);
     }
 }
 .jn-hero__chip-body {
@@ -262,7 +261,7 @@
     font-size: 18px;
     font-weight: 700;
     line-height: 1.2;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 .jn-hero__chip-count {
     font-size: 13.5px;
@@ -373,6 +372,67 @@
     }
 }
 
+/* ---- Strip: the homepage's quieter logo row (PartnerMarquee variant) ----
+   Label on the left in mono, the logos in greyscale and without tiles, one
+   hairline underneath. Multiply melts a logo's white box into the paper. */
+.jn-partners--strip {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    align-items: center;
+    gap: 24px;
+    max-width: 1124px;
+    margin: 0 auto;
+    padding: 26px 32px;
+    box-sizing: border-box;
+    background: transparent;
+    border-top: 0;
+    border-bottom: 1px solid var(--line);
+}
+.jn-partners--strip .jn-partners__label {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--muted);
+}
+.jn-partners--strip .jn-logo {
+    width: auto;
+    height: 52px;
+    margin-right: 56px;
+    padding: 0;
+    background: none;
+    border: 0;
+}
+.jn-partners--strip .jn-logo img {
+    max-width: 150px;
+    max-height: 34px;
+    filter: grayscale(1);
+    opacity: 0.62;
+    mix-blend-mode: multiply;
+    transition: opacity 0.2s ease, filter 0.2s ease;
+}
+.jn-partners--strip .jn-logo:hover img {
+    filter: none;
+    opacity: 1;
+}
+.jn-partners--strip .jn-logo__name {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--muted);
+    white-space: nowrap;
+}
+@media (max-width: 760px) {
+    .jn-partners--strip {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+        padding: 22px 20px;
+    }
+}
+
 /* ---- What to expect: three photos, the first one large ---- */
 .jn-bento {
     display: grid;
@@ -388,7 +448,7 @@
     margin: 0;
     min-height: 270px;
     overflow: hidden;
-    background: var(--navy);
+    background: var(--cfc-petrol);
     isolation: isolate;
 }
 .jn-tile--projects {
@@ -416,7 +476,7 @@
     position: absolute;
     inset: 0;
     z-index: -1;
-    background: rgba(15, 32, 64, 0.1);
+    background: rgba(19, 22, 20, 0.1);
 }
 /* The two small tiles carry a title and one line – the photo does the rest. */
 .jn-tile__body {
@@ -425,9 +485,9 @@
     color: #ffffff;
     background: linear-gradient(
         0deg,
-        rgba(15, 32, 64, 0.9) 0%,
-        rgba(15, 32, 64, 0.7) 50%,
-        rgba(15, 32, 64, 0) 100%
+        rgba(19, 22, 20, 0.9) 0%,
+        rgba(19, 22, 20, 0.7) 50%,
+        rgba(19, 22, 20, 0) 100%
     );
 }
 .jn-tile__title {
@@ -482,20 +542,20 @@
     font-weight: 600;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
 }
 .jn-way__title {
     margin: 12px 0 10px;
     font-family: var(--jn-display);
     font-size: 28px;
     line-height: 1.1;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 .jn-way__text {
     margin: 0;
     font-size: 16px;
     line-height: 1.6;
-    color: #41494a;
+    color: #43463f;
 }
 .jn-way__points {
     display: block;
@@ -515,7 +575,7 @@
     margin-bottom: 0;
 }
 .jn-way__points li::marker {
-    color: var(--teal);
+    color: var(--accent);
 }
 /* Who to ask: photo, name and role, and a small LinkedIn button – the whole
    row is the link. */
@@ -540,7 +600,7 @@
     border-radius: 50%;
     overflow: hidden;
     background: var(--alt);
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     font-family: var(--jn-display);
     font-size: 18px;
 }
@@ -566,16 +626,16 @@
     font-weight: 600;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
 }
 .jn-way__person-name {
     font-family: var(--jn-display);
     font-size: 16px;
     font-weight: 600;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 .jn-way__person-role {
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 14px;
     font-weight: 400;
     color: var(--muted);
@@ -584,7 +644,7 @@
 .jn-way__linkedin {
     flex: none;
     display: inline-flex;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     transition: color 0.15s ease, transform 0.15s ease;
 }
 .jn-way__linkedin svg {
@@ -594,7 +654,7 @@
 }
 .jn-way__contact:hover .jn-way__linkedin,
 .jn-way__contact:focus-visible .jn-way__linkedin {
-    color: var(--teal);
+    color: var(--accent);
     transform: translateY(-1px);
 }
 
@@ -636,10 +696,10 @@
     width: 44px;
     height: 44px;
     box-sizing: border-box;
-    border: 1.5px solid rgba(47, 143, 144, 0.5);
+    border: 1.5px solid rgba(11, 70, 67, 0.5);
     border-radius: 50%;
     background: #ffffff;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     font-family: var(--jn-display);
     font-size: 17px;
     font-weight: 600;
@@ -655,15 +715,15 @@
 }
 .jn-step[data-state='done'] .jn-step__node,
 .jn-step[data-state='current'] .jn-step__node {
-    border-color: var(--teal);
-    background: var(--teal);
+    border-color: var(--accent);
+    background: var(--accent);
     color: #ffffff;
 }
 .jn-step[data-state='current'] .jn-step__node {
-    box-shadow: 0 0 0 6px rgba(47, 143, 144, 0.16);
+    box-shadow: 0 0 0 6px rgba(11, 70, 67, 0.16);
 }
 .jn-step[data-state='done'] .jn-step__line {
-    background: var(--teal);
+    background: var(--accent);
 }
 .jn-step__body {
     display: block;
@@ -679,7 +739,7 @@
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     font-variant-numeric: tabular-nums;
 }
 .jn-step__title {
@@ -691,13 +751,13 @@
     font-family: var(--jn-display);
     font-size: 22px;
     line-height: 1.15;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 .jn-step__now {
     padding: 3px 8px;
-    background: var(--teal);
+    background: var(--accent);
     color: #ffffff;
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 11px;
     font-weight: 600;
     letter-spacing: 0.1em;
@@ -734,7 +794,7 @@
     font-size: 14px;
 }
 .jn-steps--strip .jn-step[data-state='current'] .jn-step__node {
-    box-shadow: 0 0 0 4px rgba(47, 143, 144, 0.16);
+    box-shadow: 0 0 0 4px rgba(11, 70, 67, 0.16);
 }
 .jn-steps--strip .jn-step__timing {
     font-size: 11px;
@@ -809,14 +869,14 @@
     font-weight: 600;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
 }
 .jn-showcase__title {
     margin: 0;
     font-family: var(--jn-display);
     font-size: 22px;
     line-height: 1.2;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 .jn-showcase__ngo {
     margin: 2px 0 0;
@@ -833,14 +893,14 @@
     display: inline-block;
     margin-top: 16px;
     padding-bottom: 2px;
-    border-bottom: 2px solid var(--teal);
+    border-bottom: 2px solid var(--accent);
     font-family: var(--jn-display);
     font-size: 15px;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     text-decoration: none;
 }
 .jn-showcase__link:hover {
-    color: var(--teal);
+    color: var(--accent);
 }
 
 /* ---- /join/apply ---- */
@@ -873,7 +933,7 @@
     scroll-margin-top: 88px;
 }
 .jn-back {
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     text-decoration: none;
 }
 .jn-back:hover {
@@ -883,12 +943,12 @@
 .jn-apply .lp-page__title {
     margin-bottom: 18px;
     font-size: clamp(34px, 4vw, 46px);
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 /* The hollow dot: coming, not yet open. */
 .jn-status--upcoming .lp-round-status__dot {
     background: transparent;
-    box-shadow: inset 0 0 0 2px var(--teal);
+    box-shadow: inset 0 0 0 2px var(--accent);
 }
 .jn-apply__lead {
     max-width: 44ch;
@@ -906,7 +966,7 @@
     color: var(--muted);
 }
 .jn-apply__contact a {
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     text-underline-offset: 3px;
 }
 .jn-apply__main .lp-formsection {
@@ -922,7 +982,7 @@
     margin: 0;
     font-family: var(--jn-display);
     font-size: 20px;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 .jn-apply__main .lp-cmsform > .lp-submit {
     margin-top: 6px;
@@ -936,7 +996,7 @@
     width: 18px;
     height: 18px;
     margin: 2px 0 0;
-    accent-color: var(--teal);
+    accent-color: var(--accent);
     box-shadow: none;
 }
 
@@ -958,16 +1018,16 @@
 }
 .jn-apply__main .lp-draft__save {
     padding: 13px 22px;
-    border: 1px solid rgba(47, 143, 144, 0.55);
+    border: 1px solid rgba(11, 70, 67, 0.55);
     background: none;
-    color: var(--teal-dark);
+    color: var(--accent-strong);
     cursor: pointer;
     font-family: var(--jn-display);
     font-size: 15px;
 }
 .jn-apply__main .lp-draft__save:hover:not(:disabled) {
-    border-color: var(--teal);
-    background: rgba(47, 143, 144, 0.06);
+    border-color: var(--accent);
+    background: rgba(11, 70, 67, 0.06);
 }
 .jn-apply__main .lp-draft__save:disabled {
     opacity: 0.5;
@@ -980,7 +1040,7 @@
     color: var(--muted);
 }
 .jn-apply__main .lp-draft__flag {
-    color: var(--teal-dark);
+    color: var(--accent-strong);
 }
 .jn-apply__main .lp-draft__clear {
     padding: 0;
@@ -1044,7 +1104,7 @@
     font-family: var(--jn-display);
     font-size: 22px;
     line-height: 1.4;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 
 /* ---- Notify me ---- */
@@ -1056,7 +1116,7 @@
     font-family: var(--jn-display);
     font-size: clamp(24px, 2.6vw, 30px);
     line-height: 1.15;
-    color: var(--navy);
+    color: var(--cfc-ink);
 }
 .jn-waitlist__lead {
     max-width: 52ch;
@@ -1085,9 +1145,9 @@
 .jn-waitlist__done {
     margin: 0;
     padding: 16px 18px;
-    border: 1px solid rgba(47, 143, 144, 0.35);
-    background: rgba(47, 143, 144, 0.08);
-    color: var(--teal-dark);
+    border: 1px solid rgba(11, 70, 67, 0.35);
+    background: rgba(11, 70, 67, 0.08);
+    color: var(--accent-strong);
     font-size: 16px;
     line-height: 1.5;
 }

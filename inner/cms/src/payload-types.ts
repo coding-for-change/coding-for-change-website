@@ -2873,24 +2873,26 @@ export interface TechTour {
  */
 export interface Homepage {
   id: number;
-  heroKicker?: string | null;
-  heroCtaPrimary?: string | null;
-  heroCtaSecondary?: string | null;
-  heroScrollHint?: string | null;
   /**
-   * Optional hero image beside the headline — ideally a wide candid of the team mid-build. Left empty, the hero stays text-only.
+   * The first hero button, to the NGO page ("Start a project").
+   */
+  heroCtaPrimary?: string | null;
+  /**
+   * The second hero button, to the Join page ("Become a member").
+   */
+  heroCtaSecondary?: string | null;
+  /**
+   * The photo behind the hero headline, across the full width – a wide, landscape candid of the club at an event or mid-build, at least 2400 px wide. The headline sits on its lower left, so keep faces out of that corner. Left empty, the built-in event photo is shown.
    */
   heroImage?: (number | null) | Media;
-  aboutKicker?: string | null;
+  /**
+   * The statement under the logo strip, first part (dark), e.g. "NGOs have the mission."
+   */
   aboutOneLiner?: string | null;
+  /**
+   * Its continuation (grey).
+   */
   aboutPitch?: string | null;
-  stats?:
-    | {
-        value: string;
-        label: string;
-        id?: string | null;
-      }[]
-    | null;
   /**
    * Overrides the built-in process timeline (homepage and NGO page). Add, remove or reorder steps freely — e.g. drop the MVP step or add an expansion step.
    */
@@ -2919,19 +2921,35 @@ export interface Homepage {
   projectsSubtitle?: string | null;
   projectsTitle?: string | null;
   projectsIntro?: string | null;
-  eventsSubtitle?: string | null;
-  eventsTitle?: string | null;
-  eventsIntro?: string | null;
-  sponsorsSubtitle?: string | null;
-  sponsorsTitle?: string | null;
-  sponsorsIntro?: string | null;
   qaSubtitle?: string | null;
   qaTitle?: string | null;
   qaIntro?: string | null;
-  threedKicker?: string | null;
-  threedTitle?: string | null;
-  threedText?: string | null;
-  threedCta?: string | null;
+  testimonials?:
+    | {
+        quote: string;
+        /**
+         * Decides where else the quote appears: NGO quotes on /ngos, company quotes on /partners.
+         */
+        audience: 'ngo' | 'company' | 'member';
+        /**
+         * Who said it.
+         */
+        name?: string | null;
+        /**
+         * Their role, e.g. "Managing Director".
+         */
+        role?: string | null;
+        /**
+         * Organisation or company; for a member, e.g. "Member since 2025".
+         */
+        organisation?: string | null;
+        /**
+         * Optional portrait, shown small beside the name.
+         */
+        photo?: (number | null) | Media;
+        id?: string | null;
+      }[]
+    | null;
   ctaHeading?: string | null;
   ctaText?: string | null;
   ctaJoin?: string | null;
@@ -3186,21 +3204,11 @@ export interface TechTourSelect<T extends boolean = true> {
  * via the `definition` "homepage_select".
  */
 export interface HomepageSelect<T extends boolean = true> {
-  heroKicker?: T;
   heroCtaPrimary?: T;
   heroCtaSecondary?: T;
-  heroScrollHint?: T;
   heroImage?: T;
-  aboutKicker?: T;
   aboutOneLiner?: T;
   aboutPitch?: T;
-  stats?:
-    | T
-    | {
-        value?: T;
-        label?: T;
-        id?: T;
-      };
   steps?:
     | T
     | {
@@ -3217,19 +3225,20 @@ export interface HomepageSelect<T extends boolean = true> {
   projectsSubtitle?: T;
   projectsTitle?: T;
   projectsIntro?: T;
-  eventsSubtitle?: T;
-  eventsTitle?: T;
-  eventsIntro?: T;
-  sponsorsSubtitle?: T;
-  sponsorsTitle?: T;
-  sponsorsIntro?: T;
   qaSubtitle?: T;
   qaTitle?: T;
   qaIntro?: T;
-  threedKicker?: T;
-  threedTitle?: T;
-  threedText?: T;
-  threedCta?: T;
+  testimonials?:
+    | T
+    | {
+        quote?: T;
+        audience?: T;
+        name?: T;
+        role?: T;
+        organisation?: T;
+        photo?: T;
+        id?: T;
+      };
   ctaHeading?: T;
   ctaText?: T;
   ctaJoin?: T;

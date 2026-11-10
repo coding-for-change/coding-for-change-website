@@ -3,16 +3,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import RouterLink from 'next/link';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { useSiteFlags } from '@/api/SiteFlagsContext';
 import { useHomepageMode } from '@/api/SiteConfigContext';
 import useNow from '../../hooks/useNow';
 import { applicationStatus } from '../../lib/applicationPhase';
 import './mobile.css';
 
-const NAVY = '#0f2040';
-// The nav uses the site's display face (Space Grotesk) via the CSS variable set
-// on <html> in layout.tsx, matching the desktop TopNav.
-const NAV_FONT = "var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif";
+// Brand tokens from index.css, matching the desktop TopNav.
+const INK = 'var(--cfc-ink)';
+const LINE = 'var(--cfc-line)';
+const NAV_FONT = 'var(--font-sans)';
 
 const LANGUAGES: { code: 'de' | 'en'; label: string; flag: string }[] = [
     { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
@@ -54,7 +53,6 @@ const MobileNav: React.FC = () => {
         return () => document.removeEventListener('mousedown', onDown);
     }, [langOpen]);
 
-    const { techTourListed } = useSiteFlags();
     // Student mode (application round): the button says "Apply now" and
     // lands straight on the form — same as the desktop nav.
     const students = useHomepageMode() === 'students';
@@ -64,9 +62,8 @@ const MobileNav: React.FC = () => {
         { to: '/ngos', label: t.nav.ngos },
         { to: '/partners', label: t.nav.partners },
         { to: '/team', label: t.nav.team },
-        ...(techTourListed ? [{ to: '/techtour', label: t.nav.techtour }] : []),
-        { to: '/#qa', label: t.nav.qa }, // FAQ stays a homepage section
-        { to: '/contact', label: t.nav.contact },
+        // Same items as the desktop nav: Contact, Q&A and the TechTour are in
+        // the footer, and the homepage hero announces the TechTour.
     ];
 
     const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0];
@@ -139,7 +136,6 @@ const MobileNav: React.FC = () => {
                             <RouterLink
                                 key={link.to}
                                 href={link.to}
-                                data-cta={link.to === '/techtour' ? 'nav-techtour' : undefined}
                                 className="mobile-menu-item"
                                 style={Object.assign({}, styles.navLink, {
                                     animationDelay: `${i * 0.05}s`,
@@ -236,7 +232,7 @@ const styles: StyleSheetCSS = {
         flexShrink: 0,
     },
     logo: {
-        height: 30,
+        height: 33,
         width: 'auto',
         objectFit: 'contain',
     },
@@ -269,7 +265,7 @@ const styles: StyleSheetCSS = {
         right: 0,
         bottom: 0,
         zIndex: 500,
-        background: '#ffffff',
+        background: 'var(--cfc-paper)',
         overflowY: 'auto',
         display: 'flex',
         flexDirection: 'column',
@@ -287,11 +283,11 @@ const styles: StyleSheetCSS = {
         display: 'flex',
         width: 44,
         height: 44,
-        border: `2px solid ${NAVY}`,
-        borderRadius: 8,
-        background: 'white',
+        border: `1px solid ${INK}`,
+        borderRadius: 999,
+        background: 'transparent',
         fontSize: 16,
-        color: NAVY,
+        color: INK,
         cursor: 'pointer',
         alignItems: 'center',
         justifyContent: 'center',
@@ -306,20 +302,23 @@ const styles: StyleSheetCSS = {
         justifyContent: 'flex-start',
         alignItems: 'center',
         padding: '16px 0',
-        fontSize: 24,
-        color: '#000',
+        fontSize: 26,
+        fontWeight: 500,
+        letterSpacing: '-0.02em',
+        color: INK,
         fontFamily: NAV_FONT,
         textDecoration: 'none',
-        borderBottom: '1px solid #f0f0f0',
+        borderBottom: `1px solid ${LINE}`,
     },
     ctaButton: {
         display: 'flex',
         marginTop: 28,
-        background: '#000000',
-        color: '#ffffff',
-        borderRadius: 32,
-        padding: '18px 0',
-        fontSize: 20,
+        background: INK,
+        color: 'var(--cfc-paper)',
+        borderRadius: 999,
+        padding: '17px 0',
+        fontSize: 18,
+        fontWeight: 500,
         fontFamily: NAV_FONT,
         textDecoration: 'none',
         justifyContent: 'center',
@@ -336,17 +335,17 @@ const styles: StyleSheetCSS = {
         alignItems: 'center',
         gap: 10,
         padding: '10px 16px',
-        borderRadius: 10,
-        border: '1px solid #e5e7eb',
-        background: '#ffffff',
+        borderRadius: 999,
+        border: `1px solid ${LINE}`,
+        background: 'transparent',
         cursor: 'pointer',
         fontSize: 15,
-        color: '#000',
+        color: INK,
         fontFamily: NAV_FONT,
     },
     caret: {
         fontSize: 12,
-        color: '#6b7280',
+        color: 'var(--cfc-grey)',
     },
     langMenu: {
         display: 'flex',
@@ -355,10 +354,10 @@ const styles: StyleSheetCSS = {
         left: 0,
         flexDirection: 'column',
         minWidth: '100%',
-        background: '#ffffff',
-        border: '1px solid #e5e7eb',
-        borderRadius: 10,
-        boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+        background: 'var(--cfc-paper)',
+        border: `1px solid ${LINE}`,
+        borderRadius: 14,
+        boxShadow: '0 8px 24px rgba(19, 22, 20, 0.12)',
         overflow: 'hidden',
         zIndex: 10,
     },
@@ -371,13 +370,13 @@ const styles: StyleSheetCSS = {
         background: 'transparent',
         cursor: 'pointer',
         fontSize: 15,
-        color: '#000',
+        color: INK,
         fontFamily: NAV_FONT,
         whiteSpace: 'nowrap',
         textAlign: 'left',
     },
     langOptionActive: {
-        background: '#f3f4f6',
+        background: 'var(--cfc-stone)',
     },
 };
 

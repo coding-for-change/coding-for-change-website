@@ -21,14 +21,14 @@
     --tt-rail: 6px;
     --tt-node: 28px;
     --tt-gutter: 72px;
-    --tt-display: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    --tt-display: var(--font-sans);
     --tt-mono: var(--font-roboto-mono), 'Roboto Mono', ui-monospace, monospace;
     /* flow-root: the route's bottom margin (below) stays on the paper. */
     display: flow-root;
     width: 100%;
     background: var(--tt-paper);
     color: var(--tt-ink);
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-family: var(--font-sans);
 }
 /* On a desktop the page scrolls inside .site-scroll, whose clearance under
    the nav would otherwise show white above the paper. */

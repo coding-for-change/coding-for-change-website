@@ -38,7 +38,7 @@
 
 .lp--techtour.tta.ttn .ttn-doc__title {
     margin: 0 0 18px;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 22px;
     font-weight: 600;
     line-height: 1.3;
