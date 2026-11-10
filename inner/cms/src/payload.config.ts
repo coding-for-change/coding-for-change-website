@@ -34,6 +34,7 @@ import { shareEndpoints } from './endpoints/share';
 import { manageEndpoints } from './endpoints/manage';
 import { memberEndpoints } from './endpoints/members';
 import { withdrawalEndpoints } from './endpoints/withdrawals';
+import { todoEndpoints } from './endpoints/todos';
 import { hostMarkEndpoints } from './endpoints/hostMarks';
 import { mailingEndpoints } from './endpoints/mailing';
 import { mediaUploadEndpoints } from './endpoints/mediaUpload';
@@ -137,7 +138,7 @@ export default buildConfig({
   // links (/api/media-upload/:token) the MCP tool hands out – see
   // endpoints/mediaUpload.ts – and the CV download links of
   // endpoints/applicantFileLink.ts.
-  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
+  endpoints: [analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },
