@@ -67,6 +67,7 @@ import { TechTour } from './globals/TechTour';
 import { Onboarding } from './globals/Onboarding';
 import { onboardingEndpoints } from './endpoints/onboarding';
 import { onboardingMemberEndpoints } from './endpoints/onboardingMember';
+import { onboardingDocumentEndpoints } from './endpoints/onboardingDocuments';
 import { checkOnboardingAnswers, requireLoginForForm, syncOnboardingSubmission } from './lib/onboarding/sync';
 import { onboardingTables } from './lib/onboarding/tables';
 import { requiresLoginField, submittedByField } from './fields/submittedBy';
@@ -161,7 +162,7 @@ export default buildConfig({
   // endpoints/onboarding.ts. The member's own page (/api/onboarding/me…,
   // /api/onboarding/photo, any signed-in account, always their own) – see
   // endpoints/onboardingMember.ts.
-  endpoints: [...googleAuthEndpoints, ...onboardingEndpoints, ...onboardingMemberEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
+  endpoints: [...googleAuthEndpoints, ...onboardingEndpoints, ...onboardingMemberEndpoints, ...onboardingDocumentEndpoints, analyticsSummary, analyticsFlow, analyticsApplications, ...analyticsExportEndpoints, submissionsExport, ...shareEndpoints, ...manageEndpoints, ...memberEndpoints, ...withdrawalEndpoints, ...todoEndpoints, ...hostMarkEndpoints, ...mailingEndpoints, ...mediaUploadEndpoints, ...applicantFileLinkEndpoints, ...stageEndpoints],
   localization: {
     locales: [
       { label: 'English', code: 'en' },

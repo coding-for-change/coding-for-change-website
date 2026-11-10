@@ -252,6 +252,25 @@
     color: var(--muted);
 }
 
+.ob .ob-item__row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+}
+
+.ob .ob-sign {
+    width: auto;
+    margin: 0;
+    padding: 9px 18px;
+    font-size: 14.5px;
+}
+
+.ob .ob-item__error--flush {
+    padding-left: 0;
+}
+
 .ob .ob-pill--done {
     border-color: rgba(47, 143, 144, 0.45);
     color: var(--teal-dark);

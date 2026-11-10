@@ -308,7 +308,9 @@ export interface Translations {
         githubInvalid: string; linkedinInvalid: string;
         profileDraft: string; profileLive: string;
         todosTitle: string; todosLead: string; todoDoneOn: string; openLink: string; todoError: string;
-        docsTitle: string; docsLead: string; docsLater: string;
+        docsTitle: string; docsLead: string; docsHint: string;
+        signStart: string; signContinue: string; signAgain: string; signOpening: string;
+        signError: string; signUnavailable: string; signBlocked: string; signOpenLink: string;
         docStatus: {
             not_started: string; pending: string; opened: string; completed: string;
             declined: string; expired: string;
@@ -845,7 +847,15 @@ const en: Translations = {
         todoError: 'That did not save. Please try again.',
         docsTitle: 'Your documents',
         docsLead: 'Please read and sign these.',
-        docsLater: 'You can sign them here soon. We will let you know.',
+        docsHint: 'Signing opens our signing service in a new tab. When you are done, come back to this tab: it updates by itself.',
+        signStart: 'Read and sign',
+        signContinue: 'Continue signing',
+        signAgain: 'Sign again',
+        signOpening: 'Opening…',
+        signError: 'The signing page could not be opened. Please try again in a few minutes.',
+        signUnavailable: 'Signing is not available at the moment. Please try again later or write to us at {email}.',
+        signBlocked: 'Your browser did not open a new tab.',
+        signOpenLink: 'Open the signing page',
         docStatus: {
             not_started: 'Not signed yet',
             pending: 'Started',
@@ -1405,7 +1415,15 @@ const de: Translations = {
         todoError: 'Das wurde nicht gespeichert. Bitte versuch es noch einmal.',
         docsTitle: 'Deine Dokumente',
         docsLead: 'Bitte lies und unterschreib diese.',
-        docsLater: 'Du kannst sie bald hier unterschreiben. Wir sagen dir Bescheid.',
+        docsHint: 'Zum Unterschreiben öffnet sich unser Signatur-Dienst in einem neuen Tab. Wenn du fertig bist, komm zu diesem Tab zurück: Er aktualisiert sich von selbst.',
+        signStart: 'Lesen und unterschreiben',
+        signContinue: 'Weiter unterschreiben',
+        signAgain: 'Noch einmal unterschreiben',
+        signOpening: 'Wird geöffnet…',
+        signError: 'Die Seite zum Unterschreiben ließ sich nicht öffnen. Bitte versuch es in ein paar Minuten noch einmal.',
+        signUnavailable: 'Unterschreiben geht gerade nicht. Bitte versuch es später noch einmal oder schreib uns an {email}.',
+        signBlocked: 'Dein Browser hat keinen neuen Tab geöffnet.',
+        signOpenLink: 'Seite zum Unterschreiben öffnen',
         docStatus: {
             not_started: 'Noch nicht unterschrieben',
             pending: 'Begonnen',

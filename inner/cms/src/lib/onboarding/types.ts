@@ -21,7 +21,15 @@ export type AdmittedPerson = {
 export type TodoState = { id: string; text: string; done: boolean; at: string | null; by: string | null };
 
 /** "not_started" until the member starts it; then DocuSeal's status (tables.ts). */
-export type DocumentState = { id: string; title: string; status: string; completedAt: string | null };
+export type DocumentState = {
+  id: string;
+  title: string;
+  status: string;
+  startedAt: string | null;
+  completedAt: string | null;
+  /** DocuSeal's id of the current submission; null when not started. */
+  submissionId: number | null;
+};
 
 /** The member's public `team` entry. `title` is its `role` (English). */
 export type MemberProfile = { id: number; name: string; title: string; published: boolean; projects: number[] };
@@ -52,6 +60,8 @@ export type OnboardingOverview = {
   orgUnitPath: string;
   onboardingUrl: string;
   formConfigured: boolean;
+  /** DocuSeal on this server: `url` is DOCUSEAL_URL (for links to submissions), null when not configured. */
+  docuseal: { configured: boolean; url: string | null };
   projects: { id: number; title: string }[];
   admitted: AdmittedPerson[];
   members: OnboardingMember[];

@@ -14,6 +14,8 @@ import { buildGoogleCsv, safeAddress, safeOrgUnitPath, safeText, type GoogleUser
 import { generatePassword, meetsGoogleRules } from '../lib/onboarding/password';
 import { memberProgress, type MemberAccount } from '../lib/onboarding/progress';
 import { buildSheetsHtml } from '../lib/onboarding/sheets';
+import { docusealBase } from '../lib/onboarding/docuseal';
+import { docusealConfigured } from '../lib/onboarding/member';
 import { currentChecks, currentDocuments, setCheck } from '../lib/onboarding/store';
 import type { AdmittedPerson, MemberProfile, OnboardingOverview, OnboardingTodo } from '../lib/onboarding/types';
 import { siteOrigin } from '../lib/mediaUpload';
@@ -239,6 +241,7 @@ const overview: Endpoint = {
       });
     }
 
+    const docuseal = docusealConfigured();
     const members = users.map((u) => {
       const teamId = idOf(u.teamProfile);
       return memberProgress({
@@ -251,6 +254,7 @@ const overview: Endpoint = {
         formConfigured: formId !== null,
         formSubmittedAt: sentAt.get(u.id) ?? null,
         profile: teamId !== null ? (profiles.get(teamId) ?? null) : null,
+        docusealConfigured: docuseal,
       });
     });
 
@@ -259,6 +263,7 @@ const overview: Endpoint = {
       orgUnitPath: safeOrgUnitPath(config.googleOrgUnitPath),
       onboardingUrl: onboardingUrl(),
       formConfigured: formId !== null,
+      docuseal: { configured: docuseal, url: docuseal ? docusealBase() : null },
       projects: projectDocs.map((p) => ({ id: p.id, title: p.title ?? `Project ${p.id}` })),
       admitted,
       members,

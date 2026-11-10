@@ -328,6 +328,7 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
                       })
                     }
                     onChange={(change) => patchMember(m.id, change)}
+                    onReload={load}
                     onError={setError}
                   />
                 ))}
@@ -364,6 +365,7 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
                         })
                       }
                       onChange={(change) => patchMember(m.id, change)}
+                      onReload={load}
                       onError={setError}
                     />
                   </details>
@@ -425,6 +427,7 @@ function MemberCard({
   reissue,
   onReissue,
   onChange,
+  onReload,
   onError,
 }: {
   member: OnboardingMember;
@@ -434,6 +437,7 @@ function MemberCard({
   reissue: boolean;
   onReissue: (on: boolean) => void;
   onChange: (change: (m: OnboardingMember) => OnboardingMember) => void;
+  onReload: () => Promise<void>;
   onError: (message: string) => void;
 }) {
   const [title, setTitle] = useState(m.profile?.title ?? '');
@@ -484,6 +488,31 @@ function MemberCard({
     }
   };
 
+  const [syncing, setSyncing] = useState(false);
+  const [syncNote, setSyncNote] = useState<string | null>(null);
+
+  // Webhooks can get lost: read this member's documents from DocuSeal again.
+  const resync = async () => {
+    setSyncing(true);
+    setSyncNote(null);
+    try {
+      const a = (await post('documents/resync', { user: m.id })) as { results: { item: string; error?: string }[] };
+      const errors = a.results.filter((r) => r.error);
+      await onReload();
+      setSyncNote(
+        errors.length
+          ? `DocuSeal: ${errors.map((r) => `${m.documents.find((d) => d.id === r.item)?.title ?? r.item}: ${r.error}`).join('; ')}`
+          : `Up to date with DocuSeal (${when.format(new Date())})`,
+      );
+    } catch (err) {
+      onError(`Could not read the documents from DocuSeal (${(err as Error).message}).`);
+    } finally {
+      setSyncing(false);
+    }
+  };
+  const docuseal = data.docuseal;
+  const canResync = docuseal.configured && m.documents.some((d) => d.submissionId !== null && d.status !== 'completed');
+
   const memberDone = m.memberTodos.filter((t) => t.done).length;
   const profileDirty =
     m.profile !== null &&
@@ -532,9 +561,29 @@ function MemberCard({
               ? 'None set'
               : m.documents.map((d) => (
                   <span key={d.id} className={`ob-doc ${d.status === 'completed' ? 'ob-yes' : 'ob-no'}`}>
-                    {d.title}: {DOCUMENT_STATUS[d.status] ?? d.status}
+                    {d.title}: <strong>{DOCUMENT_STATUS[d.status] ?? d.status}</strong>
+                    {d.status === 'completed' && d.completedAt
+                      ? ` ${day(d.completedAt)}`
+                      : d.startedAt
+                        ? ` (since ${day(d.startedAt)})`
+                        : ''}
+                    {docuseal.url && d.submissionId !== null && (
+                      <>
+                        {' '}
+                        <a href={`${docuseal.url}/submissions/${d.submissionId}`} target="_blank" rel="noopener noreferrer">
+                          DocuSeal ↗
+                        </a>
+                      </>
+                    )}
                   </span>
                 ))}
+            {m.documents.length > 0 && !docuseal.configured && <span className="ob-doc ob-muted">DocuSeal is not configured</span>}
+            {canResync && (
+              <button type="button" className="ob-linkbtn" disabled={syncing} onClick={() => void resync()}>
+                {syncing ? 'Reading from DocuSeal…' : 'Refresh from DocuSeal'}
+              </button>
+            )}
+            {syncNote && <span className="ob-doc ob-hint">{syncNote}</span>}
           </dd>
         </div>
       </dl>

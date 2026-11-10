@@ -54,7 +54,12 @@ export interface OnboardingProps {
  *    folds up into a line with the date and a way to send it again,
  *    starting from the last answers. No draft is kept in the browser.
  * 2. Their to-dos: a tick or untick is saved straight away.
- * 3. Their documents, with the status of each, when DocuSeal is set up.
+ * 3. Their documents, when DocuSeal is set up: a button per document asks
+ *    the CMS for the member's own signing link (it starts the DocuSeal
+ *    submission the first time) and opens it in a new tab. No iframe and no
+ *    DocuSeal script on this page: DocuSeal is a plain link to the
+ *    association's own instance. Coming back to this tab reads the state
+ *    again (the CMS asks DocuSeal for open documents).
  *
  * Signed out: a short explanation and "Sign in with Google", which comes
  * back here. Same light page as /join/apply.
@@ -69,7 +74,11 @@ const Onboarding: React.FC<OnboardingProps> = ({ initialView, signedOut, initial
     const [busy, setBusy] = useState<string | null>(null);
     const [todoError, setTodoError] = useState<string | null>(null);
     const [leaving, setLeaving] = useState(false);
+    const [signing, setSigning] = useState<string | null>(null);
+    const [docError, setDocError] = useState<{ id: string; text: 'error' | 'unavailable' } | null>(null);
+    const [blocked, setBlocked] = useState<{ id: string; url: string } | null>(null);
     const readIn = useRef<string>(initialLocale);
+    const lastRefresh = useRef(0);
 
     const load = async (lang: string) => {
         const res = await fetch(`/api/onboarding/me?locale=${lang}`, {
@@ -84,6 +93,82 @@ const Onboarding: React.FC<OnboardingProps> = ({ initialView, signedOut, initial
         const next = (await res.json()) as MemberOnboardingView;
         setView(next);
         return next;
+    };
+
+    // Back from signing in the other tab: read the documents again, from
+    // DocuSeal (POST /documents/refresh) while one is still open.
+    const hasOpenDoc = Boolean(
+        view?.documents.configured && view.documents.items.some((d) => d.status === 'pending' || d.status === 'opened')
+    );
+    useEffect(() => {
+        if (!hasOpenDoc) return;
+        const onBack = () => {
+            if (document.visibilityState !== 'visible' || Date.now() - lastRefresh.current < 5000) return;
+            lastRefresh.current = Date.now();
+            fetch('/api/onboarding/documents/refresh', {
+                method: 'POST',
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ locale: readIn.current }),
+            })
+                .then(async (res) => {
+                    if (res.status === 401) window.location.reload();
+                    else if (res.ok) setView((await res.json()) as MemberOnboardingView);
+                })
+                .catch(() => undefined);
+        };
+        document.addEventListener('visibilitychange', onBack);
+        window.addEventListener('focus', onBack);
+        return () => {
+            document.removeEventListener('visibilitychange', onBack);
+            window.removeEventListener('focus', onBack);
+        };
+    }, [hasOpenDoc]);
+
+    const sign = async (d: MemberDocument) => {
+        if (signing) return;
+        setSigning(d.id);
+        setDocError(null);
+        setBlocked(null);
+        // Opened right in the click, before the request: a tab opened after
+        // an await counts as a pop-up and is blocked by most browsers.
+        const tab = window.open('', '_blank');
+        if (tab) tab.opener = null;
+        try {
+            const res = await fetch(`/api/onboarding/documents/${encodeURIComponent(d.id)}/start`, {
+                method: 'POST',
+                credentials: 'same-origin',
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ locale }),
+            });
+            if (res.status === 401) {
+                tab?.close();
+                window.location.reload();
+                return;
+            }
+            if (res.status === 404 || res.status === 409) {
+                // Gone from the settings, or signed already: show the current state.
+                tab?.close();
+                await load(locale);
+                return;
+            }
+            if (!res.ok) {
+                tab?.close();
+                setDocError({ id: d.id, text: res.status === 503 ? 'unavailable' : 'error' });
+                return;
+            }
+            const answer = (await res.json()) as { url: string; view: MemberOnboardingView };
+            setView(answer.view);
+            if (tab && !tab.closed) tab.location.href = answer.url;
+            else setBlocked({ id: d.id, url: answer.url });
+        } catch {
+            tab?.close();
+            setDocError({ id: d.id, text: 'error' });
+        } finally {
+            setSigning(null);
+        }
     };
 
     // Texts come from the CMS in one language: switching reads them again.
@@ -331,14 +416,46 @@ const Onboarding: React.FC<OnboardingProps> = ({ initialView, signedOut, initial
                             <li key={d.id} className={`ob-item${d.status === 'completed' ? ' ob-item--done' : ''}`}>
                                 <span className="ob-item__title">{d.title}</span>
                                 {d.description && <span className="ob-item__desc">{d.description}</span>}
-                                <span className={`ob-pill ob-pill--${d.status === 'completed' ? 'done' : 'open'}`}>
-                                    {d.status === 'completed' && '✓ '}
-                                    {docStatus(d)}
+                                <span className="ob-item__row">
+                                    <span className={`ob-pill ob-pill--${d.status === 'completed' ? 'done' : 'open'}`}>
+                                        {d.status === 'completed' && '✓ '}
+                                        {docStatus(d)}
+                                    </span>
+                                    {d.status !== 'completed' && (
+                                        <button
+                                            type="button"
+                                            className="lp-submit ob-sign"
+                                            disabled={signing !== null}
+                                            onClick={() => void sign(d)}
+                                        >
+                                            {signing === d.id
+                                                ? o.signOpening
+                                                : d.status === 'pending' || d.status === 'opened'
+                                                  ? o.signContinue
+                                                  : d.status === 'declined' || d.status === 'expired'
+                                                    ? o.signAgain
+                                                    : o.signStart}{' '}
+                                            ↗
+                                        </button>
+                                    )}
                                 </span>
+                                {blocked?.id === d.id && (
+                                    <p className="ob-note" role="status">
+                                        {o.signBlocked}{' '}
+                                        <a href={blocked.url} target="_blank" rel="noopener noreferrer">
+                                            {o.signOpenLink} ↗
+                                        </a>
+                                    </p>
+                                )}
+                                {docError?.id === d.id && (
+                                    <p className="ob-item__error ob-item__error--flush" role="alert">
+                                        {docError.text === 'unavailable' ? withEmail(o.signUnavailable) : o.signError}
+                                    </p>
+                                )}
                             </li>
                         ))}
                     </ul>
-                    {documents.some((d) => d.status !== 'completed') && <p className="ob-note">{o.docsLater}</p>}
+                    {documents.some((d) => d.status !== 'completed') && <p className="ob-note">{o.docsHint}</p>}
                 </section>
             ),
         });

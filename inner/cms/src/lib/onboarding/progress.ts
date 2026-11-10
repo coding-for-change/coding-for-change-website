@@ -29,6 +29,8 @@ export type ProgressInput = {
   formConfigured: boolean;
   formSubmittedAt: string | null;
   profile: MemberProfile | null;
+  /** Without DocuSeal the documents cannot be signed, so they do not hold the member up (as in `ownStepsDone`). */
+  docusealConfigured: boolean;
 };
 
 const idOf = (v: number | { id: number } | null | undefined): number | null =>
@@ -47,7 +49,14 @@ export function memberProgress(input: ProgressInput): OnboardingMember {
   const boardTodos = todoStates(input.boardTodos, input.checks, 'board');
   const documents: DocumentState[] = input.documents.map((d) => {
     const s = input.started.find((x) => x.item === d.id);
-    return { id: d.id, title: d.title, status: s?.status ?? 'not_started', completedAt: s?.completedAt ?? null };
+    return {
+      id: d.id,
+      title: d.title,
+      status: s?.status ?? 'not_started',
+      startedAt: s?.startedAt ?? null,
+      completedAt: s?.completedAt ?? null,
+      submissionId: s?.submissionId ?? null,
+    };
   });
   const signedInAt = account.signedInAt ?? null;
   const complete =
@@ -55,7 +64,7 @@ export function memberProgress(input: ProgressInput): OnboardingMember {
     (!input.formConfigured || input.formSubmittedAt !== null) &&
     memberTodos.every((t) => t.done) &&
     boardTodos.every((t) => t.done) &&
-    documents.every((d) => d.status === 'completed');
+    (!input.docusealConfigured || documents.every((d) => d.status === 'completed'));
   return {
     id: account.id,
     email: account.email,

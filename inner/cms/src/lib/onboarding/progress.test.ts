@@ -11,6 +11,7 @@ const base: ProgressInput = {
   formConfigured: true,
   formSubmittedAt: null,
   profile: null,
+  docusealConfigured: true,
 };
 
 const at = '2026-11-02T10:00:00.000Z';
@@ -48,6 +49,25 @@ describe('memberProgress', () => {
     expect(memberProgress(done).complete).toBe(false);
     expect(memberProgress({ ...done, boardTodos: [] }).complete).toBe(true);
     expect(memberProgress({ ...done, boardTodos: [], account: { ...base.account, signedInAt: null } }).complete).toBe(false);
+  });
+
+  it('does not wait for documents without DocuSeal', () => {
+    const rest = {
+      ...base,
+      boardTodos: [],
+      formSubmittedAt: at,
+      checks: [{ user: 7, kind: 'member' as const, item: 'm1', done: true, text: '', by: '', at }],
+    };
+    expect(memberProgress(rest).complete).toBe(false);
+    expect(memberProgress({ ...rest, docusealConfigured: false }).complete).toBe(true);
+  });
+
+  it('carries the submission id and start of each document', () => {
+    const m = memberProgress({
+      ...base,
+      started: [{ user: 7, item: 'd1', title: 'x', status: 'opened', submissionId: 41, submitterSlug: 's', startedAt: at, completedAt: null }],
+    });
+    expect(m.documents[0]).toEqual({ id: 'd1', title: 'Membership declaration', status: 'opened', startedAt: at, completedAt: null, submissionId: 41 });
   });
 
   it('does not wait for a form when none is set', () => {
