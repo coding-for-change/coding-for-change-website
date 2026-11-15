@@ -44,6 +44,8 @@ export type OnboardingMember = {
   application: number | null;
   accountExportedAt: string | null;
   signedInAt: string | null;
+  /** When the sign-in details were last mailed to the private address (accountMail.ts); null when never. */
+  accountMailedAt: string | null;
   /** When the member last sent the onboarding form; null when not yet (or when no form is set). */
   formSubmittedAt: string | null;
   memberTodos: TodoState[];
@@ -65,8 +67,34 @@ export type OnboardingOverview = {
   projects: { id: number; title: string }[];
   /** Every account's address on `domain`, lower case: what a proposal for someone added by hand must avoid (lib/onboarding/manual.ts). */
   accountAddresses: string[];
+  /** The mail with the sign-in details as set in Onboarding Settings (or the built-in text), and whether this server can send mail. */
+  accountMail: { subject: string; message: string; canSend: boolean };
   admitted: AdmittedPerson[];
   members: OnboardingMember[];
+};
+
+/** One person of an uploaded Google CSV in POST /api/onboarding/admin/account-mails. Never carries the password. */
+export type AccountMailRecipient = {
+  /** The association address, as in the file. */
+  email: string;
+  name: string;
+  /** The private address the mail goes to; null when it cannot be sent. */
+  to: string | null;
+  /**
+   * ready: can be sent. sent / failed: what happened in this request.
+   * no_account: no onboarding account has this address. no_private: the account has no private address.
+   */
+  status: 'ready' | 'sent' | 'failed' | 'no_account' | 'no_private';
+  /** When they were mailed before this request; null when never. */
+  mailedAt: string | null;
+};
+
+export type AccountMailAnswer = {
+  recipients: AccountMailRecipient[];
+  /** Rows of the file that were left out, in words. */
+  problems: string[];
+  sent: number;
+  failed: number;
 };
 
 // ---- the member's own page --------------------------------------------------

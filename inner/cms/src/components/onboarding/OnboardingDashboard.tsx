@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Banner, Button, CheckboxInput, ConfirmationModal, SetStepNav, useModal, ViewDescription } from '@payloadcms/ui';
 import { normalizeAddress } from '../../lib/onboarding/cfcEmail';
 import { manualAddresses } from '../../lib/onboarding/manual';
+import { AccountMails } from './AccountMails';
 import type { AdmittedPerson, OnboardingMember, OnboardingOverview } from '../../lib/onboarding/types';
 import { PageHeader } from '../shared/PageHeader';
 import './onboarding.css';
@@ -88,6 +89,7 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
   const [reissue, setReissue] = useState<Set<number>>(new Set());
   const [busy, setBusy] = useState(false);
   const [manual, setManual] = useState<ManualDraft[]>([]);
+  const [mailing, setMailing] = useState(false);
   // The keys of the manual rows in the last request, in order: problems name them by index.
   const [sentManual, setSentManual] = useState<number[]>([]);
   const nextKey = useRef(1);
@@ -453,20 +455,34 @@ export function OnboardingDashboard({ apiRoute, adminRoute }: Props) {
           <section className="ob-section" aria-labelledby="ob-progress">
             <div className="ob-section__head">
               <h2 id="ob-progress">In onboarding ({inProgress.length})</h2>
-              <Button
-                buttonStyle="secondary"
-                size="small"
-                margin={false}
-                disabled={busy || reissue.size === 0}
-                onClick={() => openModal(REISSUE_MODAL)}
-              >
-                {`Export ${plural(reissue.size, 'account', 'accounts')} again`}
-              </Button>
+              <div className="ob-actions">
+                <Button buttonStyle="secondary" size="small" margin={false} disabled={mailing} onClick={() => setMailing(true)}>
+                  Email sign-in details
+                </Button>
+                <Button
+                  buttonStyle="secondary"
+                  size="small"
+                  margin={false}
+                  disabled={busy || reissue.size === 0}
+                  onClick={() => openModal(REISSUE_MODAL)}
+                >
+                  {`Export ${plural(reissue.size, 'account', 'accounts')} again`}
+                </Button>
+              </div>
             </div>
             <p className="ob-hint">
               Download lost? Tick "Export again" on the accounts and download a new file. It sets new passwords: upload
               its CSV in Google Admin again, or the new sheets will not work.
             </p>
+            {mailing && (
+              <AccountMails
+                apiRoute={apiRoute}
+                adminRoute={adminRoute}
+                template={data.accountMail}
+                onSent={() => void load()}
+                onClose={() => setMailing(false)}
+              />
+            )}
             {inProgress.length === 0 ? (
               <p className="ob-empty">Nobody is in the middle of their onboarding.</p>
             ) : (
@@ -705,7 +721,10 @@ function MemberCard({
       <dl className="ob-status">
         <div>
           <dt>Google account</dt>
-          <dd>{m.accountExportedAt ? `Exported ${day(m.accountExportedAt)}` : 'Not exported from here'}</dd>
+          <dd>
+            {m.accountExportedAt ? `Exported ${day(m.accountExportedAt)}` : 'Not exported from here'}
+            {m.accountMailedAt && <span className="ob-muted"> · mailed {day(m.accountMailedAt)}</span>}
+          </dd>
         </div>
         <div>
           <dt>Signed in</dt>

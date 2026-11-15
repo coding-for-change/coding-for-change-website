@@ -56,6 +56,7 @@ import * as migration_20261110_141651_mcp_techtour_todos_tool from './20261110_1
 import * as migration_20261110_184212_user_roles from './20261110_184212_user_roles';
 import * as migration_20261110_190747_onboarding from './20261110_190747_onboarding';
 import * as migration_20261110_194713_member_page from './20261110_194713_member_page';
+import * as migration_20261115_111519_account_mails from './20261115_111519_account_mails';
 
 export const migrations = [
   {
@@ -346,6 +347,11 @@ export const migrations = [
   {
     up: migration_20261110_194713_member_page.up,
     down: migration_20261110_194713_member_page.down,
-    name: '20261110_194713_member_page'
+    name: '20261110_194713_member_page',
+  },
+  {
+    up: migration_20261115_111519_account_mails.up,
+    down: migration_20261115_111519_account_mails.down,
+    name: '20261115_111519_account_mails'
   },
 ];

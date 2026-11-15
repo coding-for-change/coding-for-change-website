@@ -101,6 +101,18 @@ const memberFields: Field[] = [
     },
   },
   {
+    name: 'accountMailedAt',
+    label: 'Sign-in details mailed',
+    type: 'date',
+    access: memberAccess,
+    admin: {
+      position: 'sidebar',
+      readOnly: true,
+      date: { pickerAppearance: 'dayAndTime' },
+      description: 'When the dashboard last mailed this account\'s address and first password to the private address.',
+    },
+  },
+  {
     name: 'signedInAt',
     label: 'First Google sign-in',
     type: 'date',

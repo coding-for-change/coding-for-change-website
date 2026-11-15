@@ -304,3 +304,40 @@ html[data-theme='dark'] .ob {
   margin: 0;
   font-size: 12px;
 }
+
+/* ---- Email sign-in details (AccountMails.tsx) ---- */
+.ob-mails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 0 0 1.25rem;
+  padding: 1rem 1.25rem 1.25rem;
+  border: 1px solid var(--theme-elevation-150);
+  border-radius: 4px;
+  background: var(--theme-elevation-50);
+}
+
+.ob-mails__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.ob-mails__head h3 {
+  margin: 0;
+}
+
+.ob-mails__table .ob-table__row {
+  grid-template-columns: 1.5rem minmax(0, 1fr) minmax(0, 1.4fr) minmax(0, 1.4fr) minmax(0, 1.4fr);
+}
+
+.ob-mails__message {
+  height: auto;
+  min-height: 14rem;
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  resize: vertical;
+}

@@ -8,6 +8,14 @@ import {
   type PayloadRequest,
 } from 'payload';
 import type { Submission } from '../components/review/model';
+import {
+  ACCOUNT_MAIL_MAX_BYTES,
+  DEFAULT_ACCOUNT_MAIL_MESSAGE,
+  DEFAULT_ACCOUNT_MAIL_SUBJECT,
+  fillTemplate,
+  readAccountCsv,
+  templateProblem,
+} from '../lib/onboarding/accountMail';
 import { applicantOf } from '../lib/onboarding/applicant';
 import { addressProblem, normalizeAddress, proposeAddresses } from '../lib/onboarding/cfcEmail';
 import { buildGoogleCsv, safeAddress, safeOrgUnitPath, safeText, type GoogleUserRow } from '../lib/onboarding/googleCsv';
@@ -18,8 +26,16 @@ import { buildSheetsHtml } from '../lib/onboarding/sheets';
 import { docusealBase } from '../lib/onboarding/docuseal';
 import { docusealConfigured } from '../lib/onboarding/member';
 import { currentChecks, currentDocuments, setCheck } from '../lib/onboarding/store';
-import type { AdmittedPerson, MemberProfile, OnboardingOverview, OnboardingTodo } from '../lib/onboarding/types';
+import type {
+  AccountMailAnswer,
+  AccountMailRecipient,
+  AdmittedPerson,
+  MemberProfile,
+  OnboardingOverview,
+  OnboardingTodo,
+} from '../lib/onboarding/types';
 import { siteOrigin } from '../lib/mediaUpload';
+import { buildWaitlistEmail } from '../lib/waitlistEmailTemplate';
 import { zipSize, zipStream, type ZipEntry } from '../lib/share/zip';
 import { currentStages } from '../lib/stages';
 import { poolOf, requireAdmin } from './util';
@@ -66,6 +82,8 @@ type OnboardingGlobal = {
   boardTodos?: { id?: string | null; text?: string | null; linkUrl?: string | null; linkLabel?: string | null }[] | null;
   documents?: { id?: string | null; title?: string | null }[] | null;
   googleOrgUnitPath?: string | null;
+  accountMailSubject?: string | null;
+  accountMailMessage?: string | null;
 };
 
 type UserDoc = MemberAccount & { teamProfile?: number | { id: number } | null };
@@ -200,6 +218,15 @@ function waitingFor(applications: Application[], users: UserDoc[]): Application[
 
 // ---- GET overview -----------------------------------------------------------
 
+/** The mail with the sign-in details: what Onboarding Settings say, else the built-in text. */
+const accountMailTemplate = (config: OnboardingGlobal) => ({
+  subject: config.accountMailSubject?.trim() || DEFAULT_ACCOUNT_MAIL_SUBJECT,
+  message: config.accountMailMessage?.trim() || DEFAULT_ACCOUNT_MAIL_MESSAGE,
+});
+
+/** Without a mail provider a production server would only log "mail attempted": refuse instead. */
+const canSendMail = () => Boolean(process.env.RESEND_API_KEY) || process.env.NODE_ENV !== 'production';
+
 const overview: Endpoint = {
   path: `${BASE}/overview`,
   method: 'get',
@@ -314,6 +341,7 @@ const overview: Endpoint = {
       docuseal: { configured: docuseal, url: docuseal ? docusealBase() : null },
       projects: projectDocs.map((p) => ({ id: p.id, title: p.title ?? `Project ${p.id}` })),
       accountAddresses: [...addresses].filter((a) => a.endsWith(`@${domain}`)).sort(),
+      accountMail: { ...accountMailTemplate(config), canSend: canSendMail() },
       admitted,
       members,
     };
@@ -719,4 +747,134 @@ const profile: Endpoint = {
   },
 };
 
-export const onboardingEndpoints: Endpoint[] = [overview, accounts, check, profile];
+// ---- POST account-mails -----------------------------------------------------
+
+const CONTACT = process.env.CONTACT_TO_EMAIL || 'info@codingforchange.com';
+/** Resend allows two requests a second; mails with an attachment cannot go through its batch call. */
+const MAIL_SPACING_MS = 600;
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * The sign-in details by mail, for when the password sheets were not handed
+ * over in person (lib/onboarding/accountMail.ts):
+ *
+ *   POST /api/onboarding/admin/account-mails
+ *     { csv, subject?, message?, send?: boolean, only?: [association address] }
+ *
+ * `csv` is the text of a google-users.csv from an earlier download, the only
+ * place the first passwords exist. Without `send` nothing goes out: the
+ * answer lists who would get a mail at which private address, and who cannot.
+ * With `send` every "ready" person (or only those in `only`) gets one mail:
+ * the template filled in, in the branded frame, with their own password
+ * sheet attached. It goes to the private address ON THE ACCOUNT, never to an
+ * address from the file, and only to accounts the board made for onboarding.
+ *
+ * The passwords are read from the request, put into the mails and forgotten:
+ * not stored, not logged, not echoed in the answer. `users.accountMailedAt`
+ * records that (not what) was sent.
+ */
+const accountMails: Endpoint = {
+  path: `${BASE}/account-mails`,
+  method: 'post',
+  handler: async (req) => {
+    const denied = requireAdmin(req);
+    if (denied) return denied;
+    const { payload } = req;
+    const body = await readBody<{ csv?: unknown; subject?: unknown; message?: unknown; send?: unknown; only?: unknown }>(req);
+    if (!body || typeof body.csv !== 'string') return bad('Expected { csv: "the text of google-users.csv" }.');
+    if (body.csv.length > ACCOUNT_MAIL_MAX_BYTES) return bad('The file is too large for a Google users CSV.', [], 413);
+    const send = body.send === true;
+    if (body.only !== undefined && (!Array.isArray(body.only) || body.only.some((v) => typeof v !== 'string'))) {
+      return bad('"only" must be a list of association addresses.');
+    }
+    const only = Array.isArray(body.only) ? new Set((body.only as string[]).map((v) => v.trim().toLowerCase())) : null;
+
+    const stored = accountMailTemplate(await settings(req));
+    const subject = typeof body.subject === 'string' && body.subject.trim() ? body.subject.trim() : stored.subject;
+    const message = typeof body.message === 'string' && body.message.trim() ? body.message.trim() : stored.message;
+    const wrong = templateProblem(subject, message);
+    if (wrong) return bad(wrong);
+
+    const read = readAccountCsv(body.csv);
+    if (read.error) return bad(read.error);
+    if (read.rows.length === 0) return bad('Nobody with an address and a password is in this file.');
+
+    const users = new Map((await onboardingUsers(req)).filter(inScope).map((u) => [u.email.toLowerCase(), u]));
+    const plan = read.rows.map((row) => {
+      const account = users.get(row.email) ?? null;
+      const to = account ? safeAddress(account.privateEmail) : '';
+      const firstName = account?.firstName?.trim() || row.firstName;
+      const lastName = account?.lastName?.trim() || row.lastName;
+      const recipient: AccountMailRecipient = {
+        email: row.email,
+        name: `${firstName} ${lastName}`.trim() || row.email,
+        to: to || null,
+        status: !account ? 'no_account' : !to ? 'no_private' : 'ready',
+        mailedAt: account?.accountMailedAt ?? null,
+      };
+      return { row, account, firstName, lastName, recipient };
+    });
+    const answer = (sent = 0, failed = 0): AccountMailAnswer => ({
+      recipients: plan.map((p) => p.recipient),
+      problems: read.problems,
+      sent,
+      failed,
+    });
+    const headers = { 'Cache-Control': 'no-store' };
+    if (!send) return Response.json(answer(), { headers });
+
+    if (!canSendMail()) return bad('RESEND_API_KEY is not configured on the server: no mail can be sent.', [], 503);
+    const due = plan.filter((p) => p.recipient.status === 'ready' && (!only || only.has(p.row.email)));
+    if (due.length === 0) return bad('Nobody to send to: no selected person has an account with a private address.');
+
+    const url = onboardingUrl();
+    const origin = siteOrigin();
+    let sent = 0;
+    let failed = 0;
+    for (const [i, p] of due.entries()) {
+      if (i > 0) await sleep(MAIL_SPACING_MS);
+      const values = { firstName: p.firstName, lastName: p.lastName, email: p.row.email, password: p.row.password, onboardingUrl: url };
+      try {
+        const mail = buildWaitlistEmail({
+          message: fillTemplate(message, values),
+          contactEmail: CONTACT,
+          audience: 'member',
+          siteOrigin: origin,
+          lang: 'de',
+          ctaLabel: 'Onboarding',
+          ctaUrl: url,
+        });
+        await payload.sendEmail({
+          to: p.recipient.to as string,
+          replyTo: CONTACT,
+          subject: fillTemplate(subject, values),
+          html: mail.html,
+          text: mail.text,
+          attachments: [
+            {
+              filename: 'coding-for-change-zugangsdaten.html',
+              content: buildSheetsHtml([{ firstName: p.firstName, lastName: p.lastName, email: p.row.email, password: p.row.password }], url),
+            },
+          ],
+        });
+        p.recipient.status = 'sent';
+        sent++;
+        const at = new Date().toISOString();
+        p.recipient.mailedAt = at;
+        await payload
+          .update({ collection: 'users', id: (p.account as UserDoc).id, data: { accountMailedAt: at }, depth: 0, req })
+          .catch(() => undefined);
+      } catch (err) {
+        p.recipient.status = 'failed';
+        failed++;
+        // The address only: a provider's error text is not ours to trust with a mail's content.
+        payload.logger.error(`[onboarding] sign-in mail for ${p.row.email} failed (${(err as { status?: number })?.status ?? 'error'})`);
+      }
+    }
+    const by = String((req.user as { email?: string } | null)?.email ?? 'admin');
+    payload.logger.info(`[onboarding] sign-in mails by ${by}: ${sent} sent, ${failed} failed${process.env.RESEND_API_KEY ? '' : ' (console)'}`);
+    return Response.json(answer(sent, failed), { headers });
+  },
+};
+
+export const onboardingEndpoints: Endpoint[] = [overview, accounts, check, profile, accountMails];

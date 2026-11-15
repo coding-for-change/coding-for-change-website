@@ -1,4 +1,5 @@
 import type { Field, GlobalConfig } from 'payload';
+import { DEFAULT_ACCOUNT_MAIL_MESSAGE, DEFAULT_ACCOUNT_MAIL_SUBJECT, templateProblem } from '../lib/onboarding/accountMail';
 import { hasAdminRole, isAdmin, roleOf } from '../access/roles';
 
 /**
@@ -132,6 +133,42 @@ export const Onboarding: GlobalConfig = {
         value == null || value === '' || (typeof value === 'string' && value.startsWith('/'))
           ? true
           : 'Starts with "/", e.g. "/Members".',
+    },
+    {
+      type: 'collapsible',
+      label: 'Mail with the sign-in details',
+      admin: {
+        initCollapsed: true,
+        description:
+          'Sent from the Onboarding dashboard ("Email sign-in details") to each new member\'s private address, when the password sheets were not handed over in person. Placeholders: {{firstName}}, {{lastName}}, {{email}} (the association address), {{password}}, {{onboardingUrl}}. Leave a field empty to use the built-in text (German, then English).',
+      },
+      fields: [
+        {
+          name: 'accountMailSubject',
+          label: 'Subject',
+          type: 'text',
+          maxLength: 200,
+          validate: (value: unknown) => {
+            if (typeof value !== 'string' || !value.trim()) return true;
+            return templateProblem(value, DEFAULT_ACCOUNT_MAIL_MESSAGE) ?? true;
+          },
+        },
+        {
+          name: 'accountMailMessage',
+          label: 'Message',
+          type: 'textarea',
+          maxLength: 10000,
+          admin: {
+            rows: 18,
+            description:
+              'Plain text; an empty line starts a new paragraph, links become clickable. It must contain {{password}} and {{email}}. The member\'s password sheet is attached and a button to the onboarding page is added below the text.',
+          },
+          validate: (value: unknown) => {
+            if (typeof value !== 'string' || !value.trim()) return true;
+            return templateProblem(DEFAULT_ACCOUNT_MAIL_SUBJECT, value) ?? true;
+          },
+        },
+      ],
     },
   ],
 };

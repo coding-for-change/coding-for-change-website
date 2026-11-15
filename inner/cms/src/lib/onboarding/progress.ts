@@ -16,6 +16,7 @@ export type MemberAccount = {
   application?: number | { id: number } | null;
   accountExportedAt?: string | null;
   signedInAt?: string | null;
+  accountMailedAt?: string | null;
 };
 
 export type ProgressInput = {
@@ -75,6 +76,7 @@ export function memberProgress(input: ProgressInput): OnboardingMember {
     application: idOf(account.application),
     accountExportedAt: account.accountExportedAt ?? null,
     signedInAt,
+    accountMailedAt: account.accountMailedAt ?? null,
     formSubmittedAt: input.formSubmittedAt,
     memberTodos,
     boardTodos,

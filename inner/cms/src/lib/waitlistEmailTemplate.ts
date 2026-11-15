@@ -56,7 +56,7 @@ export type WaitlistEmailContent = {
   ctaUrl?: string;
 };
 
-export type EmailAudience = 'waitlist' | 'techtour' | 'applications' | 'board';
+export type EmailAudience = 'waitlist' | 'techtour' | 'applications' | 'board' | 'member';
 
 export type BuiltWaitlistEmail = {
   html: string;
@@ -153,6 +153,11 @@ const REASONS: Record<EmailAudience, { de: string; en: string }> = {
   board: {
     de: 'Du erhältst diese E-Mail, weil du im CMS von Coding for Change Admin bist. Fragen an {contact}.',
     en: 'You are receiving this email because you are an admin in the Coding for Change CMS. Questions to {contact}.',
+  },
+  // A new member's sign-in details (lib/onboarding/accountMail.ts).
+  member: {
+    de: 'Du erhältst diese E-Mail, weil du als Mitglied bei Coding for Change aufgenommen wurdest. Bei Fragen genügt eine kurze Nachricht an {contact}.',
+    en: 'You are receiving this email because you were admitted as a member of Coding for Change. Questions? Just send a short message to {contact}.',
   },
 };
 

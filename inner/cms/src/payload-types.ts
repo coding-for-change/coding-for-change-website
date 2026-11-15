@@ -952,6 +952,10 @@ export interface User {
    * When the dashboard last put this account into a Google CSV, with a new password.
    */
   accountExportedAt?: string | null;
+  /**
+   * When the dashboard last mailed this account's address and first password to the private address.
+   */
+  accountMailedAt?: string | null;
   signedInAt?: string | null;
   /**
    * The first time the member had sent the form and done all their to-dos and documents; the board got a mail then (lib/onboarding/notify.ts).
@@ -2565,6 +2569,7 @@ export interface UsersSelect<T extends boolean = true> {
   application?: T;
   teamProfile?: T;
   accountExportedAt?: T;
+  accountMailedAt?: T;
   signedInAt?: T;
   stepsCompletedAt?: T;
   updatedAt?: T;
@@ -2909,6 +2914,11 @@ export interface Onboarding {
    * Where new accounts go in Google Admin, e.g. "/" or "/Members". Written into the CSV the dashboard downloads.
    */
   googleOrgUnitPath?: string | null;
+  accountMailSubject?: string | null;
+  /**
+   * Plain text; an empty line starts a new paragraph, links become clickable. It must contain {{password}} and {{email}}. The member's password sheet is attached and a button to the onboarding page is added below the text.
+   */
+  accountMailMessage?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3317,6 +3327,8 @@ export interface OnboardingSelect<T extends boolean = true> {
         id?: T;
       };
   googleOrgUnitPath?: T;
+  accountMailSubject?: T;
+  accountMailMessage?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;
