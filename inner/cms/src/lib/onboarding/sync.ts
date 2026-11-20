@@ -203,9 +203,10 @@ export async function applyMemberAnswers(
     teamId = created.id as number;
   }
 
-  // German: the same bio (the member wrote one), and a title of its own only
-  // while there is none (a new profile's placeholder; the board's title is
-  // left alone).
+  // German: the German bio, or the English one when the member wrote none
+  // (Payload refuses a German save without a German bio), and a title of its
+  // own only while there is none (a new profile's placeholder; the board's
+  // title is left alone).
   const german = (await payload.findByID({
     collection: 'team',
     id: teamId,
@@ -220,7 +221,7 @@ export async function applyMemberAnswers(
     collection: 'team',
     id: teamId,
     data: {
-      bio: answers.bio,
+      bio: answers.bioDe || answers.bio,
       ...(german.role ? {} : { role: existing ? englishRole : PLACEHOLDER_TITLE.de }),
     },
     locale: 'de',
