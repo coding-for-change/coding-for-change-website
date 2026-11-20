@@ -17,7 +17,7 @@
 
 .lp--techtour.tta.ttm .ttm-name {
     margin: 0 0 18px;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     color: var(--tta-ink);
 }
@@ -83,7 +83,7 @@
     display: inline-block;
     padding: 3px 9px;
     border: 1px solid var(--tta-line-strong);
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 12px;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -125,7 +125,7 @@
 
 .lp--techtour.tta.ttm .ttm-todos__head {
     margin: 0;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     font-weight: 600;
     line-height: 1.4;

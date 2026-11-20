@@ -10,9 +10,9 @@
     min-height: 38px;
     padding: 8px 16px;
     box-sizing: border-box;
-    background: #0f2040;
+    background: var(--cfc-petrol);
     color: #ffffff;
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 14px;
     line-height: 1.35;
     text-align: center;
@@ -27,15 +27,15 @@
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #7fe3e4;
-    box-shadow: 0 0 0 3px rgba(127, 227, 228, 0.25);
+    background: var(--cfc-phosphor);
+    box-shadow: 0 0 0 3px rgba(158, 240, 192, 0.25);
 }
 .apply-bar__text--short {
     display: none;
 }
 .apply-bar__cta {
     flex: none;
-    color: #7fe3e4;
+    color: var(--cfc-phosphor);
     font-weight: 600;
 }
 @media (max-width: 560px) {

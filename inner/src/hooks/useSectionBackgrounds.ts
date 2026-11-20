@@ -12,19 +12,27 @@ import { useEffect, type RefObject } from 'react';
  * actually reached the nav. Extracted from the Landing so the TechTour intro
  * can turn the page black and back the same way.
  *
+ * A band can also set the nav's ink for as long as it sits under the nav,
+ * whatever its own colour: `data-nav-over="dark"`. The homepage hero needs it –
+ * a dark photo framed in paper. While such a band is under the nav,
+ * `html[data-nav-photo]` is set too, so the nav drops its glass over the photo.
+ *
  * On desktop the site scrolls inside `.site-scroll`, not the window; the hook
- * finds that scroller from the root. Respects prefers-reduced-motion by doing
- * nothing (the bands keep their own backgrounds).
+ * finds that scroller from the root. With prefers-reduced-motion nothing is
+ * blended (the bands keep their own backgrounds), but the nav still follows
+ * the band beneath it.
  */
 export default function useSectionBackgrounds(root: RefObject<HTMLElement | null>): void {
     useEffect(() => {
         const el = root.current;
         if (!el) return;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const blend = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         const scroller = el.closest('.site-scroll') as HTMLElement | null;
         const listenTarget: HTMLElement | Window = scroller ?? window;
+        const html = document.documentElement;
         const toRgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+        const isDark = ([r, g, b]: number[]) => (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 < 0.5;
 
         let raf = 0;
         const paint = () => {
@@ -50,10 +58,23 @@ export default function useSectionBackgrounds(root: RefObject<HTMLElement | null
                 g += (g2 - g) * p;
                 b += (b2 - b) * p;
             }
-            el.style.backgroundColor = `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
+            if (blend) el.style.backgroundColor = `rgb(${r | 0}, ${g | 0}, ${b | 0})`;
 
-            const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-            document.documentElement.dataset.nav = lum < 0.5 ? 'dark' : 'light';
+            // The band under the middle of the nav strip (64px tall).
+            const navLine = viewTop + 32;
+            const under = sections.find((s) => {
+                const rect = s.getBoundingClientRect();
+                return rect.top <= navLine && rect.bottom > navLine;
+            });
+            const over = under?.dataset.navOver;
+            if (over) {
+                html.dataset.nav = over;
+                html.dataset.navPhoto = '';
+            } else {
+                delete html.dataset.navPhoto;
+                const ground = blend || !under ? [r, g, b] : toRgb(under.dataset.bg!);
+                html.dataset.nav = isDark(ground) ? 'dark' : 'light';
+            }
         };
         const onScroll = () => {
             if (!raf) raf = requestAnimationFrame(paint);
@@ -70,7 +91,8 @@ export default function useSectionBackgrounds(root: RefObject<HTMLElement | null
             observer.disconnect();
             if (raf) cancelAnimationFrame(raf);
             el.style.backgroundColor = '';
-            delete document.documentElement.dataset.nav;
+            delete html.dataset.nav;
+            delete html.dataset.navPhoto;
         };
     }, [root]);
 }

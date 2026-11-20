@@ -5,13 +5,12 @@ import { getServerLocale } from '@/lib/locale';
 import { resolveHomepageMode } from '@/lib/homepageMode';
 import { translations } from '@/i18n/translations';
 import type {
-    CmsEvent,
     CmsProject,
     CmsSponsor,
-    CmsFaqItem,
     CmsHomepage,
     CmsSiteConfig,
     CmsTeamMember,
+    CmsTechTour,
 } from '@/api/types';
 
 export const dynamic = 'force-dynamic';
@@ -31,24 +30,23 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
     const locale = await getServerLocale();
-    const [events, projects, sponsors, faq, homepage, team] = await Promise.all([
-        fetchCollection<CmsEvent>('events', locale),
+    const [projects, sponsors, homepage, team, techTour] = await Promise.all([
         fetchCollection<CmsProject>('projects', locale),
         fetchCollection<CmsSponsor>('sponsors', locale, { depth: '1' }),
-        fetchCollection<CmsFaqItem>('faq', locale),
         fetchGlobal<CmsHomepage>('homepage', locale),
         // The members named on the student-mode "ways in" cards; depth 1
         // populates their photos.
         fetchCollection<CmsTeamMember>('team', locale, { depth: '1' }),
+        // The hosts of its evenings join the logo strip while the page is listed.
+        fetchGlobal<CmsTechTour>('tech-tour', locale),
     ]);
     return (
         <Landing
-            events={events}
             projects={projects}
             sponsors={sponsors}
-            faq={faq}
             homepage={homepage}
             team={team}
+            techTour={techTour}
         />
     );
 }

@@ -1,7 +1,7 @@
 import BecomeAMember from '@/components/showcase/BecomeAMember';
 import { fetchCollection, fetchGlobal } from '@/lib/cms';
 import { getServerLocale } from '@/lib/locale';
-import type { CmsMembership, CmsProject, CmsSponsor, CmsTeamMember, CmsTechTour } from '@/api/types';
+import type { CmsFaqItem, CmsMembership, CmsProject, CmsSponsor, CmsTeamMember, CmsTechTour } from '@/api/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,12 +15,13 @@ export default async function JoinPage() {
     const locale = await getServerLocale();
     // Projects and partners feed the logo band, the team the "want to know
     // more?" contacts; depth 1 populates their logos and photos.
-    const [membership, projects, sponsors, techTour, team] = await Promise.all([
+    const [membership, projects, sponsors, techTour, team, faq] = await Promise.all([
         fetchGlobal<CmsMembership>('membership', locale),
         fetchCollection<CmsProject>('projects', locale, { depth: '1' }),
         fetchCollection<CmsSponsor>('sponsors', locale, { depth: '1' }),
         fetchGlobal<CmsTechTour>('tech-tour', locale),
         fetchCollection<CmsTeamMember>('team', locale, { depth: '1' }),
+        fetchCollection<CmsFaqItem>('faq', locale),
     ]);
     return (
         <BecomeAMember
@@ -29,6 +30,7 @@ export default async function JoinPage() {
             sponsors={sponsors}
             techTour={techTour}
             team={team}
+            faq={faq}
             serverNow={Date.now()}
         />
     );

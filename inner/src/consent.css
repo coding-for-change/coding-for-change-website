@@ -54,8 +54,7 @@
 .klaro .cookie-modal li {
     font-size: inherit;
     line-height: inherit;
-    font-family: var(--font-plex-sans), -apple-system, BlinkMacSystemFont,
-        'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
 }
 
 /* A legal notice the visitor cannot select or copy is user-hostile. */
@@ -95,12 +94,12 @@
  * that actually beats Klaro's own `.klaro .cookie-modal .cm-btn.x` (0,4,0) rules.
  */
 .klaro {
-    --dark1: #0f2040; /* notice + modal background */
-    --dark2: #2c3d5e; /* borders and dividers */
-    --dark3: #a8b6cf; /* MUTED TEXT — must stay light. See note above. */
+    --dark1: #131614; /* notice + modal background (brand ink) */
+    --dark2: #30342f; /* borders and dividers */
+    --dark3: #b3b7af; /* MUTED TEXT — must stay light. See note above. */
     --light1: #ffffff; /* primary text */
     --light2: #e5e7eb;
-    --light3: #b9c6dd; /* secondary text ("Purpose: …") */
+    --light3: #bfc3bb; /* secondary text ("Purpose: …") */
     --border-radius: 10px;
 }
 
@@ -109,17 +108,17 @@
 .klaro .cookie-modal .cm-list-description,
 .klaro .cookie-notice .cm-list-description,
 .klaro .cookie-modal .cm-modal .cm-body ul.cm-services li.cm-service p {
-    color: #c3cfe2;
+    color: #c9ccc4;
 }
 
 .klaro .cookie-modal .cm-modal .cm-body ul.cm-services li.cm-service p.purposes,
 .klaro .cookie-modal .cm-modal .cm-body ul.cm-services li.cm-purpose p.purposes {
-    color: #93a4c2;
+    color: #9ea39b;
 }
 
 .klaro .cookie-modal .cm-modal .cm-body ul.cm-services li.cm-service span.cm-opt-out,
 .klaro .cookie-modal .cm-modal .cm-body ul.cm-services li.cm-service span.cm-required {
-    color: #93a4c2;
+    color: #9ea39b;
 }
 
 .klaro .cookie-modal .cm-modal .cm-header h1,
@@ -182,7 +181,7 @@
     max-width: 760px;
     box-sizing: border-box;
     border-radius: 10px;
-    box-shadow: 0 10px 40px rgba(15, 32, 64, 0.3);
+    box-shadow: 0 10px 40px rgba(19, 22, 20, 0.3);
     /* Above the site chrome, below nothing that matters. */
     z-index: 1000;
 }
@@ -262,8 +261,7 @@
 }
 
 .klaro .cm-btn {
-    font-family: var(--font-plex-sans), -apple-system, BlinkMacSystemFont,
-        'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
     font-size: 15px;
     padding: 10px 18px;
     border-radius: 8px;
@@ -271,10 +269,10 @@
 }
 
 /* Links in the banner text (privacy policy, Google's data-responsibility page)
-   must be obviously clickable against navy. */
+   must be obviously clickable against the ink panel: brand phosphor. */
 .klaro .cookie-notice a,
 .klaro .cookie-modal a {
-    color: #9ec5ff;
+    color: #9ef0c0;
     text-decoration: underline;
 }
 
@@ -324,8 +322,7 @@
 
 /* The settings modal inherits the same repairs; keep it readable and scrollable. */
 .klaro .cookie-modal .cm-modal {
-    font-family: var(--font-plex-sans), -apple-system, BlinkMacSystemFont,
-        'Segoe UI', Helvetica, Arial, sans-serif;
+    font-family: var(--font-sans);
     border-radius: 10px;
 }
 

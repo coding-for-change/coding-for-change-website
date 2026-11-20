@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useCmsGlobal } from '../../api';
 import type {
+    CmsFaqItem,
     CmsMembership,
     CmsProject,
     CmsSponsor,
@@ -22,6 +23,7 @@ import JoinExpect from './JoinExpect';
 import JoinWays from './JoinWays';
 import JoinProcess from './JoinProcess';
 import PartnerMarquee, { joinPartners } from './PartnerMarquee';
+import FaqList from './FaqList';
 import './landing.css';
 import './join.css';
 
@@ -63,6 +65,8 @@ export interface BecomeAMemberProps {
     techTour?: CmsTechTour | null;
     /** The members named on the "ways in" cards, for the "want to know more?" footers. */
     team?: CmsTeamMember[] | null;
+    /** The questions about joining (category "Membership") and the general ones. */
+    faq?: CmsFaqItem[] | null;
     /**
      * Request time from the server component. Seeding the clock with it keeps
      * the server and first client render identical (no hydration mismatch on
@@ -98,6 +102,10 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
     const partners = useMemo(
         () => joinPartners(props.projects, props.sponsors, props.techTour),
         [props.projects, props.sponsors, props.techTour]
+    );
+
+    const joinQuestions = (props.faq ?? []).filter(
+        (item) => item.category === 'membership' || item.category === 'general'
     );
 
     // The line under "Opens 5 Oct" / "Closes 30 Oct", or none: a deadline
@@ -184,7 +192,7 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
                 </div>
             </section>
 
-            <PartnerMarquee partners={partners} label={t.join.partnersLabel} />
+            <PartnerMarquee partners={partners} label={t.landing.partnersLabel} variant="strip" />
 
             <section className="lp-section jn-expect">
                 <JoinExpect />
@@ -198,13 +206,34 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
                 <JoinProcess now={now} projects={props.projects} />
             </section>
 
-            <section className="lp-cta jn-closing">
+            {joinQuestions.length > 0 && (
+                <section className="lp-section lp-faq-band">
+                    <div className="lp-inner">
+                        <motion.div className="lp-head lp-head--split" {...reveal} transition={{ duration: 0.5 }}>
+                            <div className="lp-head__copy">
+                                <p className="lp-kicker">~/faq</p>
+                                <h2 className="lp-h2">{t.pages.faq.joinTitle}</h2>
+                            </div>
+                            <Link className="lp-textlink" href="/qa">
+                                {t.pages.faq.all} →
+                            </Link>
+                        </motion.div>
+                        <FaqList items={joinQuestions} />
+                    </div>
+                </section>
+            )}
+
+            {/* The closing claim, tied to the round: one button, to the form. */}
+            <section className="lp-closing jn-closing">
                 <div className="lp-inner">
                     <motion.div style={{ display: 'block' }} {...reveal} transition={{ duration: 0.5 }}>
-                        <h2 className="lp-cta__heading">{t.join.closing.heading}</h2>
-                        <p className="lp-cta__text">{t.join.closing.text[status]}</p>
-                        <div className="lp-cta__btns">
-                            <Link className="lp-btn lp-btn--light" href="/join/apply" data-cta="join-apply-end">
+                        <h2 className="lp-closing__claim">
+                            {t.join.closing.heading}
+                            <span className="lp-cursor lp-cursor--ink" aria-hidden="true" />
+                        </h2>
+                        <p className="lp-closing__text">{t.join.closing.text[status]}</p>
+                        <div className="lp-closing__ctas">
+                            <Link className="lp-btn lp-btn--primary" href="/join/apply" data-cta="join-apply-end">
                                 {t.join.cta[status]} →
                             </Link>
                         </div>

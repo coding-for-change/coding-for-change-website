@@ -27,8 +27,11 @@
  */
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, extname, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = new URL('..', import.meta.url).pathname;
+// fileURLToPath, not .pathname: a checkout path with spaces kept its %20, the
+// walk found no folders, and the scan passed without checking anything.
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const SCAN_DIRS = ['inner/src', 'outer/src'];
 const EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx', '.html']);
 
@@ -52,6 +55,8 @@ const ALLOWED_HOSTS = new Map([
     ['github.com', 'Outbound link target'],
     ['www.instagram.com', 'Outbound link target'],
     ['www.linkedin.com', 'Outbound link target'],
+    ['startsocial.de', 'Outbound link target (our award page, Recognition.tsx)'],
+    ['movers-of-tomorrow-award.de', 'Outbound link target (our award page, Recognition.tsx)'],
     ['codingforchange.com', 'Our own origin'],
     ['www.codingforchange.com', 'Our own origin'],
 ]);

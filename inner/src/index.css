@@ -1,14 +1,35 @@
+/* ------------------------------------------------------------------ */
+/* Brand tokens – "Präzision mit Haltung" (redesign, Nov 2026).         */
+/* Every colour and face on the site derives from these; page           */
+/* stylesheets alias them (.lp in landing.css: --accent, --ink, …).     */
+/* Phosphor is a signal, never text on paper: cursor, status dots,      */
+/* labels and accents on petrol or ink only.                            */
+/* ------------------------------------------------------------------ */
+:root {
+    --cfc-paper: #f1f0ea; /* page ground */
+    --cfc-stone: #e4e3da; /* alternate bands, cards, image grounds */
+    --cfc-ink: #131614; /* text, primary buttons */
+    --cfc-grey: #5f645e; /* second voice in statements, meta (4.5:1 on stone) */
+    --cfc-line: #d6d5cb; /* hairlines */
+    --cfc-petrol: #0b4643; /* brand, dark bands */
+    --cfc-petrol-deep: #073431; /* hover on petrol */
+    --cfc-phosphor: #9ef0c0; /* signal on petrol / ink */
+
+    /* Faces come from next/font in app/layout.tsx. */
+    --font-sans: var(--font-geist), system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --font-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
 body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
-        'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans',
-        'Helvetica Neue', sans-serif;
-    /* -webkit-font-smoothing: antialiased; */
-    /* -moz-osx-font-smoothing: grayscale; */
+    font-family: var(--font-sans);
+    color: var(--cfc-ink);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 html, body {
-    background-color: #fff;
+    background-color: var(--cfc-paper);
 }
 
 code {
@@ -68,16 +89,14 @@ h6 {
 
 /* Base element typography for CMS rich-text (RichText.tsx emits classless
    <p>/<b>/<h2..h4>/<li>) — the Imprint / Privacy pages and About prose read
-   through these. Body = IBM Plex Sans, headings = Space Grotesk. */
+   through these. Body and headings are both Geist (--font-sans). */
 p {
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, -apple-system,
-        sans-serif;
+    font-family: var(--font-sans);
     font-size: 18px;
 }
 
 p b {
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, -apple-system,
-        sans-serif;
+    font-family: var(--font-sans);
 }
 
 .showcase-header {
@@ -92,32 +111,39 @@ p b {
     color: black;
 }
 
+/* Headings: Geist at 500 with tight tracking – size carries the hierarchy,
+   not weight. */
 h1 {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 64px;
+    font-weight: 500;
+    letter-spacing: -0.04em;
 }
 
 h2 {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 32px;
+    font-weight: 500;
+    letter-spacing: -0.03em;
 }
 
 h3 {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 24px;
-    letter-spacing: 0px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
 }
 
 h4 {
-    font-family: var(--font-space-grotesk), 'Space Grotesk', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 18px;
-    letter-spacing: 0px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
 }
 
 li {
     margin-bottom: 16px;
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, -apple-system,
-        sans-serif;
+    font-family: var(--font-sans);
     font-size: 18px;
 }
 
@@ -167,7 +193,7 @@ input {
     border: none;
     resize: none;
     box-shadow: var(--border-field);
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 18px;
 }
 
@@ -179,7 +205,7 @@ textarea {
     box-sizing: border-box;
     resize: none;
     box-shadow: var(--border-field);
-    font-family: var(--font-plex-sans), 'IBM Plex Sans', system-ui, sans-serif;
+    font-family: var(--font-sans);
     font-size: 18px;
 }
 

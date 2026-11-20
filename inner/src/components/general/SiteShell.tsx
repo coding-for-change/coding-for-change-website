@@ -31,6 +31,11 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
             setEmbedded(true);
         }
     }, []);
+    // Once the right chrome is on screen, release the desktop bar that
+    // layout.tsx hid on phones until now (html[data-mobile-pending]).
+    useEffect(() => {
+        if (mounted) delete document.documentElement.dataset.mobilePending;
+    }, [mounted]);
 
     if (mounted && isMobile && !embedded) {
         return (

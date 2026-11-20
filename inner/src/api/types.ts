@@ -346,16 +346,26 @@ export interface CmsAbout {
 }
 
 /** GET /api/globals/homepage — homepage section copy (falls back to i18n). */
+/** Who is speaking – decides which page a quote appears on besides the homepage. */
+export type TestimonialAudience = 'ngo' | 'company' | 'member';
+
+export interface CmsTestimonial {
+    quote: string;
+    audience?: TestimonialAudience | null;
+    name?: string | null;
+    role?: string | null;
+    organisation?: string | null;
+    photo?: CmsMedia | number | null;
+    id?: string;
+}
+
 export interface CmsHomepage {
-    heroKicker?: string | null;
     heroCtaPrimary?: string | null;
     heroCtaSecondary?: string | null;
-    heroScrollHint?: string | null;
-    heroImage?: CmsMedia | null;
-    aboutKicker?: string | null;
+    /** The photo behind the hero headline; the bundled one stands in while empty. */
+    heroImage?: CmsMedia | number | null;
     aboutOneLiner?: string | null;
     aboutPitch?: string | null;
-    stats?: { value: string; label: string; id?: string }[] | null;
     steps?: {
         title: string;
         text: string;
@@ -372,15 +382,12 @@ export interface CmsHomepage {
     projectsSubtitle?: string | null;
     projectsTitle?: string | null;
     projectsIntro?: string | null;
-    eventsSubtitle?: string | null;
-    eventsTitle?: string | null;
-    eventsIntro?: string | null;
-    sponsorsSubtitle?: string | null;
-    sponsorsTitle?: string | null;
-    sponsorsIntro?: string | null;
+    /** Head of the /qa page. */
     qaSubtitle?: string | null;
     qaTitle?: string | null;
     qaIntro?: string | null;
+    /** The homepage's "voices" section; hidden on the live site while empty. */
+    testimonials?: CmsTestimonial[] | null;
     /** Student-mode copy (homepage audience = students); each falls back to i18n. */
     studentHeroTitle?: string | null;
     studentHeroLead?: string | null;
@@ -390,10 +397,6 @@ export interface CmsHomepage {
     studentWhyIntro?: string | null;
     studentProjectsTitle?: string | null;
     studentProjectsIntro?: string | null;
-    threedKicker?: string | null;
-    threedTitle?: string | null;
-    threedText?: string | null;
-    threedCta?: string | null;
     ctaHeading?: string | null;
     ctaText?: string | null;
     ctaJoin?: string | null;

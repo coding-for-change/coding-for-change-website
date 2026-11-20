@@ -23,8 +23,9 @@ import BookingEmbed from '../general/BookingEmbed';
 import './landing.css';
 
 const statusColors: Record<string, string> = {
-    active: '#2f8f90',
-    completed: '#246b6c',
+    // Brand petrol (--cfc-petrol / --cfc-petrol-deep in index.css).
+    active: '#0b4643',
+    completed: '#073431',
     recruiting: '#b5651d',
 };
 
