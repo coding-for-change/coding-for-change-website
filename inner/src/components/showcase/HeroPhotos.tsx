@@ -40,6 +40,10 @@ export const HERO_SLIDES: HeroSlide[] = [
     bundled('hackathon-picus', '50% 60%'),
     // The Intro Day at the TUM Think Tank, 14 Nov 2026 (Canon, IMG_1513).
     bundled('intro-day-think-tank', '50% 55%'),
+    // A Tech Tour evening at QuantCo, 11 Nov 2026 (iPhone 16, IMG_4383). The
+    // room was well lit, so unlike the earlier evening shots it holds up at
+    // hero size. Its phone crop leaves out the top of the ceiling.
+    bundled('techtour-evening-quantco', '50% 70%'),
 ];
 /** How long each photo stays before the next fades in. */
 const HOLD_MS = 7000;
