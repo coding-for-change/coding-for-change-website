@@ -83,15 +83,30 @@ const MobileNav: React.FC = () => {
             >
                 <div style={styles.brand}>
                     <RouterLink href="/" style={styles.logoLink} aria-label="Coding for Change">
-                        <img
-                            src="/images/logo.svg"
-                            alt="Coding for Change"
-                            className="mobile-nav__logo"
-                            width={190}
-                            height={26}
-                            style={styles.logo}
-                        />
+                        {/* Phones show only our icon (>_♡), so the lockup with
+                            TUM's logo leaves the menu button room. */}
+                        <picture style={styles.picture}>
+                            <source media="(max-width: 600px)" srcSet="/images/logo-icon.svg" />
+                            <img
+                                src="/images/logo.svg"
+                                alt="Coding for Change"
+                                className="mobile-nav__logo"
+                                width={190}
+                                height={26}
+                                style={styles.logo}
+                            />
+                        </picture>
                     </RouterLink>
+                    {/* With a hairline, TUM's logo: we are a TUM Student Club.
+                        Both take the logo's ink flip (mobile.css). */}
+                    <span className="mobile-nav__logo mobile-nav__divider" aria-hidden="true" />
+                    <img
+                        src="/images/tum-logo.svg"
+                        alt="TUM Student Club"
+                        className="mobile-nav__logo mobile-nav__tum"
+                        width={38}
+                        height={20}
+                    />
                 </div>
                 <button
                     onClick={() => setOpen(true)}
@@ -113,14 +128,25 @@ const MobileNav: React.FC = () => {
                                 style={styles.logoLink}
                                 onClick={() => setOpen(false)}
                             >
-                                <img
-                                    src="/images/logo.svg"
-                                    alt="Coding for Change"
-                                    width={190}
-                                    height={26}
-                                    style={styles.logo}
-                                />
+                                <picture style={styles.picture}>
+                                    <source media="(max-width: 600px)" srcSet="/images/logo-icon.svg" />
+                                    <img
+                                        src="/images/logo.svg"
+                                        alt="Coding for Change"
+                                        width={190}
+                                        height={26}
+                                        style={styles.logo}
+                                    />
+                                </picture>
                             </RouterLink>
+                            <span className="mobile-nav__divider" aria-hidden="true" />
+                            <img
+                                src="/images/tum-logo.svg"
+                                alt="TUM Student Club"
+                                className="mobile-nav__tum"
+                                width={38}
+                                height={20}
+                            />
                         </div>
                         <button
                             onClick={() => setOpen(false)}
@@ -222,8 +248,11 @@ const styles: StyleSheetCSS = {
     brand: {
         display: 'flex',
         alignItems: 'center',
-        gap: 12,
+        gap: 14,
         minWidth: 0,
+    },
+    picture: {
+        display: 'flex',
     },
     logoLink: {
         display: 'flex',
@@ -232,6 +261,8 @@ const styles: StyleSheetCSS = {
         flexShrink: 0,
     },
     logo: {
+        // The same 33px for the wordmark and the phone icon: logo-icon.svg is
+        // cropped so its >_♡ then stands about 18px tall.
         height: 33,
         width: 'auto',
         objectFit: 'contain',

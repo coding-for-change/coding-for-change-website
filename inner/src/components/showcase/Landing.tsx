@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { useCmsCollection, useCmsGlobal, useSiteConfig, useHomepageMode, mediaUrl } from '../../api';
-import { useSiteFlags } from '@/api/SiteFlagsContext';
 import {
     CmsProject,
     CmsSponsor,
@@ -66,7 +65,6 @@ const Landing: React.FC<LandingProps> = (props) => {
     const l = t.landing;
     const pathname = usePathname();
     const router = useRouter();
-    const { techTourListed } = useSiteFlags();
 
     const { data: projects, loading: projectsLoading } =
         useCmsCollection<CmsProject>('projects', undefined, props.projects);
@@ -189,23 +187,8 @@ const Landing: React.FC<LandingProps> = (props) => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.6, ease: 'easeOut' }}
                         >
-                            {/* The announcement: the round's status in student
-                                mode, otherwise the TechTour while it is listed. */}
-                            {students ? (
-                                <RoundStatus now={now} className="lp-hero__pill" />
-                            ) : (
-                                techTourListed && (
-                                    <Link
-                                        className="lp-hero__pill"
-                                        href="/techtour"
-                                        data-cta="home-techtour-hero"
-                                    >
-                                        <span className="lp-hero__pill-dot" aria-hidden="true" />
-                                        {t.nav.techtour}
-                                        <span aria-hidden="true">→</span>
-                                    </Link>
-                                )
-                            )}
+                            {/* In student mode, the round's status. */}
+                            {students && <RoundStatus now={now} className="lp-hero__pill" />}
                             <h1 className="lp-hero__title">
                                 {students ? (
                                     s.heroTitle

@@ -109,8 +109,9 @@
    Runs under the overlay nav (.site-scroll > .lp--landing pulls it up 64px).
    The photo is inset by --frame so the paper shows round it; the nav sits on
    the photo with light ink (data-nav-over on the section, see
-   useSectionBackgrounds). The frame grows with its copy if a small screen
-   needs more room than the viewport. */
+   useSectionBackgrounds). The frame fills the first screen at any size, like
+   nomos.energy – a height cap let the next section peek in on large monitors –
+   and grows with its copy if a small screen needs more room than that. */
 .lp-hero {
     --frame: 10px;
     /* The copy's distance from the photo's edge – the nav over the photo
@@ -126,8 +127,8 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    min-height: clamp(600px, calc(100vh - 2 * var(--frame)), 920px);
-    min-height: clamp(600px, calc(100svh - 2 * var(--frame)), 920px);
+    min-height: max(600px, calc(100vh - 2 * var(--frame)));
+    min-height: max(600px, calc(100svh - 2 * var(--frame)));
     border-radius: 20px;
     overflow: hidden;
     background: var(--cfc-ink);
@@ -202,7 +203,7 @@
     gap: 22px;
     min-width: 0;
 }
-/* The announcement: a glass pill with a live dot. */
+/* A glass pill over the headline (student mode: the round's status). */
 .lp-hero__pill {
     display: inline-flex;
     align-items: center;
@@ -218,18 +219,6 @@
     line-height: 1.3;
     text-decoration: none;
     transition: background 0.15s ease, border-color 0.15s ease;
-}
-a.lp-hero__pill:hover {
-    background: rgba(241, 240, 234, 0.2);
-    border-color: rgba(241, 240, 234, 0.45);
-}
-.lp-hero__pill-dot {
-    flex: none;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--cfc-phosphor);
-    box-shadow: 0 0 0 3px rgba(158, 240, 192, 0.22);
 }
 /* Student mode: the round's status pill, in the same glass – open or
    closed (the pill's own rules come later in this file, hence the weight). */
@@ -306,7 +295,8 @@ a.lp-hero__pill:hover {
 }
 .lp-hero__caption {
     margin: 0;
-    max-width: 18ch;
+    /* One line for "Hackathon bei Picus Capital"; longer text still wraps. */
+    max-width: 32ch;
     font-family: var(--font-mono);
     font-size: 12px;
     line-height: 1.5;
@@ -1163,6 +1153,12 @@ a.lp-sponsor:hover {
     transition: background 0.3s ease, backdrop-filter 0.3s ease,
         border-color 0.3s ease, top 0.3s ease, padding 0.3s ease;
 }
+/* On a phone the server renders this desktop bar, and SiteShell swaps in the
+   mobile one after hydration – until then it stays hidden instead of flashing
+   (html[data-mobile-pending], stamped in app/layout.tsx). */
+html[data-mobile-pending] .lp-nav {
+    visibility: hidden;
+}
 /* Solid once the page has scrolled away from the very top. */
 .lp-nav--scrolled {
     background: rgba(241, 240, 234, 0.88);
@@ -1224,6 +1220,27 @@ html[data-nav='paper'] .lp-nav.lp-nav--scrolled {
     width: auto;
     object-fit: contain;
     /* Ease the ink flip so it reads as part of the background blend. */
+    transition: filter 0.25s ease;
+}
+/* Our logo, a hairline and TUM's: we are a TUM Student Club. The TUM logo
+   is always black or white, like ours – black on light grounds, flipping to
+   white with it on dark ones. */
+.lp-nav__lockup {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-shrink: 0;
+}
+.lp-nav__divider {
+    width: 1px;
+    height: 26px;
+    background: rgba(0, 0, 0, 0.3);
+    transition: filter 0.25s ease;
+}
+.lp-nav__tum {
+    display: block;
+    height: 20px;
+    width: auto;
     transition: filter 0.25s ease;
 }
 
@@ -1350,7 +1367,9 @@ html[data-nav='dark'] .lp-nav .lp-nav__link--active {
     color: var(--cfc-paper);
     border-bottom-color: var(--cfc-phosphor);
 }
-html[data-nav='dark'] .lp-nav .lp-nav__logo {
+html[data-nav='dark'] .lp-nav .lp-nav__logo,
+html[data-nav='dark'] .lp-nav .lp-nav__divider,
+html[data-nav='dark'] .lp-nav .lp-nav__tum {
     filter: brightness(0) invert(1);
 }
 html[data-nav='dark'] .lp-nav .lp-lang {
@@ -4171,9 +4190,10 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
     -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
     mask-image: linear-gradient(90deg, transparent 0%, #000 18%);
 }
-/* /3d is a desktop experience: below the site's mobile breakpoint it is not offered. */
+/* /3d is a desktop experience: below the site's mobile breakpoint it is not
+   offered. Two classes, so it beats `.lp--landing .lp-section { display: block }`. */
 @media (max-width: 1024px) {
-    .lp-3d {
+    .lp-section.lp-3d {
         display: none;
     }
 }

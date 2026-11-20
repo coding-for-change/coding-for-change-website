@@ -114,19 +114,31 @@ const TopNav: React.FC = () => {
                 'lp-nav' + (scrolled || !onLanding ? ' lp-nav--scrolled' : '')
             }
         >
-            <button
-                className="lp-nav__brand"
-                onClick={() => goToSection('home')}
-                aria-label={siteConfig.clubName || 'Home'}
-            >
+            {/* Our logo, a hairline and TUM's: we are a TUM Student Club
+                (tum.de's student club gallery lists us). */}
+            <div className="lp-nav__lockup">
+                <button
+                    className="lp-nav__brand"
+                    onClick={() => goToSection('home')}
+                    aria-label={siteConfig.clubName || 'Home'}
+                >
+                    <img
+                        className="lp-nav__logo"
+                        src="/images/logo.svg"
+                        alt=""
+                        width={220}
+                        height={30}
+                    />
+                </button>
+                <span className="lp-nav__divider" aria-hidden="true" />
                 <img
-                    className="lp-nav__logo"
-                    src="/images/logo.svg"
-                    alt=""
-                    width={220}
-                    height={30}
+                    className="lp-nav__tum"
+                    src="/images/tum-logo.svg"
+                    alt="TUM Student Club"
+                    width={38}
+                    height={20}
                 />
-            </button>
+            </div>
 
             <div className="lp-nav__links">
                 {sectionLinks.map((link) => (

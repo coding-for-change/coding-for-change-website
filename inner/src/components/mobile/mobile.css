@@ -16,6 +16,30 @@
 .mobile-nav__line {
     background: var(--cfc-ink);
 }
+/* The club's lockup (MobileNav.tsx): our logo, a hairline, TUM's logo – black
+   like ours, flipping to white with it. Tablets keep the wordmark at the
+   desktop sizes; phones show only our icon, with TUM's logo at its height. */
+.mobile-nav__divider {
+    display: block;
+    flex-shrink: 0;
+    width: 1px;
+    height: 26px;
+    background: rgba(0, 0, 0, 0.3);
+}
+.mobile-nav__tum {
+    display: block;
+    flex-shrink: 0;
+    width: auto;
+    height: 20px;
+}
+@media (max-width: 600px) {
+    .mobile-nav__divider {
+        height: 22px;
+    }
+    .mobile-nav__tum {
+        height: 18px;
+    }
+}
 .mobile-nav--overlay {
     position: fixed;
     /* Below the "applications are open" bar while it is on screen; ApplyBar

@@ -114,11 +114,31 @@ export default async function RootLayout({
         <html
             lang={locale}
             className={`${robotoMono.variable} ${geist.variable} ${geistMono.variable}`}
+            // The script below stamps data-nav before React hydrates.
+            suppressHydrationWarning
         >
             <head>
                 {/* `_parent` keeps links working when the OS is embedded in the
                     3D scene's monitor iframe. */}
                 <base target="_parent" />
+                {/* Before the first paint, two things only the client knows:
+                    - Over the homepage hero the nav is light and sits inside
+                      the photo's frame (html[data-nav='dark'][data-nav-photo],
+                      see landing.css and mobile.css). useSectionBackgrounds
+                      only stamps that after hydration, so a reload would first
+                      paint the dark nav and then flip and slide it.
+                    - On a phone SiteShell swaps in the mobile chrome after
+                      hydration; until then html[data-mobile-pending] hides the
+                      desktop bar the server rendered (not inside the 3D
+                      monitor, which keeps the desktop shell). */}
+                <script
+                    dangerouslySetInnerHTML={{
+                        __html:
+                            'var h=document.documentElement;' +
+                            "if(location.pathname==='/'&&!location.hash){h.dataset.nav='dark';h.dataset.navPhoto='';}" +
+                            "try{if(window.self===window.top&&matchMedia('(max-width: 1024px)').matches)h.dataset.mobilePending='';}catch(e){}",
+                    }}
+                />
                 {}
                 <link rel="preconnect" href="https://use.typekit.net" />
                 <link

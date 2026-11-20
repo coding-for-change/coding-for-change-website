@@ -29,19 +29,17 @@ const bundled = (name: string, position: string): HeroSlide => ({
  * 2400 and 3200 px wide, plus a full-height crop for phones: the tall phone
  * frame would otherwise blow a landscape photo up 1.4–1.8×. A clip from
  * partner footage can replace them once its use is cleared.
+ *
+ * The evening events' phone shots went soft in their darker parts at hero
+ * size (2026-11-12), so a photo needs good light or a real camera to belong
+ * here. With one photo the slideshow stands still.
  */
 export const HERO_SLIDES: HeroSlide[] = [
     // The hackathon at Picus Capital (Drive: Hackathon @ Picus Capital,
     // IMG_0124) – the 2400 px file is also /partners' hackathon photo.
     bundled('hackathon-picus', '50% 60%'),
-    // The Mario Kart tournament at CHECK24 (Drive: Mario Kart Tournament @
-    // CHECK24, DSC04703 – also /join's community photo).
-    bundled('mario-kart-check24', '50% 40%'),
-    // The QuantCo company event (Drive: Poker Night @ QuantCo, IMG_3903).
-    bundled('company-event-quantco', '50% 55%'),
-    // The Tech Tour evening at Project A (2026-11-09) – a 4K frame from the
-    // video, IMG_4189.MOV at 36.9 s.
-    bundled('techtour-project-a', '35% 50%'),
+    // The Intro Day at the TUM Think Tank, 14 Nov 2026 (Canon, IMG_1513).
+    bundled('intro-day-think-tank', '50% 55%'),
 ];
 /** How long each photo stays before the next fades in. */
 const HOLD_MS = 7000;
@@ -89,7 +87,11 @@ const HeroPhotos: React.FC<{ photo?: string | null; alt: string; active: number;
                         className={'lp-hero__photo' + (i === active ? ' lp-hero__photo--active' : '')}
                         src={slide.src}
                         srcSet={slide.large ? `${slide.src} 2400w, ${slide.large} 3200w` : undefined}
-                        sizes={slide.large ? '100vw' : undefined}
+                        sizes={
+                            // The frame is a screen tall: on a narrow screen a 4:3 or
+                            // 3:2 photo covers it by height, wider than the screen.
+                            slide.large ? '(max-aspect-ratio: 3/2) 150vh, 100vw' : undefined
+                        }
                         alt={i === 0 ? alt : ''}
                         aria-hidden={i === 0 ? undefined : true}
                         style={
