@@ -3,6 +3,7 @@ import { DefaultTemplate } from '@payloadcms/next/templates';
 import { Gutter } from '@payloadcms/ui';
 import { redirect } from 'next/navigation';
 import React from 'react';
+import { hasAdminRole } from '../../access/roles';
 import { mailSite } from '../../endpoints/mailing';
 import { MailingEditor } from './MailingEditor';
 import { MailingList } from './MailingList';
@@ -10,7 +11,8 @@ import { MailingList } from './MailingList';
 /**
  * /admin/mailing – the mailing tool (lib/mailing/), registered as a custom
  * admin view in payload.config.ts: the list of mailings, or one of them with
- * `?id=`. Root custom views skip Payload's auth gate, so this guards itself.
+ * `?id=`. Root custom views skip Payload's auth gate, so this guards itself:
+ * no user → the admin login, a user below admin → the dashboard.
  */
 export function MailingView({ initPageResult, params, searchParams }: AdminViewServerProps) {
   const { locale, permissions, req, visibleEntities } = initPageResult;
@@ -25,6 +27,7 @@ export function MailingView({ initPageResult, params, searchParams }: AdminViewS
   if (!user) {
     redirect(`${adminRoute}${config.admin.routes.login}?redirect=${encodeURIComponent(`${adminRoute}/mailing`)}`);
   }
+  if (!hasAdminRole(user)) redirect(adminRoute);
   const id = Number(searchParams?.id);
 
   return (

@@ -1,4 +1,5 @@
 import { GlobalConfig } from 'payload';
+import { pageAccess } from '../access/roles';
 
 /**
  * Homepage section copy. Editable in the CMS; the frontend falls back to its
@@ -7,9 +8,7 @@ import { GlobalConfig } from 'payload';
 export const Homepage: GlobalConfig = {
   slug: 'homepage',
   label: 'Homepage',
-  access: {
-    read: () => true,
-  },
+  access: pageAccess,
   fields: [
     {
       type: 'collapsible',

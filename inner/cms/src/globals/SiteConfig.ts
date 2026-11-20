@@ -1,11 +1,10 @@
 import { GlobalConfig } from 'payload';
+import { pageAccess } from '../access/roles';
 
 export const SiteConfig: GlobalConfig = {
   slug: 'site-config',
   label: 'Site Configuration',
-  access: {
-    read: () => true,
-  },
+  access: pageAccess,
   fields: [
     { name: 'clubName', type: 'text', required: true },
     { name: 'tagline', type: 'text', required: true, localized: true },

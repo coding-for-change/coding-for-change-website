@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * Set up (or reset) the "application" and "techtour" forms on a running CMS,
- * and give the TechTour page starting content if it is empty.
+ * Set up (or reset) the "application", "techtour" and "onboarding" forms on a
+ * running CMS, give the TechTour page starting content if it is empty, and
+ * point Onboarding Settings at the onboarding form (CMS_EMAIL must be an
+ * admin).
  *
  *   CMS_URL=https://codingforchange.com CMS_EMAIL=… CMS_PASSWORD=… \
  *     node scripts/upsert-forms.mjs            # shows what exists, writes nothing

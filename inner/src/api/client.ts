@@ -1,5 +1,5 @@
 import type { Attribution } from '../lib/attribution';
-import type { CmsApplicantFile, MediaSize } from './types';
+import type { CmsApplicantFile, MediaSize, MemberPhoto } from './types';
 
 const API_BASE = process.env.REACT_APP_API_URL || '/api';
 
@@ -137,6 +137,30 @@ export async function uploadApplicantFile(
     }
     const data = (await res.json()) as { doc: CmsApplicantFile };
     return data.doc;
+}
+
+/**
+ * Upload a signed-in member's photo for the onboarding form
+ * (inner/cms/src/endpoints/onboardingMember.ts). The CMS checks the image from
+ * its bytes (JPEG, PNG, WebP or GIF, at most 5 MB) and keeps it private to the
+ * member; the returned id is the form's answer. Sent with the session cookie,
+ * same origin.
+ */
+export async function uploadMemberPhoto(file: File): Promise<MemberPhoto> {
+    const body = new FormData();
+    body.append('file', file, file.name);
+    const res = await fetch(`${API_BASE}/onboarding/photo`, {
+        method: 'POST',
+        body,
+        credentials: 'same-origin',
+    });
+    if (!res.ok) {
+        const detail = await res.text().catch(() => '');
+        if (res.status === 413) throw new UploadError(detail, 'too-large');
+        if (res.status === 415) throw new UploadError(detail, 'wrong-type');
+        throw new UploadError(`Upload failed: ${res.status} ${detail}`, 'failed');
+    }
+    return (await res.json()) as MemberPhoto;
 }
 
 /**

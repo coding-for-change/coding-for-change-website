@@ -28,7 +28,7 @@ import {
   type PendingMail,
 } from '../lib/mailing/store';
 import { sendResendBatch, type BatchItem } from '../lib/resendBatch';
-import { requireAdmin as requireLogin } from './util';
+import { requireAdmin } from './util';
 
 /**
  * The mailing tool (/admin/mailing, lib/mailing/). Admins only.
@@ -81,12 +81,9 @@ export const mailSite = (): MailSite => ({
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_TEST_RECIPIENTS = 10;
 
-/**
- * Admin users only: the MCP plugin's API keys log in too, but they are meant
- * for content, not for reading applicants' addresses or mailing them.
- */
-const requireAdmin = (req: PayloadRequest): Response | null =>
-  requireLogin(req) ?? (req.user?.collection === 'users' ? null : new Response('Forbidden', { status: 403 }));
+// Admins only (endpoints/util.ts): an MCP API key that logs in on its own is
+// no `users` account and gets a 403; over /api/mcp the tools run as the key's
+// user, so they work for a key whose user is an admin.
 
 /** The admin's address, or null for an API key (the MCP plugin's keys log in too). */
 const adminEmail = (req: PayloadRequest): string | null => {

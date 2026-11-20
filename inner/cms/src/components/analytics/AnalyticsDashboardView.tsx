@@ -3,13 +3,15 @@ import { DefaultTemplate } from '@payloadcms/next/templates';
 import { Gutter } from '@payloadcms/ui';
 import { redirect } from 'next/navigation';
 import React from 'react';
+import { hasAdminRole, hasEditorRole } from '../../access/roles';
 import { AnalyticsDashboardClient } from './AnalyticsDashboardClient';
 import './dashboard.css';
 
 /**
  * /admin/analytics — first-party analytics dashboard, registered as a custom
  * admin view in payload.config.ts. Root custom views skip Payload's auth
- * gate, so this guards itself: no user → bounce to the admin login.
+ * gate, so this guards itself: no user → bounce to the admin login, a member
+ * → the dashboard. Editors see it all except the signups export (addresses).
  */
 export function AnalyticsDashboardView({
   initPageResult,
@@ -32,6 +34,7 @@ export function AnalyticsDashboardView({
       )}`,
     );
   }
+  if (!hasEditorRole(user)) redirect(adminRoute);
 
   return (
     <DefaultTemplate
@@ -45,7 +48,7 @@ export function AnalyticsDashboardView({
       visibleEntities={visibleEntities}
     >
       <Gutter>
-        <AnalyticsDashboardClient apiRoute={config.routes.api} />
+        <AnalyticsDashboardClient apiRoute={config.routes.api} canExportSignups={hasAdminRole(user)} />
       </Gutter>
     </DefaultTemplate>
   );

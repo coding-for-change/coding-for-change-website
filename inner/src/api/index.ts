@@ -1,4 +1,4 @@
-export { fetchCollection, fetchGlobal, submitForm, submitWaitlist, uploadApplicantFile, mediaUrl } from './client';
+export { fetchCollection, fetchGlobal, submitForm, submitWaitlist, uploadApplicantFile, uploadMemberPhoto, mediaUrl } from './client';
 export type { FormSubmissionValue } from './client';
 export { useCmsCollection, useCmsGlobal } from './useCms';
 export { SiteConfigProvider, useSiteConfig, useSiteConfigLoading, useHomepageMode } from './SiteConfigContext';

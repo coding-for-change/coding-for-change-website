@@ -1,5 +1,5 @@
 import type { Endpoint } from 'payload';
-import { getPool, requireAdmin } from './util';
+import { getPool, requireEditor } from './util';
 
 /**
  * GET /api/analytics/summary?days=30
@@ -148,7 +148,7 @@ export const analyticsSummary: Endpoint = {
   path: '/analytics/summary',
   method: 'get',
   handler: async (req) => {
-    const denied = requireAdmin(req);
+    const denied = requireEditor(req);
     if (denied) return denied;
     const pool = getPool(req);
     if (!pool) return new Response('DB pool unavailable', { status: 500 });

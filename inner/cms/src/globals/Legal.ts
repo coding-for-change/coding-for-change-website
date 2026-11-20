@@ -1,11 +1,10 @@
 import { GlobalConfig } from 'payload';
+import { pageAccess } from '../access/roles';
 
 export const Legal: GlobalConfig = {
   slug: 'legal',
   label: 'Legal (Imprint & Privacy)',
-  access: {
-    read: () => true,
-  },
+  access: pageAccess,
   fields: [
     {
       name: 'impressum',

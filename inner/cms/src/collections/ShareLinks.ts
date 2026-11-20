@@ -2,6 +2,7 @@ import type { CollectionConfig, CollectionBeforeValidateHook, CollectionBeforeDe
 import { APIError } from 'payload';
 import { randomBytes } from 'node:crypto';
 import { endOfEventWeek, eveningOf } from '../lib/share/evening';
+import { adminOnlyAccess } from '../access/roles';
 
 /**
  * A private link for the host company of one TechTour evening (Datenschutz
@@ -24,8 +25,6 @@ import { endOfEventWeek, eveningOf } from '../lib/share/evening';
  */
 
 const TECHTOUR_FORM_TITLE = 'techtour';
-
-const isUser = ({ req: { user } }: { req: { user?: unknown } }) => Boolean(user);
 
 const fillDefaults: CollectionBeforeValidateHook = async ({ data, operation, originalDoc, req }) => {
   if (!data) return data;
@@ -88,12 +87,7 @@ export const ShareLinks: CollectionConfig = {
     description:
       'One private link per TechTour evening for its host company. The contacts listed sign in with a code sent to their address, see the registrations for that evening from everyone who agreed to it (name, CV, other answers – never the email address) and admit or decline each person – with "Waitlist" ticked, also put them on a waitlist. The link expires on its own; tick "Blocked" to stop it at once. Every sign-in, CV opened and decision is listed under "Host link activity".',
   },
-  access: {
-    read: isUser,
-    create: isUser,
-    update: isUser,
-    delete: isUser,
-  },
+  access: adminOnlyAccess,
   hooks: {
     beforeValidate: [fillDefaults],
     beforeDelete: [deleteActivity],

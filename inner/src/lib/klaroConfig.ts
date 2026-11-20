@@ -121,6 +121,7 @@ const EN = {
         description:
             'Remembers the language you chose, your decision on this banner, and a random id proving we asked — we are legally required to keep that proof. ' +
             'On the membership application (automatically as you type) and the TechTour registration (when you press “save and finish later”), it also keeps the answers you have typed so far, in this browser only: nothing reaches us until you send the form, and you can delete them on that page at any time. ' +
+            'Team members who sign in with their Coding for Change Google account get a sign-in cookie that keeps them signed in (it runs out 2 hours after last use and is removed when they sign out), and for the few seconds of the sign-in itself a cookie that ties Google’s answer to the sign-in they started (at most 10 minutes). Neither is set for anyone who does not sign in. ' +
             'Exempt from consent under § 25(2) TDDDG because the site cannot work as you asked without it, so there is nothing here to switch off. Never used to track you.',
     },
     // Audit criterion 2: ads personalisation named explicitly, and criteria 4/5:
@@ -191,6 +192,7 @@ const DE = {
         description:
             'Speichert die von dir gewählte Sprache, deine Entscheidung zu diesem Banner und eine zufällige Kennung als Nachweis, dass wir gefragt haben – diesen Nachweis müssen wir gesetzlich aufbewahren. ' +
             'Bei der Bewerbung (automatisch beim Tippen) und der TechTour-Anmeldung (wenn du auf „Speichern und später weitermachen“ klickst) kommen deine bisherigen Antworten dazu – nur in diesem Browser: Bei uns kommt nichts an, bevor du das Formular abschickst, und du kannst sie auf der Seite jederzeit löschen. ' +
+            'Teammitglieder, die sich mit ihrem Coding-for-Change-Google-Konto anmelden, bekommen ein Anmelde-Cookie, das sie angemeldet hält (es läuft 2 Stunden nach der letzten Nutzung ab und wird beim Abmelden gelöscht), und für die Sekunden der Anmeldung selbst ein Cookie, das Googles Antwort der begonnenen Anmeldung zuordnet (höchstens 10 Minuten). Wer sich nicht anmeldet, bekommt keines davon. ' +
             'Nach § 25 Abs. 2 TDDDG einwilligungsfrei, weil die Seite ohne das nicht wie gewünscht funktioniert; es gibt hier also nichts abzuschalten. Wird nie zum Tracking verwendet.',
     },
     [SERVICE_GOOGLE_ADS]: {
@@ -275,6 +277,15 @@ export function buildKlaroConfig(locale: Locale): KlaroConfig {
                 // type (input they are entering into a form they opened – the
                 // EDPB WP194 "user-input" case); both stay on their device. § 25(2) TDDDG, so no consent to re-ask for — only the
                 // Datenschutz storage table needs the matching row.
+                //
+                // And for the two sign-in cookies, set by the CMS (not by this
+                // app, so consent-scan.mjs never sees them): `payload-token`
+                // (Payload's session, HttpOnly, 2 h after last use) and `cfc-oauth` (state +
+                // PKCE verifier of a Google sign-in in progress, HttpOnly,
+                // path /api/auth/google, 10 min) – inner/cms/src/endpoints/
+                // googleAuth.ts. Both exist only after the person clicks "Sign
+                // in with Google", the service they asked for, so § 25(2)
+                // TDDDG again: described here, no consent, no version bump.
                 name: SERVICE_NECESSARY,
                 title:
                     locale === 'de'

@@ -5,7 +5,8 @@ import type { Block, Field } from 'payload';
  * textarea, email, number, select, checkbox and message; these add the three
  * things our application forms need that it does not have:
  *
- * - `upload`        — a document (CV) stored privately in `applicant-files`
+ * - `upload`        — a document (CV) stored privately in `applicant-files`,
+ *                     or a member's photo (`accept: image`) stored in `media`
  * - `checkboxGroup` — a multi-select ("which events will you attend?")
  * - `subform`       — a checkbox that reveals another form's questions inline
  *                     ("also apply for membership") and submits them as a
@@ -47,10 +48,26 @@ const description: Field = {
 
 export const UploadBlock: Block = {
   slug: 'upload',
-  labels: { singular: 'File upload (PDF)', plural: 'File uploads (PDF)' },
+  labels: { singular: 'File upload (PDF or photo)', plural: 'File uploads (PDF or photo)' },
   fields: [
     { type: 'row', fields: [name, label] },
     required,
+    {
+      // What the question takes. A PDF goes privately to `applicant-files`
+      // (CVs), from anyone. A photo goes to `media`, private to the member
+      // who sent it, through POST /api/onboarding/photo, so it only works on
+      // a form with "Requires sign-in" (the onboarding form); see
+      // endpoints/onboardingMember.ts.
+      name: 'accept',
+      type: 'select',
+      label: 'Accepts',
+      defaultValue: 'pdf',
+      required: true,
+      options: [
+        { label: 'PDF (e.g. a CV)', value: 'pdf' },
+        { label: 'Photo (JPEG, PNG, WebP; sign-in forms only)', value: 'image' },
+      ],
+    },
     {
       ...description,
       admin: { description: 'Shown under the field, e.g. "PDF, max. 5 MB".' },

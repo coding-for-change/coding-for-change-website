@@ -1,4 +1,5 @@
 import { CollectionConfig } from 'payload';
+import { contentAccess } from '../access/roles';
 
 export const Projects: CollectionConfig = {
   slug: 'projects',
@@ -6,9 +7,7 @@ export const Projects: CollectionConfig = {
     useAsTitle: 'title',
     defaultColumns: ['title', 'ngoPartner', 'status', 'featured'],
   },
-  access: {
-    read: () => true,
-  },
+  access: contentAccess,
   fields: [
     { name: 'title', type: 'text', required: true, localized: true },
     { name: 'ngoPartner', type: 'text', required: true, label: 'NGO Partner', localized: true },

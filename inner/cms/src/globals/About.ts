@@ -1,4 +1,5 @@
 import { GlobalConfig } from 'payload';
+import { pageAccess } from '../access/roles';
 
 /**
  * About page content (/about). Editable in the CMS; the frontend falls back to
@@ -7,9 +8,7 @@ import { GlobalConfig } from 'payload';
 export const About: GlobalConfig = {
   slug: 'about',
   label: 'About Page',
-  access: {
-    read: () => true,
-  },
+  access: pageAccess,
   fields: [
     { name: 'kicker', type: 'text', localized: true },
     { name: 'title', type: 'text', localized: true, admin: { description: 'Page headline.' } },
