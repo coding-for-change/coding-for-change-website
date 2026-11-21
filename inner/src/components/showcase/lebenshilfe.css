@@ -1,0 +1,721 @@
+/* ------------------------------------------------------------------ */
+/* The Lebenshilfe case study's own chapters (LebenshilfeStory.tsx).    */
+/* Section spacing and heads come from the case-study rules in          */
+/* landing.css (.lp-cs-sec, .lp-cs-head). App.css makes every div flex, */
+/* so each container sets its own display.                              */
+/* ------------------------------------------------------------------ */
+
+.lh-sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+/* ---- 1. How school assistance works ---- */
+/* Four role cards in a row with the relations between them: what flows back
+   (grey, above) and what our portal carries forward (petrol, below). A bracket
+   under the last three cards holds the portal. */
+.lh-diagram {
+    display: grid;
+    grid-template-columns:
+        minmax(0, 1fr) 76px minmax(0, 1fr) 76px minmax(0, 1fr) 76px
+        minmax(0, 1fr);
+    grid-template-areas:
+        'r0 l0 r1 l1 r2 l2 r3'
+        '. . p p p p p';
+    margin-top: 48px;
+}
+.lh-role {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    height: 140px;
+    padding: 18px;
+    box-sizing: border-box;
+    background: #fbfaf7;
+    border-radius: 16px;
+}
+.lh-role__icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e3eee8;
+}
+.lh-role__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+.lh-role__title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 22px;
+}
+.lh-role__sub {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted);
+}
+.lh-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 28px;
+}
+.lh-rel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+.lh-rel--on {
+    margin-top: 28px;
+    gap: 3px;
+}
+.lh-rel__label {
+    font-size: 13px;
+    line-height: 16px;
+    text-align: center;
+    color: var(--muted);
+}
+.lh-rel--on .lh-rel__label {
+    font-weight: 500;
+    color: var(--accent);
+}
+.lh-arrow {
+    display: block;
+    flex: none;
+    overflow: visible;
+}
+.lh-arrow path {
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+.lh-arrow--grey path {
+    stroke: #767b74;
+}
+.lh-arrow--petrol path {
+    stroke: var(--cfc-petrol);
+}
+.lh-arrow path.lh-arrow__head {
+    stroke: none;
+}
+.lh-arrow--grey .lh-arrow__head {
+    fill: #767b74;
+}
+.lh-arrow--petrol .lh-arrow__head {
+    fill: var(--cfc-petrol);
+}
+.lh-arrow--v {
+    display: none;
+}
+.lh-portal {
+    position: relative;
+    display: block;
+    height: 52px;
+    margin-top: 12px;
+}
+/* From the middle of the first card it spans to the middle of the last: each
+   card is (span − two 76px links) / 3 wide. */
+.lh-portal__bracket {
+    position: absolute;
+    top: 0;
+    left: calc((100% - 152px) / 6);
+    right: calc((100% - 152px) / 6);
+    height: 24px;
+    border: 2px solid var(--cfc-petrol);
+    border-top: 0;
+    box-sizing: border-box;
+}
+.lh-portal__pill {
+    position: absolute;
+    top: 23px;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px 8px 8px;
+    background: var(--cfc-petrol);
+    border-radius: 999px;
+    white-space: nowrap;
+}
+.lh-portal__icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #1d5c57;
+}
+.lh-portal__text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.lh-portal__title {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 19px;
+    color: #fff;
+}
+.lh-portal__sub {
+    font-size: 12.5px;
+    line-height: 16px;
+    color: var(--cfc-phosphor);
+}
+.lh-note {
+    margin: 28px 0 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+/* ---- 2. Before and after ---- */
+.lh-compare {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 16px;
+    margin-top: 36px;
+}
+.lh-card {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: clamp(28px, 4vw, 40px);
+    padding: clamp(20px, 3.5vw, 36px);
+    background: #fbfaf7;
+    border-radius: 16px;
+}
+.lh-card__body {
+    display: flex;
+    flex: 1 1 340px;
+    flex-direction: column;
+    gap: 28px;
+    min-width: 0;
+}
+.lh-card__head {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.lh-card__label {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--accent);
+}
+.lh-card__h {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.6px;
+}
+.lh-card__text {
+    margin: 0;
+    padding-top: 20px;
+    border-top: 1px solid var(--cfc-stone);
+    font-size: 15px;
+    line-height: 1.55;
+    color: #4d514b;
+}
+/* Auto margins centre the image once it wraps under the text; beside the text
+   the growing body leaves them nothing. */
+.lh-card__media {
+    display: flex;
+    flex: 0 1 320px;
+    justify-content: center;
+    min-width: 0;
+    margin-inline: auto;
+}
+.lh-card__media img {
+    display: block;
+    width: 320px;
+    max-width: 100%;
+    height: auto;
+}
+/* The mock-up carries its own shadow and transparent margin; the negative
+   margins set its visible edges on the card's padding. */
+.lh-card__media--wide {
+    flex-basis: 360px;
+}
+.lh-card__media--wide img {
+    width: 100%;
+    max-width: 360px;
+    margin: -1.2% 0 -6.8%;
+}
+.lh-card--dark {
+    background: var(--cfc-petrol);
+    color: #fff;
+}
+.lh-card--dark .lh-card__label {
+    color: var(--cfc-phosphor);
+}
+.lh-card--dark .lh-card__text {
+    border-top-color: rgba(255, 255, 255, 0.16);
+    color: #b5cfcb;
+}
+
+.lh-steps {
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.lh-steps__step {
+    display: flex;
+    flex: 0 1 92px;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    text-align: center;
+}
+.lh-steps__icon {
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: #ecebe4;
+    color: var(--muted);
+}
+.lh-steps__label {
+    font-size: 13px;
+    line-height: 1.35;
+}
+.lh-steps__arrow {
+    position: relative;
+    flex: 1;
+    min-width: 12px;
+    height: 2px;
+    margin-top: 21px;
+    background: #c9cac2;
+}
+.lh-steps__arrow::after {
+    content: '';
+    position: absolute;
+    right: -2px;
+    top: -4px;
+    border-left: 8px solid #c9cac2;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+}
+.lh-steps--dark .lh-steps__icon {
+    background: #1d5c57;
+    color: var(--cfc-phosphor);
+}
+.lh-steps--dark .lh-steps__arrow {
+    flex: 0 1 88px;
+    background: #3e7a75;
+}
+.lh-steps--dark .lh-steps__arrow::after {
+    border-left-color: #3e7a75;
+}
+
+/* ---- 3. Where Lebenshilfe is ---- */
+.lp-cs-sec.lh-reach {
+    margin-top: 120px;
+    padding: 112px 0 96px;
+    background: var(--cfc-petrol);
+    color: #fff;
+}
+.lh-reach .lp-cs-head__kicker {
+    color: var(--cfc-phosphor);
+}
+.lh-reach .lp-cs-head__h {
+    color: #fff;
+}
+.lh-reach .lp-cs-head__lead {
+    max-width: none;
+    color: #b5cfcb;
+}
+/* Head and figures share the left column as one group, centred against the
+   map on the right. */
+.lh-reach__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+        'head map'
+        'figs map';
+    column-gap: 56px;
+}
+.lh-reach__head {
+    display: block;
+    grid-area: head;
+    align-self: end;
+    min-width: 0;
+}
+.lh-figures {
+    display: block;
+    grid-area: figs;
+    align-self: start;
+    margin: 32px 0 0;
+}
+.lh-figures__row {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+.lh-figures__row:last-child {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+}
+.lh-figures__value {
+    font-size: 44px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -1.5px;
+}
+.lh-figures__label {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #b5cfcb;
+}
+.lh-figures__mark {
+    display: inline-block;
+    margin-right: 8px;
+    border-radius: 50%;
+    box-sizing: border-box;
+}
+.lh-figures__mark--dot {
+    width: 9px;
+    height: 9px;
+    background: var(--cfc-phosphor);
+}
+.lh-figures__mark--ring {
+    width: 11px;
+    height: 11px;
+    vertical-align: -2px;
+    border: 2px solid #fff;
+}
+.lh-map {
+    position: relative;
+    display: block;
+    grid-area: map;
+    align-self: center;
+    justify-self: center;
+    width: 100%;
+    max-width: 420px;
+    margin: 0;
+}
+.lh-map img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+/* Beside the ring the map draws round Munich. */
+.lh-map__pin {
+    position: absolute;
+    right: 42%;
+    top: 90%;
+    transform: translateY(-50%);
+    padding: 4px 10px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    line-height: 14px;
+    white-space: nowrap;
+    color: var(--cfc-petrol);
+    background: #fff;
+    border-radius: 999px;
+}
+.lh-sources {
+    margin: 64px 0 0;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #9fbdb8;
+}
+.lh-sources-fold {
+    display: none;
+    margin-top: 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.lh-sources-fold__summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 16px;
+    list-style: none;
+    cursor: pointer;
+    font-size: 13px;
+    color: #9fbdb8;
+}
+.lh-sources-fold__summary::-webkit-details-marker {
+    display: none;
+}
+.lh-sources-fold__summary svg {
+    transition: transform 0.15s ease;
+}
+.lh-sources-fold[open] .lh-sources-fold__summary svg {
+    transform: rotate(180deg);
+}
+.lh-sources-fold__text {
+    margin: 12px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #9fbdb8;
+}
+
+/* ---- Narrow window / phone ---- */
+@media (max-width: 900px) {
+    /* Once an image drops under its text, equal heights only pad the shorter
+       card with empty space. */
+    .lh-compare {
+        grid-auto-rows: auto;
+    }
+    .lp-cs-sec.lh-reach {
+        margin-top: 80px;
+        padding: 72px 0 56px;
+    }
+    .lh-sources {
+        margin-top: 44px;
+    }
+}
+/* The diagram stacks once a card can no longer hold "Schulbegleiter:in"
+   (about 165px). The role cards become 76px rows with the relations between
+   them: what flows back on the left, what the portal carries down on the
+   right. A rail on the right edge runs from the assistant's card down into
+   the portal pill. Fixed heights, so the rail can be placed by numbers:
+   card 76 + link 76 + half a card 38 = 190. */
+@media (max-width: 960px) {
+    .lh-diagram {
+        position: relative;
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'r0' 'l0' 'r1' 'l1' 'r2' 'l2' 'r3' 'p';
+        max-width: 560px;
+        margin-top: 36px;
+    }
+    .lh-diagram::before,
+    .lh-diagram::after {
+        content: '';
+        position: absolute;
+        background: var(--cfc-petrol);
+        border-radius: 1px;
+    }
+    .lh-diagram::before {
+        top: 190px;
+        bottom: 44px;
+        right: 11px;
+        width: 2px;
+    }
+    .lh-diagram::after {
+        top: 189px;
+        right: 12px;
+        width: 16px;
+        height: 2px;
+    }
+    .lh-role {
+        flex-direction: row;
+        align-items: center;
+        height: 76px;
+        margin-right: 32px;
+        padding: 0 16px;
+    }
+    .lh-link {
+        flex-direction: row;
+        align-items: center;
+        height: 76px;
+        margin-right: 32px;
+        padding: 0;
+    }
+    .lh-rel,
+    .lh-rel--on {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-top: 0;
+    }
+    .lh-rel--back .lh-rel__label {
+        width: 84px;
+        text-align: right;
+    }
+    .lh-rel--on {
+        margin-left: 104px;
+    }
+    .lh-rel--on .lh-rel__label {
+        text-align: left;
+    }
+    .lh-arrow--h {
+        display: none;
+    }
+    .lh-arrow--v {
+        display: block;
+    }
+    .lh-portal {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        min-height: 52px;
+        height: auto;
+        margin-top: 8px;
+    }
+    .lh-portal__bracket {
+        display: none;
+    }
+    .lh-portal__pill {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        white-space: normal;
+    }
+}
+/* Head, map, figures in one column. */
+@media (max-width: 760px) {
+    .lh-reach__grid {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'head' 'map' 'figs';
+    }
+    .lh-map {
+        max-width: 350px;
+        margin-top: 36px;
+    }
+    .lh-figures {
+        margin-top: 36px;
+    }
+}
+/* Phone, after the mobile design (Option D · Mobil, 390px). */
+@media (max-width: 620px) {
+    .lh-note {
+        margin-top: 24px;
+    }
+    .lh-compare {
+        gap: 12px;
+        margin-top: 28px;
+    }
+    .lh-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 24px;
+        padding: 24px 20px;
+    }
+    .lh-card__body {
+        flex: none;
+        gap: 24px;
+    }
+    .lh-card__head {
+        gap: 6px;
+    }
+    .lh-card__h {
+        font-size: 20px;
+        letter-spacing: -0.5px;
+    }
+    .lh-card__text {
+        padding-top: 18px;
+    }
+    .lh-card__media,
+    .lh-card__media--wide {
+        flex: none;
+        margin: 0;
+    }
+    .lh-card__media img,
+    .lh-card__media--wide img {
+        width: 100%;
+        max-width: none;
+    }
+    /* One line from the first icon to the last, under the icons, with an
+       arrowhead between each pair: equal columns, so step i sits at
+       (i + 0.5) / n and the head between i-1 and i at i / n. */
+    .lh-steps {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(var(--steps), minmax(0, 1fr));
+    }
+    .lh-steps::before {
+        content: '';
+        position: absolute;
+        top: 19px;
+        left: calc(50% / var(--steps));
+        right: calc(50% / var(--steps));
+        height: 2px;
+        background: #c9cac2;
+    }
+    .lh-steps__step {
+        position: relative;
+        padding: 0 2px;
+    }
+    .lh-steps__arrow,
+    .lh-steps--dark .lh-steps__arrow {
+        position: absolute;
+        top: 15px;
+        left: calc(100% * var(--at) / var(--steps));
+        width: 0;
+        min-width: 0;
+        height: 0;
+        margin: 0 0 0 -3px;
+        background: none;
+        border-left: 7px solid #c9cac2;
+        border-top: 5px solid transparent;
+        border-bottom: 5px solid transparent;
+    }
+    .lh-steps__arrow::after {
+        display: none;
+    }
+    /* The two digital steps sit close together in the middle. */
+    .lh-steps--dark {
+        grid-template-columns: 100px 100px;
+        column-gap: 36px;
+        justify-content: center;
+    }
+    .lh-steps--dark::before {
+        left: calc(50% - 68px);
+        right: calc(50% - 68px);
+        background: #3e7a75;
+    }
+    .lh-steps--dark .lh-steps__arrow {
+        left: 50%;
+        border-left-color: #3e7a75;
+    }
+    .lh-steps__icon {
+        width: 40px;
+        height: 40px;
+    }
+    .lh-steps__icon svg {
+        width: 18px;
+        height: 18px;
+    }
+    .lh-steps__label {
+        font-size: 12.5px;
+        line-height: 1.3;
+    }
+    .lp-cs-sec.lh-reach {
+        margin-top: 96px;
+    }
+    .lh-figures__row {
+        grid-template-columns: 104px minmax(0, 1fr);
+        gap: 14px;
+        padding: 14px 0;
+    }
+    .lh-figures__value {
+        font-size: 38px;
+        letter-spacing: -1.3px;
+    }
+    .lh-sources {
+        display: none;
+    }
+    .lh-sources-fold {
+        display: block;
+    }
+}

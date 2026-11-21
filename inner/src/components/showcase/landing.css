@@ -2562,92 +2562,50 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
 /* ================================================================== */
 /* Project case study (/projects/<slug>)                               */
 /* ================================================================== */
-/* Two measures on one centre line. `prose` is everything with a left edge to
-   read down — paragraphs, the timeline, the FAQ — and `wide` is everything that
-   is a designed panel rather than a column of text: galleries, the demo, the
-   team, the closing call. The quote gets its own width because it is centred
-   and so has no left edge to align with anything.
-   The point of holding to two: a page where each block picks its own width has
-   as many left edges as it has blocks, and reads as drift rather than rhythm. */
+/* Chapters one after the other, each a band with the shell's measure inside:
+   a mono `~/path` kicker and a heading on the left edge, the content under
+   them. Only the hero is centred. A project's own chapters (e.g.
+   LebenshilfeStory, lebenshilfe.css) use the same bands and heads. */
 .lp-cs-page {
-    padding: 44px 0 96px;
-}
-/* A shade wider than the standard shell — the wide blocks (a five-person team
-   row, two device shots side by side) want the extra 60px, and this is the one
-   page built around them. */
-.lp-cs-page .lp-inner {
-    max-width: 1120px;
-}
-.lp-cs {
-    --cs-prose: 720px;
-    --cs-quote: 860px;
     display: block;
-    width: 100%;
-    margin: 0 auto;
 }
-.lp-cs__block {
+.lp-cs-sec {
     display: block;
-    width: 100%;
-    max-width: var(--cs-prose);
-    margin: 76px auto 0;
-    box-sizing: border-box;
+    padding-top: 120px;
 }
-.lp-cs__block--prose {
-    max-width: var(--cs-prose);
+.lp-cs-head {
+    display: block;
 }
-.lp-cs__block--quote {
-    max-width: var(--cs-quote);
+.lp-cs-head__kicker {
+    margin: 0;
 }
-.lp-cs__block--wide {
-    max-width: 100%;
+.lp-cs-head__h {
+    margin: 12px 0 0;
+    line-height: 1.1;
+}
+.lp-cs-head__lead {
+    max-width: 680px;
+    margin: 16px 0 0;
+    font-size: 17px;
+    line-height: 1.55;
+    color: var(--muted);
+}
+/* The site's closing claim ends the page, after the last chapter's own
+   spacing rather than a hairline. */
+.lp-cs-page .lp-closing {
+    border-top: 0;
+    padding-top: clamp(96px, 11vw, 160px);
 }
 
-/* ---- Hero: the claim, the press, and the product, large ---- */
-/* Full-bleed: the band runs edge to edge on a soft teal glow, the copy keeps the
-   quote measure, and the devices get the whole shell plus a little more. */
-.lp-cs-page {
-    padding-top: 0;
-}
+/* ---- Hero: the claim, the lead, the press, then the product, large ---- */
 .lp-cs-hero {
-    position: relative;
     display: block;
-    width: 100%;
-    padding: 36px 0 24px;
-    overflow: hidden;
-    background:
-        radial-gradient(1000px 440px at 50% 58%, rgba(11, 70, 67, 0.18), transparent 70%),
-        linear-gradient(180deg, #ffffff 0%, #f2f1eb 55%, #ffffff 100%);
-}
-/* A faint dot grid behind everything, fading out towards the bottom. */
-.lp-cs-hero::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: radial-gradient(rgba(7, 52, 49, 0.16) 1px, transparent 1px);
-    background-size: 22px 22px;
-    -webkit-mask-image: linear-gradient(180deg, #000 0%, transparent 75%);
-    mask-image: linear-gradient(180deg, #000 0%, transparent 75%);
-    pointer-events: none;
-}
-.lp-cs-hero__inner {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-}
-.lp-cs-hero__copy {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    max-width: 1120px;
+    padding-top: 40px;
 }
 /* Navigation, not content: it sits at the shell's left edge and stays quiet, so
    it doesn't read as the page's first button. */
 .lp-cs__back {
     display: inline-flex;
-    align-self: flex-start;
-    margin-bottom: 26px;
     font-family: var(--font-sans);
     font-size: 14px;
     color: var(--muted);
@@ -2657,300 +2615,258 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
 .lp-cs__back:hover {
     color: var(--accent-strong);
 }
+.lp-cs-hero__copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    margin-top: 40px;
+    text-align: center;
+}
 .lp-cs__eyebrow {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 9px;
+    gap: 10px;
     margin: 0;
-    font-size: 12px;
-    letter-spacing: 1.6px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
 }
-.lp-cs__sep {
-    color: #c0bfb3;
+.lp-cs__dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
 }
 .lp-cs__title {
+    max-width: 900px;
+    margin: 0;
     font-family: var(--font-sans);
-    font-size: clamp(40px, 5.4vw, 78px);
+    font-size: clamp(44px, 6vw, 78px);
     font-weight: 500;
     line-height: 1;
     letter-spacing: -0.035em;
-    margin: 20px 0 0;
     text-wrap: balance;
 }
 .lp-cs__lead {
-    max-width: 50ch;
-    margin: 0 auto;
-    padding: 56px 0 8px;
+    max-width: 680px;
+    margin: 0;
     font-family: var(--font-sans);
-    font-size: clamp(20px, 2vw, 25px);
-    line-height: 1.5;
-    letter-spacing: -0.01em;
-    text-align: center;
-    color: #2f322d;
+    font-size: 19px;
+    line-height: 1.55;
+    color: var(--muted);
     text-wrap: pretty;
 }
 
-/* ---- Press: "Featured in" pills ---- */
+/* ---- Press: "Featured in" pills under the lead ---- */
 .lp-cs-press {
     list-style: none;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 10px;
-    margin: 28px 0 0;
+    margin: 0;
     padding: 0;
 }
 .lp-cs-press__item {
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 16px;
-    background: rgba(255, 255, 255, 0.85);
-    border: 1px solid var(--line);
+    gap: 12px;
+    padding: 9px 18px;
+    background: #fbfaf7;
     border-radius: 999px;
-    box-shadow: 0 6px 20px -12px rgba(19, 22, 20, 0.35);
     color: var(--ink);
     text-decoration: none;
     white-space: nowrap;
-    transition: border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+    transition: background 0.15s ease;
 }
 .lp-cs-press__item:hover {
-    border-color: var(--accent);
-    box-shadow: 0 10px 26px -12px rgba(19, 22, 20, 0.4);
-    transform: translateY(-1px);
+    background: #fff;
 }
 .lp-cs-press__label {
+    font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 1.3px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
 }
-.lp-cs-press__logo {
-    display: block;
-    flex: none;
-    height: 18px;
-    width: auto;
-}
 .lp-cs-press__outlet {
     font-family: var(--font-sans);
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 500;
 }
 .lp-cs-press__cta {
-    color: var(--accent-strong);
-    font-size: 14px;
+    font-size: 15px;
 }
 
-/* ---- Device stage: laptop with the phone standing in front ---- */
+/* ---- Device stage: the app in a browser window, the phone in front ---- */
+.lp-cs-stage-wrap {
+    display: block;
+    max-width: 1120px;
+    margin: 56px auto 0;
+    padding: 0 32px;
+    box-sizing: border-box;
+}
 .lp-cs-stage {
     position: relative;
     display: block;
-    width: min(1180px, calc(100% - 48px));
-    margin: 44px auto 0;
-    padding-bottom: 28px;
+    padding-bottom: 56px;
 }
-.lp-cs-stage__glow {
-    position: absolute;
-    left: 10%;
-    right: 10%;
-    bottom: 0;
-    height: 46%;
-    background: radial-gradient(closest-side, rgba(11, 70, 67, 0.32), transparent);
-    filter: blur(30px);
-    pointer-events: none;
-}
-/* The app in a macOS window: the screenshot is bare, the chrome is drawn here. */
+/* The screenshot is bare; the window chrome is drawn here. */
 .lp-cs-window {
-    position: relative;
     display: block;
     width: 100%;
-    max-width: 1000px;
-    margin: 0 auto;
-    border-radius: 12px;
-    overflow: hidden;
     background: #fff;
-    border: 1px solid rgba(19, 22, 20, 0.12);
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.6) inset,
-        0 50px 80px -30px rgba(19, 22, 20, 0.35),
-        0 18px 36px -18px rgba(19, 22, 20, 0.25);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 0 rgba(19, 22, 20, 0.06), 0 30px 80px rgba(19, 22, 20, 0.1);
+}
+.lp-cs-stage--pair .lp-cs-window {
+    width: 88%;
 }
 .lp-cs-window__bar {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     height: 34px;
     padding: 0 14px;
-    background: linear-gradient(180deg, #f6f7f8, #eceef0);
-    border-bottom: 1px solid rgba(19, 22, 20, 0.08);
+    border-bottom: 1px solid #ecebe4;
+    box-sizing: border-box;
 }
 .lp-cs-window__bar span {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
-    background: #ff5f57;
-    box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.12);
-}
-.lp-cs-window__bar span:nth-child(2) {
-    background: #febc2e;
-}
-.lp-cs-window__bar span:nth-child(3) {
-    background: #28c840;
+    background: var(--cfc-line);
 }
 .lp-cs-window__screen {
     display: block;
     width: 100%;
     height: auto;
 }
-/* With a phone, the window moves left so the pair centres as a group. */
-.lp-cs-stage--pair .lp-cs-window {
-    width: 84%;
-    margin: 0 0 0 2%;
-}
 .lp-cs-stage__phone {
     position: absolute;
-    right: 2%;
+    right: 0;
     bottom: 0;
-    width: 20%;
+    width: 22%;
     height: auto;
-    filter: drop-shadow(0 30px 34px rgba(19, 22, 20, 0.3));
+    filter: drop-shadow(0 24px 40px rgba(19, 22, 20, 0.18));
+}
+.lp-cs-stage--phone {
+    display: flex;
+    justify-content: center;
+}
+.lp-cs-stage--phone .lp-cs-stage__phone {
+    position: static;
+    width: min(280px, 60%);
 }
 
-/* ---- Facts strip: partner mark + the details a visitor scans for ---- */
-/* The strip itself never wraps — the mark stays beside the facts, and the facts
-   break among themselves. Wrapping at this level instead sent the whole group
-   below the mark the moment a third fact stopped fitting. */
-.lp-cs__facts {
+/* ---- Facts: partner mark, then the details a visitor scans for ---- */
+.lp-cs-facts {
     display: flex;
-    flex-wrap: nowrap;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 34px;
-    margin-top: 40px;
-    padding-bottom: 34px;
-    border-bottom: 1px solid var(--line);
-    box-sizing: border-box;
-}
-.lp-cs__fact-set {
-    display: flex;
-    flex: 0 1 auto;
     flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: center;
-    min-width: 0;
-    gap: 20px 46px;
-}
-/* Contained, not full-bleed: a 2048px brand square blown up to a 440px hero is a
-   slab of colour that says nothing and pushes the story below the fold. */
-/* The frame is tall and grows sideways, rather than a fixed landscape box: most
-   partner logos are square or nearly so, and in a wide short frame the height is
-   what binds — a 2048×2048 mark came out at 46px, adrift in its own whitespace.
-   Height sets the size, `min-width` keeps a narrow mark from looking cramped,
-   and a wide wordmark simply widens the box. */
-.lp-cs__mark {
-    display: flex;
     align-items: center;
-    justify-content: center;
-    flex: none;
-    min-width: 116px;
-    height: 116px;
-    padding: 16px 18px;
-    border: 1px solid var(--line);
-    background: #fff;
+    gap: 20px 40px;
+    margin-top: 72px;
+    padding: 20px 20px 20px 28px;
+    background: #fbfaf7;
+    border-radius: 16px;
     box-sizing: border-box;
 }
-.lp-cs__mark img {
+.lp-cs-facts__mark {
     display: block;
-    max-width: 240px;
-    max-height: 100%;
+    flex: none;
+    height: 40px;
     width: auto;
-    height: auto;
+    max-width: 200px;
     object-fit: contain;
 }
-/* No vertical rules between the cells: this strip wraps (three facts in German
-   don't fit one line), and on a wrapped flex row a left-hand divider lands at the
-   start of the second line with nothing to its left. The label-over-value pairs
-   carry the structure on their own. */
-.lp-cs__fact {
+.lp-cs-facts__rule {
+    flex: none;
+    width: 1px;
+    height: 40px;
+    background: var(--cfc-stone);
+}
+.lp-cs-facts__set {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px 40px;
+    min-width: 0;
+}
+.lp-cs-fact {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    text-align: left;
+    gap: 4px;
 }
-.lp-cs__fact-k {
+.lp-cs-fact__k {
+    font-family: var(--font-mono);
     font-size: 11px;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--muted);
 }
-.lp-cs__fact-v {
-    font-size: 15px;
-    line-height: 1.45;
+.lp-cs-fact__v {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15.5px;
+    line-height: 1.4;
+}
+.lp-cs-fact__live {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+.lp-cs-facts__links {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+}
+.lp-cs-facts__link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--cfc-line);
+    border-radius: 50%;
+    background: #fff;
     color: var(--ink);
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, color 0.15s ease;
 }
-.lp-cs__fact-link {
-    color: var(--accent-strong);
-    text-decoration: none;
-    border-bottom: 1px solid var(--line);
-}
-.lp-cs__fact-link:hover {
-    color: var(--accent);
+.lp-cs-facts__link:hover {
     border-color: var(--accent);
+    color: var(--accent);
+}
+.lp-cs-facts__link:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
-/* ---- Body typography ---- */
-.lp-cs__h {
-    font-family: var(--font-sans);
-    font-size: clamp(24px, 2.4vw, 30px);
-    font-weight: 500;
-    line-height: 1.16;
-    letter-spacing: -0.014em;
-    margin: 0 0 18px;
-}
-.lp-cs__h--centred {
-    text-align: center;
-    margin-bottom: 34px;
+/* ---- Body: text, gallery and demo blocks under their heads ---- */
+.lp-cs-prose {
+    display: block;
+    max-width: 680px;
+    margin-top: 20px;
 }
 .lp-cs__p {
-    font-size: 18px;
-    line-height: 1.75;
+    font-size: 17px;
+    line-height: 1.65;
     color: #3b3e39;
-    margin: 0 0 18px;
+    margin: 0 0 16px;
 }
 .lp-cs__p:last-child {
     margin-bottom: 0;
 }
-/* An arrow link that closes a block: "see how partnering works", "meet the whole
-   team". inline-flex so the centred text-align on the panels above catches it. */
-.lp-cs__more {
-    display: inline-flex;
-    margin-top: 30px;
-    font-family: var(--font-sans);
-    font-size: 15px;
-    color: var(--accent-strong);
-    text-decoration: none;
-    border-bottom: 2px solid var(--accent);
-    padding-bottom: 3px;
-    transition: color 0.16s ease, border-color 0.16s ease;
-}
-.lp-cs__more:hover {
-    color: var(--accent);
-    border-color: var(--accent-strong);
-}
-.lp-cs__foot {
-    display: flex;
-    justify-content: center;
-    margin-top: 72px;
-    padding-top: 34px;
-    border-top: 1px solid var(--line);
-}
-.lp-cs__foot .lp-cs__more {
-    margin-top: 0;
+.lp-cs-head + .lp-cs-gal,
+.lp-cs-head + .lp-cs-demo {
+    margin-top: 36px;
 }
 
 /* ---- Pull quote: hairlines and typography, no box ---- */
@@ -3162,59 +3078,6 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
     text-align: center;
 }
 
-/* ---- Case-study element: team ---- */
-/* A band of its own rather than five circles adrift in the text flow, and the
-   row is centred on fixed-width cells — an auto-fill grid left the fifth member
-   stranded at the far left of a second row. */
-/* Hairlines rather than a filled panel: the gallery stage above it is already a
-   tinted box, and two grey slabs in a row read as packaging instead of rhythm. */
-.lp-cs-team-band {
-    padding: 52px 20px 46px;
-    border-top: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    text-align: center;
-}
-.lp-cs-team {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 34px 40px;
-    margin: 0;
-    padding: 0;
-}
-.lp-cs-team__card {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 132px;
-    margin: 0;
-    text-align: center;
-    gap: 3px;
-}
-.lp-cs-team__photo {
-    width: 76px;
-    height: 76px;
-    border-radius: 50%;
-    object-fit: cover;
-    background: #fff;
-    margin-bottom: 12px;
-    box-shadow: 0 0 0 1px var(--line), 0 6px 16px rgba(19, 22, 20, 0.1);
-}
-.lp-cs-team__photo--empty {
-    display: block;
-}
-.lp-cs-team__name {
-    font-family: var(--font-sans);
-    font-size: 15.5px;
-    font-weight: 600;
-    color: var(--ink);
-}
-.lp-cs-team__role {
-    font-size: 12.5px;
-    line-height: 1.4;
-    color: var(--muted);
-}
 /* ---- Full-screen gallery viewer (lightbox) ---- */
 .lp-lightbox {
     position: fixed;
@@ -3411,7 +3274,208 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
         max-height: 72vh;
     }
 }
-/* ---- NGO FAQ ---- */
+
+/* ---- Progress: the phases side by side on one track ---- */
+/* Each step draws its own stretch of the track, from its node to the next
+   one: petrol once done, half petrol on the current step, grey ahead. */
+.lp-cs-steps {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(var(--cs-steps, 4), minmax(0, 1fr));
+    gap: 0 28px;
+    margin: 40px 0 0;
+    padding: 0;
+}
+.lp-cs-steps__item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+    padding-top: 28px;
+}
+.lp-cs-steps__line {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: -28px;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--cfc-line);
+}
+.lp-cs-steps__item:last-child .lp-cs-steps__line {
+    right: 0;
+}
+.lp-cs-steps__item[data-state='done'] .lp-cs-steps__line {
+    background: var(--accent);
+}
+.lp-cs-steps__item[data-state='current'] .lp-cs-steps__line {
+    background: linear-gradient(90deg, var(--accent) 0 50%, var(--cfc-line) 50% 100%);
+}
+.lp-cs-steps__node {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border: 2px solid #b9bbb2;
+    border-radius: 50%;
+    background: var(--cfc-paper);
+    box-sizing: border-box;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+}
+.lp-cs-steps__item[data-state='done'] .lp-cs-steps__node {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+.lp-cs-steps__item[data-state='current'] .lp-cs-steps__node {
+    background: var(--cfc-phosphor);
+    border-color: var(--accent);
+}
+.lp-cs-steps__core {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+.lp-cs-steps__label {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--accent);
+}
+.lp-cs-steps__item[data-state='current'] .lp-cs-steps__label {
+    font-weight: 500;
+}
+.lp-cs-steps__item[data-state='upcoming'] .lp-cs-steps__label {
+    color: var(--muted);
+}
+.lp-cs-steps__title {
+    margin: 0;
+    font-family: var(--font-sans);
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.4px;
+}
+.lp-cs-steps__text {
+    margin: 0;
+    font-size: 14.5px;
+    line-height: 1.45;
+    color: var(--muted);
+}
+.lp-cs-steps__timing {
+    font-size: 12px;
+    color: var(--muted);
+}
+.lp-cs-steps__img {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    border-radius: 8px;
+}
+
+/* ---- Team: round photos on the left edge ---- */
+.lp-cs-team {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 28px;
+    margin: 36px 0 0;
+    padding: 0;
+}
+.lp-cs-team__card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 0;
+}
+.lp-cs-team__photo {
+    display: block;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--cfc-stone);
+}
+.lp-cs-team__text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.lp-cs-team__name {
+    font-family: var(--font-sans);
+    font-size: 17px;
+    font-weight: 500;
+    color: var(--ink);
+}
+.lp-cs-team__role {
+    font-size: 14px;
+    line-height: 1.4;
+    color: var(--muted);
+}
+
+/* ---- Press: the articles in full, after the team ---- */
+.lp-cs-sec--press {
+    padding-top: 72px;
+}
+.lp-cs-articles {
+    list-style: none;
+    display: grid;
+    gap: 12px;
+    margin: 16px 0 0;
+    padding: 0;
+}
+.lp-cs-article {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px 32px;
+    padding: 24px 28px;
+    background: #fbfaf7;
+    border-radius: 16px;
+    color: var(--ink);
+    text-decoration: none;
+    transition: background 0.15s ease;
+}
+.lp-cs-article:hover {
+    background: #fff;
+}
+.lp-cs-article__logo {
+    display: block;
+    flex: none;
+    width: 58px;
+    height: 36px;
+    object-fit: contain;
+}
+.lp-cs-article__body {
+    display: flex;
+    flex: 1 1 360px;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.lp-cs-article__meta {
+    font-size: 14.5px;
+    color: var(--muted);
+}
+.lp-cs-article__headline {
+    font-family: var(--font-sans);
+    font-size: 21px;
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.4px;
+}
+.lp-cs-article__cta {
+    flex: none;
+    font-size: 15px;
+}
+
+/* ---- FAQ ---- */
 .lp-cs-faq__item {
     display: block;
     padding: 18px 0;
@@ -3431,350 +3495,33 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
     margin: 0;
 }
 
-/* ---- The story, centred ---- */
-/* Prose blocks read as centred statements: heading, then paragraphs on a
-   narrower measure. Kept short in the CMS, so centred lines still have a shape. */
-.lp-cs__block--prose {
-    text-align: center;
-}
-.lp-cs__block--prose .lp-cs__h,
-.lp-cs-journey .lp-cs__h,
-.lp-cs-team-band .lp-cs__h {
-    font-size: clamp(28px, 3.4vw, 42px);
-    letter-spacing: -0.025em;
-    margin-bottom: 22px;
-    text-align: center;
-}
-.lp-cs__block--prose .lp-cs__p {
-    max-width: 62ch;
-    margin-left: auto;
-    margin-right: auto;
-}
-.lp-cs .lp-cs__block {
-    margin-top: 104px;
-}
-.lp-cs .lp-cs-team-band {
-    padding: 0;
-    border: 0;
-}
-
-/* ---- Journey: phases on a centred vertical line ---- */
-/* Three columns per step: left side, node, right side. Text (and its image)
-   takes one side, alternating. */
-.lp-cs-journey__list {
-    position: relative;
-    list-style: none;
-    display: block;
-    max-width: 980px;
-    margin: 48px auto 0;
-    padding: 0;
-}
-/* The line: one segment per step, from its node down to the next one, so it
-   stops at the last node. Done segments are teal, the current one fades out. */
-.lp-cs-journey__step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 50px;
-    bottom: 6px;
-    left: 50%;
-    width: 2px;
-    margin-left: -1px;
-    background: var(--line);
-}
-.lp-cs-journey__step[data-state='done']::after {
-    background: var(--accent);
-}
-.lp-cs-journey__step[data-state='current']::after {
-    background: linear-gradient(180deg, var(--accent), var(--line));
-}
-.lp-cs-journey__step {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
-    column-gap: 44px;
-    align-items: start;
-    margin: 0;
-    padding: 0 0 64px;
-}
-.lp-cs-journey__step:last-child {
-    padding-bottom: 0;
-}
-.lp-cs-journey__node {
-    position: relative;
-    z-index: 1;
-    grid-row: 1;
-    grid-column: 2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #fff;
-    border: 2px solid var(--line);
-    color: var(--muted);
-    font-family: var(--font-sans);
-    font-weight: 600;
-    font-size: 16px;
-    box-sizing: border-box;
-}
-.lp-cs-journey__body {
-    grid-row: 1;
-    grid-column: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
-    padding-top: 4px;
-}
-.lp-cs-journey__media {
-    width: 100%;
-    margin: 22px 0 0;
-}
-.lp-cs-journey__step:nth-child(even) .lp-cs-journey__body {
-    grid-column: 1;
-    align-items: flex-end;
-    text-align: right;
-}
-.lp-cs-journey__media img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 4 / 3;
-    object-fit: cover;
-    border-radius: 6px;
-    box-shadow: 0 24px 44px -24px rgba(19, 22, 20, 0.45);
-}
-.lp-cs-journey__step[data-state='done'] .lp-cs-journey__node {
-    background: var(--accent);
-    border-color: var(--accent);
-    color: #fff;
-}
-.lp-cs-journey__step[data-state='current'] .lp-cs-journey__node {
-    border-color: var(--accent);
-    color: var(--accent-strong);
-    box-shadow: 0 0 0 6px rgba(11, 70, 67, 0.16);
-    animation: lp-cs-pulse 2.4s ease-in-out infinite;
-}
-@keyframes lp-cs-pulse {
-    0%, 100% { box-shadow: 0 0 0 6px rgba(11, 70, 67, 0.16); }
-    50% { box-shadow: 0 0 0 11px rgba(11, 70, 67, 0.06); }
-}
-@media (prefers-reduced-motion: reduce) {
-    .lp-cs-journey__step[data-state='current'] .lp-cs-journey__node {
-        animation: none;
-    }
-}
-.lp-cs-journey__badge {
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-size: 11px;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    background: var(--alt);
-}
-.lp-cs-journey__step[data-state='current'] .lp-cs-journey__badge {
-    color: #fff;
-    background: var(--accent);
-}
-.lp-cs-journey__title {
-    margin: 12px 0 0;
-    font-family: var(--font-sans);
-    font-size: 24px;
-    font-weight: 600;
-    letter-spacing: -0.015em;
-}
-.lp-cs-journey__text {
-    margin: 10px 0 0;
-    max-width: 44ch;
-    font-size: 16.5px;
-    line-height: 1.65;
-    color: #4d514b;
-}
-.lp-cs-journey__step[data-state='upcoming'] .lp-cs-journey__body {
-    opacity: 0.75;
-}
-.lp-cs-journey__timing {
-    margin-top: 10px;
-    font-size: 12px;
-    color: var(--muted);
-}
-
-/* ---- Closing: two ways in ---- */
-.lp-cs-cta {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 22px;
-}
-.lp-cs-cta__card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 46px 42px 40px;
-    border-radius: 6px;
-    color: #fff;
-    box-sizing: border-box;
-}
-/* Two ways in, told apart by ground: ink for NGOs, petrol for students. */
-.lp-cs-cta__card--ngo {
-    background: linear-gradient(150deg, var(--cfc-ink) 0%, #252a26 100%);
-}
-.lp-cs-cta__card--student {
-    background: linear-gradient(150deg, var(--cfc-petrol) 0%, #0e5a56 100%);
-}
-.lp-cs-cta__kicker {
-    font-size: 12px;
-    letter-spacing: 1.6px;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.72);
-}
-.lp-cs-cta__heading {
-    margin: 12px 0 0;
-    font-family: var(--font-sans);
-    font-size: clamp(25px, 2.5vw, 32px);
-    font-weight: 500;
-    line-height: 1.15;
-    letter-spacing: -0.02em;
-    color: #fff;
-    overflow-wrap: break-word;
-    hyphens: auto;
-}
-.lp-cs-cta__text {
-    flex: 1 0 auto;
-    margin: 14px 0 0;
-    font-size: 16.5px;
-    line-height: 1.6;
-    color: rgba(255, 255, 255, 0.88);
-}
-.lp-cs-cta__actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 14px 26px;
-    margin-top: 28px;
-}
-.lp-cs-cta .lp-booking--compact {
-    justify-content: flex-start;
-}
-.lp-cs-cta .lp-btn--primary {
-    background: var(--cfc-paper);
-    border-color: var(--cfc-paper);
-    color: var(--cfc-ink);
-}
-.lp-cs-cta .lp-btn--primary:hover {
-    background: #ffffff;
-    border-color: #ffffff;
-}
-.lp-cs-cta .lp-booking__link {
-    align-self: center;
-    margin-top: 0;
-    color: #fff;
-    border-bottom-color: rgba(255, 255, 255, 0.5);
-}
-.lp-cs-cta .lp-booking__link:hover {
-    color: #fff;
-    border-bottom-color: #fff;
-}
-
 /* ---- Case study: narrow window / phone ---- */
 @media (max-width: 900px) {
-    .lp-cs__block {
-        margin-top: 58px;
+    .lp-cs-sec {
+        padding-top: 80px;
     }
-    /* The mark stays *beside* the facts once the strip can no longer hold one
-       line — stacking it on top ran the strip down most of a phone screen
-       before the story started. The cells reflow instead: two columns beside
-       the mark on a tablet, one on a phone, from a single basis width. */
-    .lp-cs__facts {
-        flex-direction: row;
-        align-items: flex-start;
-        justify-content: flex-start;
-        gap: 20px;
+    .lp-cs-sec--press {
+        padding-top: 56px;
     }
-    .lp-cs__fact-set {
-        flex: 1 1 auto;
-        flex-direction: row;
-        flex-wrap: wrap;
-        justify-content: flex-start;
-        gap: 16px 28px;
+    .lp-cs-head__lead {
+        font-size: 16px;
     }
-    /* 170px basis, not 190: two cells plus the gap have to clear the width left
-       beside the mark on a small tablet, and at 190 they missed it by 8px and
-       fell to one very wide column each. */
-    .lp-cs__fact {
-        flex: 1 1 170px;
-        min-width: 0;
-        box-sizing: border-box;
+    .lp-cs-hero {
+        padding-top: 24px;
     }
-    .lp-cs__mark {
-        min-width: 0;
-        width: 96px;
-        height: 96px;
-        padding: 12px;
+    .lp-cs-hero__copy {
+        gap: 18px;
+        margin-top: 28px;
     }
-    .lp-cs-gal--stage {
-        padding: 40px 24px 32px;
-        gap: 28px 36px;
+    .lp-cs__lead {
+        font-size: 17px;
     }
-    .lp-cs-gal--stage .lp-cs-gal__btn img {
-        max-height: 300px;
-    }
-    .lp-cs-gal--photos {
-        grid-auto-rows: 150px;
-    }
-    .lp-cs-team-band {
-        padding: 40px 6px 34px;
-    }
-    .lp-cs .lp-cs__block {
-        margin-top: 72px;
-    }
-    /* The line moves to the left edge, text beside it. */
-    .lp-cs-journey__step:not(:last-child)::after {
-        left: 22px;
-    }
-    .lp-cs-journey__step,
-    .lp-cs-journey__step:nth-child(even) {
-        grid-template-columns: 44px minmax(0, 1fr);
-        column-gap: 18px;
-        padding-bottom: 44px;
-    }
-    .lp-cs-journey__node {
-        grid-column: 1;
-    }
-    .lp-cs-journey__step .lp-cs-journey__body,
-    .lp-cs-journey__step:nth-child(even) .lp-cs-journey__body {
-        grid-column: 2;
-        align-items: flex-start;
-        text-align: left;
-    }
-    .lp-cs-cta {
-        grid-template-columns: minmax(0, 1fr);
-    }
-    .lp-cs-cta {
-        gap: 14px;
-    }
-    .lp-cs-cta__card {
-        padding: 26px 22px 24px;
-    }
-    .lp-cs-cta__heading {
-        margin-top: 8px;
-        font-size: 22px;
-    }
-    .lp-cs-cta__text {
-        margin-top: 10px;
-        font-size: 15px;
-        line-height: 1.55;
-    }
-    .lp-cs-cta__actions {
-        gap: 12px 20px;
-        margin-top: 20px;
-    }
-    .lp-cs-cta .lp-btn {
-        padding: 11px 18px;
-        font-size: 15px;
+    .lp-cs-stage-wrap {
+        margin-top: 40px;
+        padding: 0 20px;
     }
     .lp-cs-stage {
-        margin-top: 40px;
+        padding-bottom: 32px;
     }
     .lp-cs-window {
         border-radius: 8px;
@@ -3788,33 +3535,244 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
         width: 7px;
         height: 7px;
     }
-    .lp-cs-team {
-        gap: 26px 22px;
+    .lp-cs-facts {
+        gap: 16px 24px;
+        margin-top: 48px;
+        padding: 18px;
     }
-    .lp-cs-team__card {
-        width: 108px;
+    .lp-cs-facts__set {
+        gap: 16px 28px;
+    }
+    .lp-cs-gal--stage {
+        padding: 40px 24px 32px;
+        gap: 28px 36px;
+    }
+    .lp-cs-gal--stage .lp-cs-gal__btn img {
+        max-height: 300px;
+    }
+    .lp-cs-gal--photos {
+        grid-auto-rows: 150px;
     }
 }
+/* The track turns vertical: nodes on the left, each step's text beside its
+   node, the line running down to the next one. */
+@media (max-width: 720px) {
+    .lp-cs-steps {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        margin-top: 32px;
+    }
+    .lp-cs-steps__item {
+        gap: 6px;
+        padding: 0 0 28px 40px;
+    }
+    .lp-cs-steps__item:last-child {
+        padding-bottom: 0;
+    }
+    .lp-cs-steps__line,
+    .lp-cs-steps__item:last-child .lp-cs-steps__line {
+        top: 11px;
+        bottom: -11px;
+        left: 10px;
+        right: auto;
+        width: 3px;
+        height: auto;
+    }
+    .lp-cs-steps__item:last-child .lp-cs-steps__line {
+        display: none;
+    }
+    .lp-cs-steps__item[data-state='current'] .lp-cs-steps__line {
+        background: linear-gradient(180deg, var(--accent) 0 50%, var(--cfc-line) 50% 100%);
+    }
+}
+/* Phone, after the mobile design (Option D · Mobil, 390px). */
 @media (max-width: 620px) {
-    .lp-cs__title {
+    .lp-cs-sec {
+        padding-top: 88px;
+    }
+    .lp-cs-head__lead {
         margin-top: 14px;
     }
+    .lp-cs-hero__copy {
+        gap: 20px;
+        margin-top: 32px;
+    }
+    .lp-cs__eyebrow {
+        gap: 8px;
+        font-size: 11.5px;
+    }
+    .lp-cs__dot {
+        width: 6px;
+        height: 6px;
+    }
+    .lp-cs__title {
+        font-size: 40px;
+        line-height: 1.02;
+    }
+    .lp-cs-press__item {
+        gap: 10px;
+        padding: 8px 16px;
+    }
     .lp-cs-press__label {
-        font-size: 10px;
-        letter-spacing: 1px;
+        font-size: 10.5px;
     }
-    .lp-cs__lead {
-        padding-top: 36px;
+    .lp-cs-press__outlet {
+        font-size: 15px;
+    }
+    .lp-cs-press__cta {
+        font-size: 14px;
+    }
+    /* The phone stands larger in front of a smaller window. */
+    .lp-cs-stage {
+        padding-bottom: 40px;
+    }
+    .lp-cs-stage--pair .lp-cs-window {
+        width: 86%;
+    }
+    .lp-cs-window {
+        border-radius: 10px;
+        box-shadow: 0 1px 0 rgba(19, 22, 20, 0.06), 0 20px 50px rgba(19, 22, 20, 0.1);
+    }
+    .lp-cs-window__bar {
+        height: 22px;
+        padding: 0 10px;
+    }
+    .lp-cs-stage__phone {
+        width: 34%;
+        filter: drop-shadow(0 18px 30px rgba(19, 22, 20, 0.2));
+    }
+    /* Facts: the mark and the link buttons on top, the facts as a list of
+       label and value under them. */
+    .lp-cs-facts {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            'mark links'
+            'set set';
+        align-items: center;
+        gap: 0 16px;
+        padding: 20px;
+    }
+    .lp-cs-facts__mark {
+        grid-area: mark;
+        height: 36px;
+    }
+    .lp-cs-facts__rule {
+        display: none;
+    }
+    .lp-cs-facts__links {
+        grid-area: links;
+        margin-left: 0;
+    }
+    .lp-cs-facts__set {
+        grid-area: set;
+        flex-direction: column;
+        gap: 0;
+        margin-top: 18px;
+    }
+    .lp-cs-fact {
+        display: grid;
+        grid-template-columns: 96px minmax(0, 1fr);
+        align-items: center;
+        gap: 12px;
+        padding: 12px 0;
+        border-top: 1px solid var(--cfc-stone);
+    }
+    .lp-cs-fact:last-child {
+        padding-bottom: 0;
+    }
+    .lp-cs-fact__v {
+        font-size: 15px;
+    }
+    .lp-cs-steps__title {
         font-size: 19px;
+        line-height: 1.2;
     }
-    .lp-cs__back {
-        margin-bottom: 32px;
+    .lp-cs-steps__label {
+        line-height: 1.3;
     }
-    .lp-cs__facts {
-        justify-content: flex-start;
+    /* Team: two columns of small photo, name and role side by side. */
+    .lp-cs-team {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 20px 12px;
+        margin-top: 28px;
+    }
+    .lp-cs-team__card {
+        flex-direction: row;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+    }
+    .lp-cs-team__photo {
+        flex: none;
+        width: 44px;
+        height: 44px;
+    }
+    .lp-cs-team__text {
+        gap: 1px;
+        min-width: 0;
+    }
+    .lp-cs-team__name {
+        font-size: 16px;
+    }
+    .lp-cs-team__role {
+        font-size: 13px;
+    }
+    /* Press: mark and outlet on one line, the headline and the link under it. */
+    .lp-cs-sec--press {
+        padding-top: 56px;
+    }
+    .lp-cs-articles {
+        margin-top: 14px;
+    }
+    .lp-cs-article {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        grid-template-areas:
+            'logo meta'
+            'head head'
+            'cta cta';
+        align-items: center;
+        gap: 14px 12px;
+        padding: 20px;
+    }
+    .lp-cs-article--bare {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-areas: 'meta' 'head' 'cta';
+    }
+    .lp-cs-article__body {
+        display: contents;
+    }
+    .lp-cs-article__logo {
+        grid-area: logo;
+        width: 48px;
+        height: 30px;
+    }
+    .lp-cs-article__meta {
+        grid-area: meta;
+        font-size: 13.5px;
+    }
+    .lp-cs-article__headline {
+        grid-area: head;
+        font-size: 18px;
+        letter-spacing: -0.3px;
+    }
+    .lp-cs-article__cta {
+        grid-area: cta;
     }
     .lp-cs__quote {
         padding: 34px 0;
+    }
+    /* The closing's buttons stack at full width on this page. */
+    .lp-cs-page .lp-closing {
+        padding-top: 112px;
+    }
+    .lp-cs-page .lp-closing__ctas {
+        flex-direction: column;
+    }
+    .lp-cs-page .lp-closing__ctas .lp-btn {
+        width: 100%;
+        box-sizing: border-box;
     }
 }
 @media (max-width: 560px) {

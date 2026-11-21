@@ -19,12 +19,26 @@ import {
 import { useLanguage } from '../../contexts/LanguageContext';
 import { projectTeam } from '../../lib/projects';
 import { useOverlay } from '../../hooks/useOverlay';
-import BookingEmbed from '../general/BookingEmbed';
+import CaseStudyHead from './CaseStudyHead';
+import ClosingCta from './ClosingCta';
+import LebenshilfeStory from './LebenshilfeStory';
 import './landing.css';
 
+/* Chapters that belong to one project only (a diagram, a map) and so live in
+   code rather than in the CMS. They sit between the facts and the CMS blocks. */
+const PROJECT_STORIES: Record<string, React.FC> = {
+    lebenshilfe: LebenshilfeStory,
+};
+
+// The eyebrow's dot: brand petrol (--cfc-petrol / --cfc-petrol-deep in index.css).
 const statusColors: Record<string, string> = {
-    // Brand petrol (--cfc-petrol / --cfc-petrol-deep in index.css).
     active: '#0b4643',
+    completed: '#073431',
+    recruiting: '#b5651d',
+};
+// The facts strip's live dot: green while the project runs.
+const liveColors: Record<string, string> = {
+    active: '#1e9e5a',
     completed: '#073431',
     recruiting: '#b5651d',
 };
@@ -44,6 +58,16 @@ const Paragraphs: React.FC<{ text?: string | null }> = ({ text }) =>
     ) : null;
 
 type Shot = CmsGalleryImage;
+
+/** One chapter of the page: a band with the shell's measure inside. */
+const Section: React.FC<{ className?: string; children: React.ReactNode }> = ({
+    className,
+    children,
+}) => (
+    <section className={'lp-cs-sec' + (className ? ` ${className}` : '')}>
+        <div className="lp-inner">{children}</div>
+    </section>
+);
 
 /**
  * Full-screen, keyboard-navigable image viewer for a gallery block. Rendered in
@@ -143,30 +167,30 @@ const Lightbox: React.FC<{
 
 /* ---- Content blocks (rendered in the CMS-defined order) ---- */
 
-/** A section heading with the hairline that opens a new movement of the page. */
-const BlockHead: React.FC<{ heading?: string | null }> = ({ heading }) =>
-    heading ? <h2 className="lp-cs__h">{heading}</h2> : null;
-
 const TextBlock: React.FC<{ block: CmsTextBlock }> = ({ block }) =>
     block.body ? (
-        <section className="lp-cs__block lp-cs__block--prose">
-            <BlockHead heading={block.heading} />
-            <Paragraphs text={block.body} />
-        </section>
+        <Section>
+            <CaseStudyHead heading={block.heading} />
+            <div className="lp-cs-prose">
+                <Paragraphs text={block.body} />
+            </div>
+        </Section>
     ) : null;
 
 const QuoteBlock: React.FC<{ block: CmsQuoteBlock }> = ({ block }) =>
     block.text ? (
-        <blockquote className="lp-cs__block lp-cs__block--quote lp-cs__quote">
-            <p className="lp-cs__quote-text">{block.text}</p>
-            {(block.author || block.role) && (
-                <footer className="lp-cs__quote-by">
-                    {block.author}
-                    {block.author && block.role && ', '}
-                    {block.role}
-                </footer>
-            )}
-        </blockquote>
+        <Section>
+            <blockquote className="lp-cs__quote">
+                <p className="lp-cs__quote-text">{block.text}</p>
+                {(block.author || block.role) && (
+                    <footer className="lp-cs__quote-by">
+                        {block.author}
+                        {block.author && block.role && ', '}
+                        {block.role}
+                    </footer>
+                )}
+            </blockquote>
+        </Section>
     ) : null;
 
 /**
@@ -190,8 +214,8 @@ const GalleryBlock: React.FC<{
     if (items.length === 0) return null;
     const photos = block.layout === 'photos';
     return (
-        <section className="lp-cs__block lp-cs__block--wide">
-            <BlockHead heading={block.heading} />
+        <Section>
+            <CaseStudyHead heading={block.heading} />
             <div
                 className={
                     'lp-cs-gal' +
@@ -226,7 +250,7 @@ const GalleryBlock: React.FC<{
                     onNavigate={setOpenIndex}
                 />
             )}
-        </section>
+        </Section>
     );
 };
 
@@ -250,8 +274,8 @@ const DemoBlock: React.FC<{ block: CmsDemoBlock }> = ({ block }) => {
     if (!file) return null;
 
     return (
-        <section className="lp-cs__block lp-cs__block--wide">
-            <BlockHead heading={block.heading} />
+        <Section>
+            <CaseStudyHead heading={block.heading} />
             <figure className="lp-cs-demo">
                 <div className="lp-cs-demo__frame">
                     <video
@@ -267,16 +291,31 @@ const DemoBlock: React.FC<{ block: CmsDemoBlock }> = ({ block }) => {
                     <figcaption className="lp-cs-demo__cap">{block.caption}</figcaption>
                 )}
             </figure>
-        </section>
+        </Section>
     );
 };
 
+const Check = () => (
+    <svg
+        aria-hidden="true"
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="#fff"
+        strokeWidth="3"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    >
+        <path d="M20 6L9 17l-5-5" />
+    </svg>
+);
+
 /**
- * The project's phases on a centred vertical line, text alternating left and
- * right of it. A point's image sits under its own text, in the same column, so
- * it can't be read as belonging to the neighbouring step. A single "current" point implies
- * the rest: earlier ones are done, later ones still ahead (same rule as
- * ProcessTimeline). On a phone the line moves to the left edge.
+ * The project's phases side by side on one track, read left to right. A single
+ * "current" point implies the rest: earlier ones are done, later ones still
+ * ahead (same rule as ProcessTimeline). Without any state it is a plain,
+ * numbered sequence. On a phone the track turns vertical.
  */
 const TimelineBlock: React.FC<{ block: CmsTimelineBlock }> = ({ block }) => {
     const { t } = useLanguage();
@@ -285,66 +324,60 @@ const TimelineBlock: React.FC<{ block: CmsTimelineBlock }> = ({ block }) => {
     const currentIdx = points.findIndex((p) => p.state === 'current');
     const stateOf = (i: number) =>
         points[i].state || (currentIdx === -1 ? undefined : i < currentIdx ? 'done' : 'upcoming');
-    // Done steps carry a tick in the node; a "Done" label under "Problem" would
-    // read as if the problem were done.
-    const badge: Record<string, string> = {
+    const label: Record<string, string> = {
+        done: t.caseStudy.stepDone,
         current: t.caseStudy.stepNow,
         upcoming: t.caseStudy.stepNext,
     };
     return (
-        <section className="lp-cs__block lp-cs__block--wide lp-cs-journey">
-            <BlockHead heading={block.heading} />
-            <ol className="lp-cs-journey__list">
+        <Section>
+            <CaseStudyHead kicker={t.caseStudy.kickerProgress} heading={block.heading} />
+            <ol
+                className="lp-cs-steps"
+                style={{ '--cs-steps': points.length } as React.CSSProperties}
+            >
                 {points.map((p, i) => {
                     const state = stateOf(i);
                     const img = mediaUrl(p.image, 'thumbnail');
                     return (
-                        <motion.li
-                            key={p.id ?? i}
-                            className="lp-cs-journey__step"
-                            data-state={state}
-                            initial={{ opacity: 0, y: 24 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true, amount: 0.25 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <span className="lp-cs-journey__node" aria-hidden>
-                                {state === 'done' ? '✓' : p.marker?.trim() || i + 1}
+                        <li key={p.id ?? i} className="lp-cs-steps__item" data-state={state}>
+                            <span className="lp-cs-steps__line" aria-hidden />
+                            <span className="lp-cs-steps__node" aria-hidden>
+                                {state === 'done' ? (
+                                    <Check />
+                                ) : state === 'current' ? (
+                                    <span className="lp-cs-steps__core" />
+                                ) : state ? null : (
+                                    p.marker?.trim() || i + 1
+                                )}
                             </span>
-                            <div className="lp-cs-journey__body">
-                                {state && badge[state] && (
-                                    <span className="lp-cs-journey__badge">{badge[state]}</span>
-                                )}
-                                <h3 className="lp-cs-journey__title">{p.title}</h3>
-                                {p.subtitle && (
-                                    <p className="lp-cs-journey__text">{p.subtitle}</p>
-                                )}
-                                {p.timing && (
-                                    <span className="lp-cs-journey__timing">{p.timing}</span>
-                                )}
-                                {img && (
-                                    <figure className="lp-cs-journey__media">
-                                        <img
-                                            src={img}
-                                            alt={p.image?.alt || p.title}
-                                            loading="lazy"
-                                        />
-                                    </figure>
-                                )}
-                            </div>
-                        </motion.li>
+                            {state && label[state] && (
+                                <span className="lp-cs-steps__label">{label[state]}</span>
+                            )}
+                            <h3 className="lp-cs-steps__title">{p.title}</h3>
+                            {p.subtitle && <p className="lp-cs-steps__text">{p.subtitle}</p>}
+                            {p.timing && <span className="lp-cs-steps__timing">{p.timing}</span>}
+                            {img && (
+                                <img
+                                    className="lp-cs-steps__img"
+                                    src={img}
+                                    alt={p.image?.alt || p.title}
+                                    loading="lazy"
+                                />
+                            )}
+                        </li>
                     );
                 })}
             </ol>
-        </section>
+        </Section>
     );
 };
 
-const TeamBlock: React.FC<{
-    block: CmsTeamBlock;
-    project: CmsProject;
-    fallbackHeading: string;
-}> = ({ block, project, fallbackHeading }) => {
+const TeamBlock: React.FC<{ block: CmsTeamBlock; project: CmsProject }> = ({
+    block,
+    project,
+}) => {
+    const { t } = useLanguage();
     // The block normally carries no members of its own: the assignment lives on
     // the project, so it survives without a case study and the Team page can
     // read it. `projectTeam` resolves that, falling back to rows written into
@@ -352,10 +385,11 @@ const TeamBlock: React.FC<{
     const members = projectTeam(project);
     if (members.length === 0) return null;
     return (
-        <section className="lp-cs__block lp-cs__block--wide lp-cs-team-band">
-            <h2 className="lp-cs__h lp-cs__h--centred">
-                {block.heading || fallbackHeading}
-            </h2>
+        <Section>
+            <CaseStudyHead
+                kicker={t.caseStudy.kickerTeam}
+                heading={block.heading || t.projectDetail.team}
+            />
             <ul className="lp-cs-team">
                 {members.map((m, i) => {
                     const person = m.member;
@@ -375,14 +409,16 @@ const TeamBlock: React.FC<{
                                     aria-hidden
                                 />
                             )}
-                            <span className="lp-cs-team__name">{person.name}</span>
-                            {/* Project role overrides the member's default role. */}
-                            <span className="lp-cs-team__role">{m.role || person.role}</span>
+                            <span className="lp-cs-team__text">
+                                <span className="lp-cs-team__name">{person.name}</span>
+                                {/* Project role overrides the member's default role. */}
+                                <span className="lp-cs-team__role">{m.role || person.role}</span>
+                            </span>
                         </li>
                     );
                 })}
             </ul>
-        </section>
+        </Section>
     );
 };
 
@@ -390,15 +426,17 @@ const FaqBlock: React.FC<{ block: CmsFaqBlock; heading: string }> = ({ block, he
     const items = (block.items ?? []).filter((it) => it.question && it.answer);
     if (items.length === 0) return null;
     return (
-        <section className="lp-cs__block lp-cs__block--prose lp-cs-faq">
-            <h2 className="lp-cs__h">{heading}</h2>
-            {items.map((item, i) => (
-                <div className="lp-cs-faq__item" key={item.id ?? i}>
-                    <h3 className="lp-cs-faq__q">{item.question}</h3>
-                    <p className="lp-cs-faq__a">{item.answer}</p>
-                </div>
-            ))}
-        </section>
+        <Section>
+            <CaseStudyHead heading={heading} />
+            <div className="lp-cs-prose lp-cs-faq">
+                {items.map((item, i) => (
+                    <div className="lp-cs-faq__item" key={item.id ?? i}>
+                        <h3 className="lp-cs-faq__q">{item.question}</h3>
+                        <p className="lp-cs-faq__a">{item.answer}</p>
+                    </div>
+                ))}
+            </div>
+        </Section>
     );
 };
 
@@ -433,14 +471,7 @@ const CaseStudyBlocks: React.FC<{ project: CmsProject; skip: Set<Shot> }> = ({
                     case 'timeline':
                         return <TimelineBlock key={key} block={b} />;
                     case 'team':
-                        return (
-                            <TeamBlock
-                                key={key}
-                                block={b}
-                                project={project}
-                                fallbackHeading={t.projectDetail.team}
-                            />
-                        );
+                        return <TeamBlock key={key} block={b} project={project} />;
                     case 'faq':
                         return <FaqBlock key={key} block={b} heading={t.caseStudy.faqHeading} />;
                     default:
@@ -454,7 +485,7 @@ const CaseStudyBlocks: React.FC<{ project: CmsProject; skip: Set<Shot> }> = ({
 /* ---- Hero pieces ---- */
 
 /**
- * The product, large: the first "stage" gallery's landscape shot in a macOS
+ * The product, large: the first "stage" gallery's landscape shot in a browser
  * window, with its portrait shot (the phone, already framed in its device)
  * standing in front of it. The landscape shot should be a bare screenshot of
  * the app – the window chrome is drawn here. Both shots are then left out of the
@@ -478,37 +509,44 @@ const DeviceStage: React.FC<{ laptop?: Shot; phone?: Shot; title: string }> = ({
 }) => {
     if (!laptop && !phone) return null;
     return (
-        <div className={'lp-cs-stage' + (laptop && phone ? ' lp-cs-stage--pair' : '')}>
-            <span className="lp-cs-stage__glow" aria-hidden />
-            {laptop && (
-                <motion.div
-                    className="lp-cs-window"
-                    initial={{ opacity: 0, y: 40 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-                >
-                    <div className="lp-cs-window__bar" aria-hidden>
-                        <span />
-                        <span />
-                        <span />
-                    </div>
-                    <img
-                        className="lp-cs-window__screen"
-                        src={mediaUrl(laptop.image, 'large') || ''}
-                        alt={laptop.caption ?? title}
+        <div className="lp-cs-stage-wrap">
+            <div
+                className={
+                    'lp-cs-stage' +
+                    (laptop && phone ? ' lp-cs-stage--pair' : '') +
+                    (!laptop ? ' lp-cs-stage--phone' : '')
+                }
+            >
+                {laptop && (
+                    <motion.div
+                        className="lp-cs-window"
+                        initial={{ opacity: 0, y: 40 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                        <div className="lp-cs-window__bar" aria-hidden>
+                            <span />
+                            <span />
+                            <span />
+                        </div>
+                        <img
+                            className="lp-cs-window__screen"
+                            src={mediaUrl(laptop.image, 'large') || ''}
+                            alt={laptop.caption ?? title}
+                        />
+                    </motion.div>
+                )}
+                {phone && (
+                    <motion.img
+                        className="lp-cs-stage__phone"
+                        src={mediaUrl(phone.image, 'large') || ''}
+                        alt={phone.caption ?? title}
+                        initial={{ opacity: 0, y: 70 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
                     />
-                </motion.div>
-            )}
-            {phone && (
-                <motion.img
-                    className="lp-cs-stage__phone"
-                    src={mediaUrl(phone.image, 'large') || ''}
-                    alt={phone.caption ?? title}
-                    initial={{ opacity: 0, y: 70 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                />
-            )}
+                )}
+            </div>
         </div>
     );
 };
@@ -519,41 +557,121 @@ const PressBadges: React.FC<{ items: CmsPressItem[] }> = ({ items }) => {
     if (items.length === 0) return null;
     return (
         <ul className="lp-cs-press">
-            {items.map((item, i) => {
-                const logo = mediaUrl(item.logo, 'thumbnail');
-                return (
-                    <li key={item.id ?? i}>
-                        <a
-                            className="lp-cs-press__item"
-                            href={item.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            title={item.headline}
-                        >
-                            <span className="lp-cs-press__label">{t.caseStudy.pressLabel}</span>
-                            {logo && (
-                                <img className="lp-cs-press__logo" src={logo} alt="" />
-                            )}
-                            <span className="lp-cs-press__outlet">{item.outlet}</span>
-                            <span className="lp-cs-press__cta" aria-hidden>
-                                ↗
-                            </span>
-                        </a>
-                    </li>
-                );
-            })}
+            {items.map((item, i) => (
+                <li key={item.id ?? i}>
+                    <a
+                        className="lp-cs-press__item"
+                        href={item.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={item.headline}
+                    >
+                        <span className="lp-cs-press__label">{t.caseStudy.pressLabel}</span>
+                        <span className="lp-cs-press__outlet">{item.outlet}</span>
+                        <span className="lp-cs-press__cta" aria-hidden>
+                            ↗
+                        </span>
+                    </a>
+                </li>
+            ))}
         </ul>
     );
 };
 
-/* ---- The case-study page ----
-   1. Hero: the claim, the press, and the product itself, large.
-   2. The story: the CMS blocks, centred, in the order the editor set.
-   3. The team.
-   4. Two ways in: nonprofits book a call, students join.
+/** The articles in full: outlet mark, outlet and date, headline. */
+const PressCards: React.FC<{ items: CmsPressItem[] }> = ({ items }) => {
+    const { t, locale } = useLanguage();
+    if (items.length === 0) return null;
+    const formatDate = (iso?: string | null) => {
+        if (!iso) return null;
+        const d = new Date(iso);
+        if (Number.isNaN(d.getTime())) return null;
+        return d.toLocaleDateString(
+            locale === 'de' ? 'de-DE' : 'en-GB',
+            locale === 'de'
+                ? { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Europe/Berlin' }
+                : { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Europe/Berlin' }
+        );
+    };
+    return (
+        <Section className="lp-cs-sec--press">
+            <CaseStudyHead kicker={t.caseStudy.kickerPress} />
+            <ul className="lp-cs-articles">
+                {items.map((item, i) => {
+                    const logo = mediaUrl(item.logo, 'thumbnail');
+                    const date = formatDate(item.date);
+                    return (
+                        <li key={item.id ?? i}>
+                            <a
+                                className={'lp-cs-article' + (logo ? '' : ' lp-cs-article--bare')}
+                                href={item.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+                                {logo && <img className="lp-cs-article__logo" src={logo} alt="" />}
+                                <span className="lp-cs-article__body">
+                                    <span className="lp-cs-article__meta">
+                                        {item.outlet}
+                                        {date && ` · ${date}`}
+                                    </span>
+                                    <span className="lp-cs-article__headline">{item.headline}</span>
+                                </span>
+                                <span className="lp-cs-article__cta">
+                                    {t.caseStudy.pressRead} ↗
+                                </span>
+                            </a>
+                        </li>
+                    );
+                })}
+            </ul>
+        </Section>
+    );
+};
 
-   Every block is centred on one axis and picks a measure: prose for reading,
-   wide for designed panels (journey, media, team, the closing cards). */
+const GlobeIcon = () => (
+    <svg
+        aria-hidden="true"
+        width="19"
+        height="19"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+    >
+        <circle cx="12" cy="12" r="10" />
+        <path d="M2 12h20" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+    </svg>
+);
+
+const GitHubIcon = () => (
+    <svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24">
+        <path
+            fill="currentColor"
+            d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"
+        />
+    </svg>
+);
+
+const isGitHub = (url: string) => {
+    try {
+        return new URL(url).hostname.replace(/^www\./, '') === 'github.com';
+    } catch {
+        return false;
+    }
+};
+
+/* ---- The case-study page ----
+   1. Hero: the claim, the lead, the press, and the product itself, large.
+   2. The facts: partner, phase, stack, links.
+   3. The project's own chapters, if it has any (PROJECT_STORIES).
+   4. The CMS blocks, in the order the editor set.
+   5. The press, then the site's closing claim.
+
+   Every chapter is a band with the shell's measure inside: a mono kicker and a
+   heading on the left edge, the content under them. */
 const ProjectCaseStudy: React.FC<{ project: CmsProject }> = ({ project }) => {
     const { t } = useLanguage();
     const mark = mediaUrl(project.image, 'thumbnail');
@@ -569,11 +687,21 @@ const ProjectCaseStudy: React.FC<{ project: CmsProject }> = ({ project }) => {
         () => new Set([laptop, phone].filter((g): g is Shot => !!g)),
         [laptop, phone]
     );
+    // The phase the project is in, from its timeline; the status otherwise.
+    const phase = useMemo(() => {
+        for (const b of project.layout ?? []) {
+            if (b.blockType !== 'timeline') continue;
+            const current = (b.points ?? []).find((p) => p.state === 'current');
+            if (current?.title) return current.title;
+        }
+        return statusLabel;
+    }, [project.layout, statusLabel]);
+    const Story = project.slug ? PROJECT_STORIES[project.slug] : undefined;
 
     return (
-        <div className="lp lp-page lp-cs-page">
+        <div className="lp lp-cs-page">
             <header className="lp-cs-hero">
-                <div className="lp-inner lp-cs-hero__inner">
+                <div className="lp-inner">
                     <Link className="lp-cs__back" href="/projects">
                         ← {t.projectDetail.back}
                     </Link>
@@ -585,7 +713,7 @@ const ProjectCaseStudy: React.FC<{ project: CmsProject }> = ({ project }) => {
                     >
                         <p className="lp-cs__eyebrow">
                             <span
-                                className="lp-dot"
+                                className="lp-cs__dot"
                                 style={{
                                     backgroundColor: statusColors[project.status] || '#808080',
                                 }}
@@ -597,100 +725,73 @@ const ProjectCaseStudy: React.FC<{ project: CmsProject }> = ({ project }) => {
                         <h1 className="lp-cs__title">
                             {project.impactHeadline || project.title}
                         </h1>
+                        {project.impact && <p className="lp-cs__lead">{project.impact}</p>}
                         <PressBadges items={press} />
                     </motion.div>
                 </div>
                 <DeviceStage laptop={laptop} phone={phone} title={project.title} />
-                {/* The deck comes after the product: on arrival the screen
-                    belongs to the claim and the interface. */}
-                {project.impact && (
-                    <div className="lp-inner">
-                        <p className="lp-cs__lead">{project.impact}</p>
-                    </div>
-                )}
             </header>
 
             <div className="lp-inner">
-                <article className="lp-cs">
-                    {/* Facts strip: the partner's own mark, then the details a
-                        visitor scans for. */}
-                    <div className="lp-cs__facts">
-                        {mark && (
-                            <span className="lp-cs__mark">
-                                <img src={mark} alt={project.ngoPartner} />
+                <div className="lp-cs-facts">
+                    {mark && (
+                        <>
+                            <img className="lp-cs-facts__mark" src={mark} alt={project.ngoPartner} />
+                            <span className="lp-cs-facts__rule" aria-hidden />
+                        </>
+                    )}
+                    <div className="lp-cs-facts__set">
+                        <span className="lp-cs-fact">
+                            <span className="lp-cs-fact__k">{t.projectDetail.partnerLabel}</span>
+                            <span className="lp-cs-fact__v">{project.ngoPartner}</span>
+                        </span>
+                        <span className="lp-cs-fact">
+                            <span className="lp-cs-fact__k">{t.projectDetail.status}</span>
+                            <span className="lp-cs-fact__v">
+                                <span
+                                    className="lp-cs-fact__live"
+                                    style={{
+                                        backgroundColor: liveColors[project.status] || '#808080',
+                                    }}
+                                    aria-hidden
+                                />
+                                {phase}
+                            </span>
+                        </span>
+                        {stack.length > 0 && (
+                            <span className="lp-cs-fact">
+                                <span className="lp-cs-fact__k">{t.projectDetail.stack}</span>
+                                <span className="lp-cs-fact__v">{stack.join(' · ')}</span>
                             </span>
                         )}
-                        <div className="lp-cs__fact-set">
-                            <span className="lp-cs__fact">
-                                <span className="lp-cs__fact-k">
-                                    {t.projectDetail.partnerLabel}
-                                </span>
-                                <span className="lp-cs__fact-v">{project.ngoPartner}</span>
-                            </span>
-                            {stack.length > 0 && (
-                                <span className="lp-cs__fact">
-                                    <span className="lp-cs__fact-k">{t.projectDetail.stack}</span>
-                                    <span className="lp-cs__fact-v">{stack.join(' · ')}</span>
-                                </span>
-                            )}
-                            {links.length > 0 && (
-                                <span className="lp-cs__fact">
-                                    <span className="lp-cs__fact-k">{t.projectDetail.links}</span>
-                                    <span className="lp-cs__fact-v">
-                                        {links.map((l, i) => (
-                                            <React.Fragment key={l.id ?? i}>
-                                                {i > 0 && ' · '}
-                                                <a
-                                                    className="lp-cs__fact-link"
-                                                    href={l.url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                >
-                                                    {l.label}
-                                                </a>
-                                            </React.Fragment>
-                                        ))}
-                                    </span>
-                                </span>
-                            )}
-                        </div>
                     </div>
-
-                    <CaseStudyBlocks project={project} skip={promoted} />
-
-                    {/* Two ways in. The calendar opens in an overlay: inline it
-                        is ~900px of widget that would push the story off screen. */}
-                    <section className="lp-cs__block lp-cs__block--wide lp-cs-cta">
-                        <div className="lp-cs-cta__card lp-cs-cta__card--ngo">
-                            <span className="lp-cs-cta__kicker">{t.talk.ngoKicker}</span>
-                            <h2 className="lp-cs-cta__heading">{t.caseStudy.bookHeading}</h2>
-                            <p className="lp-cs-cta__text">{t.caseStudy.bookText}</p>
-                            <div className="lp-cs-cta__actions">
-                                <BookingEmbed variant="compact" />
-                            </div>
-                        </div>
-                        <div className="lp-cs-cta__card lp-cs-cta__card--student">
-                            <span className="lp-cs-cta__kicker">{t.talk.studentKicker}</span>
-                            <h2 className="lp-cs-cta__heading">{t.caseStudy.joinHeading}</h2>
-                            <p className="lp-cs-cta__text">{t.caseStudy.joinText}</p>
-                            <div className="lp-cs-cta__actions">
-                                <Link className="lp-btn lp-btn--primary" href="/join">
-                                    {t.caseStudy.joinButton} →
-                                </Link>
-                                <Link className="lp-booking__link" href="/team">
-                                    {t.caseStudy.teamLink}
-                                </Link>
-                            </div>
-                        </div>
-                    </section>
-
-                    <p className="lp-cs__foot">
-                        <Link className="lp-cs__more" href="/projects">
-                            {t.caseStudy.moreProjects} →
-                        </Link>
-                    </p>
-                </article>
+                    {links.length > 0 && (
+                        <span className="lp-cs-facts__links">
+                            {links.map((l, i) => (
+                                <a
+                                    key={l.id ?? i}
+                                    className="lp-cs-facts__link"
+                                    href={l.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    aria-label={l.label}
+                                    title={l.label}
+                                >
+                                    {isGitHub(l.url) ? <GitHubIcon /> : <GlobeIcon />}
+                                </a>
+                            ))}
+                        </span>
+                    )}
+                </div>
             </div>
+
+            {Story && <Story />}
+
+            <CaseStudyBlocks project={project} skip={promoted} />
+
+            <PressCards items={press} />
+
+            <ClosingCta />
         </div>
     );
 };

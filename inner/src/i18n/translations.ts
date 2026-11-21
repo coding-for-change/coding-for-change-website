@@ -90,7 +90,7 @@ export interface Translations {
     projectDetail: {
         back: string; problem: string; approach: string; outcome: string;
         impact: string; stack: string; links: string;
-        timeline: string; team: string; partnerLabel: string;
+        timeline: string; team: string; partnerLabel: string; status: string;
     };
     caseStudy: {
         chooseKicker: string; chooseTitle: string;
@@ -103,7 +103,9 @@ export interface Translations {
         faqHeading: string; bookHeading: string; bookText: string;
         eyebrow: string; teamLink: string; moreProjects: string;
         pressLabel: string; pressRead: string;
-        stepNow: string; stepNext: string;
+        stepDone: string; stepNow: string; stepNext: string;
+        /** Section kickers on the case study, mono `~/path` labels. */
+        kickerProgress: string; kickerTeam: string; kickerPress: string;
     };
     events: {
         title: string; subtitle: string; intro: string;
@@ -548,9 +550,9 @@ const en: Translations = {
         status: { active: 'Active', completed: 'Completed', recruiting: 'Recruiting' },
     },
     projectDetail: {
-        back: 'Back to projects', problem: 'The problem', approach: 'Our approach',
+        back: 'All projects', problem: 'The problem', approach: 'Our approach',
         outcome: 'What we shipped', impact: 'Impact', stack: 'Built with', links: 'Links',
-        timeline: 'Timeline', team: 'The team', partnerLabel: 'Partner',
+        timeline: 'Timeline', team: 'The team', partnerLabel: 'Partner', status: 'Status',
     },
     caseStudy: {
         chooseKicker: 'Two ways to read this',
@@ -579,8 +581,12 @@ const en: Translations = {
         bookText: 'Tell us about it — grab a slot and we’ll explore whether we can help.',
         pressLabel: 'Featured in',
         pressRead: 'Read the article',
-        stepNow: 'In progress',
-        stepNext: 'Up next',
+        stepDone: 'done',
+        stepNow: 'in progress',
+        stepNext: 'up next',
+        kickerProgress: '~/progress',
+        kickerTeam: '~/team',
+        kickerPress: '~/press',
         eyebrow: 'Case study',
         teamLink: 'Meet the whole team',
         moreProjects: 'See all projects',
@@ -1201,9 +1207,9 @@ const de: Translations = {
         status: { active: 'Aktiv', completed: 'Abgeschlossen', recruiting: 'Team gesucht' },
     },
     projectDetail: {
-        back: 'Zurück zu den Projekten', problem: 'Das Problem', approach: 'Unser Vorgehen',
+        back: 'Alle Projekte', problem: 'Das Problem', approach: 'Unser Vorgehen',
         outcome: 'Was wir geliefert haben', impact: 'Wirkung', stack: 'Gebaut mit', links: 'Links',
-        timeline: 'Ablauf', team: 'Das Team', partnerLabel: 'Partner',
+        timeline: 'Ablauf', team: 'Das Team', partnerLabel: 'Partner', status: 'Status',
     },
     caseStudy: {
         chooseKicker: 'Zwei Perspektiven',
@@ -1234,9 +1240,13 @@ const de: Translations = {
         bookHeading: 'Haben Sie ein ähnliches Problem?',
         bookText: 'Erzählen Sie uns davon: Buchen Sie einen Termin, und wir schauen gemeinsam, ob wir helfen können.',
         pressLabel: 'Bekannt aus',
-        pressRead: 'Zum Artikel',
-        stepNow: 'Aktuell',
-        stepNext: 'Als Nächstes',
+        pressRead: 'Artikel lesen',
+        stepDone: 'erledigt',
+        stepNow: 'läuft gerade',
+        stepNext: 'als Nächstes',
+        kickerProgress: '~/projektstand',
+        kickerTeam: '~/team',
+        kickerPress: '~/presse',
     },
     events: {
         title: 'Events', subtitle: 'Workshops, Hackathons & Mehr',
