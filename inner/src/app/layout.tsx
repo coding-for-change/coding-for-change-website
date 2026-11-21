@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist, Geist_Mono, Pixelify_Sans } from 'next/font/google';
 // All four global stylesheets — importing every one here is what the old CRA
 // build did via index.tsx/App.tsx. (The abandoned migration dropped App.css and
 // mobile.css, which is what broke its formatting.)
@@ -42,6 +42,14 @@ const geistMono = Geist_Mono({
     subsets: ['latin'],
     display: 'swap',
     variable: '--font-geist-mono',
+});
+// A pixel face for single words in a headline ("stone age", "hardest"):
+// .lp-pixel in landing.css. One weight, self-hosted the same way.
+const pixelify = Pixelify_Sans({
+    subsets: ['latin'],
+    weight: '500',
+    display: 'swap',
+    variable: '--font-pixelify',
 });
 
 export const metadata: Metadata = {
@@ -113,7 +121,7 @@ export default async function RootLayout({
     return (
         <html
             lang={locale}
-            className={`${robotoMono.variable} ${geist.variable} ${geistMono.variable}`}
+            className={`${robotoMono.variable} ${geist.variable} ${geistMono.variable} ${pixelify.variable}`}
             // The script below stamps data-nav before React hydrates.
             suppressHydrationWarning
         >

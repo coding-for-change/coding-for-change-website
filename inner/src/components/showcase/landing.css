@@ -263,6 +263,17 @@
 .lp-hero__dim {
     color: rgba(241, 240, 234, 0.6);
 }
+/* A word or two set in the pixel face as an accent ("stone age", "hardest"):
+   its one weight (500 sits next to Geist's 500 without looking heavier), no
+   faux bold, never split. A touch of negative tracking keeps "hardest
+   problem?" on one line on /ngos. */
+.lp-pixel {
+    font-family: var(--font-pixel);
+    font-weight: 500;
+    font-synthesis: none;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+}
 .lp-hero--students .lp-hero__title {
     max-width: 18ch;
     font-size: clamp(36px, 4.8vw, 68px);
@@ -281,6 +292,28 @@
     flex-wrap: wrap;
     gap: 10px;
     margin-top: 4px;
+}
+/* The lead and the buttons follow once the headline is typed (TypedTitle). */
+.lp-hero__lead,
+.lp-hero__ctas {
+    transition:
+        opacity 0.6s ease,
+        transform 0.6s ease;
+}
+.lp-hero__ctas {
+    transition-delay: 0.08s;
+}
+.lp-hero__copy--typing .lp-hero__lead,
+.lp-hero__copy--typing .lp-hero__ctas {
+    visibility: hidden;
+    opacity: 0;
+    transform: translateY(10px);
+}
+@media (prefers-reduced-motion: reduce) {
+    .lp-hero__lead,
+    .lp-hero__ctas {
+        transition: none;
+    }
 }
 .lp-hero__caption-text {
     display: inline-block;
@@ -326,6 +359,35 @@
     .lp-cursor {
         animation: none;
     }
+}
+/* The typed headline (TypedTitle.tsx). The letters still to come keep their
+   place, so the lines are set once and never move. The cursor takes no room
+   and sits on the next letter like a terminal's block cursor – solid while it
+   types, blinking once the line is done. */
+.lp-type__rest {
+    visibility: hidden;
+}
+.lp-type__word--cursor {
+    white-space: nowrap;
+}
+/* While it types, the measured lines are held by <br>s (TypedTitle) and
+   nothing else may break: the headline shrinks to its longest line, and a
+   fraction of a pixel more in that line would push its last word down. */
+.lp-type--held {
+    white-space: nowrap;
+}
+/* A slip (words typed by mistake, then deleted) takes no room either: it is
+   drawn over the hidden letters it stands in for. */
+.lp-type__slip {
+    display: inline-block;
+    width: 0;
+    white-space: nowrap;
+}
+.lp-type .lp-cursor {
+    margin-right: -0.54em;
+}
+.lp-cursor--busy {
+    animation: none;
 }
 @media (max-width: 760px) {
     .lp-hero {
