@@ -138,13 +138,20 @@ export default async function RootLayout({
                     - On a phone SiteShell swaps in the mobile chrome after
                       hydration; until then html[data-mobile-pending] hides the
                       desktop bar the server rendered (not inside the 3D
-                      monitor, which keeps the desktop shell). */}
+                      monitor, which keeps the desktop shell).
+                    And one thing for later: the homepage headline is typed by
+                    the page's script (TypedTitle). If that has not begun 1.5 s
+                    after the HTML is in – a slow connection –
+                    html[data-type-late] shows the headline as it is
+                    (landing.css). It is stamped on the page, not the headline:
+                    a phone's chrome swap mounts the headline anew. */}
                 <script
                     dangerouslySetInnerHTML={{
                         __html:
                             'var h=document.documentElement;' +
                             "if(location.pathname==='/'&&!location.hash){h.dataset.nav='dark';h.dataset.navPhoto='';}" +
-                            "try{if(window.self===window.top&&matchMedia('(max-width: 1024px)').matches)h.dataset.mobilePending='';}catch(e){}",
+                            "try{if(window.self===window.top&&matchMedia('(max-width: 1024px)').matches)h.dataset.mobilePending='';}catch(e){}" +
+                            "if(location.pathname==='/')document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){if(!window.__cfcTyping)h.dataset.typeLate='';},1500);});",
                     }}
                 />
                 {}

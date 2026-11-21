@@ -86,6 +86,11 @@ const perform = (texts: string[], slipText: string): { frames: Frame[]; settle: 
  * screen readers (via aria-label) get the headline itself, never the slip.
  * With reduced motion it is simply there. `onSettle` fires when the slip is
  * gone (or, without one, when the last letter is in).
+ *
+ * The letters only wait for the script for a moment: if the typing has not
+ * begun 1.5 s after the HTML is in – a slow connection – the page shows them
+ * by itself (html[data-type-late], stamped in layout.tsx; landing.css), and
+ * the script, once it comes, leaves the headline as it is.
  */
 const TypedTitle: React.FC<{
     parts: TypedPart[];
@@ -107,6 +112,9 @@ const TypedTitle: React.FC<{
     // `text-wrap: balance` can pick other breaks while the cursor moves
     // through the text, and a word would jump between lines.
     const [lineStarts, setLineStarts] = useState<number[] | null>(null);
+    // The script has the headline (data-live): the page's own fallback for a
+    // late script (html[data-type-late]) no longer applies to it.
+    const [live, setLive] = useState(false);
     const ref = useRef<HTMLHeadingElement>(null);
     const onSettleRef = useRef(onSettle);
     onSettleRef.current = onSettle;
@@ -115,11 +123,20 @@ const TypedTitle: React.FC<{
         setFrame(0);
         setLineStarts(null);
         const last = frames.length - 1;
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        // Has the page already shown the headline because the script came late?
+        if (
+            document.documentElement.hasAttribute('data-type-late') ||
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        ) {
+            setLive(true);
             setFrame(last);
             onSettleRef.current?.();
             return;
         }
+        // From here it is typed, and the page's fallback must not show the
+        // letters meanwhile (layout.tsx checks this flag).
+        (window as Window & { __cfcTyping?: boolean }).__cfcTyping = true;
+        setLive(true);
         let raf = 0;
         let cancelled = false;
         // Measured once the web font is in, so the lines are the final ones.
@@ -200,6 +217,7 @@ const TypedTitle: React.FC<{
         <h1
             ref={ref}
             className={'lp-type' + (held ? ' lp-type--held' : '') + (className ? ` ${className}` : '')}
+            data-live={live ? '' : undefined}
             aria-label={full}
         >
             <span aria-hidden="true">

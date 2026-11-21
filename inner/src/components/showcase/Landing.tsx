@@ -17,7 +17,7 @@ import ProcessSteps from './ProcessSteps';
 import ProjectShowcase from './ProjectShowcase';
 import Testimonials from './Testimonials';
 import ThreeDTeaser from './ThreeDTeaser';
-import HeroPhotos, { HERO_SLIDES, useHeroSlideshow } from './HeroPhotos';
+import HeroPhotos, { AfterHero, HERO_SLIDES, WAITING_SRC, useHeroSlideshow } from './HeroPhotos';
 import TypedTitle, { TypedPart } from './TypedTitle';
 import ClosingCta from './ClosingCta';
 import PartnerMarquee, { joinPartners } from './PartnerMarquee';
@@ -203,6 +203,8 @@ const Landing: React.FC<LandingProps> = (props) => {
     };
 
     return (
+        // The images below the hero wait for its first photo (AfterHero).
+        <AfterHero.Provider value={slideshow.ready}>
         <div className={'lp lp--landing' + (students ? ' jn' : '')} ref={bgRef}>
             {/* ---- Hero: one photo, framed in paper; the nav sits on it ---- */}
             <section
@@ -212,13 +214,18 @@ const Landing: React.FC<LandingProps> = (props) => {
                 data-nav-over="dark"
             >
                 <div className="lp-hero__frame">
-                    <HeroPhotos photo={heroPhoto} alt={l.photoAlt} {...slideshow} />
+                    <HeroPhotos
+                        photo={heroPhoto}
+                        alt={l.photoAlt}
+                        active={slideshow.active}
+                        upTo={slideshow.upTo}
+                        onLoad={slideshow.onLoad}
+                    />
                     <div className="lp-hero__body">
-                        <motion.div
+                        {/* No fade-in by script: the copy must not wait for it,
+                            and a slow connection can hold it up for seconds. */}
+                        <div
                             className={'lp-hero__copy' + (headlineSettled ? '' : ' lp-hero__copy--typing')}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.4, ease: 'easeOut' }}
                         >
                             {/* In student mode, the round's status. */}
                             {students && <RoundStatus now={now} className="lp-hero__pill" />}
@@ -270,7 +277,7 @@ const Landing: React.FC<LandingProps> = (props) => {
                                     </>
                                 )}
                             </div>
-                        </motion.div>
+                        </div>
                         <p className="lp-hero__caption" aria-hidden="true">
                             <span className="lp-hero__caption-text" key={caption}>
                                 {caption}
@@ -339,7 +346,11 @@ const Landing: React.FC<LandingProps> = (props) => {
                                     >
                                         <Link className="lp-way" href={way.href} data-cta={way.cta}>
                                             <span className="lp-way__photo">
-                                                <img src={way.img} alt="" loading="lazy" />
+                                                <img
+                                                    src={slideshow.ready ? way.img : WAITING_SRC}
+                                                    alt=""
+                                                    loading="lazy"
+                                                />
                                             </span>
                                             <span className="lp-way__body">
                                                 <span className="lp-way__label">{copy.label}</span>
@@ -405,6 +416,7 @@ const Landing: React.FC<LandingProps> = (props) => {
             {/* ---- Closing claim; the footer's >_♡ follows ---- */}
             <ClosingCta homepage={props.homepage} />
         </div>
+        </AfterHero.Provider>
     );
 };
 
