@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -18,6 +18,7 @@ import ProjectShowcase from './ProjectShowcase';
 import Testimonials from './Testimonials';
 import ThreeDTeaser from './ThreeDTeaser';
 import HeroPhotos, { HERO_SLIDES, useHeroSlideshow } from './HeroPhotos';
+import TypedTitle, { TypedPart } from './TypedTitle';
 import ClosingCta from './ClosingCta';
 import PartnerMarquee, { joinPartners } from './PartnerMarquee';
 import RoundStatus from './RoundStatus';
@@ -41,6 +42,23 @@ const reveal = {
 // tokens of index.css (--cfc-paper, --cfc-stone, --cfc-petrol) as hex.
 const PAPER = '#f1f0ea';
 const STONE = '#e4e3da';
+
+/**
+ * The hero headline as TypedTitle parts: the white half, then the grey half
+ * with its last words (`pixel`, e.g. "stone age.") in the pixel face. Without
+ * a match at a word start the grey half stays whole.
+ */
+const heroParts = (title: string, dim: string, pixel: string): TypedPart[] => {
+    const at = pixel ? dim.lastIndexOf(pixel) : -1;
+    if (at < 0 || (at > 0 && dim[at - 1] !== ' ')) {
+        return [{ text: title }, { text: dim, className: 'lp-hero__dim' }];
+    }
+    return [
+        { text: title },
+        ...(at > 0 ? [{ text: dim.slice(0, at), className: 'lp-hero__dim' }] : []),
+        { text: dim.slice(at), className: 'lp-hero__dim lp-pixel' },
+    ];
+};
 
 /** The three ways in, each a card with a photo of that side of the club. */
 const WAYS = [
@@ -133,6 +151,9 @@ const Landing: React.FC<LandingProps> = (props) => {
         (hp?.heroImage && typeof hp.heroImage === 'object' && mediaUrl(hp.heroImage)) || null;
     const slideshow = useHeroSlideshow(heroPhoto ? 1 : HERO_SLIDES.length);
     const caption = heroPhoto ? l.photoCaption : l.photoCaptions[slideshow.active] ?? l.photoCaption;
+    // The headline types itself out (with a slip it takes back); the lead and
+    // the buttons come in once it is on its way to the real words.
+    const [headlineSettled, setHeadlineSettled] = useState(false);
 
     // Scroll-driven background blend between the `data-bg` bands + nav ink flip.
     const bgRef = useRef<HTMLDivElement>(null);
@@ -182,24 +203,23 @@ const Landing: React.FC<LandingProps> = (props) => {
                     <HeroPhotos photo={heroPhoto} alt={l.photoAlt} {...slideshow} />
                     <div className="lp-hero__body">
                         <motion.div
-                            className="lp-hero__copy"
-                            initial={{ opacity: 0, y: 24 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, ease: 'easeOut' }}
+                            className={'lp-hero__copy' + (headlineSettled ? '' : ' lp-hero__copy--typing')}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.4, ease: 'easeOut' }}
                         >
                             {/* In student mode, the round's status. */}
                             {students && <RoundStatus now={now} className="lp-hero__pill" />}
-                            <h1 className="lp-hero__title">
-                                {students ? (
-                                    s.heroTitle
-                                ) : (
-                                    <>
-                                        {l.heroTitle}{' '}
-                                        <span className="lp-hero__dim">{l.heroTitleDim}</span>
-                                    </>
-                                )}
-                                <span className="lp-cursor" aria-hidden="true" />
-                            </h1>
+                            <TypedTitle
+                                className="lp-hero__title"
+                                parts={
+                                    students
+                                        ? [{ text: s.heroTitle }]
+                                        : heroParts(l.heroTitle, l.heroTitleDim, l.heroTitlePixel)
+                                }
+                                slip={students ? undefined : l.heroTitleSlip}
+                                onSettle={() => setHeadlineSettled(true)}
+                            />
                             <p className="lp-hero__lead">{students ? s.heroLead : l.heroLead}</p>
                             <div className="lp-hero__ctas">
                                 {students ? (

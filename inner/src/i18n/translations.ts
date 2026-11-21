@@ -19,6 +19,10 @@ export interface Translations {
     /** The homepage (Landing.tsx). CMS fields on the Homepage global win where they exist. */
     landing: {
         heroTitle: string; heroTitleDim: string; heroLead: string;
+        /** The headline as it is first "mistyped", then corrected (TypedTitle). */
+        heroTitleSlip: string;
+        /** The last words of heroTitleDim, set in the pixel face. */
+        heroTitlePixel: string;
         heroCtaPrimary: string; heroCtaSecondary: string;
         photoAlt: string; photoCaption: string;
         /** One caption per bundled hero photo (HeroPhotos.tsx), in order. */
@@ -370,6 +374,8 @@ export interface Translations {
     };
     partner: {
         kicker: string; fallbackTitle: string; fallbackLead: string;
+        /** The word of fallbackTitle set in the pixel face. */
+        fallbackTitlePixel: string;
         /** Who we are and what we do, in two sentences under the head's lead. */
         about: string;
         talkCta: string;
@@ -399,6 +405,8 @@ const en: Translations = {
     landing: {
         heroTitle: 'Helping NGOs escape',
         heroTitleDim: 'the digital stone age.',
+        heroTitleSlip: 'Helping NGOs escape Excel.',
+        heroTitlePixel: 'stone age.',
         heroLead: 'Students from Munich build free software for non-profits.',
         heroCtaPrimary: 'Start a project',
         heroCtaSecondary: 'Become a member',
@@ -1015,6 +1023,7 @@ const en: Translations = {
     partner: {
         kicker: '~/for-ngos',
         fallbackTitle: 'What is your hardest problem?',
+        fallbackTitlePixel: 'hardest',
         fallbackLead: 'Let’s find a digital solution – together and free of charge.',
         about: 'We are students from TUM, LMU and HM. As a non-profit association we build software for NGOs as volunteers – from the first idea to running it.',
         talkCta: 'Book a first talk',
@@ -1049,6 +1058,8 @@ const de: Translations = {
     landing: {
         heroTitle: 'Wir holen NGOs',
         heroTitleDim: 'aus der digitalen Steinzeit.',
+        heroTitleSlip: 'Wir holen NGOs aus Excel.',
+        heroTitlePixel: 'Steinzeit.',
         heroLead: 'Studierende aus München bauen kostenlos Software für gemeinnützige Organisationen.',
         heroCtaPrimary: 'Projekt anfragen',
         heroCtaSecondary: 'Mitglied werden',
@@ -1666,6 +1677,7 @@ const de: Translations = {
     partner: {
         kicker: '~/für-ngos',
         fallbackTitle: 'Was ist euer größtes Problem?',
+        fallbackTitlePixel: 'größtes',
         fallbackLead: 'Lasst uns gemeinsam eine digitale Lösung finden – kostenlos.',
         about: 'Wir sind Studierende von TUM, LMU und HM. Als gemeinnütziger Verein entwickeln wir ehrenamtlich Software für NGOs – von der ersten Idee bis zum laufenden Betrieb.',
         talkCta: 'Erstgespräch buchen',

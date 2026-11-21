@@ -60,6 +60,9 @@ const Partner: React.FC<PartnerProps> = (props) => {
     const { data: projects } = useCmsCollection<CmsProject>('projects', { depth: '1' }, props.projects);
 
     const title = partner?.title || t.partner.fallbackTitle;
+    // "hardest" in the pixel face, wherever the title has the word.
+    const pixelWord = t.partner.fallbackTitlePixel;
+    const pixelAt = pixelWord ? title.indexOf(pixelWord) : -1;
     const intro = partner?.intro || t.partner.fallbackLead;
     const photo = mediaUrl(partner?.heroImage, 'large') || HEAD_PHOTO;
     const email = partner?.contactEmail || siteConfig.email;
@@ -82,7 +85,17 @@ const Partner: React.FC<PartnerProps> = (props) => {
                             transition={{ duration: 0.5 }}
                         >
                             <p className="lp-kicker">{t.partner.kicker}</p>
-                            <h1 className="lp-page__title">{title}</h1>
+                            <h1 className="lp-page__title">
+                                {pixelAt < 0 ? (
+                                    title
+                                ) : (
+                                    <>
+                                        {title.slice(0, pixelAt)}
+                                        <span className="lp-pixel">{pixelWord}</span>
+                                        {title.slice(pixelAt + pixelWord.length)}
+                                    </>
+                                )}
+                            </h1>
                             <p className="lp-lead">{intro}</p>
                             {/* Who we are and what we do – context for the question above. */}
                             <p className="lp-page__about">{t.partner.about}</p>
