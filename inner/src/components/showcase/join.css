@@ -407,7 +407,12 @@
     background: none;
     border: 0;
 }
+/* A set height, not only a cap: an SVG without its own size (Hetzner's has
+   only a viewBox) otherwise collapses to nothing, and its margin doubled the
+   gap between its neighbours. */
 .jn-partners--strip .jn-logo img {
+    width: auto;
+    height: 34px;
     max-width: 150px;
     max-height: 34px;
     filter: grayscale(1);

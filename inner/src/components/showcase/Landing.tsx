@@ -49,6 +49,21 @@ const WAYS = [
     { key: 'companies', href: '/partners', img: '/images/join/company-visits.webp', cta: 'home-way-partner' },
 ] as const;
 
+/**
+ * Every NGO we work or have worked with, counted in the figures. The Projects
+ * collection only holds those with a case study, so the count can't come
+ * from there. Add a partner here when one joins.
+ */
+const NGO_PARTNERS = [
+    'Public Makers',
+    'Welthungerhilfe',
+    'Lebenshilfe München',
+    'edunovo',
+    'Cycling Without Age',
+    'Space-Eye',
+    'Verbraucherzentrale Bayern',
+];
+
 export interface LandingProps {
     projects?: CmsProject[] | null;
     sponsors?: CmsSponsor[] | null;
@@ -111,18 +126,15 @@ const Landing: React.FC<LandingProps> = (props) => {
     };
     const applyHref = '/join/apply';
 
-    // The figures under the statement: the three the Team page shows (the
-    // headcount is typed into Site Configuration, NGOs and projects come from
-    // the Projects collection) and how long the process takes. A figure we
-    // have no number for is left out rather than shown as 0.
-    const ngoCount = new Set(
-        (projects ?? []).map((p) => p.ngoPartner?.trim()).filter(Boolean)
-    ).size;
+    // The figures under the statement: the headcount (typed into Site
+    // Configuration), our NGO partners, the events we have run (the figure
+    // /partners shows too) and how long the process takes. A figure we have
+    // no number for is left out rather than shown as 0.
     const weeks = processSteps[processSteps.length - 1]?.timing?.match(/\d+/)?.[0] ?? '';
     const figures = [
         { value: siteConfig.memberCount?.trim() ?? '', label: t.team.statMembers },
-        { value: ngoCount ? String(ngoCount) : '', label: t.team.statNgos },
-        { value: projects?.length ? String(projects.length) : '', label: t.team.statProjects },
+        { value: String(NGO_PARTNERS.length), label: t.team.statNgos },
+        { value: '10+', label: l.statEvents },
         { value: weeks, label: l.statWeeks },
     ].filter((f) => f.value !== '');
 

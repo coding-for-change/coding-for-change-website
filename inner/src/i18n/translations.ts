@@ -24,7 +24,7 @@ export interface Translations {
         /** One caption per bundled hero photo (HeroPhotos.tsx), in order. */
         photoCaptions: string[];
         partnersLabel: string;
-        statement: string; statementDim: string; statWeeks: string;
+        statement: string; statementDim: string; statWeeks: string; statEvents: string;
         /** Mono section labels, written like paths. */
         labels: { ways: string; projects: string; process: string };
         waysTitle: string;
@@ -110,7 +110,7 @@ export interface Translations {
         /** Label of the logo strip: where the members have worked or studied. */
         experienceTitle: string;
         joinTileTitle: string; joinTileHint: string;
-        statMembers: string; statNgos: string; statProjects: string; };
+        statMembers: string; statNgos: string; };
     qa: { title: string; subtitle: string; intro: string; };
     /**
      * /join (the page that makes the case) and /join/apply (the form). Dates
@@ -409,6 +409,7 @@ const en: Translations = {
         statement: 'NGOs have the mission.',
         statementDim: 'We have the people who turn it into software – selected, mentored and volunteering.',
         statWeeks: 'weeks from first call to handover',
+        statEvents: 'events organised',
         labels: { ways: '~/get-involved', projects: '~/projects', process: '~/how-we-work' },
         waysTitle: 'Three ways in.',
         ways: {
@@ -593,7 +594,6 @@ const en: Translations = {
         joinTileHint: 'We are growing – join the club',
         statMembers: 'Members',
         statNgos: 'NGO partners',
-        statProjects: 'Projects',
     },
     qa: {
         title: 'Q&A', subtitle: 'Frequently Asked Questions',
@@ -1059,6 +1059,7 @@ const de: Translations = {
         statement: 'NGOs haben die Mission.',
         statementDim: 'Wir haben die Menschen, die sie digital umsetzen – ausgewählt, betreut und ehrenamtlich.',
         statWeeks: 'Wochen vom Erstgespräch bis zur Übergabe',
+        statEvents: 'organisierte Events',
         labels: { ways: '~/mitmachen', projects: '~/projekte', process: '~/so-arbeiten-wir' },
         waysTitle: 'Drei Wege zu uns.',
         ways: {
@@ -1243,7 +1244,6 @@ const de: Translations = {
         joinTileHint: 'Wir wachsen – komm dazu',
         statMembers: 'Mitglieder',
         statNgos: 'NGO-Partner',
-        statProjects: 'Projekte',
     },
     qa: {
         title: 'F&A', subtitle: 'Häufig Gestellte Fragen',
