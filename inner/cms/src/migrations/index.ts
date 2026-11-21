@@ -58,6 +58,7 @@ import * as migration_20261110_190747_onboarding from './20261110_190747_onboard
 import * as migration_20261110_194713_member_page from './20261110_194713_member_page';
 import * as migration_20261115_111519_account_mails from './20261115_111519_account_mails';
 import * as migration_20261120_142841_redesign_homepage_quotes from './20261120_142841_redesign_homepage_quotes';
+import * as migration_20261121_211500_team_departments from './20261121_211500_team_departments';
 
 export const migrations = [
   {
@@ -359,5 +360,10 @@ export const migrations = [
     up: migration_20261120_142841_redesign_homepage_quotes.up,
     down: migration_20261120_142841_redesign_homepage_quotes.down,
     name: '20261120_142841_redesign_homepage_quotes'
+  },
+  {
+    up: migration_20261121_211500_team_departments.up,
+    down: migration_20261121_211500_team_departments.down,
+    name: '20261121_211500_team_departments',
   },
 ];

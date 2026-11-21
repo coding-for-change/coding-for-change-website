@@ -1,12 +1,12 @@
 'use client';
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useCmsCollection, mediaUrl } from '../../api';
 import type { CmsCompany, CmsTeamMember } from '../../api/types';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { linkMarkMap } from '../general/SocialMarks';
-import PartnerMarquee, { type MarqueePartner } from './PartnerMarquee';
+import type { MarqueePartner } from './PartnerMarquee';
 import ClosingCta from './ClosingCta';
 import './landing.css';
 
@@ -22,16 +22,21 @@ const initials = (name: string) =>
         .map((n) => n[0])
         .join('');
 
+/** The page shows first names only, whatever the profile in the CMS holds. */
+const firstName = (member: CmsTeamMember) => member.name.trim().split(/\s+/)[0];
+
+const companiesOf = (member: CmsTeamMember): CmsCompany[] =>
+    (member.companies ?? []).filter((c): c is CmsCompany => typeof c === 'object' && c !== null);
+
 /**
  * Every company, university or programme the members list under "Previously
- * at", most frequent first – the logo strip on /team, and the talent section
- * of /partners.
+ * at", most frequent first – the logos under the project teams on /team, and
+ * the talent section of /partners.
  */
 export const memberCompanies = (members: CmsTeamMember[]): MarqueePartner[] => {
     const seen = new Map<number, { company: CmsCompany; count: number; first: number }>();
     members.forEach((member, i) => {
-        for (const c of member.companies ?? []) {
-            if (typeof c !== 'object' || !c) continue;
+        for (const c of companiesOf(member)) {
             const entry = seen.get(c.id);
             if (entry) entry.count += 1;
             else seen.set(c.id, { company: c, count: 1, first: i });
@@ -46,157 +51,172 @@ export const memberCompanies = (members: CmsTeamMember[]): MarqueePartner[] => {
         }));
 };
 
-/** The bio as a finished sentence, the name it opens with in bold. */
-const BioText: React.FC<{ name: string; bio: string }> = ({ name, bio }) => {
-    const first = name.split(' ')[0];
-    const text = /[.!?…]$/.test(bio) ? bio : `${bio}.`;
-    if (!first || !text.startsWith(first)) return <>{text}</>;
+/** One person and what they look after in one department. */
+interface Placed {
+    member: CmsTeamMember;
+    role: string;
+}
+
+interface Group {
+    id: number;
+    name: string;
+    order: number;
+    people: Placed[];
+}
+
+/**
+ * The departments of the CMS ("Teams" collection), each with its people and
+ * what they look after, and everyone who is in none of them. Whoever leads a
+ * department (a role starting "Leitung", "Lead" or "Head") comes first; the
+ * rest keep the page's order.
+ */
+const groupTeam = (members: CmsTeamMember[]) => {
+    const groups = new Map<number, Group>();
+    const rest: CmsTeamMember[] = [];
+    for (const member of members) {
+        let placed = false;
+        for (const membership of member.teamMemberships ?? []) {
+            const team = membership.team;
+            if (!team || typeof team !== 'object') continue;
+            placed = true;
+            let group = groups.get(team.id);
+            if (!group) {
+                group = { id: team.id, name: team.name, order: team.order ?? 100, people: [] };
+                groups.set(team.id, group);
+            }
+            group.people.push({ member, role: membership.role?.trim() || member.role });
+        }
+        if (!placed) rest.push(member);
+    }
+    const leads = (person: Placed) => /^(leitung|lead|head)\b/i.test(person.role);
+    const sorted = [...groups.values()].sort((a, b) => a.order - b.order || a.id - b.id);
+    for (const group of sorted) {
+        group.people.sort((a, b) => Number(leads(b)) - Number(leads(a)));
+    }
+    return { groups: sorted, rest };
+};
+
+/** The portrait, cropped square around the focal point set on the image in the CMS. */
+const Portrait: React.FC<{ member: CmsTeamMember; size: 'card' | 'thumbnail' }> = ({ member, size }) => {
+    const photo = mediaUrl(member.image, size);
+    const focus = `${member.image?.focalX ?? 50}% ${member.image?.focalY ?? 50}%`;
+    return photo ? (
+        <img src={photo} alt={firstName(member)} loading="lazy" style={{ objectPosition: focus }} />
+    ) : (
+        <span className="lp-role__initials">{initials(member.name)}</span>
+    );
+};
+
+/** The person's LinkedIn, as its mark on the portrait. */
+const LinkedInBadge: React.FC<{ member: CmsTeamMember }> = ({ member }) => {
+    const link = (member.links ?? []).find((l) => l.url && l.label === 'LinkedIn');
+    if (!link) return null;
+    const Mark = linkMarkMap.LinkedIn;
     return (
-        <>
-            <strong>{first}</strong>
-            {text.slice(first.length)}
-        </>
+        <a
+            className="lp-role__badge"
+            href={link.url}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={`${firstName(member)} on LinkedIn`}
+        >
+            <Mark />
+        </a>
     );
 };
 
 /**
- * One member: portrait, name with LinkedIn/GitHub, role. The bio (studies,
- * work, a fun fact) pops up as a speech bubble above the portrait – under the
- * pointer, on a tap, or on keyboard focus – so the wall stays short. It opens
- * kept inside the screen, and below the tile when there is no room above.
+ * Where someone has worked or studied, as small grey logos in even boxes:
+ * the first `max`, then "+N" for the rest.
  */
-const Face: React.FC<{ member: CmsTeamMember; index: number }> = ({ member, index }) => {
-    const photo = mediaUrl(member.image, 'card');
-    const links = (member.links ?? []).filter((link) => link.url);
-    const bio = member.bio?.trim();
-    const bubbleId = useId();
-    const tileRef = useRef<HTMLLIElement>(null);
-    const bubbleRef = useRef<HTMLParagraphElement>(null);
-    const lastPointer = useRef('mouse');
-    const [open, setOpen] = useState(false);
-    const [spot, setSpot] = useState({ x: 0, tail: 0, below: false });
-
-    const show = () => {
-        const tile = tileRef.current;
-        const bubble = bubbleRef.current;
-        if (!tile || !bubble) return;
-        const box = tile.getBoundingClientRect();
-        const width = bubble.offsetWidth;
-        const center = box.left + box.width / 2;
-        const left = Math.min(Math.max(16, center - width / 2), document.documentElement.clientWidth - 16 - width);
-        const navBottom = document.querySelector('.lp-nav')?.getBoundingClientRect().bottom ?? 0;
-        setSpot({ x: left - box.left, tail: center - left, below: box.top - bubble.offsetHeight - 24 < navBottom });
-        setOpen(true);
-    };
-    const hide = () => setOpen(false);
-
-    // A tap or click anywhere else, or Escape, closes it.
-    useEffect(() => {
-        if (!open) return;
-        const onDown = (e: PointerEvent) => {
-            if (!tileRef.current?.contains(e.target as Node)) setOpen(false);
-        };
-        const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setOpen(false);
-        };
-        document.addEventListener('pointerdown', onDown);
-        document.addEventListener('keydown', onKey);
-        return () => {
-            document.removeEventListener('pointerdown', onDown);
-            document.removeEventListener('keydown', onKey);
-        };
-    }, [open]);
-
-    const portrait = photo ? (
-        <img src={photo} alt={member.image?.alt || member.name} loading="lazy" />
-    ) : (
-        <span className="lp-face__initials">{initials(member.name)}</span>
-    );
-
+const CompanyLogos: React.FC<{ companies: MarqueePartner[]; max?: number }> = ({ companies, max = 2 }) => {
+    const { t } = useLanguage();
+    if (companies.length === 0) return null;
+    const shown = companies.slice(0, max);
+    const more = companies.length - shown.length;
     return (
-        <motion.li
-            ref={tileRef}
-            className="lp-face"
-            data-open={open || undefined}
-            data-place={spot.below ? 'below' : undefined}
-            onPointerEnter={(e) => {
-                if (bio && e.pointerType === 'mouse') show();
-            }}
-            onPointerLeave={(e) => {
-                if (e.pointerType === 'mouse') hide();
-            }}
-            {...reveal}
-            transition={{ duration: 0.4, delay: (index % 6) * 0.04 }}
-        >
-            {bio ? (
-                <button
-                    type="button"
-                    className="lp-face__photo"
-                    aria-label={member.name}
-                    aria-expanded={open}
-                    aria-describedby={bubbleId}
-                    onPointerDown={(e) => {
-                        lastPointer.current = e.pointerType;
-                    }}
-                    onFocus={(e) => {
-                        if (e.currentTarget.matches(':focus-visible')) show();
-                    }}
-                    onBlur={(e) => {
-                        if (!tileRef.current?.contains(e.relatedTarget as Node)) hide();
-                    }}
-                    onClick={(e) => {
-                        // The mouse opens it by hovering; a tap or Enter toggles it.
-                        if (e.detail === 0 || lastPointer.current !== 'mouse') {
-                            if (open) hide();
-                            else show();
-                        }
-                    }}
-                >
-                    {portrait}
-                    <span className="lp-face__hint" aria-hidden="true">
-                        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
-                            <path d="M3 2.5h10a1.5 1.5 0 0 1 1.5 1.5v6A1.5 1.5 0 0 1 13 11.5H8L4.5 14v-2.5H3A1.5 1.5 0 0 1 1.5 10V4A1.5 1.5 0 0 1 3 2.5z" />
-                        </svg>
-                    </span>
-                </button>
-            ) : (
-                <div className="lp-face__photo">{portrait}</div>
-            )}
-            {bio && (
-                <p
-                    ref={bubbleRef}
-                    id={bubbleId}
-                    role="tooltip"
-                    className="lp-face__bubble"
-                    style={{ '--bubble-x': `${spot.x}px`, '--bubble-tail': `${spot.tail}px` } as React.CSSProperties}
-                >
-                    <BioText name={member.name} bio={bio} />
-                </p>
-            )}
-            <div className="lp-face__head">
-                <h2 className="lp-face__name">{member.name}</h2>
-                {links.length > 0 && (
-                    <span className="lp-face__links">
-                        {links.map((link) => {
-                            const Mark = linkMarkMap[link.label];
-                            return (
-                                <a
-                                    className="lp-face__link"
-                                    key={link.label}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    aria-label={`${member.name} on ${link.label}`}
-                                >
-                                    {Mark ? <Mark /> : link.label}
-                                </a>
-                            );
-                        })}
-                    </span>
-                )}
+        <ul className="lp-logos" aria-label={t.team.experienceTitle}>
+            {shown.map((company) => (
+                <li className="lp-logos__item" key={company.key} title={company.name}>
+                    {company.logo ? (
+                        <img src={company.logo} alt={company.name} loading="lazy" />
+                    ) : (
+                        <span className="lp-logos__name">{company.name}</span>
+                    )}
+                </li>
+            ))}
+            {more > 0 && <li className="lp-logos__more">+{more}</li>}
+        </ul>
+    );
+};
+
+const logosOf = (member: CmsTeamMember): MarqueePartner[] =>
+    companiesOf(member).map((c) => ({ key: `company-${c.id}`, name: c.name, logo: mediaUrl(c.logo, 'thumbnail') }));
+
+/**
+ * One person and what they look after: the portrait (LinkedIn on it), the
+ * name right under it, the topic, where they have worked.
+ */
+const RoleCard: React.FC<{ person: Placed; index: number }> = ({ person, index }) => {
+    const { member, role } = person;
+    return (
+        <motion.li className="lp-role" {...reveal} transition={{ duration: 0.4, delay: (index % 6) * 0.04 }}>
+            <div className="lp-role__photo">
+                <Portrait member={member} size="card" />
+                <LinkedInBadge member={member} />
             </div>
-            <p className="lp-face__role">{member.role}</p>
+            <p className="lp-role__name">{firstName(member)}</p>
+            <p className="lp-role__topic">{role}</p>
+            <CompanyLogos companies={logosOf(member)} />
         </motion.li>
+    );
+};
+
+/** A department: its name on the left, its responsibilities beside it. */
+const DeptRow: React.FC<{ name: string; people: Placed[] }> = ({ name, people }) => (
+    <div className="lp-dept">
+        <h3 className="lp-dept__name">{name}</h3>
+        <ul className="lp-roles">
+            {people.map((person, i) => (
+                <RoleCard key={person.member.id} person={person} index={i} />
+            ))}
+        </ul>
+    </div>
+);
+
+const PILE = 10;
+
+/**
+ * The last row: everyone who is in no department, as a row of small faces
+ * and where they have worked, then the way in. No count: not everyone in
+ * the project teams has a profile in the CMS.
+ */
+const MoreRow: React.FC<{ rest: CmsTeamMember[] }> = ({ rest }) => {
+    const { t } = useLanguage();
+    const companies = useMemo(() => memberCompanies(rest).slice(0, 8), [rest]);
+    const faces = rest.slice(0, PILE);
+    return (
+        <div className="lp-dept">
+            <h3 className="lp-dept__name">{t.team.moreTitle}</h3>
+            <motion.div className="lp-more" {...reveal} transition={{ duration: 0.4 }}>
+                {rest.length > 0 && (
+                    <>
+                        <ul className="lp-pile" aria-hidden="true">
+                            {faces.map((member) => (
+                                <li className="lp-pile__face" key={member.id} title={firstName(member)}>
+                                    <Portrait member={member} size="thumbnail" />
+                                </li>
+                            ))}
+                        </ul>
+                        <p className="lp-more__text">{t.team.moreText}</p>
+                        <CompanyLogos companies={companies} max={8} />
+                    </>
+                )}
+                <Link className="lp-more__cta" href="/join" data-cta="team-join">
+                    {t.team.joinTileHint} →
+                </Link>
+            </motion.div>
+        </div>
     );
 };
 
@@ -205,10 +225,10 @@ export interface TeamGridProps {
 }
 
 /**
- * /team – short on purpose: who we are in one line, everyone's face (in the
- * order the CMS sets by drag and drop) with a last tile for whoever joins
- * next, then where the members have worked – the faces show students we are
- * real people, the logos show recruiters where they come from.
+ * /team: who looks after what. One row per department of the CMS ("Teams",
+ * by order) with a card per responsibility – the topic first, then the
+ * person, then where they have worked – and everyone else as a row of faces
+ * with a count. Without any departments in the CMS, everyone shows as a card.
  */
 const TeamGrid: React.FC<TeamGridProps> = (props) => {
     const { t } = useLanguage();
@@ -220,7 +240,7 @@ const TeamGrid: React.FC<TeamGridProps> = (props) => {
 
     const members = useMemo(() => (team ?? []).filter((m) => m.category !== 'adviser'), [team]);
     const advisers = useMemo(() => (team ?? []).filter((m) => m.category === 'adviser'), [team]);
-    const companies = useMemo(() => memberCompanies(team ?? []), [team]);
+    const { groups, rest } = useMemo(() => groupTeam(members), [members]);
 
     return (
         <div className="lp">
@@ -239,43 +259,33 @@ const TeamGrid: React.FC<TeamGridProps> = (props) => {
                 </div>
             </div>
 
-            <section className="lp-section lp-people-band">
+            <section className="lp-team">
                 <div className="lp-inner">
                     {loading && members.length === 0 ? (
                         <p className="lp-loading">Loading…</p>
-                    ) : (
-                        <ul className="lp-faces">
-                            {members.map((member, i) => (
-                                <Face key={member.id} member={member} index={i} />
+                    ) : groups.length === 0 ? (
+                        <ul className="lp-roles lp-roles--wide">
+                            {rest.map((member, i) => (
+                                <RoleCard key={member.id} person={{ member, role: member.role }} index={i} />
                             ))}
-                            <li className="lp-face">
-                                <Link className="lp-face__join" href="/join" data-cta="team-join">
-                                    <span className="lp-face__photo lp-face__photo--join" aria-hidden="true">
-                                        +
-                                    </span>
-                                    <span className="lp-face__head">
-                                        <span className="lp-face__name">{t.team.joinTileTitle}</span>
-                                    </span>
-                                    <span className="lp-face__role">{t.team.joinTileHint} →</span>
-                                </Link>
-                            </li>
                         </ul>
-                    )}
-
-                    {advisers.length > 0 && (
+                    ) : (
                         <>
-                            <h2 className="lp-h2 lp-faces__title">{t.team.advisersTitle}</h2>
-                            <ul className="lp-faces">
-                                {advisers.map((member, i) => (
-                                    <Face key={member.id} member={member} index={i} />
-                                ))}
-                            </ul>
+                            {groups.map((group) => (
+                                <DeptRow key={group.id} name={group.name} people={group.people} />
+                            ))}
+                            <MoreRow rest={rest} />
                         </>
+                    )}
+                    {advisers.length > 0 && (
+                        <DeptRow
+                            name={t.team.advisersTitle}
+                            people={advisers.map((member) => ({ member, role: member.role }))}
+                        />
                     )}
                 </div>
             </section>
 
-            <PartnerMarquee partners={companies} label={t.team.experienceTitle} variant="strip" />
             <ClosingCta />
         </div>
     );
