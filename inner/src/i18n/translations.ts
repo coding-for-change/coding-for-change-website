@@ -115,7 +115,9 @@ export interface Translations {
     team: { title: string; subtitle: string; intro: string; advisersTitle: string;
         /** Label of the logo strip: where the members have worked or studied. */
         experienceTitle: string;
-        joinTileTitle: string; joinTileHint: string;
+        joinTileHint: string;
+        /** The last row: everyone in no department. No count: not everyone has a profile in the CMS. */
+        moreTitle: string; moreText: string;
         statMembers: string; statNgos: string; };
     qa: { title: string; subtitle: string; intro: string; };
     /**
@@ -604,8 +606,9 @@ const en: Translations = {
         intro: 'Students from TUM, LMU and HM who build software for non-profits in their spare time.',
         experienceTitle: 'Where our members have been',
         advisersTitle: 'Advisers',
-        joinTileTitle: 'Your face here',
         joinTileHint: 'We are growing – join the club',
+        moreTitle: 'Project teams',
+        moreText: 'Many more members build software for NGOs in our project teams, with stops at:',
         statMembers: 'Members',
         statNgos: 'NGO partners',
     },
@@ -1261,8 +1264,9 @@ const de: Translations = {
         intro: 'Studierende von TUM, LMU und HM, die in ihrer Freizeit Software für gemeinnützige Organisationen bauen.',
         experienceTitle: 'Stationen unserer Mitglieder',
         advisersTitle: 'Beirat',
-        joinTileTitle: 'Dein Gesicht hier',
         joinTileHint: 'Wir wachsen – komm dazu',
+        moreTitle: 'Projektteams',
+        moreText: 'Viele weitere Mitglieder entwickeln in unseren Projektteams Software für NGOs, mit Stationen bei:',
         statMembers: 'Mitglieder',
         statNgos: 'NGO-Partner',
     },

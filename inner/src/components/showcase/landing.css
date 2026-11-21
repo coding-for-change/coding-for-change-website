@@ -4279,304 +4279,324 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
 }
 
 /* ================================================================== */
-/* /team – a short wall of faces (TeamGrid.tsx)                         */
+/* /team – who looks after what (TeamGrid.tsx)                          */
 /* ================================================================== */
 .lp-page--team {
-    padding-bottom: 32px;
+    padding-bottom: 8px;
 }
-.lp-people-band {
-    padding-top: 16px;
-    padding-bottom: 72px;
-    /* The closed speech bubbles of the right-hand tiles reach past the screen
-       edge; clip them sideways so phones get no horizontal scroll. Open ones
-       are kept on screen (TeamGrid.tsx), and nothing is clipped vertically. */
-    overflow-x: clip;
+.lp-team {
+    display: block;
+    padding: 0 0 88px;
 }
-.lp-faces {
+
+/* One row per department: its name on the left, the cards beside it. */
+.lp-dept {
+    display: grid;
+    grid-template-columns: 172px minmax(0, 1fr);
+    gap: 24px;
+    padding: 22px 0 2px;
+    border-top: 1px solid var(--line);
+}
+.lp-dept__name {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    text-wrap: balance;
+}
+
+/* The cards: photo, topic, person, logos – six across, so a department is
+   one row. Subgrid lines the four up across the row. */
+.lp-roles {
     display: grid;
     grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 28px 16px;
+    column-gap: 14px;
+    row-gap: 0;
     margin: 0;
     padding: 0;
     list-style: none;
 }
-.lp-faces__title {
-    margin: 64px 0 24px;
+.lp-roles--wide {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
 }
-.lp-face {
-    position: relative;
-    z-index: 0;
-    display: flex;
-    flex-direction: column;
+.lp-role {
+    display: grid;
+    grid-row: span 4;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    align-content: start;
     min-width: 0;
-    /* Stays on top while its bubble fades out. */
-    transition: z-index 0s linear 0.2s;
+    margin: 0 0 18px;
 }
-.lp-face[data-open] {
-    z-index: 20;
-    transition: none;
-}
-/* The portrait, in colour. With a bio it is a button: under the pointer, on a
-   tap or on keyboard focus it lifts and the bio pops up as a speech bubble. */
-.lp-face__photo {
+.lp-role__photo {
     position: relative;
     display: block;
-    box-sizing: border-box;
     width: 100%;
-    aspect-ratio: 4 / 5;
-    margin: 0;
-    padding: 0;
-    border: 0;
+    aspect-ratio: 1;
     overflow: hidden;
-    border-radius: 12px;
+    border-radius: 10px;
     background: var(--alt);
-    box-shadow: 0 4px 14px rgba(21, 48, 48, 0.08);
-    outline: none;
-    font: inherit;
-    color: inherit;
-    transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
-button.lp-face__photo {
-    cursor: pointer;
-}
-.lp-face[data-open] .lp-face__photo {
-    box-shadow: 0 14px 30px rgba(21, 48, 48, 0.18);
-    transform: translateY(-3px);
-}
-@media (hover: hover) {
-    .lp-face:hover .lp-face__photo {
-        box-shadow: 0 14px 30px rgba(21, 48, 48, 0.18);
-        transform: translateY(-3px);
-    }
-}
-.lp-face__photo:focus-visible {
-    box-shadow: 0 0 0 2px var(--cfc-paper), 0 0 0 4px var(--accent);
-}
-.lp-face__photo img {
+.lp-role__photo img {
     display: block;
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-.lp-face__initials {
+.lp-role__initials {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 100%;
     height: 100%;
-    font-size: 32px;
+    font-size: 24px;
     font-weight: 500;
     letter-spacing: -0.03em;
     color: var(--muted);
 }
-/* The bio as a speech bubble above the portrait, its tail pointing down at the
-   face. TeamGrid.tsx sets --bubble-x / --bubble-tail so it stays on screen,
-   and data-place="below" when there is no room above. */
-.lp-face__bubble {
+/* LinkedIn: just its mark, white on the portrait's corner. */
+.lp-role__badge {
     position: absolute;
-    bottom: calc(100% + 14px);
-    left: var(--bubble-x, 0);
-    box-sizing: border-box;
-    width: min(320px, calc(100vw - 32px));
-    margin: 0;
-    padding: 15px 18px 16px;
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    background: #fff;
-    box-shadow: 0 24px 48px -20px rgba(19, 22, 20, 0.38), 0 6px 16px rgba(19, 22, 20, 0.08);
-    font-size: 15px;
-    line-height: 1.5;
-    letter-spacing: -0.005em;
-    color: var(--ink);
-    text-align: left;
-    text-wrap: pretty;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(8px) scale(0.92);
-    transform-origin: var(--bubble-tail, 50%) calc(100% + 14px);
-    transition: opacity 0.14s ease, transform 0.18s ease, visibility 0s linear 0.18s;
-    pointer-events: none;
-}
-.lp-face__bubble strong {
-    font-weight: 600;
-}
-/* A short delay, so moving across the wall does not flash every bubble. */
-.lp-face[data-open] .lp-face__bubble {
-    opacity: 1;
-    visibility: visible;
-    transform: none;
-    pointer-events: auto;
-    transition: opacity 0.16s ease 0.07s, transform 0.32s cubic-bezier(0.34, 1.45, 0.64, 1) 0.07s,
-        visibility 0s linear 0.07s;
-}
-/* The tail. */
-.lp-face__bubble::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: var(--bubble-tail, 50%);
-    width: 14px;
-    height: 14px;
-    margin: -7px 0 0 -7px;
-    border-right: 1px solid var(--line);
-    border-bottom: 1px solid var(--line);
-    border-bottom-right-radius: 3px;
-    background: #fff;
-    transform: rotate(45deg);
-}
-/* Bridges the gap to the portrait, so the pointer can move onto the bubble. */
-.lp-face__bubble::before {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    height: 16px;
-}
-.lp-face[data-place='below'] .lp-face__bubble {
-    top: calc(100% + 14px);
-    bottom: auto;
-    transform-origin: var(--bubble-tail, 50%) -14px;
-}
-.lp-face[data-place='below'] .lp-face__bubble::after {
-    top: 0;
-    transform: rotate(225deg);
-}
-.lp-face[data-place='below'] .lp-face__bubble::before {
-    top: auto;
-    bottom: 100%;
-}
-/* Touch screens have no hover: a small bubble on the portrait says "tap me". */
-.lp-face__hint {
-    display: none;
-}
-@media (hover: none) {
-    .lp-face__hint {
-        position: absolute;
-        right: 6px;
-        bottom: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.92);
-        box-shadow: 0 2px 6px rgba(19, 22, 20, 0.16);
-        color: var(--ink);
-    }
-    .lp-face__hint svg {
-        width: 13px;
-        height: 13px;
-    }
-}
-.lp-face__head {
+    right: 7px;
+    bottom: 7px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    min-width: 0;
-    margin-top: 10px;
+    color: #fff;
+    opacity: 0.92;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+    transition: opacity 0.15s ease;
 }
-.lp-face__name {
-    margin: 0;
+.lp-role__badge svg {
+    width: 15px;
+    height: 15px;
+}
+.lp-role__badge:hover {
+    opacity: 1;
+}
+/* The name right under the portrait, the topic right under the name. */
+.lp-role__name {
+    margin: 10px 0 0;
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
-    line-height: 1.25;
-    letter-spacing: -0.015em;
+    line-height: 1.3;
+    letter-spacing: -0.012em;
     color: var(--ink);
 }
-.lp-face__links {
-    display: flex;
-    flex-shrink: 0;
-    margin-right: -5px;
-}
-.lp-face__link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    color: var(--muted);
-    transition: color 0.15s ease;
-}
-.lp-face__link svg {
-    width: 14px;
-    height: 14px;
-}
-.lp-face__link:hover {
-    color: var(--ink);
-}
-.lp-face__role {
+.lp-role__topic {
     margin: 2px 0 0;
     font-family: var(--font-mono);
     font-size: 11.5px;
     line-height: 1.4;
     color: var(--accent);
+    overflow-wrap: break-word;
 }
-/* The last tile: an empty frame with a plus, for whoever joins next. */
-.lp-face__join {
+
+/* ---- Where someone has worked: small grey logos ----
+   Each logo gets its own width (one height, wide wordmarks capped), so the
+   gap between two logos is the gap you see: an even box would leave a round
+   logo like BMW with a hole beside it. */
+.lp-logos {
     display: flex;
-    flex-direction: column;
-    color: inherit;
-    text-decoration: none;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 9px 0 0;
+    padding: 0;
+    list-style: none;
 }
-.lp-face__photo--join {
+.lp-logos__item,
+.lp-logos__more {
+    margin: 0;
+}
+.lp-logos__item {
+    display: flex;
+    align-items: center;
+    height: 17px;
+}
+.lp-logos__item img {
+    display: block;
+    width: auto;
+    height: 100%;
+    max-width: 46px;
+    object-fit: contain;
+    /* Grey and quiet until the card is under the pointer; multiply drops a
+       logo's white box on the paper ground. */
+    filter: grayscale(1);
+    opacity: 0.8;
+    mix-blend-mode: multiply;
+    transition: filter 0.2s ease, opacity 0.2s ease;
+}
+.lp-role:hover .lp-logos__item img {
+    filter: none;
+    opacity: 1;
+}
+.lp-logos__name {
+    max-width: 46px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+}
+.lp-logos__more {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+}
+
+/* ---- The last row: everyone else as faces, and the way in ---- */
+.lp-more {
+    display: block;
+    padding-bottom: 24px;
+}
+.lp-pile {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.lp-pile__face {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: transparent;
-    border: 1px dashed var(--muted);
-    font-size: 44px;
-    font-weight: 300;
-    color: var(--accent);
-    transition: background 0.2s ease, border-color 0.2s ease;
-}
-.lp-face__join:hover .lp-face__photo--join {
+    flex-shrink: 0;
+    box-sizing: border-box;
+    width: 44px;
+    height: 44px;
+    margin: 0 0 0 -8px;
+    overflow: hidden;
+    border: 2px solid var(--cfc-paper);
+    border-radius: 50%;
     background: var(--alt);
-    border-color: var(--accent);
 }
-@media (max-width: 1060px) {
-    .lp-faces {
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+.lp-pile__face:first-child {
+    margin-left: 0;
+}
+.lp-pile__face img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.lp-pile__face .lp-role__initials {
+    font-size: 14px;
+}
+.lp-more__text {
+    max-width: 52ch;
+    margin: 14px 0 0;
+    font-size: 15px;
+    line-height: 1.5;
+    color: #43463f;
+    text-wrap: pretty;
+}
+/* Here the logos stand alone in a row: bigger, with more air. */
+.lp-more .lp-logos {
+    gap: 14px 28px;
+    margin-top: 14px;
+}
+.lp-more .lp-logos__item {
+    height: 22px;
+}
+.lp-more .lp-logos__item img {
+    max-width: 80px;
+}
+.lp-more__cta {
+    display: inline-block;
+    margin-top: 20px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--accent-strong);
+    text-decoration: none;
+}
+.lp-more__cta:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+/* Below the full content width the name goes above its cards, so the six
+   cards keep their width (at least ~120px: name, topic and two logos on
+   one line each). */
+@media (max-width: 1059px) {
+    .lp-dept {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
     }
 }
-@media (max-width: 860px) {
-    .lp-faces {
+@media (max-width: 900px) {
+    .lp-roles--wide {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
-/* Phones: three across; the bio opens with a tap. */
-@media (max-width: 640px) {
-    .lp-faces {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 20px 10px;
+/* Tablets and phones: where six cards no longer fit, a department is still
+   one row – it scrolls sideways, edge to edge, and the next card peeks in. */
+@media (max-width: 860px) {
+    .lp-roles {
+        grid-template-columns: none;
+        grid-template-rows: repeat(4, auto);
+        grid-auto-flow: column;
+        grid-auto-columns: 118px;
+        column-gap: 12px;
+        margin: 0 -20px;
+        padding: 0 20px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: 20px;
+        scrollbar-width: none;
     }
-    .lp-face__name {
-        font-size: 14px;
+    .lp-roles::-webkit-scrollbar {
+        display: none;
     }
-    .lp-face__role {
-        font-size: 10.5px;
+    .lp-role {
+        scroll-snap-align: start;
     }
-    .lp-face__link {
-        width: 22px;
+    /* Two logos and "+N" still on one line. */
+    .lp-role .lp-logos__item img,
+    .lp-role .lp-logos__name {
+        max-width: 42px;
+    }
+    .lp-roles--wide {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-rows: none;
+        grid-auto-flow: row;
+        grid-auto-columns: auto;
+        margin: 0;
+        padding: 0;
+        overflow: visible;
     }
 }
-@media (prefers-reduced-motion: reduce) {
-    .lp-face__photo {
-        transition: none;
+@media (max-width: 640px) {
+    .lp-dept {
+        padding-top: 20px;
     }
-    .lp-face:hover .lp-face__photo,
-    .lp-face[data-open] .lp-face__photo {
-        transform: none;
+    .lp-roles--wide {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-    .lp-face__bubble,
-    .lp-face[data-open] .lp-face__bubble {
-        transform: none;
-        transition: opacity 0.12s ease, visibility 0s;
+    .lp-pile__face {
+        width: 38px;
+        height: 38px;
+    }
+    /* Two even rows of four logos instead of three ragged ones. */
+    .lp-more .lp-logos {
+        gap: 12px 20px;
+    }
+    .lp-more .lp-logos__item {
+        height: 20px;
+    }
+    .lp-more .lp-logos__item img {
+        max-width: 70px;
+    }
+}
+/* The smallest phones: the faces overlap a little more, so ten fit in 280px. */
+@media (max-width: 400px) {
+    .lp-pile__face {
+        width: 34px;
+        height: 34px;
+        margin-left: -10px;
     }
 }
 
