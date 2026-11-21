@@ -8,6 +8,15 @@ on:
 permissions:
   contents: read
 
+# One deploy at a time, and the newest one last. On 2026-11-21 two merges a
+# few seconds apart started two runs side by side; the older commit's run
+# finished second, pushed its images as :latest after the newer ones and put
+# them live, so the newer merge was not on the site. In this group a new run
+# waits for the one in progress (a waiting run is replaced by a newer one).
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
