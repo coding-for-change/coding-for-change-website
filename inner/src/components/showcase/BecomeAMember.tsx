@@ -192,7 +192,7 @@ const BecomeAMember: React.FC<BecomeAMemberProps> = (props) => {
                 </div>
             </section>
 
-            <PartnerMarquee partners={partners} label={t.landing.partnersLabel} variant="strip" />
+            <PartnerMarquee partners={partners} label={t.landing.partnersLabel} />
 
             <section className="lp-section jn-expect">
                 <JoinExpect />

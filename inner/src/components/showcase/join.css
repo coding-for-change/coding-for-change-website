@@ -269,24 +269,26 @@
     color: var(--muted);
 }
 
-/* ---- Partners: the logo band under the head ---- */
+/* ---- Partners: the logo strip (PartnerMarquee) ----
+   The one logo row of the site, on the homepage, /join and /partners: label
+   on the left in mono, the logos in greyscale and without tiles sliding by,
+   one hairline underneath. Multiply melts a logo's white box into the paper. */
 .jn-partners {
-    display: block;
-    padding: 34px 0 38px;
-    background: var(--alt);
-    border-top: 1px solid var(--line);
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    align-items: center;
+    gap: 24px;
+    max-width: 1124px;
+    margin: 0 auto;
+    padding: 26px 32px;
+    box-sizing: border-box;
     border-bottom: 1px solid var(--line);
     overflow: hidden;
 }
 .jn-partners__label {
-    max-width: 1060px;
-    margin: 0 auto 20px;
-    padding: 0 32px;
-    box-sizing: border-box;
-    text-align: center;
-    font-size: 13px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 12.5px;
     color: var(--muted);
 }
 .jn-marquee {
@@ -296,7 +298,7 @@
     mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
 }
 /* Two identical passes slide by one pass's width, so the loop never jumps.
-   The spacing is each tile's own right margin (not `gap`), which keeps the
+   The spacing is each logo's own right margin (not `gap`), which keeps the
    two passes exactly the same width. */
 .jn-marquee__track {
     display: flex;
@@ -323,33 +325,37 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    width: 196px;
-    height: 96px;
-    margin-right: 16px;
-    padding: 16px 22px;
-    box-sizing: border-box;
-    background: #ffffff;
-    border: 1px solid var(--line);
+    height: 52px;
+    margin-right: 56px;
 }
+/* A set height, not only a cap: an SVG without its own size (Hetzner's has
+   only a viewBox) otherwise collapses to nothing, and its margin doubled the
+   gap between its neighbours. */
 .jn-logo img {
     display: block;
-    max-width: 100%;
-    max-height: 52px;
+    width: auto;
+    height: 34px;
+    max-width: 150px;
+    max-height: 34px;
     object-fit: contain;
+    filter: grayscale(1);
+    opacity: 0.62;
+    mix-blend-mode: multiply;
+    transition: opacity 0.2s ease, filter 0.2s ease;
     -webkit-user-drag: none;
     user-select: none;
 }
-.jn-logo--named {
-    justify-content: flex-start;
+.jn-logo:hover img {
+    filter: none;
+    opacity: 1;
 }
 .jn-logo__name {
-    min-width: 0;
     font-family: var(--jn-display);
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 500;
     line-height: 1.2;
-    color: var(--ink);
-    overflow-wrap: anywhere;
+    color: var(--muted);
+    white-space: nowrap;
 }
 @media (prefers-reduced-motion: reduce) {
     .jn-marquee {
@@ -359,9 +365,8 @@
     .jn-marquee__track {
         flex-wrap: wrap;
         justify-content: center;
-        gap: 12px;
+        gap: 12px 56px;
         width: auto;
-        padding: 0 32px;
         animation: none;
     }
     .jn-logo {
@@ -371,67 +376,8 @@
         display: none;
     }
 }
-
-/* ---- Strip: the homepage's quieter logo row (PartnerMarquee variant) ----
-   Label on the left in mono, the logos in greyscale and without tiles, one
-   hairline underneath. Multiply melts a logo's white box into the paper. */
-.jn-partners--strip {
-    display: grid;
-    grid-template-columns: 210px minmax(0, 1fr);
-    align-items: center;
-    gap: 24px;
-    max-width: 1124px;
-    margin: 0 auto;
-    padding: 26px 32px;
-    box-sizing: border-box;
-    background: transparent;
-    border-top: 0;
-    border-bottom: 1px solid var(--line);
-}
-.jn-partners--strip .jn-partners__label {
-    max-width: none;
-    margin: 0;
-    padding: 0;
-    text-align: left;
-    font-family: var(--font-mono);
-    font-size: 12.5px;
-    letter-spacing: 0;
-    text-transform: none;
-    color: var(--muted);
-}
-.jn-partners--strip .jn-logo {
-    width: auto;
-    height: 52px;
-    margin-right: 56px;
-    padding: 0;
-    background: none;
-    border: 0;
-}
-/* A set height, not only a cap: an SVG without its own size (Hetzner's has
-   only a viewBox) otherwise collapses to nothing, and its margin doubled the
-   gap between its neighbours. */
-.jn-partners--strip .jn-logo img {
-    width: auto;
-    height: 34px;
-    max-width: 150px;
-    max-height: 34px;
-    filter: grayscale(1);
-    opacity: 0.62;
-    mix-blend-mode: multiply;
-    transition: opacity 0.2s ease, filter 0.2s ease;
-}
-.jn-partners--strip .jn-logo:hover img {
-    filter: none;
-    opacity: 1;
-}
-.jn-partners--strip .jn-logo__name {
-    font-size: 16px;
-    font-weight: 500;
-    color: var(--muted);
-    white-space: nowrap;
-}
 @media (max-width: 760px) {
-    .jn-partners--strip {
+    .jn-partners {
         grid-template-columns: minmax(0, 1fr);
         gap: 14px;
         padding: 22px 20px;

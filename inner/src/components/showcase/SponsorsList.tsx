@@ -263,7 +263,7 @@ const SponsorsList: React.FC<SponsorsListProps> = (props) => {
                     </motion.div>
                 </div>
             </section>
-            <PartnerMarquee partners={companies} label={t.team.experienceTitle} variant="strip" />
+            <PartnerMarquee partners={companies} label={t.team.experienceTitle} />
 
             {/* ---- Press and awards ---- */}
             <Recognition projects={projects} />
