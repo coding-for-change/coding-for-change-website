@@ -9,7 +9,7 @@ import './join.css';
 export interface MarqueePartner {
     key: string;
     name: string;
-    /** A logo with the name in it; without one the tile prints the name. */
+    /** A logo with the name in it; without one the row prints the name. */
     logo: string | null;
 }
 
@@ -63,8 +63,8 @@ export const joinPartners = (
 };
 
 /**
- * One pass has to outrun the widest screen, or the loop shows a gap: 16 tiles
- * of 212px cover a 3,392px-wide window.
+ * One pass has to outrun the widest screen, or the loop shows a gap: 16 logos
+ * of at least 212px (with their margin) cover a 3,392px-wide window.
  */
 const MIN_TILES_PER_PASS = 16;
 
@@ -72,13 +72,10 @@ const Tile: React.FC<{ partner: MarqueePartner; hidden: boolean }> = ({ partner,
     // On the homepage the logos wait until the hero photo is in.
     const show = useAfterHero();
     return (
-        <li
-            className={`jn-logo${partner.logo ? '' : ' jn-logo--named'}`}
-            aria-hidden={hidden || undefined}
-        >
+        <li className="jn-logo" aria-hidden={hidden || undefined}>
             {partner.logo && (
                 // Not lazy: the band moves, and a lazy logo would only start
-                // loading as it slides into view – a blank tile first.
+                // loading as it slides into view – a blank gap first.
                 <img
                     src={show ? partner.logo : WAITING_SRC}
                     alt={partner.name}
@@ -92,29 +89,23 @@ const Tile: React.FC<{ partner: MarqueePartner; hidden: boolean }> = ({ partner,
 };
 
 /**
- * The logo band under the /join head: every partner slides past, right to
- * left, pausing under the pointer. Each logo is announced once; the repeats
- * that make the loop seamless are hidden from screen readers, and with
- * reduced motion the band stands still with each logo shown once.
- *
- * `strip` is the homepage's quieter version: the label on the left, the logos
- * in greyscale without tiles, on one hairline-bounded row.
+ * The site's one logo row (homepage, /join, /partners): the label on the left,
+ * the logos in greyscale sliding past, right to left, pausing under the
+ * pointer. Each logo is announced once; the repeats that make the loop
+ * seamless are hidden from screen readers, and with reduced motion the row
+ * stands still with each logo shown once.
  */
 const PartnerMarquee: React.FC<{
     partners: MarqueePartner[];
     label: string;
-    variant?: 'tiles' | 'strip';
-}> = ({ partners, label, variant = 'tiles' }) => {
+}> = ({ partners, label }) => {
     if (partners.length === 0) return null;
     const reps = Math.max(1, Math.ceil(MIN_TILES_PER_PASS / partners.length));
     const pass = Array.from({ length: reps }, () => partners).flat();
     const style = { '--jn-marquee-duration': `${pass.length * 5}s` } as React.CSSProperties;
 
     return (
-        <section
-            className={'jn-partners' + (variant === 'strip' ? ' jn-partners--strip' : '')}
-            aria-label={label}
-        >
+        <section className="jn-partners" aria-label={label}>
             <p className="jn-partners__label">{label}</p>
             <div className="jn-marquee" style={style}>
                 <ul className="jn-marquee__track">

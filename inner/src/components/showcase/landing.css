@@ -4683,11 +4683,13 @@ html[data-nav='dark'] .lp-nav .enter3d-btn {
     object-fit: cover;
 }
 
-/* ---- Event partners under the /partners head: the moving tile band
-   (PartnerMarquee, join.css). The formats below start without a rule of
-   their own – the band ends on one. ---- */
-.jn-partners + .lp-formats > .lp-inner::before {
-    display: none;
+/* ---- Event partners under the /partners head: the logo strip
+   (PartnerMarquee, join.css) on the content grid, its label flush with the
+   head. It leaves the rule to the formats below, so that one sits on the
+   grid like every other section's. ---- */
+.lp-page--partners + .jn-partners {
+    max-width: 1060px;
+    border-bottom: 0;
 }
 
 /* ---- Press and awards: tiles with logo, title, one line and the link ---- */
@@ -5014,7 +5016,7 @@ a.lp-recog__tile:hover .lp-recog__link {
 }
 /* The member logo strip after the figures sits on the content grid (its
    label flush with the text above) and leaves the rule to the next band. */
-.lp-talent + .jn-partners--strip {
+.lp-talent + .jn-partners {
     max-width: 1060px;
     margin-top: -24px;
     border-bottom: 0;

@@ -288,7 +288,7 @@ const Landing: React.FC<LandingProps> = (props) => {
             </section>
 
             {/* ---- Everyone we work with, right under the hero ---- */}
-            <PartnerMarquee partners={partners} label={l.partnersLabel} variant="strip" />
+            <PartnerMarquee partners={partners} label={l.partnersLabel} />
 
             {/* ---- Statement and the figures behind it ---- */}
             <section id="about" data-bg={PAPER} className="lp-section lp-intro">

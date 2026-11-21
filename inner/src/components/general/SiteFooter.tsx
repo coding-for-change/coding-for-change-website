@@ -248,7 +248,7 @@ const styles: StyleSheetCSS = {
     },
     logo: {
         display: 'block',
-        height: 30,
+        height: 40,
         width: 'auto',
     },
     tagline: {
