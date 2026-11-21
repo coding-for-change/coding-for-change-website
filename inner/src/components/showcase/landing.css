@@ -389,6 +389,38 @@
 .lp-cursor--busy {
     animation: none;
 }
+/* Until the script takes the headline over (TypedTitle sets data-live), the
+   letters wait – but on a slow connection the script can come many seconds
+   after the page. If the typing has not begun 1.5 s after the HTML is in,
+   layout.tsx stamps html[data-type-late]: the headline, the lead and the
+   buttons are then simply shown, the cursor (still at the first letter)
+   goes, and nothing is typed. With reduced motion there is no wait at all. */
+html[data-type-late] .lp-type:not([data-live]) .lp-type__rest {
+    visibility: visible;
+}
+html[data-type-late] .lp-type:not([data-live]) .lp-cursor {
+    visibility: hidden;
+}
+html[data-type-late] .lp-hero__copy--typing .lp-type:not([data-live]) ~ .lp-hero__lead,
+html[data-type-late] .lp-hero__copy--typing .lp-type:not([data-live]) ~ .lp-hero__ctas {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+    .lp-type:not([data-live]) .lp-type__rest {
+        visibility: visible;
+    }
+    .lp-type:not([data-live]) .lp-cursor {
+        visibility: hidden;
+    }
+    .lp-hero__copy--typing .lp-type:not([data-live]) ~ .lp-hero__lead,
+    .lp-hero__copy--typing .lp-type:not([data-live]) ~ .lp-hero__ctas {
+        visibility: visible;
+        opacity: 1;
+        transform: none;
+    }
+}
 @media (max-width: 760px) {
     .lp-hero {
         --frame: 8px;
@@ -405,6 +437,17 @@
     }
     .lp-hero__copy {
         gap: 18px;
+    }
+    /* On a phone the two buttons sit side by side, a size smaller, so the
+       copy leaves more of the photo free. They fit from 360 px wide in both
+       languages; a narrower screen stacks them again. */
+    .lp-hero__ctas {
+        gap: 8px;
+    }
+    .lp-hero__ctas .lp-btn {
+        padding: 10px 12px;
+        font-size: 13.5px;
+        white-space: nowrap;
     }
 }
 

@@ -3,6 +3,7 @@ import React from 'react';
 import { mediaUrl } from '../../api';
 import type { CmsProject, CmsSponsor, CmsTechTour } from '../../api/types';
 import { techTourListed } from '../../lib/techTour';
+import { WAITING_SRC, useAfterHero } from './HeroPhotos';
 import './join.css';
 
 export interface MarqueePartner {
@@ -67,24 +68,28 @@ export const joinPartners = (
  */
 const MIN_TILES_PER_PASS = 16;
 
-const Tile: React.FC<{ partner: MarqueePartner; hidden: boolean }> = ({ partner, hidden }) => (
-    <li
-        className={`jn-logo${partner.logo ? '' : ' jn-logo--named'}`}
-        aria-hidden={hidden || undefined}
-    >
-        {partner.logo && (
-            // Not lazy: the band moves, and a lazy logo would only start
-            // loading as it slides into view – a blank tile first.
-            <img
-                src={partner.logo}
-                alt={partner.name}
-                decoding="async"
-                draggable={false}
-            />
-        )}
-        {!partner.logo && <span className="jn-logo__name">{partner.name}</span>}
-    </li>
-);
+const Tile: React.FC<{ partner: MarqueePartner; hidden: boolean }> = ({ partner, hidden }) => {
+    // On the homepage the logos wait until the hero photo is in.
+    const show = useAfterHero();
+    return (
+        <li
+            className={`jn-logo${partner.logo ? '' : ' jn-logo--named'}`}
+            aria-hidden={hidden || undefined}
+        >
+            {partner.logo && (
+                // Not lazy: the band moves, and a lazy logo would only start
+                // loading as it slides into view – a blank tile first.
+                <img
+                    src={show ? partner.logo : WAITING_SRC}
+                    alt={partner.name}
+                    decoding="async"
+                    draggable={false}
+                />
+            )}
+            {!partner.logo && <span className="jn-logo__name">{partner.name}</span>}
+        </li>
+    );
+};
 
 /**
  * The logo band under the /join head: every partner slides past, right to
