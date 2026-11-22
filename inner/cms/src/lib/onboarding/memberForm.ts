@@ -5,7 +5,9 @@
  * are tested (memberForm.test.ts); lib/onboarding/sync.ts applies them.
  *
  *   displayName     → team.name (empty: first and last name of the account)
- *   bio             → team.bio, both languages (needed for a profile)
+ *   bio             → team.bio in English (needed for a profile), and in German
+ *                     when there is no bioDe
+ *   bioDe           → team.bio in German (optional)
  *   linkedin        → a "LinkedIn" link on the profile
  *   githubUsername  → users.githubUsername, and a "GitHub" link on the profile
  *   photo           → team.image (the id the photo upload answered with)
@@ -14,7 +16,7 @@
  * Any other question of the form is only kept on the submission.
  */
 
-export const MEMBER_FIELDS = ['displayName', 'bio', 'linkedin', 'githubUsername', 'photo', 'profilePublic'] as const;
+export const MEMBER_FIELDS = ['displayName', 'bio', 'bioDe', 'linkedin', 'githubUsername', 'photo', 'profilePublic'] as const;
 export type MemberField = (typeof MEMBER_FIELDS)[number];
 
 /** The title a new profile starts with, per language, until the board sets one in the dashboard. */
@@ -31,6 +33,8 @@ export type MemberAnswers = {
   present: Set<MemberField>;
   displayName: string;
   bio: string;
+  /** Empty: the German profile gets `bio`. */
+  bioDe: string;
   linkedin: string | null;
   githubUsername: string | null;
   photo: number | null;
@@ -112,12 +116,13 @@ export function readMemberAnswers(submissionData: unknown): { answers: MemberAns
   const profilePublic = (map.get('profilePublic') ?? '').trim() === 'true';
   const displayName = clean(map.get('displayName') ?? '', MAX_NAME);
   const bio = clean(map.get('bio') ?? '', MAX_BIO);
+  const bioDe = clean(map.get('bioDe') ?? '', MAX_BIO);
   if (profilePublic && !bio) {
     problems.push({ field: 'bio', message: 'A public profile needs a few words about you.' });
   }
 
   return {
-    answers: { present, displayName, bio, linkedin, githubUsername, photo, profilePublic },
+    answers: { present, displayName, bio, bioDe, linkedin, githubUsername, photo, profilePublic },
     problems,
   };
 }

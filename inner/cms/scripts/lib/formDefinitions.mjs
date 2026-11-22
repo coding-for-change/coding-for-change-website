@@ -61,7 +61,8 @@ const L = {
       'You are registered! The host companies decide who joins their evening – we will email you as soon as they have, with the time and place.',
     // The onboarding form (no dashes in these: the member's page avoids them).
     obDisplayName: 'Name on your profile (leave empty to use your first and last name)',
-    obBio: 'A few sentences about you: what you study, what you like building, what you want to do at Coding for Change',
+    obBio: 'A few sentences about you in English: what you study, what you like building, what you want to do at Coding for Change',
+    obBioDe: 'The same in German (optional; leave empty to show the English text on the German page too)',
     obLinkedin: 'Link to your LinkedIn profile (optional)',
     obGithub: 'Your GitHub username (we add you to our GitHub organisation)',
     obPhoto: 'A photo of you for the Team page (optional)',
@@ -108,7 +109,8 @@ const L = {
     techtourConfirm:
       'Du bist angemeldet! Die gastgebenden Unternehmen entscheiden, wer an ihrem Abend dabei ist – sobald sie das getan haben, schreiben wir dir per E-Mail, mit Uhrzeit und Ort.',
     obDisplayName: 'Name auf deinem Profil (leer lassen für Vor- und Nachnamen)',
-    obBio: 'Ein paar Sätze über dich: was du studierst, was du gern baust, was du bei Coding for Change machen willst',
+    obBio: 'Ein paar Sätze über dich auf Englisch: was du studierst, was du gern baust, was du bei Coding for Change machen willst',
+    obBioDe: 'Dasselbe auf Deutsch (optional; leer lassen, dann zeigt auch die deutsche Seite den englischen Text)',
     obLinkedin: 'Link zu deinem LinkedIn-Profil (optional)',
     obGithub: 'Dein GitHub-Benutzername (wir nehmen dich in unsere GitHub-Organisation auf)',
     obPhoto: 'Ein Foto von dir für die Team-Seite (optional)',
@@ -241,7 +243,7 @@ export const techtourForm = (locale, { applicationFormId, toEmail, fromEmail } =
 /**
  * The new members' onboarding form (the `onboarding` global's `form`, shown on
  * /onboarding). Members only (`requiresLogin`). The field names are fixed:
- * the CMS copies displayName, bio, linkedin, githubUsername, photo and
+ * the CMS copies displayName, bio, bioDe, linkedin, githubUsername, photo and
  * profilePublic to the member's account and team profile
  * (inner/cms/src/lib/onboarding/sync.ts). No notification emails: the CMS
  * mails the admins itself (lib/onboarding/notify.ts).
@@ -256,6 +258,7 @@ export const onboardingForm = (locale) => {
     fields: [
       { blockType: 'text', name: 'displayName', label: t.obDisplayName, required: false },
       { blockType: 'textarea', name: 'bio', label: t.obBio, required: true },
+      { blockType: 'textarea', name: 'bioDe', label: t.obBioDe, required: false },
       { blockType: 'text', name: 'githubUsername', label: t.obGithub, required: true },
       { blockType: 'text', name: 'linkedin', label: t.obLinkedin, required: false },
       { blockType: 'upload', name: 'photo', accept: 'image', label: t.obPhoto, required: false, description: t.obPhotoHint },

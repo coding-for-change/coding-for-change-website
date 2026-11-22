@@ -50,7 +50,12 @@ describe('readMemberAnswers', () => {
     expect([...answers.present].sort()).toEqual(['bio', 'displayName', 'githubUsername', 'photo', 'profilePublic']);
   });
 
-  it('lists every wrong answer', () => {
+  it('reads a German bio when the form asks for one', () => {
+    expect(readMemberAnswers(sent({ bio: 'Hi', bioDe: ' Hallo ' })).answers).toMatchObject({ bio: 'Hi', bioDe: 'Hallo' });
+    expect(readMemberAnswers(sent({ bio: 'Hi' })).answers.bioDe).toBe('');
+  });
+
+    it('lists every wrong answer', () => {
     const { problems } = readMemberAnswers(sent({ githubUsername: 'no way', linkedin: 'https://evil.com', photo: 'x.png', profilePublic: 'true', bio: ' ' }));
     expect(problems.map((p) => p.field).sort()).toEqual(['bio', 'githubUsername', 'linkedin', 'photo']);
   });
