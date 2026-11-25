@@ -83,7 +83,7 @@ Follow these steps exactly when updating the CMS:
 3. **Review** the generated `up`/`down` SQL. If it drops a column that holds data you must keep, hand-edit the migration to copy the data first (see `scripts/prod-localize-reconcile.sql` for the pattern).
 4. **Verify the build:** `pnpm build` (this also runs the type-check that the prod Docker build gates on).
 5. **Commit** the new `src/migrations/*` files **together with** the code change. Never commit one without the other.
-6. **Deploy.** The CMS Dockerfile `CMD` is `pnpm payload migrate && pnpm start`, so pending migrations auto-apply on boot before the server starts. A migration failure blocks startup (loud crash-loop) rather than silently serving a broken schema — check `docker logs homepage-cms-1` if a deploy crash-loops.
+6. **Deploy.** The CMS Dockerfile `CMD` is `pnpm payload migrate && pnpm start`, so pending migrations auto-apply on boot before the server starts. A migration failure blocks startup (loud crash-loop) rather than silently serving a broken schema. Production runs blue/green on infra-v2 (role `coding_for_change_website`): a failing migration keeps the new slot's CMS unhealthy, the deploy fails before traffic is switched and the previous slot keeps serving. Its logs are in Grafana (Loki: `{job="app", app="coding-for-change-website", compose_service="cms"}`) or on the host in `docker logs coding-for-change-website-<blue|green>-cms-1`. Because the previous slot keeps running on the migrated database until the switch, a migration must not break the previous version (add before you remove).
 
 Hard rules / gotchas:
 - **Never enable `push` in production**, and never "fix" a schema drift by toggling it — `push` can drop columns non-interactively and destroy data.
