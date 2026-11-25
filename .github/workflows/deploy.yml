@@ -1,5 +1,21 @@
 name: Deploy
 
+# Build the three images (website, inner, cms), push them to the registry of infra-v2 tagged
+# with the commit sha, then start the deploy in infra-v2: it starts the inactive blue/green
+# slot (the CMS first, which applies pending Payload migrations), waits for the health checks
+# and switches Caddy. The server side (compose file, runtime secrets, database, uploads, Caddy)
+# lives in infra-v2, role `coding_for_change_website`.
+#
+# Until DNS points at the new server, a deploy lands on the rehearsal address
+# website-new.codingforchange.com. The old VPS gets no new versions any more.
+#
+# Secrets: only org secrets (REGISTRY_*, DEPLOY_APP_ID, DEPLOY_APP_PRIVATE_KEY; this repo is in
+# `github_secret_repos` of infra-v2). Runtime secrets and the Google Ads / GA4 ids are in
+# infra-v2. Repo secrets named like an org secret override it: none may exist here.
+#
+# This repo is public and may not call a workflow of the private infra-v2, so the deploy job
+# starts infra-v2's deploy-dispatch.yml through the API and waits for it. The deploy logs stay
+# in infra-v2.
 on:
   push:
     branches: [master]
@@ -8,133 +24,121 @@ on:
 permissions:
   contents: read
 
-# One deploy at a time, and the newest one last. On 2026-11-21 two merges a
-# few seconds apart started two runs side by side; the older commit's run
-# finished second, pushed its images as :latest after the newer ones and put
-# them live, so the newer merge was not on the site. In this group a new run
+# One deploy at a time, and the newest one last. On 2026-11-21 two merges a few seconds apart
+# started two runs side by side and the older commit went live last. In this group a new run
 # waits for the one in progress (a waiting run is replaced by a newer one).
 concurrency:
   group: deploy-production
   cancel-in-progress: false
 
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
+env:
+  # The Docker registry of the infrastructure, the same for every project
+  REGISTRY: docker-registry.codingforchange.com
 
+jobs:
+  build:
+    name: Build and push the images
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Gate the deploy on the consent scan. We self-host the CMP, so nothing
-      # else watches for trackers added without being declared in the consent
-      # config — an undeclared cookie firing before consent breaks TDDDG § 25 and
-      # fails Google's EU User Consent Policy audit, which can suspend conversion
-      # measurement and take the Ad Grant with it. Cheap check, expensive miss.
+      # Gate the deploy on the consent scan. We self-host the CMP, so nothing else watches for
+      # trackers added without being declared in the consent config — an undeclared cookie
+      # firing before consent breaks TDDDG § 25 and fails Google's EU User Consent Policy
+      # audit, which can suspend conversion measurement and take the Ad Grant with it.
       - name: Consent scan
         run: node scripts/consent-scan.mjs
 
-      # 2. Build Docker images
-      - name: Build Docker images
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to the registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME }}
+          password: ${{ secrets.REGISTRY_PASSWORD }}
+
+      # Tag = commit sha only. No `latest`: the nightly prune deletes by digest and would take
+      # the running image's manifest with it. The names must match what the infra-v2 role
+      # pulls: localhost:5000/homepage-{website,inner,cms}, all with the same tag.
+      - name: Build and push homepage-website
+        uses: docker/build-push-action@v6
+        with:
+          context: ./outer
+          push: true
+          tags: ${{ env.REGISTRY }}/homepage-website:${{ github.sha }}
+          provenance: false
+          cache-from: type=gha,scope=homepage-website
+          cache-to: type=gha,scope=homepage-website,mode=max
+
+      - name: Build and push homepage-inner
+        uses: docker/build-push-action@v6
+        with:
+          context: ./inner
+          push: true
+          tags: ${{ env.REGISTRY }}/homepage-inner:${{ github.sha }}
+          provenance: false
+          cache-from: type=gha,scope=homepage-inner
+          cache-to: type=gha,scope=homepage-inner,mode=max
+
+      - name: Build and push homepage-cms
+        uses: docker/build-push-action@v6
+        with:
+          context: ./inner/cms
+          push: true
+          tags: ${{ env.REGISTRY }}/homepage-cms:${{ github.sha }}
+          provenance: false
+          cache-from: type=gha,scope=homepage-cms
+          cache-to: type=gha,scope=homepage-cms,mode=max
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # The deploy runs in the private repo infra-v2 (workflow deploy-dispatch.yml): this job
+    # starts it with a token of the GitHub App "c4c-infra-deploy" and waits for the result.
+    # Its logs stay in infra-v2; this repo needs only DEPLOY_APP_ID and DEPLOY_APP_PRIVATE_KEY.
+    steps:
+      - name: Get a token for infra-v2
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.DEPLOY_APP_ID }}
+          private-key: ${{ secrets.DEPLOY_APP_PRIVATE_KEY }}
+          owner: coding-for-change
+          repositories: infra-v2
+          permission-actions: write
+
+      - name: Start the deploy in infra-v2 and wait for it
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP: coding_for_change_website
+          IMAGE_TAG: ${{ github.sha }}
+          CALLER: ${{ github.repository }}#${{ github.run_id }}-${{ github.run_attempt }}
+          INFRA_REPO: coding-for-change/infra-v2
         run: |
-          docker build \
-            -t registry.infra.codingforchange.com/homepage-website:${{ github.sha }} \
-            -t registry.infra.codingforchange.com/homepage-website:latest \
-            ./outer
-          
-          docker build \
-            -t registry.infra.codingforchange.com/homepage-inner:${{ github.sha }} \
-            -t registry.infra.codingforchange.com/homepage-inner:latest \
-            ./inner
-            
-          docker build \
-            -t registry.infra.codingforchange.com/homepage-cms:${{ github.sha }} \
-            -t registry.infra.codingforchange.com/homepage-cms:latest \
-            ./inner/cms
+          gh workflow run deploy-dispatch.yml --repo "$INFRA_REPO" --ref main \
+            -f app="$APP" -f image_tag="$IMAGE_TAG" -f caller="$CALLER"
 
-      # 3. Push to private registry
-      - name: Login to registry
-        run: |
-          docker login registry.infra.codingforchange.com \
-            -u ${{ secrets.REGISTRY_USERNAME }} \
-            -p ${{ secrets.REGISTRY_PASSWORD }}
+          # The run name ends with "(<caller>)": find our run
+          RUN_ID=""
+          for _ in $(seq 1 30); do
+            RUN_ID=$(gh run list --repo "$INFRA_REPO" --workflow deploy-dispatch.yml \
+                --event workflow_dispatch --limit 30 --json databaseId,displayTitle \
+              | jq -r --arg c "($CALLER)" '[.[] | select(.displayTitle | endswith($c))][0].databaseId // empty')
+            [ -n "$RUN_ID" ] && break
+            sleep 5
+          done
+          [ -n "$RUN_ID" ] || { echo "::error::deploy run in infra-v2 not found"; exit 1; }
+          echo "Deploy run in infra-v2 (private): https://github.com/$INFRA_REPO/actions/runs/$RUN_ID" | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Push Docker images
-        run: |
-          docker push registry.infra.codingforchange.com/homepage-website:${{ github.sha }}
-          docker push registry.infra.codingforchange.com/homepage-website:latest
-          
-          docker push registry.infra.codingforchange.com/homepage-inner:${{ github.sha }}
-          docker push registry.infra.codingforchange.com/homepage-inner:latest
-          
-          docker push registry.infra.codingforchange.com/homepage-cms:${{ github.sha }}
-          docker push registry.infra.codingforchange.com/homepage-cms:latest
-
-      # 4. Deploy to VPS via SSH
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_DEPLOY_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H codingforchange.com >> ~/.ssh/known_hosts
-
-      - name: Copy files to VPS
-        run: |
-          SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
-          SCP="scp -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key"
-          SSH_TARGET="deploy-homepage@codingforchange.com"
-
-          # Ensure target directory exists
-          $SSH $SSH_TARGET "mkdir -p /var/www/homepage"
-
-          # Copy docker-compose (prod → docker-compose.yml on VPS)
-          $SCP docker-compose.prod.yml ${SSH_TARGET}:/var/www/homepage/docker-compose.yml
-
-          # Copy Caddyfile
-          $SCP Caddyfile ${SSH_TARGET}:/var/www/homepage/Caddyfile
-
-          # Write .env from GitHub secrets and copy to VPS.
-          #
-          # This OVERWRITES /var/www/homepage/.env wholesale — deliberately, so
-          # the server holds no configuration that isn't reproducible from here.
-          # Consequence: anything added to that file by hand is lost on the next
-          # deploy, so every value must come from a secret.
-          #
-          # The Ads / GA4 ids are required for Ad Grants compliance, and an unset
-          # one is SILENT: GoogleTag.tsx renders no tag at all, the deploy goes
-          # green, and conversion tracking simply stops. If you add a new
-          # conversion action, add its secret here in the same commit.
-          printf '%s\n' \
-            "POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}" \
-            "DATABASE_URL=postgresql://payload:${{ secrets.POSTGRES_PASSWORD }}@postgres:5432/payload" \
-            "PAYLOAD_SECRET=${{ secrets.PAYLOAD_SECRET }}" \
-            "CMS_URL=http://cms:3000" \
-            "INNER_URL=http://inner:80" \
-            "RESEND_API_KEY=${{ secrets.RESEND_API_KEY }}" \
-            "EMAIL_FROM=info@codingforchange.com" \
-            "EMAIL_FROM_NAME=Coding for Change" \
-            "CONTACT_TO_EMAIL=info@codingforchange.com" \
-            "GOOGLE_ADS_CONVERSION_ID=${{ secrets.GOOGLE_ADS_CONVERSION_ID }}" \
-            "GOOGLE_ADS_LABEL_WAITLIST=${{ secrets.GOOGLE_ADS_LABEL_WAITLIST }}" \
-            "GOOGLE_ADS_LABEL_CONTACT=${{ secrets.GOOGLE_ADS_LABEL_CONTACT }}" \
-            "GOOGLE_ADS_LABEL_APPLICATION=${{ secrets.GOOGLE_ADS_LABEL_APPLICATION }}" \
-            "GOOGLE_ADS_LABEL_TECHTOUR=${{ secrets.GOOGLE_ADS_LABEL_TECHTOUR }}" \
-            "GOOGLE_ADS_LABEL_BOOKING=${{ secrets.GOOGLE_ADS_LABEL_BOOKING }}" \
-            "GA4_MEASUREMENT_ID=${{ secrets.GA4_MEASUREMENT_ID }}" \
-            "GOOGLE_OAUTH_CLIENT_ID=${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}" \
-            "GOOGLE_OAUTH_CLIENT_SECRET=${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}" \
-            "GOOGLE_ALLOWED_DOMAIN=codingforchange.com" \
-            "ADMIN_EMAILS=info@codingforchange.com,jakob.landbrecht@codingforchange.com" \
-            "DOCUSEAL_URL=https://docuseal.codingforchange.com" \
-            "DOCUSEAL_API_KEY=${{ secrets.DOCUSEAL_API_KEY }}" \
-            "DOCUSEAL_WEBHOOK_SECRET=${{ secrets.DOCUSEAL_WEBHOOK_SECRET }}" \
-            > /tmp/.env
-          $SCP /tmp/.env ${SSH_TARGET}:/var/www/homepage/.env
-          rm -f /tmp/.env
-
-      - name: Deploy on VPS
-        run: |
-          SSH="ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key deploy-homepage@codingforchange.com"
-
-          $SSH "cd /var/www/homepage && \
-            docker compose pull && \
-            docker compose up -d"
+          while :; do
+            STATE=$(gh run view "$RUN_ID" --repo "$INFRA_REPO" --json status,conclusion --jq '.status + " " + .conclusion')
+            [ "${STATE%% *}" = completed ] && break
+            sleep 15
+          done
+          echo "Result: ${STATE#* }" | tee -a "$GITHUB_STEP_SUMMARY"
+          [ "${STATE#* }" = success ]
