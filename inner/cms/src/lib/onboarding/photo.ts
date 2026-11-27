@@ -45,13 +45,35 @@ async function setPrivate(payload: Payload, id: number | null, hidden: boolean, 
   await payload.update({ collection: 'media', id, data: { private: hidden }, depth: 0, overrideAccess: true, req });
 }
 
+type ProfileFields = { id?: unknown; image?: unknown; published?: boolean | null };
+
+/**
+ * What a saved profile means for its photos: the current image is hidden
+ * exactly while the profile is unpublished, and an image it no longer uses
+ * goes back to private. Pairs of [media id, hidden].
+ */
+export function photoVisibility(profile: ProfileFields, previous?: ProfileFields | null): [number, boolean][] {
+  const image = idOf(profile.image);
+  const before = idOf(previous?.image);
+  const changes: [number, boolean][] = [];
+  if (image !== null) changes.push([image, profile.published === false]);
+  if (before !== null && before !== image) changes.push([before, true]);
+  return changes;
+}
+
+/**
+ * Whether the hook was handed the whole profile. An update with `select`
+ * (e.g. over MCP) passes only the selected fields: a missing `image` would
+ * read as a removed photo and hide it from the site.
+ */
+export const hasPhotoFields = (doc: object): boolean => 'image' in doc && 'published' in doc;
+
 /** Team afterChange: a member photo is public exactly while it is the image of a published profile. */
 export const syncPhotoVisibility: CollectionAfterChangeHook = async ({ doc, previousDoc, req }) => {
-  const image = idOf((doc as { image?: unknown }).image);
-  const before = idOf((previousDoc as { image?: unknown } | undefined)?.image);
-  const published = (doc as { published?: boolean | null }).published !== false;
-  await setPrivate(req.payload, image, !published, req);
-  if (before !== null && before !== image) await setPrivate(req.payload, before, true, req);
+  const profile: ProfileFields = hasPhotoFields(doc)
+    ? doc
+    : await req.payload.findByID({ collection: 'team', id: doc.id, depth: 0, overrideAccess: true, req });
+  for (const [id, hidden] of photoVisibility(profile, previousDoc)) await setPrivate(req.payload, id, hidden, req);
   return doc;
 };
 
