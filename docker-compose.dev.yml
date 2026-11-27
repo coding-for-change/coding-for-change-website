@@ -20,7 +20,7 @@ services:
   # with webpack in watch mode so edits in ./outer rebuild the 3D bundle.
   # The 3D scene requires a browser refresh after a rebuild (no HMR for outer).
   website:
-    image: node:18-alpine
+    image: node:22-alpine
     working_dir: /app
     # 1) install deps, 2) do an initial build so /3d has content,
     # 3) start webpack in watch mode (background), 4) run the Express server (foreground).
@@ -50,7 +50,7 @@ services:
 
   # Inner site (Next.js) — `next dev` with HMR
   inner:
-    image: node:20-alpine
+    image: node:22-alpine
     working_dir: /app
     command: sh -c "npm install && npm run dev"
     environment:
@@ -84,7 +84,7 @@ services:
   cms:
     image: node:22-alpine
     working_dir: /app
-    command: sh -c "corepack enable && corepack prepare pnpm@10.33.4 --activate && pnpm install && pnpm dev"
+    command: sh -c "corepack enable && corepack prepare pnpm@10.34.5 --activate && pnpm install && pnpm dev"
     env_file:
       - .env
     environment:

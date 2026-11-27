@@ -34,6 +34,7 @@ import { MailingView as MailingView_4688fc1704f49ef061705dd53f31d2ab } from '../
 import { OnboardingView as OnboardingView_cd5381d22714150aff446b9dbe28fefc } from '../../../components/onboarding/OnboardingView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
+/** @type import('payload').ImportMap */
 export const importMap = {
   "/components/waitlist/MailingLink#MailingLink": MailingLink_9f177a814c53f7d385efbe6295ef59e5,
   "/components/share/EveningField#EveningField": EveningField_fc0d9d7a45e2576f3ace2b0766116921,
