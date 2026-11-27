@@ -1,17 +1,13 @@
 # pnpm 10+ reads overrides from here, not from the package.json `pnpm` field.
 overrides:
-  '@payloadcms/drizzle': 3.79.1
+  '@payloadcms/drizzle': 3.90.2
+  # drizzle-kit (pinned by @payloadcms/db-postgres) and its @esbuild-kit loader
+  # pin esbuild 0.25 / 0.18, whose binaries are built with Go releases that
+  # have critical stdlib CVEs. Same esbuild line as tsx/vite use.
+  'drizzle-kit>esbuild': ^0.27.7
+  '@esbuild-kit/core-utils>esbuild': ^0.27.7
 
 # Allowlist for pnpm's opt-in postinstall-script security model.
 onlyBuiltDependencies:
   - esbuild
   - sharp
-
-# Local fixes to installed packages (patches/, created with `pnpm patch`).
-# plugin-mcp: (1) backport of the 3.93.0 fix for TypeScript 6 – without it
-# every MCP key with an "update" box ticked hangs /api/mcp. (2) The update
-# tools no longer take `filePath`, which made the server read any path from its
-# own disk. When Payload is upgraded to >= 3.93.0, drop (1) but keep (2): it is
-# not fixed upstream.
-patchedDependencies:
-  '@payloadcms/plugin-mcp@3.79.1': patches/@payloadcms__plugin-mcp@3.79.1.patch

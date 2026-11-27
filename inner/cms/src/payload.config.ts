@@ -198,7 +198,11 @@ export default buildConfig({
         // Our own blocks (see lib/formBlocks.ts): a private PDF upload for
         // CVs, a multi-select checkbox group, and a "linked form" checkbox
         // that reveals another form's questions inline.
-        upload: UploadBlock,
+        // Not under the key `upload`: since 3.90 the plugin has its own upload
+        // block there and silently replaces whatever object we pass with it.
+        // The block's slug stays `upload`, so stored forms are unchanged.
+        upload: false,
+        cfcUpload: UploadBlock,
         checkboxGroup: CheckboxGroupBlock,
         subform: SubformBlock,
         // Not needed for our forms — keep the builder UI focused.
